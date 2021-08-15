@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/home.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/home.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tqnwhz.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介 今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformer">
+<meta property="og:url" content="https://tqnwhz.github.io/2021/08/14/Transformer/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/08/14/Transformer/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/08/14/Transformer/comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/08/14/Transformer/example.png">
+<meta property="article:published_time" content="2021-08-14T14:08:23.000Z">
+<meta property="article:modified_time" content="2021-08-15T10:46:37.442Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="多头注意力机制">
+<meta property="article:tag" content="BERT">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/2021/08/14/Transformer/architecture.png">
+
+<link rel="canonical" href="https://tqnwhz.github.io/2021/08/14/Transformer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Transformer | 一隅</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<link rel="alternate" href="/atom.xml" title="一隅" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">一隅</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/2021/08/14/Transformer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Transformer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-08-14 22:08:23" itemprop="dateCreated datePublished" datetime="2021-08-14T22:08:23+08:00">2021-08-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-08-15 18:46:37" itemprop="dateModified" datetime="2021-08-15T18:46:37+08:00">2021-08-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/BERT/" itemprop="url" rel="index"><span itemprop="name">BERT</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介">简介</h2>
+<p>今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
+<span id="more"></span>
+<h2 id="题外话">题外话</h2>
+<p>之前由于换电脑的原因，断更了一段时间。BERT与Transformer的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p>
+<h2 id="模型结构">模型结构</h2>
+<p>Transformer使用的仍然是encoder-decoder架构，但与RNN等自回归模型不同，Transformer使用的是堆叠的多头注意力机制，全连接层等，其模型结构如下所示：</p>
+<p><img src="architecture.png"></p>
+<p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中N=6，嵌入向量维度为512。</p>
+<p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个Masked的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有6个解码器组成。</p>
+<h3 id="注意力机制">注意力机制</h3>
+<p>多头注意力机制可谓是Transformer的核心，详细过程可以参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解Transformer完整版</a>。这里只做核心部分介绍，单头计算过程为： <span class="math display">\[
+Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
+\]</span> Q，K，V分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline">\(\sqrt{d_k}\)</span>​​​。这个标量是softmax的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下softmax的温度系数。</p>
+<p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用8个注意力机制，每个注意力机制的输出为512/8=64维嵌入向量。</p>
+<h3 id="注意力机制的使用">注意力机制的使用</h3>
+<p>多头注意力机制以三种方式在模型中使用：</p>
+<ul>
+<li>编码器与解码器间的注意力：查询q来自解码器，键K与值V来自编码器。这里的注意力机制用以在输出的每一步关注在输入序列的不同部分，与seq2seq的注意力机制相似、</li>
+<li>编码器内的自注意力：查询、键、值均来自编码器。输入序列的每个位置可以得到到整个输入序列的信息。</li>
+<li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline">\(-\infty\)</span>​，进而经过softmax后概率值为0。</li>
+</ul>
+<h3 id="前馈神经网络">前馈神经网络</h3>
+<p>在编码器和解码器中的前馈神经网络，搭配relu激活函数来为模型构造非线性计算。计算过程如下所示： <span class="math display">\[
+FFN(x)=\max(0,xW_1+b_1)W2+b_2
+\]</span> 其中，输入和输出的维度均为512，隐藏层维度为1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
+<h3 id="位置编码">位置编码</h3>
+<p>由于Transformer中不存在RNN中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用sin与cos函数： <span class="math display">\[
+PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})
+\]</span></p>
+<p><span class="math display">\[
+PE_{(pos,2i+1)}=\cos(pos/10000^{2i/d_{model}})
+\]</span></p>
+<p>其中，pos为位置，i为向量维度。作者称选取三角函数的原因是假设这样可以更好地使模型学到相对位置关系，对于任意固定的偏移k，<span class="math inline">\(PE_{pos+k}\)</span>可以表示为<span class="math inline">\(PE_{pos}\)</span>的线性函数。另外，作者还尝试了学习位置编码的方式，实验对比显示，二者结果差别不大。因此作者最终选择了上述编码方式，因为它可以处理更长的序列。</p>
+<h2 id="为什么使用自注意力机制">为什么使用自注意力机制</h2>
+<p>论文从计算时间复杂度、序列操作数、最长路径长度三方面对比了自注意力机制、RNN、CNN以及受限的自注意力机制，结果如下：</p>
+<p><img src="comparison.png"></p>
+<p>这一部分计算过程论文没有给出，我参考了<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a>，这里简单介绍一下。</p>
+<h3 id="计算时间复杂度">计算（时间）复杂度</h3>
+<p>计算复杂度主要取决于计算的规模，以矩阵乘法为例，形状为NxM的矩阵与形状为MxP的矩阵相乘，得到一个NxP的矩阵。结果矩阵中的每个元素为M维向量内积的结果，进行M次乘法，并求和。所以整个矩阵乘法的复杂度为<span class="math inline">\(O(NMP)\)</span>。</p>
+<h4 id="自注意力机制">自注意力机制</h4>
+<p><span class="math display">\[
+Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
+\]</span></p>
+<p>其中，Q，K分别为nxd与dxn的矩阵，<span class="math inline">\(QK^\intercal\)</span>​的复杂度为<span class="math inline">\(O(n^2d)\)</span>​​，softmax的复杂度为<span class="math inline">\(O(n^2)\)</span>，加权求和的矩阵形状分别为nxn与nxd，复杂度为<span class="math inline">\(O(n^2d)\)</span>，因此总复杂度为<span class="math inline">\(O(n^2d)\)</span>​。受限自注意力机制与之同理，区别在于它只使用查询最近的k个</p>
+<h4 id="rnn">RNN</h4>
+<p><span class="math display">\[
+h_t=f(Ux_t+Wh_{t-1})
+\]</span></p>
+<p>其中，U与x的形状分别为dxd与dx1（假设隐藏状态与输入维度均为d），复杂度为<span class="math inline">\(O(d^2)\)</span>​，W与h的形状分别为dxd与dx1，复杂度同样为<span class="math inline">\(O(d^2)\)</span>。对于长度为n的序列，总复杂度为<span class="math inline">\(O(nd^2)\)</span>。</p>
+<h4 id="cnn">CNN</h4>
+<p>将输入序列进行padding后，总共需要n次卷积，每次卷积计算量为kxd，假设步长为1，单个卷积核复杂度为<span class="math inline">\(O(nkd)\)</span>​。为了保证维度相同，需要使用d个卷积核，总复杂度为<span class="math inline">\(O(nkd^2)\)</span></p>
+<h3 id="序列操作数">序列操作数</h3>
+<p>序列操作数主要衡量了并行化的支持情况，只有RNN需要串行地完成n次序列操作，其他模型均支持并行化。</p>
+<h3 id="最长路径长度">最长路径长度</h3>
+<p>最长路径为序列中首尾token在模型中的路径，其长度越长，依赖越不容易被捕捉到。对于自注意力机制，序列中的任意两个元素均可以看作直接相连，路径长度为<span class="math inline">\(O(1)\)</span>。而RNN中，第一个token的信息需要进行n次迭代才能到达最后一个token，最大路径长度即为<span class="math inline">\(O(n)\)</span>。CNN中，通过若干个卷积层来获取不同位置的信息，每个卷积层（论文中使用的是空洞卷积）相当于让序列信息浓缩了k倍（卷积层的输出中的每个位置都有输入中k个位置的信息），最大路径长度为<span class="math inline">\(O(log_kn)\)</span>​。受限的自注意力机制与连续卷积类似，每次卷积相当于可以获取连续k个位置的信息，最大路径长度为<span class="math inline">\(O(n/k)\)</span>。</p>
+<p>这就基本解释了这个突兀的表格是怎么计算得来的了。那么可以总结自注意力机制的优点是：</p>
+<ul>
+<li>单层计算量更少。在实际应用中，序列长度n往往小于表征维度d，因此，自注意力机制的单层计算量相较于RNN与CNN都要更小。</li>
+<li>支持并行化。这个就不说了，全世界都在针对RNN。</li>
+<li>能够更好地捕捉长距离依赖。相较于CNN与RNN，自注意力机制的最长路径最短。</li>
+<li>可解释性更强。作者将注意力机制的概率分布展示如下，证明多头注意力的多个头完成了与句子语义与结构相关不同的工作。</li>
+</ul>
+<p><img src="example.png"></p>
+<p>上图是作者给出的多头注意力的例子，使用了两个头。对于its这个单词，得到了非常尖锐的概率分布，its主要与law与application相关联，一个头捕获到了its指代的主体law，一个头捕获到了its的目标application。个人感觉这个效果也太过于理想了。。。可能这就是Transformer吧。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文提出了完全依赖于注意力机制的序列转换模型Transformer，相较于RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了state-of-the-art，在英语成分分析上也取得了比RNN更优的结果。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer） - 西多士NLP - 博客园 (cnblogs.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Transformer/" rel="tag"><i class="fa fa-tag"></i> Transformer</a>
+              <a href="/tags/%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag"><i class="fa fa-tag"></i> 多头注意力机制</a>
+              <a href="/tags/BERT/" rel="tag"><i class="fa fa-tag"></i> BERT</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/30/DEM-VAE/" rel="prev" title="DEM-VAE">
+      <i class="fa fa-chevron-left"></i> DEM-VAE
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D"><span class="nav-number">2.</span> <span class="nav-text">题外话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">模型结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">3.1.</span> <span class="nav-text">注意力机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">3.2.</span> <span class="nav-text">注意力机制的使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E9%A6%88%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">3.3.</span> <span class="nav-text">前馈神经网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81"><span class="nav-number">3.4.</span> <span class="nav-text">位置编码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">4.</span> <span class="nav-text">为什么使用自注意力机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="nav-number">4.1.</span> <span class="nav-text">计算（时间）复杂度</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">4.1.1.</span> <span class="nav-text">自注意力机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rnn"><span class="nav-number">4.1.2.</span> <span class="nav-text">RNN</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cnn"><span class="nav-number">4.1.3.</span> <span class="nav-text">CNN</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%8F%E5%88%97%E6%93%8D%E4%BD%9C%E6%95%B0"><span class="nav-number">4.2.</span> <span class="nav-text">序列操作数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E8%B7%AF%E5%BE%84%E9%95%BF%E5%BA%A6"><span class="nav-number">4.3.</span> <span class="nav-text">最长路径长度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">26k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23 分钟</span>
+</div>
+<div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="/lib/canvas-ribbon/canvas-ribbon.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

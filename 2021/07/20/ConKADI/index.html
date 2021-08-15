@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/home.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/home.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tqnwhz.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介 今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ConKADI">
+<meta property="og:url" content="https://tqnwhz.github.io/2021/07/20/ConKADI/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/07/20/ConKADI/apple.png">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/07/20/ConKADI/model.png">
+<meta property="og:image" content="https://tqnwhz.github.io/2021/07/20/ConKADI/result.png">
+<meta property="article:published_time" content="2021-07-20T08:56:58.000Z">
+<meta property="article:modified_time" content="2021-08-14T02:31:58.317Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="常识对话">
+<meta property="article:tag" content="CopyNet">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/2021/07/20/ConKADI/apple.png">
+
+<link rel="canonical" href="https://tqnwhz.github.io/2021/07/20/ConKADI/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ConKADI | 一隅</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<link rel="alternate" href="/atom.xml" title="一隅" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">一隅</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/2021/07/20/ConKADI/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ConKADI
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-20 16:56:58" itemprop="dateCreated datePublished" datetime="2021-07-20T16:56:58+08:00">2021-07-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-08-14 10:31:58" itemprop="dateModified" datetime="2021-08-14T10:31:58+08:00">2021-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">对话系统</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介">简介</h2>
+<p>今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。</p>
+<span id="more"></span>
+<h2 id="对话系统发展简介">对话系统发展简介</h2>
+<p>对话系统，即能够与人进行对话的计算机系统，是自然语言处理中的一个重要方向。在前神经网络时期，对话系统主要基于模板生成回复。即使是现在，仍由一些场景下在使用基于模板的回复生成。在2014年，seq2seq（Sequence to sequence）模型被提出。seq2seq提供了一种序列间进行转换映射的通用方法。此后，seq2seq被广泛用于各类序列任务，包含对话系统。但是seq2seq应用于对话系统任务时会有以下问题：</p>
+<ul>
+<li>对同一输入，只能生成单一回复。而理想的对话系统间输入与回复间的关系应该是一对多的。</li>
+<li>倾向于生成通用性回复（例如，我不知道）。</li>
+</ul>
+<p>此后，构建能够生成多样性回复的对话系统一直是研究人员研究的重点。2017年，zhao等人将条件变分自编码器（Condition vae，CVAE）应用于对话生成，通过在隐变量分布中采样不同的隐变量，模型能够生成多样的回复。</p>
+<p>另外，有研究指出，对话模型生成通用性回复的原因之一是语料中缺少人类拥有的知识背景，这使得模型无法学习知识进而理解对话。基于此，一部分工作开始探索在对话模型中引入外部知识。2018年zhou等提出的常识对话模型（CCM）就是这类研究的典型代表。</p>
+<p>常识对话模型CCM虽然比传统模型取得了更好的效果，但是CCM在检索知识实体相关知识事实时，没有考虑到实体单词所在的上下文，而复杂实体单词的具体含义往往是由其上下文决定的。这就来到了本文要介绍的ConKADI。</p>
+<p><img src="apple.png"></p>
+<h2 id="研究方法">研究方法</h2>
+<p>本文提出了：</p>
+<ul>
+<li>Felicitous Fact mechanism（恰当事实机制）帮助模型关注在上下文高度相关的知识事实。</li>
+<li>上下文知识融合以及灵活模式融合技术，促进知识的集成。</li>
+</ul>
+<p>ConKADI（Context Knowledge-Aware Diverse and Informative conversation generation model），别的不说，这个名字真的跟叠buff一样。。。模型的流程如下：</p>
+<ol type="1">
+<li>恰当事实机制根据知识实体词所在上下文计算得到知识事实的概率分布。（此过程中，使用真实回复作为后验来监督学习）。</li>
+<li>上下文融合机制在解码之前将上下文与知识融合。</li>
+<li>ConKADI在灵活融合模式下生成三种类型的单词。</li>
+</ol>
+<h3 id="模型概览">模型概览</h3>
+<p><img src="model.png"></p>
+<p>主要由以下几部分组成：</p>
+<ul>
+<li>知识检索器（Knowledge Retriever）：给定输入<span class="math inline">\(X\)</span>，对于每一个单词<span class="math inline">\(x_i\)</span>，检索<span class="math inline">\(x_i\)</span>​作为头实体或者尾实体的知识事实，若不为实体词，则返回一个空事实。</li>
+<li>上下文编码器（Context Encoder）：使用双向GRU进行编码，特殊的是，GRU的输入加入了当前实体词的嵌入向量。</li>
+<li>恰当知识识别器（Felicitous Fact Recognizer）：计算检索事实<span class="math inline">\(F=\{f_1,f_2,\dots,f_n\}\)</span>​上的概率分布<span class="math inline">\(z\)</span>，计算过程如下:</li>
+</ul>
+<p><span class="math display">\[
+z_{post}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^x_n}^\intercal;{h^y_m}^\intercal]\cdot W_{post}))^\intercal
+\]</span></p>
+<p><span class="math display">\[
+z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot W_{prior}))^\intercal
+\]</span></p>
+<p>其中，<span class="math inline">\(\eta\)</span>​​是softmax函数，<span class="math inline">\(\phi\)</span>​​是tanh激活函数，<span class="math inline">\(F\in R^{l*(d_e+d_r+d_e)}\)</span>​​是知识事实矩阵，<span class="math inline">\(W_{ft},W_{post},W_{prior}\)</span>​​​​​是训练参数​。直观来看，上下文、知识事实都包含在公式中，但是也不好进一步解释公式的由来，更像是两部分拼凑在一起的。与VAE一样，在得到先后验分布后，使用KL散度作为损失函数<span class="math inline">\(\mathcal L_k\)</span>，达到逼近先后验分布的效果。</p>
+<ul>
+<li>上下文知识融合：为了增强解码器对知识背景的理解，将输入上下文与知识融合作为解码器的初始权重，即<span class="math inline">\({h^y_0}^\intercal=tanh([{h^x_n}^\intercal;f_z^\intercal]\cdot W_{init})\)</span>​</li>
+</ul>
+<p>此外，为了保证<span class="math inline">\({h^x_n}^\intercal,f_z^\intercal\)</span>是有意义的，模型中还引入了词袋损失（参考CVAE）。为了监督<span class="math inline">\(z_{post}\)</span>​的概率分布的计算，引入了监督的条件信号（参考CCM），二者之和为损失函数<span class="math inline">\(\mathcal L_f\)</span>。​</p>
+<h3 id="知识解码器">知识解码器</h3>
+<p>解码器同样是GRU，在解码时，会从以下三种类型的单词中选择进行输出：</p>
+<ul>
+<li>词表单词</li>
+<li>知识实体单词，计算过程如下：</li>
+</ul>
+<p><span class="math display">\[
+z_{d,t}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^y_t}^\intercal;{u_{t-1}}^\intercal]\cdot W_{d}))^\intercal
+\]</span></p>
+<p><span class="math display">\[
+\gamma_t=sigmoid([{h^y_t}^\intercal;u_t^\intercal;c_t^\intercal]\cdot W_{gate})\in R^1
+\]</span></p>
+<p><span class="math display">\[
+p_{k,t}=\gamma_t*z+(1.0-\gamma_t)*z_d
+\]</span></p>
+<p>其中，<span class="math inline">\(c_t\)</span>是注意力机制的结果，<span class="math inline">\(z_{d,t}\)</span>也是同样方法计算得到的知识事实的概率分布，与<span class="math inline">\(z\)</span>相比，<span class="math inline">\(z_{d,t}\)</span>是动态的，而<span class="math inline">\(z\)</span>是静态的，与CCM中的动/静态图注意力机制类似。之后，计算得到一个标量<span class="math inline">\(\gamma_t\)</span>作为二者的相对比例，求和得到最终的实体单词权重。</p>
+<ul>
+<li>复制单词。解码器可从输入中复制一个单词作为输出，计算过程如下：</li>
+</ul>
+<p><span class="math display">\[
+p_{c,t}=\eta(\phi(H^x\cdot W_{cs})\cdot\phi({u_t^c}^\intercal\cdot W_{ct})^\intercal)
+\]</span></p>
+<p><span class="math display">\[
+{u^c_t}^\intercal=[{h^y_t}^\intercal,{u_{t-1}}^\intercal,{c_t}^\intercal]
+\]</span></p>
+<p>计算形式与前文知识事实概率分布的计算相似。</p>
+<h3 id="灵活模式融合">灵活模式融合</h3>
+<p>最终输出的概率分布为三种模式的加权和（其中，<span class="math inline">\((\gamma_{w,t},\gamma_{k,t},\gamma_{c,t})\)</span>是由灵活模式融合计算得出的概率分布，即三者之和为1。）： <span class="math display">\[
+p_{out,t}=\gamma_{w,t}*p_{w,t}+\gamma_{k,t}*p_{k,t}+\gamma_{c,t}*p_{c,t}
+\]</span> 这一部分损失函数为<span class="math inline">\(\mathcal L_n\)</span>： <span class="math display">\[
+-\sum_t\lambda_tlogp_{out,t}(y_t|y_{t-1:1},X,F)+\frac{\mathcal L_m}{2}
+\]</span> 其中，<span class="math inline">\(\mathcal L_m\)</span>为解码器输出与真实回复间的交叉熵，<span class="math inline">\(\lambda_t\)</span>​为词表外单词（unk）的惩罚项权重： <span class="math display">\[
+\lambda_t=
+\begin{cases}
+\frac{1}{\#(unk\in Y)}^3,\ if\ y_t=unk\\
+1,\ otherwise
+\end{cases}
+\]</span> 个人猜测思路是这样，如果<span class="math inline">\(y_t\)</span>为unk，<span class="math inline">\(\lambda_t\)</span>​会更小，进而优化对应参数的速度会减慢。</p>
+<h2 id="case-study">Case Study</h2>
+<p>下文是论文中展示的回复样例，只看表格生成回复的效果还是不错的。</p>
+<p><img src="result.png"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%B8%B8%E8%AF%86%E5%AF%B9%E8%AF%9D/" rel="tag"><i class="fa fa-tag"></i> 常识对话</a>
+              <a href="/tags/CopyNet/" rel="tag"><i class="fa fa-tag"></i> CopyNet</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/17/ea-vq-vae-code/" rel="prev" title="EA-VQ-VAE 代码学习（1）">
+      <i class="fa fa-chevron-left"></i> EA-VQ-VAE 代码学习（1）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/22/language-model/" rel="next" title="语言模型">
+      语言模型 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F%E5%8F%91%E5%B1%95%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">对话系统发展简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A0%94%E7%A9%B6%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">研究方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%A7%88"><span class="nav-number">3.1.</span> <span class="nav-text">模型概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%A5%E8%AF%86%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="nav-number">3.2.</span> <span class="nav-text">知识解码器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%81%B5%E6%B4%BB%E6%A8%A1%E5%BC%8F%E8%9E%8D%E5%90%88"><span class="nav-number">3.3.</span> <span class="nav-text">灵活模式融合</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#case-study"><span class="nav-number">4.</span> <span class="nav-text">Case Study</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">26k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23 分钟</span>
+</div>
+<div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="/lib/canvas-ribbon/canvas-ribbon.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
