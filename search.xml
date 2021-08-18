@@ -1,657 +1,293 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search>
-  <entry>
-    <title>ConKADI</title>
-    <url>/blog/2021/07/20/ConKADI/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。</p>
-<span id="more"></span>
-<h2 id="对话系统发展简介">对话系统发展简介</h2>
-<p>对话系统，即能够与人进行对话的计算机系统，是自然语言处理中的一个重要方向。在前神经网络时期，对话系统主要基于模板生成回复。即使是现在，仍由一些场景下在使用基于模板的回复生成。在2014年，seq2seq（Sequence to sequence）模型被提出。seq2seq提供了一种序列间进行转换映射的通用方法。此后，seq2seq被广泛用于各类序列任务，包含对话系统。但是seq2seq应用于对话系统任务时会有以下问题：</p>
-<ul>
-<li>对同一输入，只能生成单一回复。而理想的对话系统间输入与回复间的关系应该是一对多的。</li>
-<li>倾向于生成通用性回复（例如，我不知道）。</li>
-</ul>
-<p>此后，构建能够生成多样性回复的对话系统一直是研究人员研究的重点。2017年，zhao等人将条件变分自编码器（Condition vae，CVAE）应用于对话生成，通过在隐变量分布中采样不同的隐变量，模型能够生成多样的回复。</p>
-<p>另外，有研究指出，对话模型生成通用性回复的原因之一是语料中缺少人类拥有的知识背景，这使得模型无法学习知识进而理解对话。基于此，一部分工作开始探索在对话模型中引入外部知识。2018年zhou等提出的常识对话模型（CCM）就是这类研究的典型代表。</p>
-<p>常识对话模型CCM虽然比传统模型取得了更好的效果，但是CCM在检索知识实体相关知识事实时，没有考虑到实体单词所在的上下文，而复杂实体单词的具体含义往往是由其上下文决定的。这就来到了本文要介绍的ConKADI。</p>
-<p><img src="apple.png"></p>
-<h2 id="研究方法">研究方法</h2>
-<p>本文提出了：</p>
-<ul>
-<li>Felicitous Fact mechanism（恰当事实机制）帮助模型关注在上下文高度相关的知识事实。</li>
-<li>上下文知识融合以及灵活模式融合技术，促进知识的集成。</li>
-</ul>
-<p>ConKADI（Context Knowledge-Aware Diverse and Informative conversation generation model），别的不说，这个名字真的跟叠buff一样。。。模型的流程如下：</p>
-<ol type="1">
-<li>恰当事实机制根据知识实体词所在上下文计算得到知识事实的概率分布。（此过程中，使用真实回复作为后验来监督学习）。</li>
-<li>上下文融合机制在解码之前将上下文与知识融合。</li>
-<li>ConKADI在灵活融合模式下生成三种类型的单词。</li>
-</ol>
-<h3 id="模型概览">模型概览</h3>
-<p><img src="model.png"></p>
-<p>主要由以下几部分组成：</p>
-<ul>
-<li>知识检索器（Knowledge Retriever）：给定输入<span class="math inline">\(X\)</span>，对于每一个单词<span class="math inline">\(x_i\)</span>，检索<span class="math inline">\(x_i\)</span>​作为头实体或者尾实体的知识事实，若不为实体词，则返回一个空事实。</li>
-<li>上下文编码器（Context Encoder）：使用双向GRU进行编码，特殊的是，GRU的输入加入了当前实体词的嵌入向量。</li>
-<li>恰当知识识别器（Felicitous Fact Recognizer）：计算检索事实<span class="math inline">\(F=\{f_1,f_2,\dots,f_n\}\)</span>​上的概率分布<span class="math inline">\(z\)</span>，计算过程如下:</li>
-</ul>
-<p><span class="math display">\[
-z_{post}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^x_n}^\intercal;{h^y_m}^\intercal]\cdot W_{post}))^\intercal
-\]</span></p>
-<p><span class="math display">\[
-z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot W_{prior}))^\intercal
-\]</span></p>
-<p>其中，<span class="math inline">\(\eta\)</span>​​是softmax函数，<span class="math inline">\(\phi\)</span>​​是tanh激活函数，<span class="math inline">\(F\in R^{l*(d_e+d_r+d_e)}\)</span>​​是知识事实矩阵，<span class="math inline">\(W_{ft},W_{post},W_{prior}\)</span>​​​​​是训练参数​。直观来看，上下文、知识事实都包含在公式中，但是也不好进一步解释公式的由来，更像是两部分拼凑在一起的。与VAE一样，在得到先后验分布后，使用KL散度作为损失函数<span class="math inline">\(\mathcal L_k\)</span>，达到逼近先后验分布的效果。</p>
-<ul>
-<li>上下文知识融合：为了增强解码器对知识背景的理解，将输入上下文与知识融合作为解码器的初始权重，即<span class="math inline">\({h^y_0}^\intercal=tanh([{h^x_n}^\intercal;f_z^\intercal]\cdot W_{init})\)</span>​</li>
-</ul>
-<p>此外，为了保证<span class="math inline">\({h^x_n}^\intercal,f_z^\intercal\)</span>是有意义的，模型中还引入了词袋损失（参考CVAE）。为了监督<span class="math inline">\(z_{post}\)</span>​的概率分布的计算，引入了监督的条件信号（参考CCM），二者之和为损失函数<span class="math inline">\(\mathcal L_f\)</span>。​</p>
-<h3 id="知识解码器">知识解码器</h3>
-<p>解码器同样是GRU，在解码时，会从以下三种类型的单词中选择进行输出：</p>
-<ul>
-<li>词表单词</li>
-<li>知识实体单词，计算过程如下：</li>
-</ul>
-<p><span class="math display">\[
-z_{d,t}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^y_t}^\intercal;{u_{t-1}}^\intercal]\cdot W_{d}))^\intercal
-\]</span></p>
-<p><span class="math display">\[
-\gamma_t=sigmoid([{h^y_t}^\intercal;u_t^\intercal;c_t^\intercal]\cdot W_{gate})\in R^1
-\]</span></p>
-<p><span class="math display">\[
-p_{k,t}=\gamma_t*z+(1.0-\gamma_t)*z_d
-\]</span></p>
-<p>其中，<span class="math inline">\(c_t\)</span>是注意力机制的结果，<span class="math inline">\(z_{d,t}\)</span>也是同样方法计算得到的知识事实的概率分布，与<span class="math inline">\(z\)</span>相比，<span class="math inline">\(z_{d,t}\)</span>是动态的，而<span class="math inline">\(z\)</span>是静态的，与CCM中的动/静态图注意力机制类似。之后，计算得到一个标量<span class="math inline">\(\gamma_t\)</span>作为二者的相对比例，求和得到最终的实体单词权重。</p>
-<ul>
-<li>复制单词。解码器可从输入中复制一个单词作为输出，计算过程如下：</li>
-</ul>
-<p><span class="math display">\[
-p_{c,t}=\eta(\phi(H^x\cdot W_{cs})\cdot\phi({u_t^c}^\intercal\cdot W_{ct})^\intercal)
-\]</span></p>
-<p><span class="math display">\[
-{u^c_t}^\intercal=[{h^y_t}^\intercal,{u_{t-1}}^\intercal,{c_t}^\intercal]
-\]</span></p>
-<p>计算形式与前文知识事实概率分布的计算相似。</p>
-<h3 id="灵活模式融合">灵活模式融合</h3>
-<p>最终输出的概率分布为三种模式的加权和（其中，<span class="math inline">\((\gamma_{w,t},\gamma_{k,t},\gamma_{c,t})\)</span>是由灵活模式融合计算得出的概率分布，即三者之和为1。）： <span class="math display">\[
-p_{out,t}=\gamma_{w,t}*p_{w,t}+\gamma_{k,t}*p_{k,t}+\gamma_{c,t}*p_{c,t}
-\]</span> 这一部分损失函数为<span class="math inline">\(\mathcal L_n\)</span>： <span class="math display">\[
--\sum_t\lambda_tlogp_{out,t}(y_t|y_{t-1:1},X,F)+\frac{\mathcal L_m}{2}
-\]</span> 其中，<span class="math inline">\(\mathcal L_m\)</span>为解码器输出与真实回复间的交叉熵，<span class="math inline">\(\lambda_t\)</span>​为词表外单词（unk）的惩罚项权重： <span class="math display">\[
-\lambda_t=
-\begin{cases}
-\frac{1}{\#(unk\in Y)}^3,\ if\ y_t=unk\\
-1,\ otherwise
-\end{cases}
-\]</span> 个人猜测思路是这样，如果<span class="math inline">\(y_t\)</span>为unk，<span class="math inline">\(\lambda_t\)</span>​会更小，进而优化对应参数的速度会减慢。</p>
-<h2 id="case-study">Case Study</h2>
-<p>下文是论文中展示的回复样例，只看表格生成回复的效果还是不错的。</p>
-<p><img src="result.png"></p>
-]]></content>
+<search> 
+  
+  
+    
+    <entry>
+      <title>BERT</title>
+      <link href="/blog/2021/08/16/BERT/"/>
+      <url>/blog/2021/08/16/BERT/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>今天来看读的是大名鼎鼎的BERT，出自论文Google团队2018年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（<strong>B</strong>idirectional <strong>E</strong>ncoder Representations from <strong>T</strong>ransformers）可谓是NLP历史上划时代的预训练模型，在11项自然语言处理任务上都取得了state-of-the-art。并且，Google将BERT的代码与预训练模型全部开源，便于大家使用。</p><span id="more"></span><h2 id="预训练语言模型">预训练（语言）模型</h2><p>预训练语言模型是自然语言处理中的重要部分，与计算机视觉中的预训练模型类似，也是为了从特定的下游任务中脱离出来，在大量数据上预训练可以解决通用任务的模型。这样以来，下流任务可以根据自己的任务特点进行微调，而不需要从头训练。这样做的好处非常明显：</p><ul><li>训练时间更短</li><li>数据要求更少</li></ul><p>在计算机视觉中，预训练模型例如ImageNet首先得到广泛应用，利用ImageNet，你可以很快地构造一个特定任务的识别模型，而不需要从头训练，重复捕捉像物体边界等信息。在自然语言处理中，预训练模型应用就没有那么广泛。一个主要的原因就是多义词，例如“苹果”既可以代表电脑品牌、也可以代表水果，其具体的含义要根据具体的上下文才能推断出来。而像word2vec/glove这样的静态词向量算法，词向量一经训练得到就固定了，所以不能建模一词多义的现象。ELMO于2018年3月提出，在双向LSTM上预训练语言模型，解决了静态词向量存在的问题，然而还没来得及大展拳脚，就被2018年10月的BERT拍死在了沙滩上。。。</p><p>预训练模型可以简单分为两类：</p><ul><li>基于特征的预训练模型，指利用语言模型的中间结果，作为额外的特征，引入到下游任务中。典型的就是ELMO。特点：<strong>模型参数是固定的</strong>。</li><li>基于微调的预训练模型，指在语言模型的基础上，加入少量的特定任务参数（例如分类任务，加一层softmax），再在任务数据上微调模型，典型的就是GPT。特点：<strong>模型参数需要微调</strong>。</li></ul><p>在BERT之前的预训练模型，例如ELMO与GPT，存在的一个重要问题是它们只从单向建模了序列。虽然ELMO是使用的双向LSTM，也只是把双向的隐藏状态进行了拼接，双向的特征信息也没有很好地进行融合。形式化的来说，标准的语言模型就是单向的，当前词的选择只依赖于先前词，例如从左到右方向： <span class="math display">\[P_{l2r}(x_1,x_2,\dots,x_n)=\prod_{t=1}^nP(x_t|x_{&lt;t})\]</span></p><h3 id="掩码语言模型masked-language-modelmlm">掩码语言模型（masked language model，MLM）</h3><p>考虑到标准的语言模型所存在的问题，BERT提出了一种掩码语言模型的任务，具体做法为：随机遮挡输入中的部分单词，目标是仅根据单词的上下文预测当前位置本来的单词（即遮掩前的单词）。与从左到右的语言模型不同，掩码语言模型能够融合单词的左右上下文。形式化而言，对于<span class="math inline">\(x_t\)</span>的概率分布，掩码语言模型计算的是<span class="math inline">\(P(x_t|x_{&lt;t},x_{&gt;t})\)</span>，标准的语言模型计算的是<span class="math inline">\(P(x_t|x_{&lt;t})\)</span>。但值得注意的是，掩码语言模型并不是传统的语言模型，一些论文中可能存在二者混用的情况。语言模型的定义可以看我之前的博客 <a href="https://tqnwhz.github.io/blog/2021/07/22/language-model/#more">语言模型 | 一隅</a>。</p><p>个人认为掩码语言模型的思路与cbow的思想是有些像的，根据一个单词的上下文来预测这个词。</p><h2 id="bert">BERT</h2><p>BERT主要分为两个阶段：预训练和微调。两者流程如下所示：</p><p><img src="architecture.png"></p><p>可以看到，除了输出层，预训练和微调的架构基本上是完全一致的。预训练的权重将会作为下流微调任务的参数的初始权重。在序列中，BERT加入了两个特殊标记：</p><ul><li>[CLS]：添加于序列起始位置，作为整个序列的表示，可以用于分类任务。</li><li>[SEP]：当输入为一对序列的时候（例如问答任务，一问一答），添加于两序列之中，作为分隔符。</li></ul><p>BERT由若干个<strong>Transformer编码器</strong>（注意只有编码器）组成，在论文中，作者提出了两种规模的BERT：</p><ul><li><span class="math inline">\(BERT_{BASE}\)</span>​：由12个Transformer编码器堆叠而成，隐节点大小为768，自注意力机制有12个头，约110M参数。</li><li><span class="math inline">\(BERT_{LARGE}\)</span>​：由24个Transformer编码器堆叠而成，隐节点大小为1024，自注意力机制有16个头，约340M参数。</li></ul><h3 id="输入输出表征">输入输出表征</h3><p>在输入表征上，BERT使用了WordPiece的词嵌入，词表大小为30000。WordPiece是一种子词模型，token粒度介于整个单词与字符之间，例如会将“working”这个单词拆分为“work”、“ing”两个token存储在词表中，"ing"又可以与其他的动词结合，这样就可以用更小的词表存储更多的单词，也没有损失太多的语义信息。</p><p>BERT的输入既可以是单个序列，也可以是一对序列（例如问答场景）。应用于一对序列时，需要插入[SEP]分隔符，并且要使用段嵌入向量。对于输入的每个token，它的输入表征为以下三个向量的和：</p><ul><li>符号向量（token embedding），也就是我们传统意义上所说的词向量。</li><li>段向量（segement embedding），用以区分一对序列中的两个不同的序列。</li><li>位置向量（position embedding），用以编码位置信息。</li></ul><p><img src="embedding.png"></p><p>值得注意的是，<strong>以上三种词向量全部通过学习得到</strong>，这与Transformer不同。Transformer中的位置向量是通过三角函数计算得到，而BERT是通过学习得到的。就这一点作者似乎没有进行解释，而Transformer的作者在论文中实验结果是，学习得到与使用三角函数的位置向量效果相近，而三角函数更易扩展。一种说法是BERT使用的语料更大，可能可以学习到更好的位置向量。</p><h3 id="预训练">预训练</h3><h4 id="掩码语言模型">掩码语言模型</h4><p>在训练时,按一定比例（实验中为15%）随机屏蔽输入序列中的部分单词（使用[MASK]替换），然后预测被屏蔽掉的单词，而不是重建整个输入序列。这个过程与完形填空类似，想象一个句子中有几个单词空缺，掩码语言模型的目标就是根据上下文成功预测空缺的单词。这与语言模型的训练方式还是有较大差别的。</p><p>上述方式虽然听上去很合理，但有一个问题，在下流任务的微调阶段，并不会出现[MASK]标记，这一定程度上导致了预训练与微调间的不匹配。为了解决这种情况，BERT并不总是使用[MASK]替换掉需要屏蔽的单词，而是按照概率执行对应操作：</p><ul><li>80%替换为[MASK]</li><li>10%替换为随机其他单词</li><li>10%保持不变</li></ul><p>之后，被屏蔽掉的单词会被用以预测原本的单词，换而言之，预测概率变为<span class="math inline">\(P(x_t|x_{&lt;t},x_{mask},x_{&gt;t})\)</span>。这样能够缓解预训练与微调间的不匹配情况。直观来看，BERT会参考被屏蔽掉单词，因为它有10%的概率就是真实的单词，但也不会完全依赖这个单词，因为10%的概率还是很小的。</p><h4 id="下句预测next-sentence-predictionnsp">下句预测（Next Sentence Prediction，NSP）</h4><p>考虑到NLP中的很多任务例如问答、自然语言推理都基于句子间关系的理解，而这种句子间的关系不能被语言模型捕获，因此BERT提出了一个名为下句预测的预训练任务。顾名思义，这个任务的目标是判断两个句子是否构成上下句的关系。这个任务的数据非常容易获得，在大规模语料上获取连续的两句话，并以50%的概率替换真实的下句话，即可得到正负样本分布均匀的数据集。</p><h3 id="微调">微调</h3><p>在微调时，只需要将特定任务的输入输出放到BERT中，微调所有参数，输入的形式可以是单个句子或句子对，可以应用的任务举例如下：</p><ul><li>单个句子：文本分类、序列标注、情绪分析（利用[CLS]符号）</li><li>句子对：释义、问答等任务</li></ul><p>对于句子对，传统的模型往往将其拆分分开处理，而BERT将句子对同时投喂到模型中，能够更好地捕获句子间关系。</p><h2 id="实验">实验</h2><p>实验部分主要介绍了BERT微调之后是怎么横扫涵盖通用语言评理解评估等十一项任务的，基线模型有biLSTM+elmo，GPT等，这里就不多介绍了。有兴趣的可以去看看原文。</p><h2 id="消融实验">消融实验</h2><p>消融实验更像是控制变量法，对于模型中的多个改进，控制变量来分析哪个改进对于效果的提升是最大的，这就是消融实验。消融实验细节可以看原文，我在这里总结一下消融实验的结论：</p><h3 id="预训练任务">预训练任务</h3><ul><li>去除下句预测后的BERT模型在QNLI, MNLI等涉及句子对的任务上的性能损失严重，证明下句预测对于句子间关系的捕获还是很有作用的。</li><li>仅使用从左到右的语言模型训练的BERT比使用掩码语言模型训练得到的BERT效果要差，证明掩码语言模型训练方式的有效性。</li></ul><h3 id="模型大小">模型大小</h3><ul><li>参数越多，各项任务上的效果越好，非常的真实。</li></ul><h3 id="训练步数">训练步数</h3><ul><li>BERT真的需要在128,000字符/batch 上训练1,000,000步才能达到这么好的效果，训练一百万步比五十万步的BERT在MNLI获得了1%的提升。</li><li>掩码语言模型的收敛慢于自左向右的语言模型，但就精度而言，掩码语言模型几乎在训练之初就强于语言模型。</li></ul><h3 id="基于特征的方法">基于特征的方法</h3><ul><li>BERT对基于特征和微调的方法都是有效的。</li></ul><h2 id="结论">结论</h2><p>论文提出了一种全新的预训练任务--掩码语言模型，并在该任务和下句预测任务上预训练了一个基于双向Transformer的深层模型BERT。在十一项NLP任务上的微调实验结果表明，BERT的效果优于现有的预训练模型。</p><p>BERT的论文断断续续读了几天，读下来感觉醍醐灌顶，很多之前模棱两可的东西都真正了解了。果然读论文还是要读原文，别人的博客只是参考。后面有空了再读一读BERT的源码，又想去读GPT的论文，时间也太少了。</p><h2 id="参考">参考</h2><p><a href="https://zhuanlan.zhihu.com/p/46833276">论文解读:BERT模型及fine-tuning - 知乎 (zhihu.com)</a></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>对话系统</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 预训练模型 </category>
+          
+          <category> BERT </category>
+          
       </categories>
-      <tags>
-        <tag>常识对话</tag>
-        <tag>CopyNet</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>DEM-VAE</title>
-    <url>/blog/2021/07/30/DEM-VAE/</url>
-    <content><![CDATA[<h2 id="序言">序言</h2>
-<p>DEM-VAE是字节跳动AI LAB团队于2020年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在ICML中。论文名直译为“用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p>
-<span id="more"></span>
-<h2 id="题外话">题外话</h2>
-<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
-<h2 id="简介">简介</h2>
-<p>连续型VAE的隐变量难以解释分散属性，例如主题、对话动作等。这一点与VQ-VAE的动机相似。然而只使用分散隐变量的VAE的表达能力有限，隐变量<span class="math inline">\(c\)</span>​只包含<span class="math inline">\(log(\#c)\)</span>​位的信息，其中<span class="math inline">\(\#c\)</span>​为<span class="math inline">\(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的“信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline">\(-log(1/\#c)=log(\#c)\)</span>​。）</p>
-<p>混合高斯分布的VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而GM-VAE容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE退化为只有一个高斯分量的普通VAE。如下图所示：</p>
-<p><img src="example.png"></p>
-<p>在本文中，作者证明了模式崩溃问题不仅存在于GM-VAE中，而是具有指数族混合先验分布的VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的DEM-VAE，在EM-VAE的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE虽然适度减小了句子的似然（由于引入了新的损失项），但是在rPPL（reverse perplexity）与BLEU得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
-<h2 id="模式崩溃vs后验崩塌">模式崩溃vs后验崩塌</h2>
-<p>普通的VAE会面临后验坍塌（KL散度消失）的问题，具体而言，KL损失项在训练之初迅速变为0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
-<p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个KL损失项。</p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="混合指数族vae">混合指数族VAE</h3>
-<p>混合指数族VAE是指使用混合指数族分布作为先验分布的VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE使用一个分散变量<span class="math inline">\(c\)</span>代表不同的高斯成分，连续隐变量<span class="math inline">\(z\)</span>依赖于<span class="math inline">\(c\)</span>。如下图所示：</p>
-<p><img src="gm-vae.png"></p>
-<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
-<p>测试时：从先验分布<span class="math inline">\(p(c)\)</span>中采样一个<span class="math inline">\(c\)</span>，然后从<span class="math inline">\(c\)</span>对应的高斯分布中采样隐变量<span class="math inline">\(p(z|c)\)</span>，接着投喂到解码器<span class="math inline">\(p(x|z)\)</span>中。</p>
-<p>训练时：通过最大化边际似然<span class="math inline">\(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与VAE一样，使用近似后验分布<span class="math inline">\(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline">\(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
-<p><img src="elbo.png"></p>
-<h3 id="模式崩溃问题">模式崩溃问题</h3>
-<p>作者通过研究ELBO目标函数，将导致模式崩溃的原因定位到<span class="math inline">\(\mathcal R_c\)</span>与<span class="math inline">\(\mathcal R_z\)</span>中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline">\(\mathcal R_z,\mathcal R_c\)</span>​重写为KL平均正则项与分散项<span class="math inline">\(\mathcal L_d\)</span>​​。 <span class="math display">\[
-\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0
-\]</span> 作者得出结论，最小化分散项<span class="math inline">\(\mathcal L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示： <span class="math display">\[
-L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
-\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline">\(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
-<h3 id="dem-vae">DEM-VAE</h3>
-<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解KL散度消失的问题，定义如下： <span class="math display">\[
-\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
-\]</span> 公式部分介绍完毕。在模型结构上，编码器为GRU等循环单元、解码器为一个语言模型。</p>
-<h2 id="实验">实验</h2>
-<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
-<p><img src="mode-collapse-result.png"></p>
-<p>可以看出，同时引入互信息项和分散项的VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
-<h3 id="文本生成">文本生成</h3>
-<p>作者使用四个指标：逆困惑度、BLEU、词级KL散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个LSTM语言模型，从VAE的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
-<p><img src="lg-result.png"></p>
-<p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得NLL（负对数似然）相较基线模型更大，但是rPPL，BLEU等指标上取得了更好的结果。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文也是离散VAE的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得EQ-VAE相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
-<h2 id="参考">参考</h2>
-<p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC智库 (iczhiku.com)</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> BERT </tag>
+            
+            <tag> 预训练模型 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Transformer</title>
+      <link href="/blog/2021/08/14/Transformer/"/>
+      <url>/blog/2021/08/14/Transformer/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p><span id="more"></span><h2 id="题外话">题外话</h2><p>之前由于换电脑的原因，断更了一段时间。BERT与Transformer的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p><h2 id="模型结构">模型结构</h2><p>Transformer使用的仍然是encoder-decoder架构，但与RNN等自回归模型不同，Transformer使用的是堆叠的多头注意力机制，全连接层等，其模型结构如下所示：</p><p><img src="architecture.png"></p><p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中N=6，嵌入向量维度为512。</p><p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个Masked的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有6个解码器组成。</p><h3 id="注意力机制">注意力机制</h3><p>多头注意力机制可谓是Transformer的核心，详细过程可以参考<a href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解Transformer完整版</a>。这里只做核心部分介绍，单头计算过程为： <span class="math display">\[Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V\]</span> Q，K，V分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline">\(\sqrt{d_k}\)</span>​​​。这个标量是softmax的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下softmax的温度系数。</p><p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用8个注意力机制，每个注意力机制的输出为512/8=64维嵌入向量。</p><h3 id="注意力机制的使用">注意力机制的使用</h3><p>多头注意力机制以三种方式在模型中使用：</p><ul><li>编码器与解码器间的注意力：查询q来自解码器，键K与值V来自编码器。这里的注意力机制用以在输出的每一步关注在输入序列的不同部分，与seq2seq的注意力机制相似、</li><li>编码器内的自注意力：查询、键、值均来自编码器。输入序列的每个位置可以得到到整个输入序列的信息。</li><li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline">\(-\infty\)</span>​，进而经过softmax后概率值为0。</li></ul><h3 id="前馈神经网络">前馈神经网络</h3><p>在编码器和解码器中的前馈神经网络，搭配relu激活函数来为模型构造非线性计算。计算过程如下所示： <span class="math display">\[FFN(x)=\max(0,xW_1+b_1)W2+b_2\]</span> 其中，输入和输出的维度均为512，隐藏层维度为1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p><h3 id="位置编码">位置编码</h3><p>由于Transformer中不存在RNN中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用sin与cos函数： <span class="math display">\[PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})\]</span></p><p><span class="math display">\[PE_{(pos,2i+1)}=\cos(pos/10000^{2i/d_{model}})\]</span></p><p>其中，pos为位置，i为向量维度。作者称选取三角函数的原因是假设这样可以更好地使模型学到相对位置关系，对于任意固定的偏移k，<span class="math inline">\(PE_{pos+k}\)</span>可以表示为<span class="math inline">\(PE_{pos}\)</span>的线性函数。另外，作者还尝试了学习位置编码的方式，实验对比显示，二者结果差别不大。因此作者最终选择了上述编码方式，因为它可以处理更长的序列。</p><h2 id="为什么使用自注意力机制">为什么使用自注意力机制</h2><p>论文从计算时间复杂度、序列操作数、最长路径长度三方面对比了自注意力机制、RNN、CNN以及受限的自注意力机制，结果如下：</p><p><img src="comparison.png"></p><p>这一部分计算过程论文没有给出，我参考了<a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a>，这里简单介绍一下。</p><h3 id="计算时间复杂度">计算（时间）复杂度</h3><p>计算复杂度主要取决于计算的规模，以矩阵乘法为例，形状为NxM的矩阵与形状为MxP的矩阵相乘，得到一个NxP的矩阵。结果矩阵中的每个元素为M维向量内积的结果，进行M次乘法，并求和。所以整个矩阵乘法的复杂度为<span class="math inline">\(O(NMP)\)</span>。</p><h4 id="自注意力机制">自注意力机制</h4><p><span class="math display">\[Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V\]</span></p><p>其中，Q，K分别为nxd与dxn的矩阵，<span class="math inline">\(QK^\intercal\)</span>​的复杂度为<span class="math inline">\(O(n^2d)\)</span>​​，softmax的复杂度为<span class="math inline">\(O(n^2)\)</span>，加权求和的矩阵形状分别为nxn与nxd，复杂度为<span class="math inline">\(O(n^2d)\)</span>，因此总复杂度为<span class="math inline">\(O(n^2d)\)</span>​。受限自注意力机制与之同理，区别在于它只使用查询最近的k个</p><h4 id="rnn">RNN</h4><p><span class="math display">\[h_t=f(Ux_t+Wh_{t-1})\]</span></p><p>其中，U与x的形状分别为dxd与dx1（假设隐藏状态与输入维度均为d），复杂度为<span class="math inline">\(O(d^2)\)</span>​，W与h的形状分别为dxd与dx1，复杂度同样为<span class="math inline">\(O(d^2)\)</span>。对于长度为n的序列，总复杂度为<span class="math inline">\(O(nd^2)\)</span>。</p><h4 id="cnn">CNN</h4><p>将输入序列进行padding后，总共需要n次卷积，每次卷积计算量为kxd，假设步长为1，单个卷积核复杂度为<span class="math inline">\(O(nkd)\)</span>​。为了保证维度相同，需要使用d个卷积核，总复杂度为<span class="math inline">\(O(nkd^2)\)</span></p><h3 id="序列操作数">序列操作数</h3><p>序列操作数主要衡量了并行化的支持情况，只有RNN需要串行地完成n次序列操作，其他模型均支持并行化。</p><h3 id="最长路径长度">最长路径长度</h3><p>最长路径为序列中首尾token在模型中的路径，其长度越长，依赖越不容易被捕捉到。对于自注意力机制，序列中的任意两个元素均可以看作直接相连，路径长度为<span class="math inline">\(O(1)\)</span>。而RNN中，第一个token的信息需要进行n次迭代才能到达最后一个token，最大路径长度即为<span class="math inline">\(O(n)\)</span>。CNN中，通过若干个卷积层来获取不同位置的信息，每个卷积层（论文中使用的是空洞卷积）相当于让序列信息浓缩了k倍（卷积层的输出中的每个位置都有输入中k个位置的信息），最大路径长度为<span class="math inline">\(O(log_kn)\)</span>​。受限的自注意力机制与连续卷积类似，每次卷积相当于可以获取连续k个位置的信息，最大路径长度为<span class="math inline">\(O(n/k)\)</span>。</p><p>这就基本解释了这个突兀的表格是怎么计算得来的了。那么可以总结自注意力机制的优点是：</p><ul><li>单层计算量更少。在实际应用中，序列长度n往往小于表征维度d，因此，自注意力机制的单层计算量相较于RNN与CNN都要更小。</li><li>支持并行化。这个就不说了，全世界都在针对RNN。</li><li>能够更好地捕捉长距离依赖。相较于CNN与RNN，自注意力机制的最长路径最短。</li><li>可解释性更强。作者将注意力机制的概率分布展示如下，证明多头注意力的多个头完成了与句子语义与结构相关不同的工作。</li></ul><p><img src="example.png"></p><p>上图是作者给出的多头注意力的例子，使用了两个头。对于its这个单词，得到了非常尖锐的概率分布，its主要与law与application相关联，一个头捕获到了its指代的主体law，一个头捕获到了its的目标application。个人感觉这个效果也太过于理想了。。。可能这就是Transformer吧。</p><h2 id="总结">总结</h2><p>这篇论文提出了完全依赖于注意力机制的序列转换模型Transformer，相较于RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了state-of-the-art，在英语成分分析上也取得了比RNN更优的结果。</p><h2 id="参考">参考</h2><ul><li><a href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer） - 西多士NLP - 博客园 (cnblogs.com)</a></li><li><a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a></li></ul>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> BERT </category>
+          
       </categories>
-      <tags>
-        <tag>VAE</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Transformer</title>
-    <url>/blog/2021/08/14/Transformer/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
-<span id="more"></span>
-<h2 id="题外话">题外话</h2>
-<p>之前由于换电脑的原因，断更了一段时间。BERT与Transformer的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p>
-<h2 id="模型结构">模型结构</h2>
-<p>Transformer使用的仍然是encoder-decoder架构，但与RNN等自回归模型不同，Transformer使用的是堆叠的多头注意力机制，全连接层等，其模型结构如下所示：</p>
-<p><img src="architecture.png"></p>
-<p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中N=6，嵌入向量维度为512。</p>
-<p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个Masked的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有6个解码器组成。</p>
-<h3 id="注意力机制">注意力机制</h3>
-<p>多头注意力机制可谓是Transformer的核心，详细过程可以参考<a href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解Transformer完整版</a>。这里只做核心部分介绍，单头计算过程为： <span class="math display">\[
-Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span> Q，K，V分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline">\(\sqrt{d_k}\)</span>​​​。这个标量是softmax的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下softmax的温度系数。</p>
-<p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用8个注意力机制，每个注意力机制的输出为512/8=64维嵌入向量。</p>
-<h3 id="注意力机制的使用">注意力机制的使用</h3>
-<p>多头注意力机制以三种方式在模型中使用：</p>
-<ul>
-<li>编码器与解码器间的注意力：查询q来自解码器，键K与值V来自编码器。这里的注意力机制用以在输出的每一步关注在输入序列的不同部分，与seq2seq的注意力机制相似、</li>
-<li>编码器内的自注意力：查询、键、值均来自编码器。输入序列的每个位置可以得到到整个输入序列的信息。</li>
-<li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline">\(-\infty\)</span>​，进而经过softmax后概率值为0。</li>
-</ul>
-<h3 id="前馈神经网络">前馈神经网络</h3>
-<p>在编码器和解码器中的前馈神经网络，搭配relu激活函数来为模型构造非线性计算。计算过程如下所示： <span class="math display">\[
-FFN(x)=\max(0,xW_1+b_1)W2+b_2
-\]</span> 其中，输入和输出的维度均为512，隐藏层维度为1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
-<h3 id="位置编码">位置编码</h3>
-<p>由于Transformer中不存在RNN中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用sin与cos函数： <span class="math display">\[
-PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})
-\]</span></p>
-<p><span class="math display">\[
-PE_{(pos,2i+1)}=\cos(pos/10000^{2i/d_{model}})
-\]</span></p>
-<p>其中，pos为位置，i为向量维度。作者称选取三角函数的原因是假设这样可以更好地使模型学到相对位置关系，对于任意固定的偏移k，<span class="math inline">\(PE_{pos+k}\)</span>可以表示为<span class="math inline">\(PE_{pos}\)</span>的线性函数。另外，作者还尝试了学习位置编码的方式，实验对比显示，二者结果差别不大。因此作者最终选择了上述编码方式，因为它可以处理更长的序列。</p>
-<h2 id="为什么使用自注意力机制">为什么使用自注意力机制</h2>
-<p>论文从计算时间复杂度、序列操作数、最长路径长度三方面对比了自注意力机制、RNN、CNN以及受限的自注意力机制，结果如下：</p>
-<p><img src="comparison.png"></p>
-<p>这一部分计算过程论文没有给出，我参考了<a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a>，这里简单介绍一下。</p>
-<h3 id="计算时间复杂度">计算（时间）复杂度</h3>
-<p>计算复杂度主要取决于计算的规模，以矩阵乘法为例，形状为NxM的矩阵与形状为MxP的矩阵相乘，得到一个NxP的矩阵。结果矩阵中的每个元素为M维向量内积的结果，进行M次乘法，并求和。所以整个矩阵乘法的复杂度为<span class="math inline">\(O(NMP)\)</span>。</p>
-<h4 id="自注意力机制">自注意力机制</h4>
-<p><span class="math display">\[
-Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span></p>
-<p>其中，Q，K分别为nxd与dxn的矩阵，<span class="math inline">\(QK^\intercal\)</span>​的复杂度为<span class="math inline">\(O(n^2d)\)</span>​​，softmax的复杂度为<span class="math inline">\(O(n^2)\)</span>，加权求和的矩阵形状分别为nxn与nxd，复杂度为<span class="math inline">\(O(n^2d)\)</span>，因此总复杂度为<span class="math inline">\(O(n^2d)\)</span>​。受限自注意力机制与之同理，区别在于它只使用查询最近的k个</p>
-<h4 id="rnn">RNN</h4>
-<p><span class="math display">\[
-h_t=f(Ux_t+Wh_{t-1})
-\]</span></p>
-<p>其中，U与x的形状分别为dxd与dx1（假设隐藏状态与输入维度均为d），复杂度为<span class="math inline">\(O(d^2)\)</span>​，W与h的形状分别为dxd与dx1，复杂度同样为<span class="math inline">\(O(d^2)\)</span>。对于长度为n的序列，总复杂度为<span class="math inline">\(O(nd^2)\)</span>。</p>
-<h4 id="cnn">CNN</h4>
-<p>将输入序列进行padding后，总共需要n次卷积，每次卷积计算量为kxd，假设步长为1，单个卷积核复杂度为<span class="math inline">\(O(nkd)\)</span>​。为了保证维度相同，需要使用d个卷积核，总复杂度为<span class="math inline">\(O(nkd^2)\)</span></p>
-<h3 id="序列操作数">序列操作数</h3>
-<p>序列操作数主要衡量了并行化的支持情况，只有RNN需要串行地完成n次序列操作，其他模型均支持并行化。</p>
-<h3 id="最长路径长度">最长路径长度</h3>
-<p>最长路径为序列中首尾token在模型中的路径，其长度越长，依赖越不容易被捕捉到。对于自注意力机制，序列中的任意两个元素均可以看作直接相连，路径长度为<span class="math inline">\(O(1)\)</span>。而RNN中，第一个token的信息需要进行n次迭代才能到达最后一个token，最大路径长度即为<span class="math inline">\(O(n)\)</span>。CNN中，通过若干个卷积层来获取不同位置的信息，每个卷积层（论文中使用的是空洞卷积）相当于让序列信息浓缩了k倍（卷积层的输出中的每个位置都有输入中k个位置的信息），最大路径长度为<span class="math inline">\(O(log_kn)\)</span>​。受限的自注意力机制与连续卷积类似，每次卷积相当于可以获取连续k个位置的信息，最大路径长度为<span class="math inline">\(O(n/k)\)</span>。</p>
-<p>这就基本解释了这个突兀的表格是怎么计算得来的了。那么可以总结自注意力机制的优点是：</p>
-<ul>
-<li>单层计算量更少。在实际应用中，序列长度n往往小于表征维度d，因此，自注意力机制的单层计算量相较于RNN与CNN都要更小。</li>
-<li>支持并行化。这个就不说了，全世界都在针对RNN。</li>
-<li>能够更好地捕捉长距离依赖。相较于CNN与RNN，自注意力机制的最长路径最短。</li>
-<li>可解释性更强。作者将注意力机制的概率分布展示如下，证明多头注意力的多个头完成了与句子语义与结构相关不同的工作。</li>
-</ul>
-<p><img src="example.png"></p>
-<p>上图是作者给出的多头注意力的例子，使用了两个头。对于its这个单词，得到了非常尖锐的概率分布，its主要与law与application相关联，一个头捕获到了its指代的主体law，一个头捕获到了its的目标application。个人感觉这个效果也太过于理想了。。。可能这就是Transformer吧。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文提出了完全依赖于注意力机制的序列转换模型Transformer，相较于RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了state-of-the-art，在英语成分分析上也取得了比RNN更优的结果。</p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer） - 西多士NLP - 博客园 (cnblogs.com)</a></li>
-<li><a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a></li>
-</ul>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> BERT </tag>
+            
+            <tag> Transformer </tag>
+            
+            <tag> 多头注意力机制 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>DEM-VAE</title>
+      <link href="/blog/2021/07/30/DEM-VAE/"/>
+      <url>/blog/2021/07/30/DEM-VAE/</url>
+      
+        <content type="html"><![CDATA[<h2 id="序言">序言</h2><p>DEM-VAE是字节跳动AI LAB团队于2020年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在ICML中。论文名直译为“用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p><span id="more"></span><h2 id="题外话">题外话</h2><p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p><h2 id="简介">简介</h2><p>连续型VAE的隐变量难以解释分散属性，例如主题、对话动作等。这一点与VQ-VAE的动机相似。然而只使用分散隐变量的VAE的表达能力有限，隐变量<span class="math inline">\(c\)</span>​只包含<span class="math inline">\(log(\#c)\)</span>​位的信息，其中<span class="math inline">\(\#c\)</span>​为<span class="math inline">\(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的“信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline">\(-log(1/\#c)=log(\#c)\)</span>​。）</p><p>混合高斯分布的VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而GM-VAE容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE退化为只有一个高斯分量的普通VAE。如下图所示：</p><p><img src="example.png"></p><p>在本文中，作者证明了模式崩溃问题不仅存在于GM-VAE中，而是具有指数族混合先验分布的VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的DEM-VAE，在EM-VAE的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE虽然适度减小了句子的似然（由于引入了新的损失项），但是在rPPL（reverse perplexity）与BLEU得到了更好的结果，并且能够有效地避免模式崩溃问题。</p><h2 id="模式崩溃vs后验崩塌">模式崩溃vs后验崩塌</h2><p>普通的VAE会面临后验坍塌（KL散度消失）的问题，具体而言，KL损失项在训练之初迅速变为0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p><p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个KL损失项。</p><h2 id="解决方法">解决方法</h2><h3 id="混合指数族vae">混合指数族VAE</h3><p>混合指数族VAE是指使用混合指数族分布作为先验分布的VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE使用一个分散变量<span class="math inline">\(c\)</span>代表不同的高斯成分，连续隐变量<span class="math inline">\(z\)</span>依赖于<span class="math inline">\(c\)</span>。如下图所示：</p><p><img src="gm-vae.png"></p><p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p><p>测试时：从先验分布<span class="math inline">\(p(c)\)</span>中采样一个<span class="math inline">\(c\)</span>，然后从<span class="math inline">\(c\)</span>对应的高斯分布中采样隐变量<span class="math inline">\(p(z|c)\)</span>，接着投喂到解码器<span class="math inline">\(p(x|z)\)</span>中。</p><p>训练时：通过最大化边际似然<span class="math inline">\(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与VAE一样，使用近似后验分布<span class="math inline">\(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline">\(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p><p><img src="elbo.png"></p><h3 id="模式崩溃问题">模式崩溃问题</h3><p>作者通过研究ELBO目标函数，将导致模式崩溃的原因定位到<span class="math inline">\(\mathcal R_c\)</span>与<span class="math inline">\(\mathcal R_z\)</span>中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline">\(\mathcal R_z,\mathcal R_c\)</span>​重写为KL平均正则项与分散项<span class="math inline">\(\mathcal L_d\)</span>​​。 <span class="math display">\[\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0\]</span> 作者得出结论，最小化分散项<span class="math inline">\(\mathcal L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示： <span class="math display">\[L(\theta;x)=ELBO+\beta \cdot \mathcal L_d\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline">\(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p><h3 id="dem-vae">DEM-VAE</h3><p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解KL散度消失的问题，定义如下： <span class="math display">\[\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))\]</span> 公式部分介绍完毕。在模型结构上，编码器为GRU等循环单元、解码器为一个语言模型。</p><h2 id="实验">实验</h2><h3 id="模式崩溃实验结果">模式崩溃实验结果</h3><p><img src="mode-collapse-result.png"></p><p>可以看出，同时引入互信息项和分散项的VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p><h3 id="文本生成">文本生成</h3><p>作者使用四个指标：逆困惑度、BLEU、词级KL散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个LSTM语言模型，从VAE的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p><p><img src="lg-result.png"></p><p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得NLL（负对数似然）相较基线模型更大，但是rPPL，BLEU等指标上取得了更好的结果。</p><h2 id="总结">总结</h2><p>这篇论文也是离散VAE的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得EQ-VAE相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p><h2 id="参考">参考</h2><p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC智库 (iczhiku.com)</a></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>BERT</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 文本生成 </category>
+          
       </categories>
-      <tags>
-        <tag>Transformer</tag>
-        <tag>多头注意力机制</tag>
-        <tag>BERT</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>EA-VQ-VAE 代码学习（1）</title>
-    <url>/blog/2021/07/17/ea-vq-vae-code/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>之前学习EA-VQ-VAE的时候发现只读论文本身还是有很多细节问题不太懂，而EA-VQ-VAE的代码开源在<a href="https://github.com/microsoft/EA-VQ-VAE">github</a>上。今天正好通过学习代码更深层地理解一下这个模型以及基础的VQ-VAE模型。</p>
-<span id="more"></span>
-<h2 id="目录结构">目录结构</h2>
-<p>代码的目录结构如下：</p>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">│  README.md</span><br><span class="line">|  LICENSE</span><br><span class="line">├─data</span><br><span class="line">│      get_atomic_data.sh</span><br><span class="line">│      get_event2mind_data.sh</span><br><span class="line">│      preprocess-atomic.py</span><br><span class="line">│      preprocess-event2mind.py</span><br><span class="line">├─estimator</span><br><span class="line">│      model.py</span><br><span class="line">│      run.py</span><br><span class="line">├─generator</span><br><span class="line">│      beam.py</span><br><span class="line">│      model.py</span><br><span class="line">│      run.py</span><br><span class="line">└─vq-vae</span><br><span class="line">        gpt2.py</span><br><span class="line">        model.py</span><br><span class="line">        run.py</span><br></pre></td></tr></tbody></table></figure>
-<p>可以看到，整个代码目录结构还是比较清晰的四部分：</p>
-<ul>
-<li>data/：用以数据的获取和预处理</li>
-<li>estimator/：估计先验分布的模型</li>
-<li>generator/：推理阶段生成推理文本（光束搜索等）</li>
-<li>vq-vae/：vq-vae的模型定义：包含codebook、编码器、解码器等</li>
-</ul>
-<p>这次先介绍最为核心的vq-vae模型，处在vq-vae/model.py。剩下的部分后续有时间再进行分享。</p>
-<h2 id="vq-vae">VQ-VAE</h2>
-<h3 id="model.py">model.py</h3>
-<p>首先是CodeBook。codebook在EA-VQ-VAE充当了隐变量表的角色，保存了一张由K个D维隐变量组成的<span class="math inline">\(R^{K*D}\)</span>。CodeBook类代码如下：</p>
-<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CodeBook</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, num_embeddings, embedding_dim, commitment_cost</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(CodeBook, self).__init__()  </span><br><span class="line">        self._embedding_dim = embedding_dim</span><br><span class="line">        self._num_embeddings = num_embeddings     </span><br><span class="line">        self._embedding = nn.Embedding(self._num_embeddings, self._embedding_dim)      </span><br><span class="line">        self._commitment_cost = commitment_cost</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, inputs</span>):</span></span><br><span class="line">        <span class="comment"># Calculate distances</span></span><br><span class="line">        distances = (torch.<span class="built_in">sum</span>(inputs**<span class="number">2</span>, dim=<span class="number">1</span>, keepdim=<span class="literal">True</span>) </span><br><span class="line">                    + torch.<span class="built_in">sum</span>(self._embedding.weight**<span class="number">2</span>, dim=<span class="number">1</span>)</span><br><span class="line">                    - <span class="number">2</span> * torch.matmul(inputs, self._embedding.weight.t()))</span><br><span class="line">            </span><br><span class="line">        <span class="comment"># Encoding</span></span><br><span class="line">        encoding_indices = torch.argmin(distances, dim=<span class="number">1</span>).unsqueeze(<span class="number">1</span>)</span><br><span class="line">        encodings = torch.zeros(encoding_indices.shape[<span class="number">0</span>], self._num_embeddings).cuda()</span><br><span class="line">        encodings.scatter_(<span class="number">1</span>, encoding_indices, <span class="number">1</span>) <span class="comment"># 离散隐变量索引 [batch_size,num_embeddings]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Quantize and unflatten</span></span><br><span class="line">        quantized = torch.matmul(encodings, self._embedding.weight) <span class="comment">## 乘法获得隐变量</span></span><br><span class="line">        <span class="comment"># 整个隐变量的获取方法有点复杂了，argmin之后直接查询embedding即可，无需手动操作。这里这样处理是为了后续</span></span><br><span class="line">        <span class="comment"># 还要计算perplexity</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Loss</span></span><br><span class="line">        <span class="comment"># detach()从计算图中脱离，达到stop gradient的目的</span></span><br><span class="line">        e_latent_loss = torch.mean((quantized.detach() - inputs)**<span class="number">2</span>) </span><br><span class="line">        q_latent_loss = torch.mean((quantized - inputs.detach())**<span class="number">2</span>)</span><br><span class="line">        loss = q_latent_loss + self._commitment_cost * e_latent_loss</span><br><span class="line">        </span><br><span class="line">        quantized = inputs + (quantized - inputs).detach()</span><br><span class="line">        avg_probs = torch.mean(encodings, dim=<span class="number">0</span>)</span><br><span class="line">        perplexity = torch.exp(-torch.<span class="built_in">sum</span>(avg_probs * torch.log(avg_probs + <span class="number">1e-10</span>)))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># convert quantized from BHWC -&gt; BCHW</span></span><br><span class="line">        <span class="keyword">return</span> loss, quantized, perplexity, encodings</span><br></pre></td></tr></tbody></table></figure>
-<p>整个代码是比较清晰的。在初始化中根据传入参数初始化嵌入空间，并保存了commitment cost。commitment cost指的是VQ-VAE损失函数的第三项的权重<span class="math inline">\(\beta\)</span>。由论文可知，CodeBook的前向过程应该是输入编码器输出<span class="math inline">\(z_e(x)\)</span>，输出最近的隐变量<span class="math inline">\(z\)</span>。那么代码中inputs的shape应该为[batch_size，embedding_dim]，进而距离的计算过程就很自然了。其他见代码的注释部分。</p>
-<p>接下来是seq2seq模型：</p>
-<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Model</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">        Build Seqence-to-Sequence.</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        Parameters:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        * `encoder`- encoder of seq2seq model. e.g. 2-layer transformer</span></span><br><span class="line"><span class="string">        * `decoder`- decoder of seq2seq model. e.g. GPT2</span></span><br><span class="line"><span class="string">        * `config`- configuration of encoder model. </span></span><br><span class="line"><span class="string">        * `args`- arguments.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, encoder,decoder,config,args</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(Model, self).__init__()</span><br><span class="line">        self.encoder = encoder</span><br><span class="line">        self.decoder=decoder</span><br><span class="line">        self.config=config</span><br><span class="line">        self.args=args</span><br><span class="line">        </span><br><span class="line">        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=<span class="literal">False</span>)      </span><br><span class="line">        self.codebook = CodeBook(args.z_size, config.n_embd,<span class="number">0.25</span>)  </span><br><span class="line">        self.codebook._embedding.weight.data.normal_(mean=<span class="number">0</span>,std=<span class="number">0.1</span>)</span><br><span class="line">        self.lsm = nn.LogSoftmax(dim=-<span class="number">1</span>)</span><br><span class="line">        self.lm_head.weight=self.decoder.wte.weight     </span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, event_ids,target_ids</span>):</span>   </span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">            Forward the VQ-VAE model.</span></span><br><span class="line"><span class="string">            Parameters:</span></span><br><span class="line"><span class="string">            * `event_ids`- event ids of examples</span></span><br><span class="line"><span class="string">            * `target_ids`- target ids of examples</span></span><br><span class="line"><span class="string">        """</span>  </span><br><span class="line">        input_ids=torch.cat((event_ids,target_ids),-<span class="number">1</span>)</span><br><span class="line">        <span class="comment">#obtain hidden of event+target by encoder</span></span><br><span class="line">        hidden_xy=self.encoder(input_ids,special=<span class="literal">True</span>)[<span class="number">0</span>][:,-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="comment">#obtain latent variable z by coodebook</span></span><br><span class="line">        vae_loss, z, perplexity, encoding=self.codebook(hidden_xy)</span><br><span class="line"></span><br><span class="line">        <span class="comment">#obtain hiddens of target </span></span><br><span class="line">        transformer_outputs=self.decoder(input_ids,z=z)</span><br><span class="line">        hidden_states = transformer_outputs[<span class="number">0</span>][:,-target_ids.size(<span class="number">1</span>):]</span><br><span class="line"></span><br><span class="line">        <span class="comment">#calculate loss</span></span><br><span class="line">        lm_logits = self.lm_head(hidden_states+z[:,<span class="literal">None</span>,:])</span><br><span class="line">        <span class="comment"># Shift so that tokens &lt; n predict n</span></span><br><span class="line">        active_loss = target_ids[..., <span class="number">1</span>:].ne(<span class="number">0</span>).view(-<span class="number">1</span>) == <span class="number">1</span> <span class="comment"># 将推理文本展平并得到非0位置的索引，用以计算loss</span></span><br><span class="line">        shift_logits = lm_logits[..., :-<span class="number">1</span>, :].contiguous() <span class="comment"># 去除末尾的EOS</span></span><br><span class="line">        shift_labels = target_ids[..., <span class="number">1</span>:].contiguous() <span class="comment"># </span></span><br><span class="line">        <span class="comment"># Flatten the tokens</span></span><br><span class="line">        loss_fct = CrossEntropyLoss(ignore_index=-<span class="number">1</span>)</span><br><span class="line">        loss = loss_fct(shift_logits.view(-<span class="number">1</span>, shift_logits.size(-<span class="number">1</span>))[active_loss],</span><br><span class="line">                        shift_labels.view(-<span class="number">1</span>)[active_loss])</span><br><span class="line"></span><br><span class="line">        outputs = (loss,vae_loss,perplexity),loss*active_loss.<span class="built_in">sum</span>(),active_loss.<span class="built_in">sum</span>(),encoding</span><br><span class="line">        <span class="keyword">return</span> outputs</span><br></pre></td></tr></tbody></table></figure>
-<p>init方法比较简单，只是保存参数和新建codebook。前向过程也比较简单：训练阶段，seq2seq的输入是事件和推理文本的拼接，然后进行编码和解码（这里编码器为2层Transformer，解码器为预训练的GPT模型）。</p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> VAE </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>循环神经网络RNN及其变体GRU、LSTM</title>
+      <link href="/blog/2021/07/22/rnns/"/>
+      <url>/blog/2021/07/22/rnns/</url>
+      
+        <content type="html"><![CDATA[<h2 id="序言">序言</h2><p>同样，借着复习面试，把RNN家族再梳理回顾一下，包含RNN、GRU、LSTM。 <span id="more"></span></p><h2 id="循环神经网络rnn">循环神经网络RNN</h2><h3 id="模型结构">模型结构</h3><p><img src="rnn.png"></p><p>RNN的结构如上图所示，其核心思想是使用同一套参数来更新状态<span class="math inline">\(s\)</span>与计算输出<span class="math inline">\(o\)</span>，箭头右侧是按时序展开的模型结构图。可以看到，RNN仅使用了一个状态<span class="math inline">\(s\)</span>​来保存序列信息，共有三个参数矩阵。这一部分公式化描述如下: <span class="math display">\[s_t=f(Ux_t+Ws_{t-1})\]</span></p><p><span class="math display">\[o_t=g(Vs_t)\]</span></p><p>其中，<span class="math inline">\(f\)</span>与<span class="math inline">\(g\)</span>​均为激活函数，激活函数可选的有sigmoid，tanh，relu等（下面会分析）。</p><p>RNN有以下缺陷：</p><ul><li>容易发生梯度消失和梯度爆炸现象（由于导数连乘）。</li><li>难以捕捉长距离的依赖。</li></ul><p>在其中，梯度消失相对于梯度爆炸要更为严重，因为梯度爆炸是可以观测到的（NAN），梯度消失则难以直接观测。梯度爆炸问题很容易解决，可以通过梯度裁剪的方法进行解决。</p><h3 id="梯度消失和梯度爆炸">梯度消失和梯度爆炸</h3><p>梯度消失和爆炸的解决方法：</p><ul><li>梯度的剪切以及正则化（常见的是l1正则和l2正则）。</li><li>relu、elu等激活函数。（梯度消失）</li><li>批标准化（<strong>Batch Normalization</strong>）。</li><li>残差结构（将映射F(x)改为F(x)+x，使用relu激活函数的F在x&lt;0时能够无损传播梯度，保证了深层网络的性能）。</li><li>LSTM、GRU等结构。</li></ul><h4 id="批标准化-batch-normalization">批标准化 Batch Normalization</h4><p>Batch Normalization是一种常用于CNN的正则化方法，可以分为两个步骤：</p><p>（1）标准化：对batch的数据求均值与标准差，将数据标准化到标准正态分布</p><p>（2）进行放缩与平移</p><p>整个过程类似于VAE的重参数化，先获得一个正态分布的变量，再进行放缩平移，达到从任意正态分布中取样的效果。</p><p>也就是说，batch normlization 假设每个batch的数据服从一个正态分布（参数γ和β学习得来，即通过batch数据计算得来），先将数据标准化，再放缩与平移，使得数据“看起来”是从这个正态分布中取样而来的。</p><p>在预测阶段，所有参数的取值是固定的，对BN层而言，意味着μ、σ、γ、β都是固定值。γ和β比较好理解，随着训练结束，两者最终收敛，预测阶段使用训练结束时的值即可。</p><p>对于μ和σ，在训练阶段，它们为当前mini batch的统计量，随着输入batch的不同，μ和σ一直在变化。在预测阶段，输入数据可能只有1条，该使用哪个μ和σ，或者说，每个BN层的μ和σ该如何取值？可以采用训练收敛最后几批mini batch的 μ和σ的期望，作为预测阶段的μ和σ。</p><h3 id="层标准化-layer-normalization">层标准化 Layer Normalization</h3><p>Batch Normalization是在Batch的方向上进行Normalization。这种方法在NLP中不是很适合。由于文本序列的长度可变性，一个batch中的数据往往长度不同，进而对每个位置进行标准化不是很合适。</p><p>而Layer Normalization则是在序列的方向上进行Normalization。这使得它可以处理变长序列。</p><h3 id="激活函数">激活函数</h3><p>对于激活函数而言，sigmoid的最大梯度为0.25，因此很容易发生梯度消失现象，而tanh虽然最大梯度为1，但也只有0处取得，也熔岩发生梯度消失。因此RNN常使用relu作为激活函数。relu的梯度非0即1，这能够缓解梯度消失现象，但也有一定的问题：1. 容易发生梯度爆炸。（梯度恒为1时）2. 负数部分梯度恒为0，部分神经元无法激活。elu能够缓解relu的0梯度的问题，但是由于加入了幂运算，会更慢一点。</p><h2 id="门控循环单元gru">门控循环单元GRU</h2><h3 id="模型结构-1">模型结构</h3><p>GRU的思想是在RNN的基础上，引入门控信号来缓解RNN存在的梯度消失问题。模型结构如下：</p><p><img src="gru.png"></p><p>公式化描述如下（公式中的<span class="math inline">\(\odot\)</span>代表哈达玛积，即同型矩阵间逐元素乘法）：</p><p>首先根据输入<span class="math inline">\(x_t\)</span>与上一时刻隐藏状态<span class="math inline">\(h_{t-1}\)</span>计算得到两个门控状态<span class="math inline">\(z_t\)</span>与<span class="math inline">\(r_t\)</span>​，假设<span class="math inline">\(h_t\in \mathbb R^H\)</span>： <span class="math display">\[z_t=sigmoid(W_zx_t+U_zh_{t-1})\in \mathbb R^{H}\]</span></p><p><span class="math display">\[r_t=sigmoid(W_rx_t+U_rh_{t-1})\in \mathbb R^{H}\]</span></p><p>之后，使用重置门计算得到一个新的隐藏状态（即图中的<span class="math inline">\(h’\)</span>）： <span class="math display">\[\tilde h_t=tanh(Wx_t+U(r_t\odot h_{t-1}))\in \mathbb R^{H}\]</span> 再使用更新门<span class="math inline">\(z_t\)</span>更新隐藏状态： <span class="math display">\[h_t=(1-z)\odot h_{t-1}+z\odot \tilde h_t\in \mathbb R^{H}\]</span></p><h2 id="长短期记忆网络lstm">长短期记忆网络LSTM</h2><h3 id="模型结构-2">模型结构</h3><p>LSTM的思想是在RNN的基础上，加入一个不易被改变的新状态<span class="math inline">\(c_t\)</span>​​，代表的是0-t时刻的全局信息。而<span class="math inline">\(h_t\)</span>​代表的是在0~t-1时刻全局信息的影响下，<span class="math inline">\(t\)</span>时刻的信息。换而言之，<span class="math inline">\(c_t\)</span>变化的很慢，而<span class="math inline">\(h_t\)</span>变化的很快。</p><p><img src="lstm.png"></p><p>公式化描述如下：</p><p>首先计算得到三个门控状态（分别对应图中的<span class="math inline">\(z^i,z^f,z^o\)</span>）： <span class="math display">\[i_t=sigmoid(W_ix_t+U_ih_{t-1})\in \mathbb R^{H}\]</span></p><p><span class="math display">\[f_t=sigmoid(W_fx_t+U_fh_{t-1})\in \mathbb R^{H}\]</span></p><p><span class="math display">\[o_t=sigmoid(W_ox_t+U_oh_{t-1})\in \mathbb R^{H}\]</span></p><p>以及一个与当前输入密切相关的向量（对应图中的<span class="math inline">\(z\)</span>） <span class="math display">\[\tilde c_t=tanh(W_zx_t+U_zh_{t-1})\]</span> 接着，更新两种状态： <span class="math display">\[c_t=f_t\odot c_{t-1}+i_t\odot \tilde c_t\]</span></p><p><span class="math display">\[h_t=o_t\odot tanh(c_t)\]</span></p><p>其中，<span class="math inline">\(i_t.f_t,o_t\)</span>分别代表信息、遗忘、输出门控。信息和遗忘门控负责cell state的更新，输出门控负责hidden state的更新。具体而言，LSTM可以简单分为以下三个阶段：</p><ul><li>遗忘阶段，根据遗忘门控，忘记上一个cell state的部分信息。</li><li>记忆阶段，根据信息门控，将输入信息进行选择记忆。</li><li>输出阶段，根据输出门控，输出最终的状态。</li></ul><h3 id="lstm-vs-gru">LSTM VS GRU</h3><p>本质上，LSTM和GRU都是通过引入门控信号来解决RNN的梯度消失问题。在实现方法上，GRU相对于LSTM要更为简单。GRU抛弃了LSTM中的hidden state（GRU 中的hidden state 实际上是LSTM中的cell state），因为LSTM中的<span class="math inline">\(h_t\)</span>只是想保存当前时刻的信息，这一部分已经包含到GRU中的<span class="math inline">\(\tilde h_t\)</span>中了。cell state中的之前的全局信息与当前时刻的信息应当是一个此消彼长的状态，GRU因此直接使用一个门控信号<span class="math inline">\(z_t\)</span>同时控制了遗忘和更新。</p><p>在参数上，GRU有着比LSTM更少的参数，收敛速度更快，并且与LSTM有着差不多的性能表现，因此实际工程中多使用GRU。</p><h2 id="参考">参考</h2><p><a href="https://zhuanlan.zhihu.com/p/68579467">深度学习之3——梯度爆炸与梯度消失 - 知乎 (zhihu.com)</a></p><p><a href="https://zhuanlan.zhihu.com/p/32481747">人人都能看懂的GRU - 知乎 (zhihu.com)</a></p><p><a href="https://zhuanlan.zhihu.com/p/32085405">人人都能看懂的LSTM - 知乎 (zhihu.com)</a></p><p><a href="https://zhuanlan.zhihu.com/p/55386469#:~:text=这里归纳一下%20LSTM%20与%20GRU%20的区别：%20首先，,LSTM%20选择暴露部分信息（%20才是真正的输出，%20只是作为信息载体，并不输出">RNN vs LSTM vs GRU -- 该选哪个？ - 知乎 (zhihu.com)</a></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 循环神经网络 </category>
+          
       </categories>
-      <tags>
-        <tag>VQ-VAE</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>语言模型</title>
-    <url>/blog/2021/07/22/language-model/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
-<span id="more"></span>
-<h2 id="定义">定义</h2>
-<p>对于一串语言序列<span class="math inline">\(w_1w_2\dots w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline">\(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子“学生们打开了书”的概率应该比“学生们打开了玛卡巴卡”高得多，即更像是人说的话。</p>
-<p>在之前的VQ-VAE中，我们提到过自回归模型，按照自回归的思路，如果第n个单词只与前n-1个单词相关，那么句子的概率可以转化为如下形式： <span class="math display">\[
-P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})
-\]</span> 那么怎么求解右侧的式子呢？</p>
-<h2 id="n-gram">N-gram</h2>
-<p>首先要提到的是N-gram模型。为了解决上面这个问题，N-gram模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline">\(N-1\)</span>个词有关。以4-gram为例，即每个词只与其之前的3个词有关，即： <span class="math display">\[
-P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})
-\]</span> 换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计： <span class="math display">\[
-P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})} 
-\]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[
-P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
-\]</span> 上述的方法虽然简单直接，但是有以下缺点：</p>
-<ul>
-<li>稀疏问题：一些片段可能没有在语料中出现，计数为0，在概率连乘之下整句概率变为0。</li>
-<li>存储问题：随着n的增大，存储量指数级上升，而n过小时模型性能又会很差。</li>
-</ul>
-<h2 id="基于窗口的神经网络">基于窗口的神经网络</h2>
-<p>在N-gram的基础上，使用神经网络来计算条件概率。同样以4-gram为例，计算用公式表达如下: <span class="math display">\[
-\begin{align}
-P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\
-&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])
-\end{align}
-\]</span> 思路非常简单，即将前N-1个词输入到神经网络，由神经网络计算得到第N个词的概率分布。这样做解决了N-gram的稀疏问题与存储问题，但也存在一些问题：</p>
-<ul>
-<li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
-<li>需要变化窗口大小时，矩阵W的形状也需要变化，进而需要重新训练。</li>
-</ul>
-<h2 id="循环神经网络rnn">循环神经网络RNN</h2>
-<p>RNN的思路同样也很直接，使用同一个矩阵<span class="math inline">\(W\)</span>来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN的公式如下: <span class="math display">\[
-h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
-\]</span></p>
-<p><span class="math display">\[
-\hat{y_t}=softmax(W^{(S)}h_t)
-\]</span></p>
-<p>其中，<span class="math inline">\(\sigma\)</span>是激活函数，<span class="math inline">\(h_t\)</span>是t时刻的隐藏状态，<span class="math inline">\(W\)</span>是参数矩阵。</p>
-<p>RNN有以下优点：</p>
-<ul>
-<li>能够处理任意长度的序列。</li>
-<li>没有进行马尔科夫假设，理论上每一时刻模型都知道之前时刻的全部信息。</li>
-</ul>
-<p>但也有以下缺点：</p>
-<ul>
-<li>会出现梯度消失和梯度爆炸问题。</li>
-<li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li>
-</ul>
-<h2 id="参考">参考</h2>
-<p><a href="https://zhuanlan.zhihu.com/p/63397627">CS224N笔记(六)：语言模型与RNN - 知乎 (zhihu.com)</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> RNN </tag>
+            
+            <tag> GRU </tag>
+            
+            <tag> LSTM </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>序列到序列模型</title>
+      <link href="/blog/2021/07/22/seq2seq/"/>
+      <url>/blog/2021/07/22/seq2seq/</url>
+      
+        <content type="html"><![CDATA[<h2 id="序言">序言</h2><p>序列到序列模型（sequence to sequence, seq2seq）是自然语言处理中的一个重要模型，在机器翻译、对话系统等多个领域都有着广泛的应用。今天借着准备面试的机会，将这一部分知识整理出一篇博客。</p><span id="more"></span><h2 id="seq2seq">seq2seq</h2><p><img src="basemodel.png"></p><p>seq2seq模型常用语序列间的转化任务，其结构如上图所示，主要由两部分组成：</p><ul><li>编码器，常见为循环神经网络，用以将输入序列编码为固定维度的向量（即最后时刻编码器的隐藏状态），进而投喂给解码器进行解码。</li><li>解码器，同样常见为循环神经网络，用以根据向量输出最终序列。可以看做一个条件语言模型，“条件”即为输入序列。因此，可以使用预训练的语言模型初始化权重，再进行fine-tune。</li></ul><p>在训练阶段，解码器的输出仅用于计算损失，解码器的输入是编码器得到的上下文状态向量(最后一个时间步的隐藏状态)和目标序列当前的单词。换而言之，训练时，解码器的输出一定是与目标序列等长的。</p><p>在推理阶段，解码器每一个时间步的输出是下一个时间步的输入。可以通过限制输出序列的最大长度或者在输出结束标志后停止。对于batch的数据，往往使用限制最大长度，再删去结束标志之后的部分。</p><p>seq2seq虽然简单有效，但存在以下的缺点：</p><ul><li>输入序列过长时，固定长度的向量无法存储全部的信息，进而造成信息丢失。</li><li>贪婪解码问题，下面会提到。</li></ul><h2 id="贪婪解码问题">贪婪解码问题</h2><p>对于seq2seq模型，我们希望得到概率最大的输出序列，即建模的是<span class="math inline">\(\arg\max_YP(Y|X)\)</span>（<span class="math inline">\(X\)</span>为输入序列，<span class="math inline">\(Y\)</span>为输出序列）。然而事实上，解码器每一步求解的是<span class="math inline">\(\arg\max_{y_t}P(y_t|y_{t-1:1},X)\)</span>​，即当前时间步概率最大的单词。这样以来，整个解码的过程就是贪婪的，每一步的单词概率最大并不意味着整个句子的概率最大。</p><p>怎么解决这个问题呢？解决方法是beam search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道ground truth），</p><p>保留k个可能性最大的序列（可能性以概率相乘的对数作为分数，即<span class="math inline">\(\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​）。</p><p>当某个序列输出终止符号时，可以认作该序列已经结束，继续维护其他序列。</p><p>搜索的终止条件可以根据任务具体选择，例如：</p><ul><li>最多搜索多长时间步（例如30步）。</li><li>至少拥有多少个候选序列（例如10个）。</li></ul><p>在搜索结束，得到若干个候选序列后，将序列分数标准化后，即<span class="math inline">\(\frac{1}{t}\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​作为最终的分数。这样是为了避免短序列概率更大（概率连乘的数量小），然后选择概率最大的序列。</p><p>在搜索时，分数不需要进行标准化，因为搜索时处理的序列总是等长的。</p><h2 id="注意力机制">注意力机制</h2><p>为了解决seq2seq在面对长序列时的信息丢失问题，研究者们在seq2seq中引入了注意力（Attention）机制。借助于注意力机制，解码器能够在解码时与输入序列直接相连，还可以关注到输入序列的不同部分。公式化描述如下：</p><p>首先根据编码器状态<span class="math inline">\({h_1,\dots,h_N}\)</span>与当前解码器状态<span class="math inline">\(s_t\)</span>点乘计算分数 <span class="math display">\[e^t=[s_t^\intercal h_1,\dots,s_t^\intercal h_N]\in \mathbb R^N\]</span> 将分数归一化后作为输入序列与当前位置相关性的概率分布： <span class="math display">\[\alpha^t=softmax(e^t)\in \mathbb R ^N\]</span> 加权求和后作为最终的注意力结果： <span class="math display">\[\alpha_t=\sum_{i=1}^N\alpha_i^th_i\in \mathbb R^h\]</span> 将注意力结果与解码器隐藏状态拼接后计算新的隐藏状态<span class="math inline">\(\hat s_t\)</span>，再计算输出。 <span class="math display">\[[\alpha_t;s_t]\in \mathbb R^{2h}\]</span> 带有Attention 的seq2seq的简单示意图如下：</p><p><img src="model.png"></p><h3 id="广义的attention机制">广义的Attention机制</h3><p>广义的attention定义如下：给定一组向量values，一个向量query，attention是value的加权和，权重是某个相似性度量函数，例如点积、加性注意力等。</p><p>度量函数可以为：</p><ul><li><p>点乘：<span class="math inline">\(e_i=s^\intercal h_i\in \mathbb R\)</span></p></li><li><p>乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in \mathbb R\)</span>​（其中<span class="math inline">\(W\in \mathbb R^{d_2*d_1}\)</span>为权重矩阵）</p></li><li><p>加法注意力：<span class="math inline">\(e_i=v^\intercal tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline">\(W_1,W_2\)</span>为权重矩阵，<span class="math inline">\(v\)</span>是权重向量）</p></li></ul><p>对应到seq2seq的Attention机制中，query向量为解码器隐藏状态，values为编码器的全部隐藏状态，度量函数为点乘。</p><p>联想一下BERT的自注意力机制：</p><p>对于每个单词向量，通过Query、Key、Value三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的query向量与每个位置的key做点乘，作为相似性度量，再对value矩阵加权求和。公式如下： <span class="math display">\[Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V\]</span></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>语言模型</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> seq2seq </category>
+          
       </categories>
-      <tags>
-        <tag>语言模型</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>推理文本生成 | EA-VQ-VAE</title>
-    <url>/blog/2021/07/16/ea-vq-vae/</url>
-    <content><![CDATA[<h2 id="题外话">题外话</h2>
-<p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
-<h2 id="简介">简介</h2>
-<p>EA-VQ-VAE是微软团队于2020年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在ACL上。该文的主要工作是利用VQ-VAE进行推理文本生成。推理文本生成定义为，给定一个事件（例如“A偷看了B的日记”），从多个维度对该事件进行推断（“A的心理状态”，“A的目的”）。而EA-VQ-VAE中的EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
-<span id="more"></span>
-<h2 id="实现方法">实现方法</h2>
-<p>下图展示了整个模型的流程：给定事件<span class="math inline">\(x\)</span>后，经过VQ-VAE将其映射为离散的隐变量<span class="math inline">\(z\)</span>，根据事件<span class="math inline">\(x\)</span>从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline">\(y\)</span>。下面逐项介绍模型的细节。</p>
-<p><img src="model.png"></p>
-<h3 id="vq-vae">VQ-VAE</h3>
-<p>VQ-VAE的详细介绍可以看我的上一篇博客。论文使用的VQ-VAE与标准的VQ-VAE最主要的区别在于，普通的VQ-VAE生成是数据<span class="math inline">\(x\)</span>，而在推理文本生成任务中，生成的是以符合事件<span class="math inline">\(x\)</span>的推理文本<span class="math inline">\(y\)</span>，换而言之，这是一个<strong>条件模型</strong>，叫它VQ-CVAE可能更恰当一点。基于此，下面所述的后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>与先验分布<span class="math inline">\(p_\theta(z|x)\)</span>均与标准的VQ-VAE有所不同。</p>
-<p>本文使用的VQ-VAE分为以下三个部分：</p>
-<ul>
-<li>codebook：对应VQ-VAE中的隐变量嵌入空间，只是换了个名字，同样是一张<span class="math inline">\(R^{k*d}\)</span>的表，由<span class="math inline">\(k\)</span>个维度为<span class="math inline">\(d\)</span>的隐变量组成</li>
-<li>后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>：同样是一个独热分布，使用最近邻算法将编码器输出<span class="math inline">\(h_(x,y)\)</span>映射到最近的隐变量<span class="math inline">\(z'\)</span></li>
-<li>先验分布<span class="math inline">\(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如RoBERTa）将事件编码为隐藏状态<span class="math inline">\(h\)</span>，，再将其映射为k个类别，即<span class="math inline">\(p_\theta(z|x)=softmax(hW_k)\)</span></li>
-</ul>
-<h3 id="证据的检索与选择">证据的检索与选择</h3>
-<p>去除事件中的停用词后，在大规模文本语料中使用Elastic Search引擎检索事件，并选取前K个得分最高的句子。论文使用的语料库基于BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
-<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline">\(x\)</span>与推理文本<span class="math inline">\(y\)</span>均已知，例如给定事件“A读了B的日记”，与推理文本“A感到很愧疚”，那么证据“A偷了B的日记”就比“B把日记给A看”更合理，此时我们想要建模的就是<span class="math inline">\(q(c|x,y)\)</span>（c代表事件上下文，即证据）与<span class="math inline">\(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline">\(p(c|z)\)</span>,而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span>代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用Transformer将其编码为向量<span class="math inline">\(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span>与<span class="math inline">\(q_\phi(z|x,y)\)</span>类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即： <span class="math display">\[
-p_s(c_k|z)=
-\begin{cases}
-1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\
-0 &amp;otherwise
-\end{cases}
-\]</span></p>
-<p><span class="math display">\[
-c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2
-\]</span></p>
-<p>值得注意的是，作者没有使用注意力机制得到的“软”分布，而是借鉴VQ-VAE，采用了一种独热分布将<span class="math inline">\(z\)</span>映射到最近的<span class="math inline">\(c\)</span>。这样的优点是一定程度上降低了学习的难度，由于<span class="math inline">\(z\)</span>与<span class="math inline">\(c\)</span>处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p>
-<h3 id="解码器">解码器</h3>
-<p>解码器使用的是预训练的GPT-2，是一个基于Transformer的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下GPT家族。</p>
-<h2 id="训练过程">训练过程</h2>
-<p>首先单独训练VQ-VAE与codebook，再训练基于后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>的证据感知解码器。</p>
-<h3 id="vq-vae-1">VQ-VAE</h3>
-<p>首先只根据隐变量<span class="math inline">\(z\)</span>重构推理文本<span class="math inline">\(y\)</span>，损失函数与VQ-VAE损失函数类似： <span class="math display">\[
-loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||_2^2+\beta||h_{(x,y)}-sg[z]||_2^2
-\]</span></p>
-<p>真实的先验分布可以使用频率近似（<span class="math inline">\(N_{(x)}\)</span>代表包含<span class="math inline">\(x\)</span>事件的数据数量）： <span class="math display">\[
-p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}
-\]</span> 通过KL散度来优化先验分布<span class="math inline">\(p_\theta(z|x)\)</span>: <span class="math display">\[
-loss_{prior}=KL(p(z|x)||p_\theta(z|x))
-\]</span></p>
-<p>不过这里为什么不像CVAE一样，直接优化后验分布与先验分布间的KL散度，暂时还不是很理解。</p>
-<h3 id="证据感知解码器">证据感知解码器</h3>
-<p>这一部分通过最大化边际似然进行训练： <span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\
-&amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')
-\end{align}
-\]</span> 然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline">\(z'\)</span>最近的<span class="math inline">\(c_{z'}\)</span>不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline">\(c\)</span>，损失函数中应该还有一项是<span class="math inline">\(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法： <span class="math display">\[
-R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))
-\]</span></p>
-<p><span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
-&amp;=logp_m(y|x,c_{z'})-R|||h_{c_{z'}}-z'||_2^2
-\end{align}
-\]</span> 其中，<span class="math inline">\(\delta(x)\)</span>当x大于0时为1，否则为-1。<span class="math inline">\(c_r\)</span>为随机选取的与<span class="math inline">\(c_{z'}\)</span>不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当<span class="math inline">\(R\)</span>为正时，<span class="math inline">\(logp(y|x)\)</span>会更大，进而激励模型选择正确的证据。</p>
-<h2 id="个案研究">个案研究</h2>
-<p><img src="case.png"></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> seq2seq </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>语言模型</title>
+      <link href="/blog/2021/07/22/language-model/"/>
+      <url>/blog/2021/07/22/language-model/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p><span id="more"></span><h2 id="定义">定义</h2><p>对于一串语言序列<span class="math inline">\(w_1w_2\dots w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline">\(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子“学生们打开了书”的概率应该比“学生们打开了玛卡巴卡”高得多，即更像是人说的话。</p><p>在之前的VQ-VAE中，我们提到过自回归模型，按照自回归的思路，如果第n个单词只与前n-1个单词相关，那么句子的概率可以转化为如下形式： <span class="math display">\[P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})\]</span> 那么怎么求解右侧的式子呢？</p><h2 id="n-gram">N-gram</h2><p>首先要提到的是N-gram模型。为了解决上面这个问题，N-gram模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline">\(N-1\)</span>个词有关。以4-gram为例，即每个词只与其之前的3个词有关，即： <span class="math display">\[P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})\]</span> 换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计： <span class="math display">\[P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})} \]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})\]</span> 上述的方法虽然简单直接，但是有以下缺点：</p><ul><li>稀疏问题：一些片段可能没有在语料中出现，计数为0，在概率连乘之下整句概率变为0。</li><li>存储问题：随着n的增大，存储量指数级上升，而n过小时模型性能又会很差。</li></ul><h2 id="基于窗口的神经网络">基于窗口的神经网络</h2><p>在N-gram的基础上，使用神经网络来计算条件概率。同样以4-gram为例，计算用公式表达如下: <span class="math display">\[\begin{align}P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])\end{align}\]</span> 思路非常简单，即将前N-1个词输入到神经网络，由神经网络计算得到第N个词的概率分布。这样做解决了N-gram的稀疏问题与存储问题，但也存在一些问题：</p><ul><li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li><li>需要变化窗口大小时，矩阵W的形状也需要变化，进而需要重新训练。</li></ul><h2 id="循环神经网络rnn">循环神经网络RNN</h2><p>RNN的思路同样也很直接，使用同一个矩阵<span class="math inline">\(W\)</span>来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN的公式如下: <span class="math display">\[h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)\]</span></p><p><span class="math display">\[\hat{y_t}=softmax(W^{(S)}h_t)\]</span></p><p>其中，<span class="math inline">\(\sigma\)</span>是激活函数，<span class="math inline">\(h_t\)</span>是t时刻的隐藏状态，<span class="math inline">\(W\)</span>是参数矩阵。</p><p>RNN有以下优点：</p><ul><li>能够处理任意长度的序列。</li><li>没有进行马尔科夫假设，理论上每一时刻模型都知道之前时刻的全部信息。</li></ul><p>但也有以下缺点：</p><ul><li>会出现梯度消失和梯度爆炸问题。</li><li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li></ul><h2 id="参考">参考</h2><p><a href="https://zhuanlan.zhihu.com/p/63397627">CS224N笔记(六)：语言模型与RNN - 知乎 (zhihu.com)</a></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 语言模型 </category>
+          
       </categories>
-      <tags>
-        <tag>VQ-VAE</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>循环神经网络RNN及其变体GRU、LSTM</title>
-    <url>/blog/2021/07/22/rnns/</url>
-    <content><![CDATA[<h2 id="序言">序言</h2>
-<p>同样，借着复习面试，把RNN家族再梳理回顾一下，包含RNN、GRU、LSTM。 <span id="more"></span></p>
-<h2 id="循环神经网络rnn">循环神经网络RNN</h2>
-<h3 id="模型结构">模型结构</h3>
-<p><img src="rnn.png"></p>
-<p>RNN的结构如上图所示，其核心思想是使用同一套参数来更新状态<span class="math inline">\(s\)</span>与计算输出<span class="math inline">\(o\)</span>，箭头右侧是按时序展开的模型结构图。可以看到，RNN仅使用了一个状态<span class="math inline">\(s\)</span>​来保存序列信息，共有三个参数矩阵。这一部分公式化描述如下: <span class="math display">\[
-s_t=f(Ux_t+Ws_{t-1})
-\]</span></p>
-<p><span class="math display">\[
-o_t=g(Vs_t)
-\]</span></p>
-<p>其中，<span class="math inline">\(f\)</span>与<span class="math inline">\(g\)</span>​均为激活函数，激活函数可选的有sigmoid，tanh，relu等（下面会分析）。</p>
-<p>RNN有以下缺陷：</p>
-<ul>
-<li>容易发生梯度消失和梯度爆炸现象（由于导数连乘）。</li>
-<li>难以捕捉长距离的依赖。</li>
-</ul>
-<p>在其中，梯度消失相对于梯度爆炸要更为严重，因为梯度爆炸是可以观测到的（NAN），梯度消失则难以直接观测。梯度爆炸问题很容易解决，可以通过梯度裁剪的方法进行解决。</p>
-<h3 id="梯度消失和梯度爆炸">梯度消失和梯度爆炸</h3>
-<p>梯度消失和爆炸的解决方法：</p>
-<ul>
-<li>梯度的剪切以及正则化（常见的是l1正则和l2正则）。</li>
-<li>relu、elu等激活函数。（梯度消失）</li>
-<li>批标准化（<strong>Batch Normalization</strong>）。</li>
-<li>残差结构（将映射F(x)改为F(x)+x，使用relu激活函数的F在x&lt;0时能够无损传播梯度，保证了深层网络的性能）。</li>
-<li>LSTM、GRU等结构。</li>
-</ul>
-<h4 id="批标准化-batch-normalization">批标准化 Batch Normalization</h4>
-<p>Batch Normalization是一种常用于CNN的正则化方法，可以分为两个步骤：</p>
-<p>（1）标准化：对batch的数据求均值与标准差，将数据标准化到标准正态分布</p>
-<p>（2）进行放缩与平移</p>
-<p>整个过程类似于VAE的重参数化，先获得一个正态分布的变量，再进行放缩平移，达到从任意正态分布中取样的效果。</p>
-<p>也就是说，batch normlization 假设每个batch的数据服从一个正态分布（参数γ和β学习得来，即通过batch数据计算得来），先将数据标准化，再放缩与平移，使得数据“看起来”是从这个正态分布中取样而来的。</p>
-<p>在预测阶段，所有参数的取值是固定的，对BN层而言，意味着μ、σ、γ、β都是固定值。γ和β比较好理解，随着训练结束，两者最终收敛，预测阶段使用训练结束时的值即可。</p>
-<p>对于μ和σ，在训练阶段，它们为当前mini batch的统计量，随着输入batch的不同，μ和σ一直在变化。在预测阶段，输入数据可能只有1条，该使用哪个μ和σ，或者说，每个BN层的μ和σ该如何取值？可以采用训练收敛最后几批mini batch的 μ和σ的期望，作为预测阶段的μ和σ。</p>
-<h3 id="层标准化-layer-normalization">层标准化 Layer Normalization</h3>
-<p>Batch Normalization是在Batch的方向上进行Normalization。这种方法在NLP中不是很适合。由于文本序列的长度可变性，一个batch中的数据往往长度不同，进而对每个位置进行标准化不是很合适。</p>
-<p>而Layer Normalization则是在序列的方向上进行Normalization。这使得它可以处理变长序列。</p>
-<h3 id="激活函数">激活函数</h3>
-<p>对于激活函数而言，sigmoid的最大梯度为0.25，因此很容易发生梯度消失现象，而tanh虽然最大梯度为1，但也只有0处取得，也熔岩发生梯度消失。因此RNN常使用relu作为激活函数。relu的梯度非0即1，这能够缓解梯度消失现象，但也有一定的问题：1. 容易发生梯度爆炸。（梯度恒为1时）2. 负数部分梯度恒为0，部分神经元无法激活。elu能够缓解relu的0梯度的问题，但是由于加入了幂运算，会更慢一点。</p>
-<h2 id="门控循环单元gru">门控循环单元GRU</h2>
-<h3 id="模型结构-1">模型结构</h3>
-<p>GRU的思想是在RNN的基础上，引入门控信号来缓解RNN存在的梯度消失问题。模型结构如下：</p>
-<p><img src="gru.png"></p>
-<p>公式化描述如下（公式中的<span class="math inline">\(\odot\)</span>代表哈达玛积，即同型矩阵间逐元素乘法）：</p>
-<p>首先根据输入<span class="math inline">\(x_t\)</span>与上一时刻隐藏状态<span class="math inline">\(h_{t-1}\)</span>计算得到两个门控状态<span class="math inline">\(z_t\)</span>与<span class="math inline">\(r_t\)</span>​，假设<span class="math inline">\(h_t\in \mathbb R^H\)</span>： <span class="math display">\[
-z_t=sigmoid(W_zx_t+U_zh_{t-1})\in \mathbb R^{H}
-\]</span></p>
-<p><span class="math display">\[
-r_t=sigmoid(W_rx_t+U_rh_{t-1})\in \mathbb R^{H}
-\]</span></p>
-<p>之后，使用重置门计算得到一个新的隐藏状态（即图中的<span class="math inline">\(h’\)</span>）： <span class="math display">\[
-\tilde h_t=tanh(Wx_t+U(r_t\odot h_{t-1}))\in \mathbb R^{H}
-\]</span> 再使用更新门<span class="math inline">\(z_t\)</span>更新隐藏状态： <span class="math display">\[
-h_t=(1-z)\odot h_{t-1}+z\odot \tilde h_t\in \mathbb R^{H}
-\]</span></p>
-<h2 id="长短期记忆网络lstm">长短期记忆网络LSTM</h2>
-<h3 id="模型结构-2">模型结构</h3>
-<p>LSTM的思想是在RNN的基础上，加入一个不易被改变的新状态<span class="math inline">\(c_t\)</span>​​，代表的是0-t时刻的全局信息。而<span class="math inline">\(h_t\)</span>​代表的是在0~t-1时刻全局信息的影响下，<span class="math inline">\(t\)</span>时刻的信息。换而言之，<span class="math inline">\(c_t\)</span>变化的很慢，而<span class="math inline">\(h_t\)</span>变化的很快。</p>
-<p><img src="lstm.png"></p>
-<p>公式化描述如下：</p>
-<p>首先计算得到三个门控状态（分别对应图中的<span class="math inline">\(z^i,z^f,z^o\)</span>）： <span class="math display">\[
-i_t=sigmoid(W_ix_t+U_ih_{t-1})\in \mathbb R^{H}
-\]</span></p>
-<p><span class="math display">\[
-f_t=sigmoid(W_fx_t+U_fh_{t-1})\in \mathbb R^{H}
-\]</span></p>
-<p><span class="math display">\[
-o_t=sigmoid(W_ox_t+U_oh_{t-1})\in \mathbb R^{H}
-\]</span></p>
-<p>以及一个与当前输入密切相关的向量（对应图中的<span class="math inline">\(z\)</span>） <span class="math display">\[
-\tilde c_t=tanh(W_zx_t+U_zh_{t-1})
-\]</span> 接着，更新两种状态： <span class="math display">\[
-c_t=f_t\odot c_{t-1}+i_t\odot \tilde c_t
-\]</span></p>
-<p><span class="math display">\[
-h_t=o_t\odot tanh(c_t)
-\]</span></p>
-<p>其中，<span class="math inline">\(i_t.f_t,o_t\)</span>分别代表信息、遗忘、输出门控。信息和遗忘门控负责cell state的更新，输出门控负责hidden state的更新。具体而言，LSTM可以简单分为以下三个阶段：</p>
-<ul>
-<li>遗忘阶段，根据遗忘门控，忘记上一个cell state的部分信息。</li>
-<li>记忆阶段，根据信息门控，将输入信息进行选择记忆。</li>
-<li>输出阶段，根据输出门控，输出最终的状态。</li>
-</ul>
-<h3 id="lstm-vs-gru">LSTM VS GRU</h3>
-<p>本质上，LSTM和GRU都是通过引入门控信号来解决RNN的梯度消失问题。在实现方法上，GRU相对于LSTM要更为简单。GRU抛弃了LSTM中的hidden state（GRU 中的hidden state 实际上是LSTM中的cell state），因为LSTM中的<span class="math inline">\(h_t\)</span>只是想保存当前时刻的信息，这一部分已经包含到GRU中的<span class="math inline">\(\tilde h_t\)</span>中了。cell state中的之前的全局信息与当前时刻的信息应当是一个此消彼长的状态，GRU因此直接使用一个门控信号<span class="math inline">\(z_t\)</span>同时控制了遗忘和更新。</p>
-<p>在参数上，GRU有着比LSTM更少的参数，收敛速度更快，并且与LSTM有着差不多的性能表现，因此实际工程中多使用GRU。</p>
-<h2 id="参考">参考</h2>
-<p><a href="https://zhuanlan.zhihu.com/p/68579467">深度学习之3——梯度爆炸与梯度消失 - 知乎 (zhihu.com)</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/32481747">人人都能看懂的GRU - 知乎 (zhihu.com)</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/32085405">人人都能看懂的LSTM - 知乎 (zhihu.com)</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/55386469#:~:text=这里归纳一下%20LSTM%20与%20GRU%20的区别：%20首先，,LSTM%20选择暴露部分信息（%20才是真正的输出，%20只是作为信息载体，并不输出">RNN vs LSTM vs GRU -- 该选哪个？ - 知乎 (zhihu.com)</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 语言模型 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>ConKADI</title>
+      <link href="/blog/2021/07/20/ConKADI/"/>
+      <url>/blog/2021/07/20/ConKADI/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。</p><span id="more"></span><h2 id="对话系统发展简介">对话系统发展简介</h2><p>对话系统，即能够与人进行对话的计算机系统，是自然语言处理中的一个重要方向。在前神经网络时期，对话系统主要基于模板生成回复。即使是现在，仍由一些场景下在使用基于模板的回复生成。在2014年，seq2seq（Sequence to sequence）模型被提出。seq2seq提供了一种序列间进行转换映射的通用方法。此后，seq2seq被广泛用于各类序列任务，包含对话系统。但是seq2seq应用于对话系统任务时会有以下问题：</p><ul><li>对同一输入，只能生成单一回复。而理想的对话系统间输入与回复间的关系应该是一对多的。</li><li>倾向于生成通用性回复（例如，我不知道）。</li></ul><p>此后，构建能够生成多样性回复的对话系统一直是研究人员研究的重点。2017年，zhao等人将条件变分自编码器（Condition vae，CVAE）应用于对话生成，通过在隐变量分布中采样不同的隐变量，模型能够生成多样的回复。</p><p>另外，有研究指出，对话模型生成通用性回复的原因之一是语料中缺少人类拥有的知识背景，这使得模型无法学习知识进而理解对话。基于此，一部分工作开始探索在对话模型中引入外部知识。2018年zhou等提出的常识对话模型（CCM）就是这类研究的典型代表。</p><p>常识对话模型CCM虽然比传统模型取得了更好的效果，但是CCM在检索知识实体相关知识事实时，没有考虑到实体单词所在的上下文，而复杂实体单词的具体含义往往是由其上下文决定的。这就来到了本文要介绍的ConKADI。</p><p><img src="apple.png"></p><h2 id="研究方法">研究方法</h2><p>本文提出了：</p><ul><li>Felicitous Fact mechanism（恰当事实机制）帮助模型关注在上下文高度相关的知识事实。</li><li>上下文知识融合以及灵活模式融合技术，促进知识的集成。</li></ul><p>ConKADI（Context Knowledge-Aware Diverse and Informative conversation generation model），别的不说，这个名字真的跟叠buff一样。。。模型的流程如下：</p><ol type="1"><li>恰当事实机制根据知识实体词所在上下文计算得到知识事实的概率分布。（此过程中，使用真实回复作为后验来监督学习）。</li><li>上下文融合机制在解码之前将上下文与知识融合。</li><li>ConKADI在灵活融合模式下生成三种类型的单词。</li></ol><h3 id="模型概览">模型概览</h3><p><img src="model.png"></p><p>主要由以下几部分组成：</p><ul><li>知识检索器（Knowledge Retriever）：给定输入<span class="math inline">\(X\)</span>，对于每一个单词<span class="math inline">\(x_i\)</span>，检索<span class="math inline">\(x_i\)</span>​作为头实体或者尾实体的知识事实，若不为实体词，则返回一个空事实。</li><li>上下文编码器（Context Encoder）：使用双向GRU进行编码，特殊的是，GRU的输入加入了当前实体词的嵌入向量。</li><li>恰当知识识别器（Felicitous Fact Recognizer）：计算检索事实<span class="math inline">\(F=\{f_1,f_2,\dots,f_n\}\)</span>​上的概率分布<span class="math inline">\(z\)</span>，计算过程如下:</li></ul><p><span class="math display">\[z_{post}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^x_n}^\intercal;{h^y_m}^\intercal]\cdot W_{post}))^\intercal\]</span></p><p><span class="math display">\[z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot W_{prior}))^\intercal\]</span></p><p>其中，<span class="math inline">\(\eta\)</span>​​是softmax函数，<span class="math inline">\(\phi\)</span>​​是tanh激活函数，<span class="math inline">\(F\in R^{l*(d_e+d_r+d_e)}\)</span>​​是知识事实矩阵，<span class="math inline">\(W_{ft},W_{post},W_{prior}\)</span>​​​​​是训练参数​。直观来看，上下文、知识事实都包含在公式中，但是也不好进一步解释公式的由来，更像是两部分拼凑在一起的。与VAE一样，在得到先后验分布后，使用KL散度作为损失函数<span class="math inline">\(\mathcal L_k\)</span>，达到逼近先后验分布的效果。</p><ul><li>上下文知识融合：为了增强解码器对知识背景的理解，将输入上下文与知识融合作为解码器的初始权重，即<span class="math inline">\({h^y_0}^\intercal=tanh([{h^x_n}^\intercal;f_z^\intercal]\cdot W_{init})\)</span>​</li></ul><p>此外，为了保证<span class="math inline">\({h^x_n}^\intercal,f_z^\intercal\)</span>是有意义的，模型中还引入了词袋损失（参考CVAE）。为了监督<span class="math inline">\(z_{post}\)</span>​的概率分布的计算，引入了监督的条件信号（参考CCM），二者之和为损失函数<span class="math inline">\(\mathcal L_f\)</span>。​</p><h3 id="知识解码器">知识解码器</h3><p>解码器同样是GRU，在解码时，会从以下三种类型的单词中选择进行输出：</p><ul><li>词表单词</li><li>知识实体单词，计算过程如下：</li></ul><p><span class="math display">\[z_{d,t}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^y_t}^\intercal;{u_{t-1}}^\intercal]\cdot W_{d}))^\intercal\]</span></p><p><span class="math display">\[\gamma_t=sigmoid([{h^y_t}^\intercal;u_t^\intercal;c_t^\intercal]\cdot W_{gate})\in R^1\]</span></p><p><span class="math display">\[p_{k,t}=\gamma_t*z+(1.0-\gamma_t)*z_d\]</span></p><p>其中，<span class="math inline">\(c_t\)</span>是注意力机制的结果，<span class="math inline">\(z_{d,t}\)</span>也是同样方法计算得到的知识事实的概率分布，与<span class="math inline">\(z\)</span>相比，<span class="math inline">\(z_{d,t}\)</span>是动态的，而<span class="math inline">\(z\)</span>是静态的，与CCM中的动/静态图注意力机制类似。之后，计算得到一个标量<span class="math inline">\(\gamma_t\)</span>作为二者的相对比例，求和得到最终的实体单词权重。</p><ul><li>复制单词。解码器可从输入中复制一个单词作为输出，计算过程如下：</li></ul><p><span class="math display">\[p_{c,t}=\eta(\phi(H^x\cdot W_{cs})\cdot\phi({u_t^c}^\intercal\cdot W_{ct})^\intercal)\]</span></p><p><span class="math display">\[{u^c_t}^\intercal=[{h^y_t}^\intercal,{u_{t-1}}^\intercal,{c_t}^\intercal]\]</span></p><p>计算形式与前文知识事实概率分布的计算相似。</p><h3 id="灵活模式融合">灵活模式融合</h3><p>最终输出的概率分布为三种模式的加权和（其中，<span class="math inline">\((\gamma_{w,t},\gamma_{k,t},\gamma_{c,t})\)</span>是由灵活模式融合计算得出的概率分布，即三者之和为1。）： <span class="math display">\[p_{out,t}=\gamma_{w,t}*p_{w,t}+\gamma_{k,t}*p_{k,t}+\gamma_{c,t}*p_{c,t}\]</span> 这一部分损失函数为<span class="math inline">\(\mathcal L_n\)</span>： <span class="math display">\[-\sum_t\lambda_tlogp_{out,t}(y_t|y_{t-1:1},X,F)+\frac{\mathcal L_m}{2}\]</span> 其中，<span class="math inline">\(\mathcal L_m\)</span>为解码器输出与真实回复间的交叉熵，<span class="math inline">\(\lambda_t\)</span>​为词表外单词（unk）的惩罚项权重： <span class="math display">\[\lambda_t=\begin{cases}\frac{1}{\#(unk\in Y)}^3,\ if\ y_t=unk\\1,\ otherwise\end{cases}\]</span> 个人猜测思路是这样，如果<span class="math inline">\(y_t\)</span>为unk，<span class="math inline">\(\lambda_t\)</span>​会更小，进而优化对应参数的速度会减慢。</p><h2 id="case-study">Case Study</h2><p>下文是论文中展示的回复样例，只看表格生成回复的效果还是不错的。</p><p><img src="result.png"></p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>循环神经网络</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 对话系统 </category>
+          
       </categories>
-      <tags>
-        <tag>RNN</tag>
-        <tag>GRU</tag>
-        <tag>LSTM</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>序列到序列模型</title>
-    <url>/blog/2021/07/22/seq2seq/</url>
-    <content><![CDATA[<h2 id="序言">序言</h2>
-<p>序列到序列模型（sequence to sequence, seq2seq）是自然语言处理中的一个重要模型，在机器翻译、对话系统等多个领域都有着广泛的应用。今天借着准备面试的机会，将这一部分知识整理出一篇博客。</p>
-<span id="more"></span>
-<h2 id="seq2seq">seq2seq</h2>
-<p><img src="basemodel.png"></p>
-<p>seq2seq模型常用语序列间的转化任务，其结构如上图所示，主要由两部分组成：</p>
-<ul>
-<li>编码器，常见为循环神经网络，用以将输入序列编码为固定维度的向量（即最后时刻编码器的隐藏状态），进而投喂给解码器进行解码。</li>
-<li>解码器，同样常见为循环神经网络，用以根据向量输出最终序列。可以看做一个条件语言模型，“条件”即为输入序列。因此，可以使用预训练的语言模型初始化权重，再进行fine-tune。</li>
-</ul>
-<p>在训练阶段，解码器的输出仅用于计算损失，解码器的输入是编码器得到的上下文状态向量(最后一个时间步的隐藏状态)和目标序列当前的单词。换而言之，训练时，解码器的输出一定是与目标序列等长的。</p>
-<p>在推理阶段，解码器每一个时间步的输出是下一个时间步的输入。可以通过限制输出序列的最大长度或者在输出结束标志后停止。对于batch的数据，往往使用限制最大长度，再删去结束标志之后的部分。</p>
-<p>seq2seq虽然简单有效，但存在以下的缺点：</p>
-<ul>
-<li>输入序列过长时，固定长度的向量无法存储全部的信息，进而造成信息丢失。</li>
-<li>贪婪解码问题，下面会提到。</li>
-</ul>
-<h2 id="贪婪解码问题">贪婪解码问题</h2>
-<p>对于seq2seq模型，我们希望得到概率最大的输出序列，即建模的是<span class="math inline">\(\arg\max_YP(Y|X)\)</span>（<span class="math inline">\(X\)</span>为输入序列，<span class="math inline">\(Y\)</span>为输出序列）。然而事实上，解码器每一步求解的是<span class="math inline">\(\arg\max_{y_t}P(y_t|y_{t-1:1},X)\)</span>​，即当前时间步概率最大的单词。这样以来，整个解码的过程就是贪婪的，每一步的单词概率最大并不意味着整个句子的概率最大。</p>
-<p>怎么解决这个问题呢？解决方法是beam search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道ground truth），</p>
-<p>保留k个可能性最大的序列（可能性以概率相乘的对数作为分数，即<span class="math inline">\(\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​）。</p>
-<p>当某个序列输出终止符号时，可以认作该序列已经结束，继续维护其他序列。</p>
-<p>搜索的终止条件可以根据任务具体选择，例如：</p>
-<ul>
-<li>最多搜索多长时间步（例如30步）。</li>
-<li>至少拥有多少个候选序列（例如10个）。</li>
-</ul>
-<p>在搜索结束，得到若干个候选序列后，将序列分数标准化后，即<span class="math inline">\(\frac{1}{t}\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​作为最终的分数。这样是为了避免短序列概率更大（概率连乘的数量小），然后选择概率最大的序列。</p>
-<p>在搜索时，分数不需要进行标准化，因为搜索时处理的序列总是等长的。</p>
-<h2 id="注意力机制">注意力机制</h2>
-<p>为了解决seq2seq在面对长序列时的信息丢失问题，研究者们在seq2seq中引入了注意力（Attention）机制。借助于注意力机制，解码器能够在解码时与输入序列直接相连，还可以关注到输入序列的不同部分。公式化描述如下：</p>
-<p>首先根据编码器状态<span class="math inline">\({h_1,\dots,h_N}\)</span>与当前解码器状态<span class="math inline">\(s_t\)</span>点乘计算分数 <span class="math display">\[
-e^t=[s_t^\intercal h_1,\dots,s_t^\intercal h_N]\in \mathbb R^N
-\]</span> 将分数归一化后作为输入序列与当前位置相关性的概率分布： <span class="math display">\[
-\alpha^t=softmax(e^t)\in \mathbb R ^N
-\]</span> 加权求和后作为最终的注意力结果： <span class="math display">\[
-\alpha_t=\sum_{i=1}^N\alpha_i^th_i\in \mathbb R^h
-\]</span> 将注意力结果与解码器隐藏状态拼接后计算新的隐藏状态<span class="math inline">\(\hat s_t\)</span>，再计算输出。 <span class="math display">\[
-[\alpha_t;s_t]\in \mathbb R^{2h}
-\]</span> 带有Attention 的seq2seq的简单示意图如下：</p>
-<p><img src="model.png"></p>
-<h3 id="广义的attention机制">广义的Attention机制</h3>
-<p>广义的attention定义如下：给定一组向量values，一个向量query，attention是value的加权和，权重是某个相似性度量函数，例如点积、加性注意力等。</p>
-<p>度量函数可以为：</p>
-<ul>
-<li><p>点乘：<span class="math inline">\(e_i=s^\intercal h_i\in \mathbb R\)</span></p></li>
-<li><p>乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in \mathbb R\)</span>​（其中<span class="math inline">\(W\in \mathbb R^{d_2*d_1}\)</span>为权重矩阵）</p></li>
-<li><p>加法注意力：<span class="math inline">\(e_i=v^\intercal tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline">\(W_1,W_2\)</span>为权重矩阵，<span class="math inline">\(v\)</span>是权重向量）</p></li>
-</ul>
-<p>对应到seq2seq的Attention机制中，query向量为解码器隐藏状态，values为编码器的全部隐藏状态，度量函数为点乘。</p>
-<p>联想一下BERT的自注意力机制：</p>
-<p>对于每个单词向量，通过Query、Key、Value三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的query向量与每个位置的key做点乘，作为相似性度量，再对value矩阵加权求和。公式如下： <span class="math display">\[
-Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 常识对话 </tag>
+            
+            <tag> CopyNet </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>EA-VQ-VAE 代码学习（1）</title>
+      <link href="/blog/2021/07/17/ea-vq-vae-code/"/>
+      <url>/blog/2021/07/17/ea-vq-vae-code/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>之前学习EA-VQ-VAE的时候发现只读论文本身还是有很多细节问题不太懂，而EA-VQ-VAE的代码开源在<a href="https://github.com/microsoft/EA-VQ-VAE">github</a>上。今天正好通过学习代码更深层地理解一下这个模型以及基础的VQ-VAE模型。</p><span id="more"></span><h2 id="目录结构">目录结构</h2><p>代码的目录结构如下：</p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">│  README.md</span><br><span class="line">|  LICENSE</span><br><span class="line">├─data</span><br><span class="line">│      get_atomic_data.sh</span><br><span class="line">│      get_event2mind_data.sh</span><br><span class="line">│      preprocess-atomic.py</span><br><span class="line">│      preprocess-event2mind.py</span><br><span class="line">├─estimator</span><br><span class="line">│      model.py</span><br><span class="line">│      run.py</span><br><span class="line">├─generator</span><br><span class="line">│      beam.py</span><br><span class="line">│      model.py</span><br><span class="line">│      run.py</span><br><span class="line">└─vq-vae</span><br><span class="line">        gpt2.py</span><br><span class="line">        model.py</span><br><span class="line">        run.py</span><br></pre></td></tr></tbody></table></figure><p>可以看到，整个代码目录结构还是比较清晰的四部分：</p><ul><li>data/：用以数据的获取和预处理</li><li>estimator/：估计先验分布的模型</li><li>generator/：推理阶段生成推理文本（光束搜索等）</li><li>vq-vae/：vq-vae的模型定义：包含codebook、编码器、解码器等</li></ul><p>这次先介绍最为核心的vq-vae模型，处在vq-vae/model.py。剩下的部分后续有时间再进行分享。</p><h2 id="vq-vae">VQ-VAE</h2><h3 id="model.py">model.py</h3><p>首先是CodeBook。codebook在EA-VQ-VAE充当了隐变量表的角色，保存了一张由K个D维隐变量组成的<span class="math inline">\(R^{K*D}\)</span>。CodeBook类代码如下：</p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CodeBook</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, num_embeddings, embedding_dim, commitment_cost</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(CodeBook, self).__init__()  </span><br><span class="line">        self._embedding_dim = embedding_dim</span><br><span class="line">        self._num_embeddings = num_embeddings     </span><br><span class="line">        self._embedding = nn.Embedding(self._num_embeddings, self._embedding_dim)      </span><br><span class="line">        self._commitment_cost = commitment_cost</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, inputs</span>):</span></span><br><span class="line">        <span class="comment"># Calculate distances</span></span><br><span class="line">        distances = (torch.<span class="built_in">sum</span>(inputs**<span class="number">2</span>, dim=<span class="number">1</span>, keepdim=<span class="literal">True</span>) </span><br><span class="line">                    + torch.<span class="built_in">sum</span>(self._embedding.weight**<span class="number">2</span>, dim=<span class="number">1</span>)</span><br><span class="line">                    - <span class="number">2</span> * torch.matmul(inputs, self._embedding.weight.t()))</span><br><span class="line">            </span><br><span class="line">        <span class="comment"># Encoding</span></span><br><span class="line">        encoding_indices = torch.argmin(distances, dim=<span class="number">1</span>).unsqueeze(<span class="number">1</span>)</span><br><span class="line">        encodings = torch.zeros(encoding_indices.shape[<span class="number">0</span>], self._num_embeddings).cuda()</span><br><span class="line">        encodings.scatter_(<span class="number">1</span>, encoding_indices, <span class="number">1</span>) <span class="comment"># 离散隐变量索引 [batch_size,num_embeddings]</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Quantize and unflatten</span></span><br><span class="line">        quantized = torch.matmul(encodings, self._embedding.weight) <span class="comment">## 乘法获得隐变量</span></span><br><span class="line">        <span class="comment"># 整个隐变量的获取方法有点复杂了，argmin之后直接查询embedding即可，无需手动操作。这里这样处理是为了后续</span></span><br><span class="line">        <span class="comment"># 还要计算perplexity</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># Loss</span></span><br><span class="line">        <span class="comment"># detach()从计算图中脱离，达到stop gradient的目的</span></span><br><span class="line">        e_latent_loss = torch.mean((quantized.detach() - inputs)**<span class="number">2</span>) </span><br><span class="line">        q_latent_loss = torch.mean((quantized - inputs.detach())**<span class="number">2</span>)</span><br><span class="line">        loss = q_latent_loss + self._commitment_cost * e_latent_loss</span><br><span class="line">        </span><br><span class="line">        quantized = inputs + (quantized - inputs).detach()</span><br><span class="line">        avg_probs = torch.mean(encodings, dim=<span class="number">0</span>)</span><br><span class="line">        perplexity = torch.exp(-torch.<span class="built_in">sum</span>(avg_probs * torch.log(avg_probs + <span class="number">1e-10</span>)))</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># convert quantized from BHWC -&gt; BCHW</span></span><br><span class="line">        <span class="keyword">return</span> loss, quantized, perplexity, encodings</span><br></pre></td></tr></tbody></table></figure><p>整个代码是比较清晰的。在初始化中根据传入参数初始化嵌入空间，并保存了commitment cost。commitment cost指的是VQ-VAE损失函数的第三项的权重<span class="math inline">\(\beta\)</span>。由论文可知，CodeBook的前向过程应该是输入编码器输出<span class="math inline">\(z_e(x)\)</span>，输出最近的隐变量<span class="math inline">\(z\)</span>。那么代码中inputs的shape应该为[batch_size，embedding_dim]，进而距离的计算过程就很自然了。其他见代码的注释部分。</p><p>接下来是seq2seq模型：</p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Model</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">        Build Seqence-to-Sequence.</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        Parameters:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        * `encoder`- encoder of seq2seq model. e.g. 2-layer transformer</span></span><br><span class="line"><span class="string">        * `decoder`- decoder of seq2seq model. e.g. GPT2</span></span><br><span class="line"><span class="string">        * `config`- configuration of encoder model. </span></span><br><span class="line"><span class="string">        * `args`- arguments.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, encoder,decoder,config,args</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(Model, self).__init__()</span><br><span class="line">        self.encoder = encoder</span><br><span class="line">        self.decoder=decoder</span><br><span class="line">        self.config=config</span><br><span class="line">        self.args=args</span><br><span class="line">        </span><br><span class="line">        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=<span class="literal">False</span>)      </span><br><span class="line">        self.codebook = CodeBook(args.z_size, config.n_embd,<span class="number">0.25</span>)  </span><br><span class="line">        self.codebook._embedding.weight.data.normal_(mean=<span class="number">0</span>,std=<span class="number">0.1</span>)</span><br><span class="line">        self.lsm = nn.LogSoftmax(dim=-<span class="number">1</span>)</span><br><span class="line">        self.lm_head.weight=self.decoder.wte.weight     </span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, event_ids,target_ids</span>):</span>   </span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">            Forward the VQ-VAE model.</span></span><br><span class="line"><span class="string">            Parameters:</span></span><br><span class="line"><span class="string">            * `event_ids`- event ids of examples</span></span><br><span class="line"><span class="string">            * `target_ids`- target ids of examples</span></span><br><span class="line"><span class="string">        """</span>  </span><br><span class="line">        input_ids=torch.cat((event_ids,target_ids),-<span class="number">1</span>)</span><br><span class="line">        <span class="comment">#obtain hidden of event+target by encoder</span></span><br><span class="line">        hidden_xy=self.encoder(input_ids,special=<span class="literal">True</span>)[<span class="number">0</span>][:,-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="comment">#obtain latent variable z by coodebook</span></span><br><span class="line">        vae_loss, z, perplexity, encoding=self.codebook(hidden_xy)</span><br><span class="line"></span><br><span class="line">        <span class="comment">#obtain hiddens of target </span></span><br><span class="line">        transformer_outputs=self.decoder(input_ids,z=z)</span><br><span class="line">        hidden_states = transformer_outputs[<span class="number">0</span>][:,-target_ids.size(<span class="number">1</span>):]</span><br><span class="line"></span><br><span class="line">        <span class="comment">#calculate loss</span></span><br><span class="line">        lm_logits = self.lm_head(hidden_states+z[:,<span class="literal">None</span>,:])</span><br><span class="line">        <span class="comment"># Shift so that tokens &lt; n predict n</span></span><br><span class="line">        active_loss = target_ids[..., <span class="number">1</span>:].ne(<span class="number">0</span>).view(-<span class="number">1</span>) == <span class="number">1</span> <span class="comment"># 将推理文本展平并得到非0位置的索引，用以计算loss</span></span><br><span class="line">        shift_logits = lm_logits[..., :-<span class="number">1</span>, :].contiguous() <span class="comment"># 去除末尾的EOS</span></span><br><span class="line">        shift_labels = target_ids[..., <span class="number">1</span>:].contiguous() <span class="comment"># </span></span><br><span class="line">        <span class="comment"># Flatten the tokens</span></span><br><span class="line">        loss_fct = CrossEntropyLoss(ignore_index=-<span class="number">1</span>)</span><br><span class="line">        loss = loss_fct(shift_logits.view(-<span class="number">1</span>, shift_logits.size(-<span class="number">1</span>))[active_loss],</span><br><span class="line">                        shift_labels.view(-<span class="number">1</span>)[active_loss])</span><br><span class="line"></span><br><span class="line">        outputs = (loss,vae_loss,perplexity),loss*active_loss.<span class="built_in">sum</span>(),active_loss.<span class="built_in">sum</span>(),encoding</span><br><span class="line">        <span class="keyword">return</span> outputs</span><br></pre></td></tr></tbody></table></figure><p>init方法比较简单，只是保存参数和新建codebook。前向过程也比较简单：训练阶段，seq2seq的输入是事件和推理文本的拼接，然后进行编码和解码（这里编码器为2层Transformer，解码器为预训练的GPT模型）。</p>]]></content>
+      
+      
       <categories>
-        <category>自然语言处理</category>
-        <category>seq2seq</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 文本生成 </category>
+          
       </categories>
-      <tags>
-        <tag>seq2seq</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>量子变分自编码器 VQ-VAE</title>
-    <url>/blog/2021/07/15/vq-vae/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>VQ-VAE（Vector Quantised - Variational AutoEncoder，量子变分自编码器）出自2017年Google团队的论文Neural Discrete Representation Learning。顾名思义，VQ-VAE是VAE（ Variational AutoEncoder，变分自编码器）的变种。主要是为了解决VAE所存在的”后验坍塌“问题。VQ-VAE与VAE的主要区别在于：</p>
-<ul>
-<li>隐变量是离散的，而非连续的</li>
-<li>先验分布是学习得来的，而非固定不变的</li>
-</ul>
-<span id="more"></span>
-<h2 id="研究动机与背景">研究动机与背景</h2>
-<h3 id="离散型隐变量">离散型隐变量</h3>
-<p>离散型隐变量对于某些任务是更为自然与恰当的，例如语言是由离散的字符组成的，图像的像素是0-255的自然数。然而，离散VAE往往难以训练，现有的训练方法无法弥补其与连续型VAE存在的性能上的差距。尽管连续型VAE会存在后验坍塌问题，但是由于从高斯分布中使用重参数化技巧采样隐变量，连续型VAE中能够获得方差更小，即更稳定的参数梯度。</p>
-<h3 id="自回归模型">自回归模型</h3>
-<p>自回归模型（<strong>A</strong>uto<strong>r</strong>egressive model）是一种处理时间序列的方法，使用<span class="math inline">\(x_1,x_2,\dots,x_{t-1}\)</span>来预测<span class="math inline">\(x_t\)</span>，并假设它们是线性关系。由于其使用<span class="math inline">\(x\)</span>本身来预测<span class="math inline">\(x\)</span>，因而得名为自回归模型。形式化来讲，自回归模型定义如下： <span class="math display">\[
-X_t=c+\sum_{i=1}^p\phi_iX_{t-i}+\epsilon_t
-\]</span> 其中，<span class="math inline">\(c\)</span>是常数项，<span class="math inline">\(\epsilon_t\)</span>假设为一个均值为0，标准差为<span class="math inline">\(\sigma\)</span>的随机误差。</p>
-<p>典型的自回归模型有循环神经网络（Recurrent Neural Network, RNN），PixelCNN等。下面以文中提到的PixelCNN为例进行介绍。</p>
-<p>PixelCNN是虽然是CNN，但它与传统的CNN不同，而是参考了RNN的思路，将图片扁平化为一维后，将其看成时间序列进行逐像素的生成。即： <span class="math display">\[
-\begin{align}
-p(x)&amp;=p(x_1,x_2,\dots,x_t)\\
-&amp;=p(x_1)p(x_2|x_1)\dots p(x_t|x_1,x_2,\dots,x_{t-1})
-\end{align}
-\]</span> 可以看到，符合上述的自回归模型的定义（令<span class="math inline">\(X_t=p(x_1,x_2,\dots,x_t)\)</span>）。</p>
-<h3 id="变分自编码器">变分自编码器</h3>
-<p>变分自编码器（Variational AutoEncoder，VAE）是一类重要的生成模型。由于篇幅原因这里只做简单介绍，后面可能会单独出一篇博客介绍。VAE假设存在一个无法观测的隐变量<span class="math inline">\(z\)</span>控制数据<span class="math inline">\(x\)</span>的生成，它主要由以下几部分组成：</p>
-<ul>
-<li>编码网络，拟合后验分布<span class="math inline">\(q(z|x)\)</span> ，将数据<span class="math inline">\(x\)</span>映射到连续隐变量<span class="math inline">\(z\)</span></li>
-<li>生成网络，拟合分布<span class="math inline">\(p(x|z)\)</span></li>
-<li>隐变量的先验分布<span class="math inline">\(p(z)\)</span></li>
-</ul>
-<p>在训练过程中，从<span class="math inline">\(q(z|x)\)</span>中采样隐变量<span class="math inline">\(z\)</span>来重构数据。在推理过程中，从<span class="math inline">\(p(z)\)</span>中采样隐变量来生成数据。</p>
-<h2 id="模型细节">模型细节</h2>
-<p>整体结构如下图所示：</p>
-<p><img src="model.png"></p>
-<h3 id="离散隐变量">离散隐变量</h3>
-<p>模型定义了一个<span class="math inline">\(K*D\)</span>的隐变量嵌入空间，其中<span class="math inline">\(K\)</span>为空间大小，<span class="math inline">\(D\)</span>为隐变量向量的维度。在得到编码网络的输出<span class="math inline">\(z_e(x)\)</span>后，通过<strong>最近邻算法</strong>将其映射为隐变量嵌入空间中的某个隐变量<span class="math inline">\(e_k\)</span>（简记为<span class="math inline">\(z\)</span>），投喂到解码器。后验分布<span class="math inline">\(q(z|x)\)</span>定义为如下的独热分布： <span class="math display">\[
-q(z=k|x) = \begin{cases}
-1 &amp;if\ k=\arg\min_j||z_e(x)-e_j|| , \\
-0 &amp; otherwise.
-\end{cases}
-\]</span> 进而： <span class="math display">\[
-z_q(x)=e_k, where\ k=\arg\min_j||z_e(x)-e_j||
-\]</span></p>
-<h3 id="梯度计算">梯度计算</h3>
-<p>注意到上述公式中的<span class="math inline">\(\arg\min\)</span>操作是无法求梯度的，这使得模型无法进行反向传播。VQ-VAE采取直通估计（straight-through estimator ）来解决这个问题。原论文中具体做法描述为<strong>”将解码器输入<span class="math inline">\(z_q(x)\)</span>的梯度复制到解码器的输出<span class="math inline">\(z_e(x)\)</span>“</strong>。对应上述结构图中的红线。</p>
-<h3 id="损失函数">损失函数</h3>
-<p>损失函数表示如下： <span class="math display">\[
-L=logp(x|z_q(x))+||sg[z_e(x)]-e||_2^2+\beta||z_e(x)-sg[e]||^2_2
-\]</span> 其中，<span class="math inline">\(sg\)</span>代表停止梯度，即反向传播时不再向前计算梯度。这个符号的含义我个人感觉论文解释的有点不清楚，可能需要对照代码进一步看一下。我目前的理解是，在前向传播的时候，sg是恒等式，即被忽略掉了，此时计算得到的loss是真正的loss。在反向传播时，sg部分的计算图相当于断开了，以<span class="math inline">\(||sg[z_e(x)]-e||_2^2\)</span>为例，前项传播时等价于<span class="math inline">\(||z_e(x)-e||_2^2\)</span>。反向传播时等价于<span class="math inline">\(||const-e||_2^2\)</span>，即将<span class="math inline">\(z_e(x)\)</span>看做常数，不对其进行优化。</p>
-<p>损失函数的各项含义解释如下：</p>
-<ul>
-<li>第一项为重构损失，用以训练编码器和解码器，个人感觉这里是不是少了个负号，这一部分是似然函数，按理说应该是要最大化的。</li>
-<li>第二项为L2范数损失函数。通过矢量量化（Vector Quantisation，VQ）学习嵌入空间的字典，即希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与最近邻算法得到的<span class="math inline">\(e\)</span>距离越近越好，用以优化嵌入空间。</li>
-<li>第三项为L2范数损失函数。与第二项的区别在于优化的是编码器。原论文中的说法是，由于嵌入空间是无量纲的，当仅存在第二项时，若<span class="math inline">\(e\)</span>的参数训练速度慢于编码器参数，会使得<span class="math inline">\(e\)</span>的参数向任意方向增长。</li>
-</ul>
-<p>第二项和第三项本质上都是希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与离散化隐变量<span class="math inline">\(e\)</span>相互接近，相较于<span class="math inline">\(||z_e(x)-e||_2^2\)</span>，个人理解这里的设计是为了控制二者的优化速度。如果希望编码器输出相对稳定，则调小<span class="math inline">\(\beta\)</span>，让嵌入空间更多地靠近编码器的输出，也可以反之。</p>
-<p>论文中实验发现<span class="math inline">\(\beta\)</span>从0.1-2.0都是非常鲁棒的，实验设置<span class="math inline">\(\beta=0.25\)</span>，可能意味着二者靠近的速度影响不大（这也更符合直观认知）。</p>
-<h3 id="先验分布pz">先验分布<span class="math inline">\(p(z)\)</span></h3>
-<p>先验分布<span class="math inline">\(p(z)\)</span>是个分类分布（categotical distribution），在训练过程中保持不变。在训练结束后，在隐变量<span class="math inline">\(z\)</span>上拟合一个自回归分布，即<span class="math inline">\(p(z)\)</span>，进而通过祖先采样（ancestral sampling）来生成<span class="math inline">\(x\)</span>。</p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="https://zh.wikipedia.org/wiki/自迴歸模型">自回归模型 - 维基百科，自由的百科全书 (wikipedia.org)</a></li>
-</ul>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> VQ-VAE </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>推理文本生成 | EA-VQ-VAE</title>
+      <link href="/blog/2021/07/16/ea-vq-vae/"/>
+      <url>/blog/2021/07/16/ea-vq-vae/</url>
+      
+        <content type="html"><![CDATA[<h2 id="题外话">题外话</h2><p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p><h2 id="简介">简介</h2><p>EA-VQ-VAE是微软团队于2020年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在ACL上。该文的主要工作是利用VQ-VAE进行推理文本生成。推理文本生成定义为，给定一个事件（例如“A偷看了B的日记”），从多个维度对该事件进行推断（“A的心理状态”，“A的目的”）。而EA-VQ-VAE中的EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p><span id="more"></span><h2 id="实现方法">实现方法</h2><p>下图展示了整个模型的流程：给定事件<span class="math inline">\(x\)</span>后，经过VQ-VAE将其映射为离散的隐变量<span class="math inline">\(z\)</span>，根据事件<span class="math inline">\(x\)</span>从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline">\(y\)</span>。下面逐项介绍模型的细节。</p><p><img src="model.png"></p><h3 id="vq-vae">VQ-VAE</h3><p>VQ-VAE的详细介绍可以看我的上一篇博客。论文使用的VQ-VAE与标准的VQ-VAE最主要的区别在于，普通的VQ-VAE生成是数据<span class="math inline">\(x\)</span>，而在推理文本生成任务中，生成的是以符合事件<span class="math inline">\(x\)</span>的推理文本<span class="math inline">\(y\)</span>，换而言之，这是一个<strong>条件模型</strong>，叫它VQ-CVAE可能更恰当一点。基于此，下面所述的后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>与先验分布<span class="math inline">\(p_\theta(z|x)\)</span>均与标准的VQ-VAE有所不同。</p><p>本文使用的VQ-VAE分为以下三个部分：</p><ul><li>codebook：对应VQ-VAE中的隐变量嵌入空间，只是换了个名字，同样是一张<span class="math inline">\(R^{k*d}\)</span>的表，由<span class="math inline">\(k\)</span>个维度为<span class="math inline">\(d\)</span>的隐变量组成</li><li>后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>：同样是一个独热分布，使用最近邻算法将编码器输出<span class="math inline">\(h_(x,y)\)</span>映射到最近的隐变量<span class="math inline">\(z'\)</span></li><li>先验分布<span class="math inline">\(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如RoBERTa）将事件编码为隐藏状态<span class="math inline">\(h\)</span>，，再将其映射为k个类别，即<span class="math inline">\(p_\theta(z|x)=softmax(hW_k)\)</span></li></ul><h3 id="证据的检索与选择">证据的检索与选择</h3><p>去除事件中的停用词后，在大规模文本语料中使用Elastic Search引擎检索事件，并选取前K个得分最高的句子。论文使用的语料库基于BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p><p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline">\(x\)</span>与推理文本<span class="math inline">\(y\)</span>均已知，例如给定事件“A读了B的日记”，与推理文本“A感到很愧疚”，那么证据“A偷了B的日记”就比“B把日记给A看”更合理，此时我们想要建模的就是<span class="math inline">\(q(c|x,y)\)</span>（c代表事件上下文，即证据）与<span class="math inline">\(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline">\(p(c|z)\)</span>,而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span>代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用Transformer将其编码为向量<span class="math inline">\(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span>与<span class="math inline">\(q_\phi(z|x,y)\)</span>类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即： <span class="math display">\[p_s(c_k|z)=\begin{cases}1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\0 &amp;otherwise\end{cases}\]</span></p><p><span class="math display">\[c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2\]</span></p><p>值得注意的是，作者没有使用注意力机制得到的“软”分布，而是借鉴VQ-VAE，采用了一种独热分布将<span class="math inline">\(z\)</span>映射到最近的<span class="math inline">\(c\)</span>。这样的优点是一定程度上降低了学习的难度，由于<span class="math inline">\(z\)</span>与<span class="math inline">\(c\)</span>处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p><h3 id="解码器">解码器</h3><p>解码器使用的是预训练的GPT-2，是一个基于Transformer的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下GPT家族。</p><h2 id="训练过程">训练过程</h2><p>首先单独训练VQ-VAE与codebook，再训练基于后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>的证据感知解码器。</p><h3 id="vq-vae-1">VQ-VAE</h3><p>首先只根据隐变量<span class="math inline">\(z\)</span>重构推理文本<span class="math inline">\(y\)</span>，损失函数与VQ-VAE损失函数类似： <span class="math display">\[loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||_2^2+\beta||h_{(x,y)}-sg[z]||_2^2\]</span></p><p>真实的先验分布可以使用频率近似（<span class="math inline">\(N_{(x)}\)</span>代表包含<span class="math inline">\(x\)</span>事件的数据数量）： <span class="math display">\[p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}\]</span> 通过KL散度来优化先验分布<span class="math inline">\(p_\theta(z|x)\)</span>: <span class="math display">\[loss_{prior}=KL(p(z|x)||p_\theta(z|x))\]</span></p><p>不过这里为什么不像CVAE一样，直接优化后验分布与先验分布间的KL散度，暂时还不是很理解。</p><h3 id="证据感知解码器">证据感知解码器</h3><p>这一部分通过最大化边际似然进行训练： <span class="math display">\[\begin{align}logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\&amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')\end{align}\]</span> 然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline">\(z'\)</span>最近的<span class="math inline">\(c_{z'}\)</span>不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline">\(c\)</span>，损失函数中应该还有一项是<span class="math inline">\(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法： <span class="math display">\[R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))\]</span></p><p><span class="math display">\[\begin{align}logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\&amp;=logp_m(y|x,c_{z'})-R|||h_{c_{z'}}-z'||_2^2\end{align}\]</span> 其中，<span class="math inline">\(\delta(x)\)</span>当x大于0时为1，否则为-1。<span class="math inline">\(c_r\)</span>为随机选取的与<span class="math inline">\(c_{z'}\)</span>不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当<span class="math inline">\(R\)</span>为正时，<span class="math inline">\(logp(y|x)\)</span>会更大，进而激励模型选择正确的证据。</p><h2 id="个案研究">个案研究</h2><p><img src="case.png"></p>]]></content>
+      
+      
       <categories>
-        <category>生成模型</category>
-        <category>VAE</category>
+          
+          <category> 自然语言处理 </category>
+          
+          <category> 文本生成 </category>
+          
       </categories>
-      <tags>
-        <tag>VQ-VAE</tag>
-        <tag>论文</tag>
-      </tags>
-  </entry>
+      
+      
+        <tags>
+            
+            <tag> VQ-VAE </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>量子变分自编码器 VQ-VAE</title>
+      <link href="/blog/2021/07/15/vq-vae/"/>
+      <url>/blog/2021/07/15/vq-vae/</url>
+      
+        <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>VQ-VAE（Vector Quantised - Variational AutoEncoder，量子变分自编码器）出自2017年Google团队的论文Neural Discrete Representation Learning。顾名思义，VQ-VAE是VAE（ Variational AutoEncoder，变分自编码器）的变种。主要是为了解决VAE所存在的”后验坍塌“问题。VQ-VAE与VAE的主要区别在于：</p><ul><li>隐变量是离散的，而非连续的</li><li>先验分布是学习得来的，而非固定不变的</li></ul><span id="more"></span><h2 id="研究动机与背景">研究动机与背景</h2><h3 id="离散型隐变量">离散型隐变量</h3><p>离散型隐变量对于某些任务是更为自然与恰当的，例如语言是由离散的字符组成的，图像的像素是0-255的自然数。然而，离散VAE往往难以训练，现有的训练方法无法弥补其与连续型VAE存在的性能上的差距。尽管连续型VAE会存在后验坍塌问题，但是由于从高斯分布中使用重参数化技巧采样隐变量，连续型VAE中能够获得方差更小，即更稳定的参数梯度。</p><h3 id="自回归模型">自回归模型</h3><p>自回归模型（<strong>A</strong>uto<strong>r</strong>egressive model）是一种处理时间序列的方法，使用<span class="math inline">\(x_1,x_2,\dots,x_{t-1}\)</span>来预测<span class="math inline">\(x_t\)</span>，并假设它们是线性关系。由于其使用<span class="math inline">\(x\)</span>本身来预测<span class="math inline">\(x\)</span>，因而得名为自回归模型。形式化来讲，自回归模型定义如下： <span class="math display">\[X_t=c+\sum_{i=1}^p\phi_iX_{t-i}+\epsilon_t\]</span> 其中，<span class="math inline">\(c\)</span>是常数项，<span class="math inline">\(\epsilon_t\)</span>假设为一个均值为0，标准差为<span class="math inline">\(\sigma\)</span>的随机误差。</p><p>典型的自回归模型有循环神经网络（Recurrent Neural Network, RNN），PixelCNN等。下面以文中提到的PixelCNN为例进行介绍。</p><p>PixelCNN是虽然是CNN，但它与传统的CNN不同，而是参考了RNN的思路，将图片扁平化为一维后，将其看成时间序列进行逐像素的生成。即： <span class="math display">\[\begin{align}p(x)&amp;=p(x_1,x_2,\dots,x_t)\\&amp;=p(x_1)p(x_2|x_1)\dots p(x_t|x_1,x_2,\dots,x_{t-1})\end{align}\]</span> 可以看到，符合上述的自回归模型的定义（令<span class="math inline">\(X_t=p(x_1,x_2,\dots,x_t)\)</span>）。</p><h3 id="变分自编码器">变分自编码器</h3><p>变分自编码器（Variational AutoEncoder，VAE）是一类重要的生成模型。由于篇幅原因这里只做简单介绍，后面可能会单独出一篇博客介绍。VAE假设存在一个无法观测的隐变量<span class="math inline">\(z\)</span>控制数据<span class="math inline">\(x\)</span>的生成，它主要由以下几部分组成：</p><ul><li>编码网络，拟合后验分布<span class="math inline">\(q(z|x)\)</span> ，将数据<span class="math inline">\(x\)</span>映射到连续隐变量<span class="math inline">\(z\)</span></li><li>生成网络，拟合分布<span class="math inline">\(p(x|z)\)</span></li><li>隐变量的先验分布<span class="math inline">\(p(z)\)</span></li></ul><p>在训练过程中，从<span class="math inline">\(q(z|x)\)</span>中采样隐变量<span class="math inline">\(z\)</span>来重构数据。在推理过程中，从<span class="math inline">\(p(z)\)</span>中采样隐变量来生成数据。</p><h2 id="模型细节">模型细节</h2><p>整体结构如下图所示：</p><p><img src="model.png"></p><h3 id="离散隐变量">离散隐变量</h3><p>模型定义了一个<span class="math inline">\(K*D\)</span>的隐变量嵌入空间，其中<span class="math inline">\(K\)</span>为空间大小，<span class="math inline">\(D\)</span>为隐变量向量的维度。在得到编码网络的输出<span class="math inline">\(z_e(x)\)</span>后，通过<strong>最近邻算法</strong>将其映射为隐变量嵌入空间中的某个隐变量<span class="math inline">\(e_k\)</span>（简记为<span class="math inline">\(z\)</span>），投喂到解码器。后验分布<span class="math inline">\(q(z|x)\)</span>定义为如下的独热分布： <span class="math display">\[q(z=k|x) = \begin{cases}1 &amp;if\ k=\arg\min_j||z_e(x)-e_j|| , \\0 &amp; otherwise.\end{cases}\]</span> 进而： <span class="math display">\[z_q(x)=e_k, where\ k=\arg\min_j||z_e(x)-e_j||\]</span></p><h3 id="梯度计算">梯度计算</h3><p>注意到上述公式中的<span class="math inline">\(\arg\min\)</span>操作是无法求梯度的，这使得模型无法进行反向传播。VQ-VAE采取直通估计（straight-through estimator ）来解决这个问题。原论文中具体做法描述为<strong>”将解码器输入<span class="math inline">\(z_q(x)\)</span>的梯度复制到解码器的输出<span class="math inline">\(z_e(x)\)</span>“</strong>。对应上述结构图中的红线。</p><h3 id="损失函数">损失函数</h3><p>损失函数表示如下： <span class="math display">\[L=logp(x|z_q(x))+||sg[z_e(x)]-e||_2^2+\beta||z_e(x)-sg[e]||^2_2\]</span> 其中，<span class="math inline">\(sg\)</span>代表停止梯度，即反向传播时不再向前计算梯度。这个符号的含义我个人感觉论文解释的有点不清楚，可能需要对照代码进一步看一下。我目前的理解是，在前向传播的时候，sg是恒等式，即被忽略掉了，此时计算得到的loss是真正的loss。在反向传播时，sg部分的计算图相当于断开了，以<span class="math inline">\(||sg[z_e(x)]-e||_2^2\)</span>为例，前项传播时等价于<span class="math inline">\(||z_e(x)-e||_2^2\)</span>。反向传播时等价于<span class="math inline">\(||const-e||_2^2\)</span>，即将<span class="math inline">\(z_e(x)\)</span>看做常数，不对其进行优化。</p><p>损失函数的各项含义解释如下：</p><ul><li>第一项为重构损失，用以训练编码器和解码器，个人感觉这里是不是少了个负号，这一部分是似然函数，按理说应该是要最大化的。</li><li>第二项为L2范数损失函数。通过矢量量化（Vector Quantisation，VQ）学习嵌入空间的字典，即希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与最近邻算法得到的<span class="math inline">\(e\)</span>距离越近越好，用以优化嵌入空间。</li><li>第三项为L2范数损失函数。与第二项的区别在于优化的是编码器。原论文中的说法是，由于嵌入空间是无量纲的，当仅存在第二项时，若<span class="math inline">\(e\)</span>的参数训练速度慢于编码器参数，会使得<span class="math inline">\(e\)</span>的参数向任意方向增长。</li></ul><p>第二项和第三项本质上都是希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与离散化隐变量<span class="math inline">\(e\)</span>相互接近，相较于<span class="math inline">\(||z_e(x)-e||_2^2\)</span>，个人理解这里的设计是为了控制二者的优化速度。如果希望编码器输出相对稳定，则调小<span class="math inline">\(\beta\)</span>，让嵌入空间更多地靠近编码器的输出，也可以反之。</p><p>论文中实验发现<span class="math inline">\(\beta\)</span>从0.1-2.0都是非常鲁棒的，实验设置<span class="math inline">\(\beta=0.25\)</span>，可能意味着二者靠近的速度影响不大（这也更符合直观认知）。</p><h3 id="先验分布pz">先验分布<span class="math inline">\(p(z)\)</span></h3><p>先验分布<span class="math inline">\(p(z)\)</span>是个分类分布（categotical distribution），在训练过程中保持不变。在训练结束后，在隐变量<span class="math inline">\(z\)</span>上拟合一个自回归分布，即<span class="math inline">\(p(z)\)</span>，进而通过祖先采样（ancestral sampling）来生成<span class="math inline">\(x\)</span>。</p><h2 id="参考">参考</h2><ul><li><a href="https://zh.wikipedia.org/wiki/自迴歸模型">自回归模型 - 维基百科，自由的百科全书 (wikipedia.org)</a></li></ul>]]></content>
+      
+      
+      <categories>
+          
+          <category> 生成模型 </category>
+          
+          <category> VAE </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> VQ-VAE </tag>
+            
+            <tag> 论文 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+  
+  
 </search>
