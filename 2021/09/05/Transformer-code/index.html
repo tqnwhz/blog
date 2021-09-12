@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/home.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/home.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tqnwhz.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介 今天来读一下《Attention is All You Need》的代码，也就是Transformer。pytorch代码[地址](jadore801120&#x2F;attention-is-all-you-need-pytorch: A PyTorch implementation of the Transformer model in &quot;Attention is All You Need&quot;. (">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformer-code">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2021/09/05/Transformer-code/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 今天来读一下《Attention is All You Need》的代码，也就是Transformer。pytorch代码[地址](jadore801120&#x2F;attention-is-all-you-need-pytorch: A PyTorch implementation of the Transformer model in &quot;Attention is All You Need&quot;. (">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-05T08:47:01.000Z">
+<meta property="article:modified_time" content="2021-09-12T13:50:26.396Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="代码">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2021/09/05/Transformer-code/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Transformer-code | 一隅</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">一隅</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2021/09/05/Transformer-code/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Transformer-code
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-05 16:47:01" itemprop="dateCreated datePublished" datetime="2021-09-05T16:47:01+08:00">2021-09-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-12 21:50:26" itemprop="dateModified" datetime="2021-09-12T21:50:26+08:00">2021-09-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/Transformer/" itemprop="url" rel="index"><span itemprop="name">Transformer</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="far fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>23 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介">简介</h2>
+<p>今天来读一下《<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">Attention is All You Need</a>》的代码，也就是Transformer。pytorch代码[地址](<a target="_blank" rel="noopener" href="https://github.com/jadore801120/attention-is-all-you-need-pytorch">jadore801120/attention-is-all-you-need-pytorch: A PyTorch implementation of the Transformer model in "Attention is All You Need". (github.com)</a>)。</p>
+<span id="more"></span>
+<h2 id="目录结构">目录结构</h2>
+<p>Transformer文件夹下有以下文件：</p>
+<ul>
+<li>Constants.py：模型常量定义</li>
+<li>Layers.py：编码器和解码器层定义</li>
+<li>Models.py：模型定义</li>
+<li>Modules.py：工具模块</li>
+<li>Optim.py：优化模块</li>
+<li>SubLayer.py：多头注意力机制等子层</li>
+<li>Translator.py：翻译beam search</li>
+</ul>
+<p>顶层目录下有以下文件：</p>
+<ul>
+<li>train.py：训练入口，实例化模型、优化器等，进行优化迭代</li>
+<li>learn_bpe.py：bpe学习词表</li>
+<li>apply_bpe.py：使用bpe得到的词表将文本进行编码</li>
+<li>translate.py：加载模型进行翻译</li>
+</ul>
+<p>下面逐一进行分析模型相关文件，剩下的文件等到下次再读吧。</p>
+<h2 id="模型解析">模型解析</h2>
+<p>下面按照依赖顺序对各文件进行解析。</p>
+<h3 id="constants.py">Constants.py</h3>
+<p>文件内容非常简单，分别为填充、未知、起始、终止四种token的定义。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PAD_WORD = <span class="string">'&lt;blank&gt;'</span> <span class="comment"># 填充token</span></span><br><span class="line">UNK_WORD = <span class="string">'&lt;unk&gt;'</span> <span class="comment"># 未知token</span></span><br><span class="line">BOS_WORD = <span class="string">'&lt;s&gt;'</span> <span class="comment"># 起始token</span></span><br><span class="line">EOS_WORD = <span class="string">'&lt;/s&gt;'</span> <span class="comment"># 结束token</span></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="modules.py">Modules.py</h3>
+<p>定义了标量化点乘注意力机制类。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ScaledDotProductAttention</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' Scaled Dot-Product Attention '''</span></span><br><span class="line">	</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, temperature, attn_dropout=<span class="number">0.1</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        self.temperature = temperature <span class="comment"># softmax的温度系数，论文中为\sqrt d_k</span></span><br><span class="line">        self.dropout = nn.Dropout(attn_dropout) <span class="comment"># 原论文dropout比例即为0.1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, q, k, v, mask=<span class="literal">None</span></span>):</span></span><br><span class="line">		<span class="string">'''</span></span><br><span class="line"><span class="string">		q,k:  bsz x n_head x lq  x d_k</span></span><br><span class="line"><span class="string">		v: bsz x n_head x lq x d_v</span></span><br><span class="line"><span class="string">		'''</span></span><br><span class="line">        attn = torch.matmul(q / self.temperature, k.transpose(<span class="number">2</span>, <span class="number">3</span>)) </span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> mask <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            attn = attn.masked_fill(mask == <span class="number">0</span>, -<span class="number">1e9</span>) <span class="comment"># 填充位置的注意力掩码，避免信息泄露等问题</span></span><br><span class="line"></span><br><span class="line">        attn = self.dropout(F.softmax(attn, dim=-<span class="number">1</span>)) <span class="comment"># 注意力的dropout</span></span><br><span class="line">        output = torch.matmul(attn, v) </span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> output, attn</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="sublayers.py">SubLayers.py</h3>
+<p>多头注意力机制定义：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MultiHeadAttention</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' Multi-Head Attention module '''</span></span><br><span class="line">	<span class="string">'''</span></span><br><span class="line"><span class="string">	n_head：注意力头数</span></span><br><span class="line"><span class="string">	d_model：词嵌入向量维度</span></span><br><span class="line"><span class="string">	d_k：query,key向量维度</span></span><br><span class="line"><span class="string">	d_v：value向量维度，d_v*n_head即为注意力输出的维度</span></span><br><span class="line"><span class="string">	'''</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, n_head, d_model, d_k, d_v, dropout=<span class="number">0.1</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line"></span><br><span class="line">        self.n_head = n_head</span><br><span class="line">        self.d_k = d_k</span><br><span class="line">        self.d_v = d_v</span><br><span class="line">		<span class="comment"># query key value 矩阵</span></span><br><span class="line">        self.w_qs = nn.Linear(d_model, n_head * d_k, bias=<span class="literal">False</span>)</span><br><span class="line">        self.w_ks = nn.Linear(d_model, n_head * d_k, bias=<span class="literal">False</span>)</span><br><span class="line">        self.w_vs = nn.Linear(d_model, n_head * d_v, bias=<span class="literal">False</span>)</span><br><span class="line">        self.fc = nn.Linear(n_head * d_v, d_model, bias=<span class="literal">False</span>) <span class="comment">#全连接层</span></span><br><span class="line"></span><br><span class="line">        self.attention = ScaledDotProductAttention(temperature=d_k ** <span class="number">0.5</span>) <span class="comment">#注意力计算</span></span><br><span class="line"></span><br><span class="line">        self.dropout = nn.Dropout(dropout)</span><br><span class="line">        self.layer_norm = nn.LayerNorm(d_model, eps=<span class="number">1e-6</span>) <span class="comment"># 层标准化</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, q, k, v, mask=<span class="literal">None</span></span>):</span></span><br><span class="line"></span><br><span class="line">        d_k, d_v, n_head = self.d_k, self.d_v, self.n_head</span><br><span class="line">        sz_b, len_q, len_k, len_v = q.size(<span class="number">0</span>), q.size(<span class="number">1</span>), k.size(<span class="number">1</span>), v.size(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        residual = q</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Pass through the pre-attention projection: b x lq x (n*dv)</span></span><br><span class="line">        <span class="comment"># Separate different heads: b x lq x n x dv</span></span><br><span class="line">        q = self.w_qs(q).view(sz_b, len_q, n_head, d_k)</span><br><span class="line">        k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)</span><br><span class="line">        v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Transpose for attention dot product: b x n x lq x dv</span></span><br><span class="line">        q, k, v = q.transpose(<span class="number">1</span>, <span class="number">2</span>), k.transpose(<span class="number">1</span>, <span class="number">2</span>), v.transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> mask <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            mask = mask.unsqueeze(<span class="number">1</span>)   <span class="comment"># For head axis broadcasting.</span></span><br><span class="line">	    <span class="comment"># q为注意力的输出</span></span><br><span class="line">        q, attn = self.attention(q, k, v, mask=mask)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Transpose to move the head dimension back: b x lq x n x dv</span></span><br><span class="line">        <span class="comment"># Combine the last two dimensions to concatenate all the heads together: b x lq x (n*dv)</span></span><br><span class="line">        q = q.transpose(<span class="number">1</span>, <span class="number">2</span>).contiguous().view(sz_b, len_q, -<span class="number">1</span>)</span><br><span class="line">        q = self.dropout(self.fc(q))</span><br><span class="line">        q += residual</span><br><span class="line"></span><br><span class="line">        q = self.layer_norm(q)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> q, attn</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>前馈神经网络子层、残差层定义：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PositionwiseFeedForward</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' A two-feed-forward-layer module '''</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, d_in, d_hid, dropout=<span class="number">0.1</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        self.w_1 = nn.Linear(d_in, d_hid) <span class="comment"># position-wise</span></span><br><span class="line">        self.w_2 = nn.Linear(d_hid, d_in) <span class="comment"># position-wise</span></span><br><span class="line">        self.layer_norm = nn.LayerNorm(d_in, eps=<span class="number">1e-6</span>)</span><br><span class="line">        self.dropout = nn.Dropout(dropout)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x</span>):</span></span><br><span class="line"></span><br><span class="line">        residual = x</span><br><span class="line"></span><br><span class="line">        x = self.w_2(F.relu(self.w_1(x)))</span><br><span class="line">        x = self.dropout(x)</span><br><span class="line">        x += residual <span class="comment"># 残差计算</span></span><br><span class="line"></span><br><span class="line">        x = self.layer_norm(x)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="layers.py">Layers.py</h3>
+<p>编码器层类（非常简单，将多头注意力机制与前馈神经网络拼接起来即可）：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">''' Define the Layers '''</span></span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> transformer.SubLayers <span class="keyword">import</span> MultiHeadAttention, PositionwiseFeedForward</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EncoderLayer</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' Compose with two layers '''</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, d_model, d_inner, n_head, d_k, d_v, dropout=<span class="number">0.1</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>(EncoderLayer, self).__init__()</span><br><span class="line">        self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)</span><br><span class="line">        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, enc_input, slf_attn_mask=<span class="literal">None</span></span>):</span></span><br><span class="line">        enc_output, enc_slf_attn = self.slf_attn(</span><br><span class="line">            enc_input, enc_input, enc_input, mask=slf_attn_mask)</span><br><span class="line">        enc_output = self.pos_ffn(enc_output)</span><br><span class="line">        <span class="keyword">return</span> enc_output, enc_slf_attn</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>解码器层类：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DecoderLayer</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' Compose with three layers '''</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, d_model, d_inner, n_head, d_k, d_v, dropout=<span class="number">0.1</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>(DecoderLayer, self).__init__()</span><br><span class="line">        self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)</span><br><span class="line">        self.enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout) <span class="comment"># 解码器对编码器输出的注意力</span></span><br><span class="line">        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">            self, dec_input, enc_output,</span></span></span><br><span class="line"><span class="params"><span class="function">            slf_attn_mask=<span class="literal">None</span>, dec_enc_attn_mask=<span class="literal">None</span></span>):</span></span><br><span class="line">        dec_output, dec_slf_attn = self.slf_attn(</span><br><span class="line">            dec_input, dec_input, dec_input, mask=slf_attn_mask) <span class="comment"># 解码器的自注意力</span></span><br><span class="line">        dec_output, dec_enc_attn = self.enc_attn(</span><br><span class="line">            dec_output, enc_output, enc_output, mask=dec_enc_attn_mask) <span class="comment"># 解码器对编码器输出的注意力</span></span><br><span class="line">        dec_output = self.pos_ffn(dec_output) <span class="comment"># 前馈神经网络</span></span><br><span class="line">        <span class="keyword">return</span> dec_output, dec_slf_attn, dec_enc_attn</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="models.py">Models.py</h3>
+<p>Models.py是模型定义核心文件。</p>
+<p>工具函数：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_pad_mask</span>(<span class="params">seq, pad_idx</span>):</span> <span class="comment"># 获取序列的MASK（填充位置为0）</span></span><br><span class="line">    <span class="keyword">return</span> (seq != pad_idx).unsqueeze(-<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_subsequent_mask</span>(<span class="params">seq</span>):</span> <span class="comment"># 获取序列的所有MASK（长度为1,2,...n）</span></span><br><span class="line">    <span class="string">''' For masking out the subsequent info. '''</span></span><br><span class="line">    sz_b, len_s = seq.size()</span><br><span class="line">    subsequent_mask = (<span class="number">1</span> - torch.triu(</span><br><span class="line">        torch.ones((<span class="number">1</span>, len_s, len_s), device=seq.device), diagonal=<span class="number">1</span>)).<span class="built_in">bool</span>()</span><br><span class="line">    <span class="keyword">return</span> subsequent_mask</span><br></pre></td></tr></tbody></table></figure>
+<p>位置编码：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PositionalEncoding</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, d_hid, n_position=<span class="number">200</span></span>):</span></span><br><span class="line">        <span class="built_in">super</span>(PositionalEncoding, self).__init__()</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Not a parameter</span></span><br><span class="line">        <span class="comment"># 成员变量无法保存在模型参数中且无法通过.cuda()转移到gpu上，register_buffer注册后则可以</span></span><br><span class="line">        self.register_buffer(<span class="string">'pos_table'</span>, self._get_sinusoid_encoding_table(n_position, d_hid))</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_get_sinusoid_encoding_table</span>(<span class="params">self, n_position, d_hid</span>):</span></span><br><span class="line">        <span class="string">''' Sinusoid position encoding table '''</span></span><br><span class="line">        <span class="comment"># <span class="doctag">TODO:</span> make it with torch instead of numpy</span></span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">get_position_angle_vec</span>(<span class="params">position</span>):</span></span><br><span class="line">            <span class="keyword">return</span> [position / np.power(<span class="number">10000</span>, <span class="number">2</span> * (hid_j // <span class="number">2</span>) / d_hid) <span class="keyword">for</span> hid_j <span class="keyword">in</span> <span class="built_in">range</span>(d_hid)]</span><br><span class="line"></span><br><span class="line">        sinusoid_table = np.array([get_position_angle_vec(pos_i) <span class="keyword">for</span> pos_i <span class="keyword">in</span> <span class="built_in">range</span>(n_position)])</span><br><span class="line">        sinusoid_table[:, <span class="number">0</span>::<span class="number">2</span>] = np.sin(sinusoid_table[:, <span class="number">0</span>::<span class="number">2</span>])  <span class="comment"># dim 2i</span></span><br><span class="line">        sinusoid_table[:, <span class="number">1</span>::<span class="number">2</span>] = np.cos(sinusoid_table[:, <span class="number">1</span>::<span class="number">2</span>])  <span class="comment"># dim 2i+1</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> torch.FloatTensor(sinusoid_table).unsqueeze(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        <span class="keyword">return</span> x + self.pos_table[:, :x.size(<span class="number">1</span>)].clone().detach()</span><br></pre></td></tr></tbody></table></figure>
+<p>Transformer编码器：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Encoder</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' A encoder model with self attention mechanism. '''</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">            self, n_src_vocab, d_word_vec, n_layers, n_head, d_k, d_v,</span></span></span><br><span class="line"><span class="params"><span class="function">            d_model, d_inner, pad_idx, dropout=<span class="number">0.1</span>, n_position=<span class="number">200</span>, scale_emb=<span class="literal">False</span></span>):</span></span><br><span class="line"></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line"></span><br><span class="line">        self.src_word_emb = nn.Embedding(n_src_vocab, d_word_vec, padding_idx=pad_idx) <span class="comment"># 词嵌入表</span></span><br><span class="line">        self.position_enc = PositionalEncoding(d_word_vec, n_position=n_position)</span><br><span class="line">        self.dropout = nn.Dropout(p=dropout)</span><br><span class="line">        self.layer_stack = nn.ModuleList([</span><br><span class="line">            EncoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout) <span class="comment"># 编码网络</span></span><br><span class="line">            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(n_layers)])</span><br><span class="line">        self.layer_norm = nn.LayerNorm(d_model, eps=<span class="number">1e-6</span>)</span><br><span class="line">        self.scale_emb = scale_emb</span><br><span class="line">        self.d_model = d_model</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, src_seq, src_mask, return_attns=<span class="literal">False</span></span>):</span></span><br><span class="line"></span><br><span class="line">        enc_slf_attn_list = []</span><br><span class="line"></span><br><span class="line">        <span class="comment"># -- Forward</span></span><br><span class="line">        enc_output = self.src_word_emb(src_seq)</span><br><span class="line">        <span class="keyword">if</span> self.scale_emb:</span><br><span class="line">            enc_output *= self.d_model ** <span class="number">0.5</span></span><br><span class="line">        enc_output = self.dropout(self.position_enc(enc_output))</span><br><span class="line">        enc_output = self.layer_norm(enc_output)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> enc_layer <span class="keyword">in</span> self.layer_stack: <span class="comment"># 编码网络</span></span><br><span class="line">            enc_output, enc_slf_attn = enc_layer(enc_output, slf_attn_mask=src_mask)</span><br><span class="line">            enc_slf_attn_list += [enc_slf_attn] <span class="keyword">if</span> return_attns <span class="keyword">else</span> []</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> return_attns:</span><br><span class="line">            <span class="keyword">return</span> enc_output, enc_slf_attn_list</span><br><span class="line">        <span class="keyword">return</span> enc_output,</span><br></pre></td></tr></tbody></table></figure>
+<p>Transformer解码器：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Decoder</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' A decoder model with self attention mechanism. '''</span></span><br><span class="line">	<span class="string">'''</span></span><br><span class="line"><span class="string">		与编码器类似</span></span><br><span class="line"><span class="string">	'''</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">            self, n_trg_vocab, d_word_vec, n_layers, n_head, d_k, d_v,</span></span></span><br><span class="line"><span class="params"><span class="function">            d_model, d_inner, pad_idx, n_position=<span class="number">200</span>, dropout=<span class="number">0.1</span>, scale_emb=<span class="literal">False</span></span>):</span></span><br><span class="line"></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line"></span><br><span class="line">        self.trg_word_emb = nn.Embedding(n_trg_vocab, d_word_vec, padding_idx=pad_idx)</span><br><span class="line">        self.position_enc = PositionalEncoding(d_word_vec, n_position=n_position)</span><br><span class="line">        self.dropout = nn.Dropout(p=dropout)</span><br><span class="line">        self.layer_stack = nn.ModuleList([</span><br><span class="line">            DecoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)</span><br><span class="line">            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(n_layers)])</span><br><span class="line">        self.layer_norm = nn.LayerNorm(d_model, eps=<span class="number">1e-6</span>)</span><br><span class="line">        self.scale_emb = scale_emb</span><br><span class="line">        self.d_model = d_model</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, trg_seq, trg_mask, enc_output, src_mask, return_attns=<span class="literal">False</span></span>):</span></span><br><span class="line"></span><br><span class="line">        dec_slf_attn_list, dec_enc_attn_list = [], []</span><br><span class="line"></span><br><span class="line">        <span class="comment"># -- Forward</span></span><br><span class="line">        dec_output = self.trg_word_emb(trg_seq)</span><br><span class="line">        <span class="keyword">if</span> self.scale_emb:</span><br><span class="line">            dec_output *= self.d_model ** <span class="number">0.5</span> <span class="comment"># Transformer论文中的trick，对词嵌入向量进行放大</span></span><br><span class="line">        dec_output = self.dropout(self.position_enc(dec_output))</span><br><span class="line">        dec_output = self.layer_norm(dec_output)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> dec_layer <span class="keyword">in</span> self.layer_stack:</span><br><span class="line">            dec_output, dec_slf_attn, dec_enc_attn = dec_layer(</span><br><span class="line">                dec_output, enc_output, slf_attn_mask=trg_mask, dec_enc_attn_mask=src_mask)</span><br><span class="line">            dec_slf_attn_list += [dec_slf_attn] <span class="keyword">if</span> return_attns <span class="keyword">else</span> []</span><br><span class="line">            dec_enc_attn_list += [dec_enc_attn] <span class="keyword">if</span> return_attns <span class="keyword">else</span> []</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> return_attns:</span><br><span class="line">            <span class="keyword">return</span> dec_output, dec_slf_attn_list, dec_enc_attn_list</span><br><span class="line">        <span class="keyword">return</span> dec_output,</span><br></pre></td></tr></tbody></table></figure>
+<p>Transformer：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Transformer</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="string">''' A sequence to sequence model with attention mechanism. '''</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">            self, n_src_vocab, n_trg_vocab, src_pad_idx, trg_pad_idx,</span></span></span><br><span class="line"><span class="params"><span class="function">            d_word_vec=<span class="number">512</span>, d_model=<span class="number">512</span>, d_inner=<span class="number">2048</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">            n_layers=<span class="number">6</span>, n_head=<span class="number">8</span>, d_k=<span class="number">64</span>, d_v=<span class="number">64</span>, dropout=<span class="number">0.1</span>, n_position=<span class="number">200</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">            trg_emb_prj_weight_sharing=<span class="literal">True</span>, emb_src_trg_weight_sharing=<span class="literal">True</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">            scale_emb_or_prj=<span class="string">'prj'</span></span>):</span></span><br><span class="line"></span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line"></span><br><span class="line">        self.src_pad_idx, self.trg_pad_idx = src_pad_idx, trg_pad_idx</span><br><span class="line"></span><br><span class="line">        <span class="comment"># In section 3.4 of paper "Attention Is All You Need", there is such detail:</span></span><br><span class="line">        <span class="comment"># "In our model, we share the same weight matrix between the two</span></span><br><span class="line">        <span class="comment"># embedding layers and the pre-softmax linear transformation...</span></span><br><span class="line">        <span class="comment"># In the embedding layers, we multiply those weights by \sqrt{d_model}".</span></span><br><span class="line">        <span class="comment">#</span></span><br><span class="line">        <span class="comment"># Options here:</span></span><br><span class="line">        <span class="comment">#   'emb': multiply \sqrt{d_model} to embedding output</span></span><br><span class="line">        <span class="comment">#   'prj': multiply (\sqrt{d_model} ^ -1) to linear projection output</span></span><br><span class="line">        <span class="comment">#   'none': no multiplication</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">assert</span> scale_emb_or_prj <span class="keyword">in</span> [<span class="string">'emb'</span>, <span class="string">'prj'</span>, <span class="string">'none'</span>]</span><br><span class="line">        scale_emb = (scale_emb_or_prj == <span class="string">'emb'</span>) <span class="keyword">if</span> trg_emb_prj_weight_sharing <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line">        self.scale_prj = (scale_emb_or_prj == <span class="string">'prj'</span>) <span class="keyword">if</span> trg_emb_prj_weight_sharing <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line">        self.d_model = d_model</span><br><span class="line"></span><br><span class="line">        self.encoder = Encoder(</span><br><span class="line">            n_src_vocab=n_src_vocab, n_position=n_position,</span><br><span class="line">            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,</span><br><span class="line">            n_layers=n_layers, n_head=n_head, d_k=d_k, d_v=d_v,</span><br><span class="line">            pad_idx=src_pad_idx, dropout=dropout, scale_emb=scale_emb)</span><br><span class="line"></span><br><span class="line">        self.decoder = Decoder(</span><br><span class="line">            n_trg_vocab=n_trg_vocab, n_position=n_position,</span><br><span class="line">            d_word_vec=d_word_vec, d_model=d_model, d_inner=d_inner,</span><br><span class="line">            n_layers=n_layers, n_head=n_head, d_k=d_k, d_v=d_v,</span><br><span class="line">            pad_idx=trg_pad_idx, dropout=dropout, scale_emb=scale_emb)</span><br><span class="line"></span><br><span class="line">        self.trg_word_prj = nn.Linear(d_model, n_trg_vocab, bias=<span class="literal">False</span>) <span class="comment"># 投影到词表</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> p <span class="keyword">in</span> self.parameters():</span><br><span class="line">            <span class="keyword">if</span> p.dim() &gt; <span class="number">1</span>:</span><br><span class="line">                nn.init.xavier_uniform_(p) <span class="comment"># xavier 初始化权重</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">assert</span> d_model == d_word_vec, \</span><br><span class="line">        <span class="string">'To facilitate the residual connections, \</span></span><br><span class="line"><span class="string">         the dimensions of all module outputs shall be the same.'</span></span><br><span class="line">		<span class="comment"># 嵌入层与投影线性层权重共享</span></span><br><span class="line">        <span class="keyword">if</span> trg_emb_prj_weight_sharing:</span><br><span class="line">            <span class="comment"># Share the weight between target word embedding &amp; last dense layer</span></span><br><span class="line">            self.trg_word_prj.weight = self.decoder.trg_word_emb.weight</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> emb_src_trg_weight_sharing:</span><br><span class="line">            self.encoder.src_word_emb.weight = self.decoder.trg_word_emb.weight</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, src_seq, trg_seq</span>):</span></span><br><span class="line"></span><br><span class="line">        src_mask = get_pad_mask(src_seq, self.src_pad_idx)</span><br><span class="line">        trg_mask = get_pad_mask(trg_seq, self.trg_pad_idx) &amp; get_subsequent_mask(trg_seq)</span><br><span class="line"></span><br><span class="line">        enc_output, *_ = self.encoder(src_seq, src_mask)</span><br><span class="line">        dec_output, *_ = self.decoder(trg_seq, trg_mask, enc_output, src_mask)</span><br><span class="line">        seq_logit = self.trg_word_prj(dec_output)</span><br><span class="line">        <span class="keyword">if</span> self.scale_prj:</span><br><span class="line">            seq_logit *= self.d_model ** -<span class="number">0.5</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> seq_logit.view(-<span class="number">1</span>, seq_logit.size(<span class="number">2</span>))</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="optim.py">Optim.py</h3>
+<p>一个简单封装的优化器类，用以动态调整学习率。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'''A wrapper class for scheduled optimizer '''</span></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ScheduledOptim</span>():</span></span><br><span class="line">    <span class="string">'''A simple wrapper class for learning rate scheduling'''</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, optimizer, lr_mul, d_model, n_warmup_steps</span>):</span></span><br><span class="line">        self._optimizer = optimizer</span><br><span class="line">        self.lr_mul = lr_mul</span><br><span class="line">        self.d_model = d_model</span><br><span class="line">        self.n_warmup_steps = n_warmup_steps</span><br><span class="line">        self.n_steps = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">step_and_update_lr</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="string">"Step with the inner optimizer"</span></span><br><span class="line">        self._update_learning_rate()</span><br><span class="line">        self._optimizer.step()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">zero_grad</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="string">"Zero out the gradients with the inner optimizer"</span></span><br><span class="line">        self._optimizer.zero_grad()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_get_lr_scale</span>(<span class="params">self</span>):</span></span><br><span class="line">        d_model = self.d_model</span><br><span class="line">        n_steps, n_warmup_steps = self.n_steps, self.n_warmup_steps</span><br><span class="line">        <span class="keyword">return</span> (d_model ** -<span class="number">0.5</span>) * <span class="built_in">min</span>(n_steps ** (-<span class="number">0.5</span>), n_steps * n_warmup_steps ** (-<span class="number">1.5</span>))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_update_learning_rate</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="string">''' Learning rate scheduling per step '''</span></span><br><span class="line"></span><br><span class="line">        self.n_steps += <span class="number">1</span></span><br><span class="line">        lr = self.lr_mul * self._get_lr_scale()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> param_group <span class="keyword">in</span> self._optimizer.param_groups:</span><br><span class="line">            param_group[<span class="string">'lr'</span>] = lr</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h2 id="总结">总结</h2>
+<p>读一遍代码发现了论文中忽视的好几个点，例如嵌入向量放缩、dropout等，读代码还是很有必要的。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/blog/tags/%E4%BB%A3%E7%A0%81/" rel="tag"><i class="fa fa-tag"></i> 代码</a>
+              <a href="/blog/tags/Transformer/" rel="tag"><i class="fa fa-tag"></i> Transformer</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/09/03/RoBERTa/" rel="prev" title="RoBERTa">
+      <i class="fa fa-chevron-left"></i> RoBERTa
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">目录结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E8%A7%A3%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">模型解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#constants.py"><span class="nav-number">3.1.</span> <span class="nav-text">Constants.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#modules.py"><span class="nav-number">3.2.</span> <span class="nav-text">Modules.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sublayers.py"><span class="nav-number">3.3.</span> <span class="nav-text">SubLayers.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#layers.py"><span class="nav-number">3.4.</span> <span class="nav-text">Layers.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#models.py"><span class="nav-number">3.5.</span> <span class="nav-text">Models.py</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#optim.py"><span class="nav-number">3.6.</span> <span class="nav-text">Optim.py</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">49k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:29</span>
+</div>
+<div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="/blog/lib/canvas-ribbon/canvas-ribbon.js"></script>
+  <script src="/blog/lib/anime.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
