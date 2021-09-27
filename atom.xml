@@ -6,7 +6,7 @@
   <link href="https://tqnwhz.github.io/blog/atom.xml" rel="self"/>
   
   <link href="https://tqnwhz.github.io/blog/"/>
-  <updated>2021-09-12T14:11:29.053Z</updated>
+  <updated>2021-09-27T13:01:14.245Z</updated>
   <id>https://tqnwhz.github.io/blog/</id>
   
   <author>
@@ -15,6 +15,32 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>NLP必备网站Hugging Face</title>
+    <link href="https://tqnwhz.github.io/blog/2021/09/27/huggingface/"/>
+    <id>https://tqnwhz.github.io/blog/2021/09/27/huggingface/</id>
+    <published>2021-09-27T11:58:30.000Z</published>
+    <updated>2021-09-27T13:01:14.245Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介">简介</h2><p>今天来分享一个网站吧，<a href="https://huggingface.co/">Hugging Face</a>，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。</p><span id="more"></span><h2 id="为什么需要hugging-face">为什么需要Hugging Face</h2><p><img src="intro.png"></p><p>Hugging Face不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p><ul><li>开箱即用：对于常见的NLP任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li><li>多后端支持：Transformers支持Pytorch、Jax、Tensorflow三种框架，无需再为框架微调苦恼。</li><li>可定制性：高效封装的同时，Transformers支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li></ul><p>鉴于现在NLP方向的研究、工程基本都是大规模预训练模型相关，Hugging Face的重要性就一目了然了。如果你是学生党，Hugging Face能让你在各类NLP比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging Face也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p><h2 id="有用的链接">有用的链接</h2><ol type="1"><li><a href="https://github.com/huggingface/transformers">github链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li><li><a href="https://huggingface.co/">Hugging Face 官网</a>，试试推理api、看一看文档。</li><li><a href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face Course</a>，Hugging Face出品的官方课程，目前更新了前四章，基本上是step-by-step的教你从推理到微调任务如何构建和完成。</li></ol><h2 id="总结">总结</h2><p>没错，这么短的一篇博客还有总结。今天刚刚看完Hugging Face 的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>]]></content>
+    
+    
+    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;简介&lt;/h2&gt;
+&lt;p&gt;今天来分享一个网站吧，&lt;a href=&quot;https://huggingface.co/&quot;&gt;Hugging Face&lt;/a&gt;，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="自然语言处理" scheme="https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/"/>
+    
+    <category term="预训练模型" scheme="https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/"/>
+    
+    
+    <category term="Hugging Face" scheme="https://tqnwhz.github.io/blog/tags/Hugging-Face/"/>
+    
+    <category term="工程" scheme="https://tqnwhz.github.io/blog/tags/%E5%B7%A5%E7%A8%8B/"/>
+    
+  </entry>
   
   <entry>
     <title>Transformer-code</title>
@@ -187,7 +213,7 @@
     <link href="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/"/>
     <id>https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/</id>
     <published>2021-07-30T01:25:25.000Z</published>
-    <updated>2021-08-14T02:31:58.322Z</updated>
+    <updated>2021-09-25T15:13:24.129Z</updated>
     
     <content type="html"><![CDATA[<h2 id="序言">序言</h2><p>DEM-VAE是字节跳动AI LAB团队于2020年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在ICML中。论文名直译为“用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p><span id="more"></span><h2 id="题外话">题外话</h2><p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p><h2 id="简介">简介</h2><p>连续型VAE的隐变量难以解释分散属性，例如主题、对话动作等。这一点与VQ-VAE的动机相似。然而只使用分散隐变量的VAE的表达能力有限，隐变量<span class="math inline">\(c\)</span>​只包含<span class="math inline">\(log(\#c)\)</span>​位的信息，其中<span class="math inline">\(\#c\)</span>​为<span class="math inline">\(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的“信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline">\(-log(1/\#c)=log(\#c)\)</span>​。）</p><p>混合高斯分布的VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而GM-VAE容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE退化为只有一个高斯分量的普通VAE。如下图所示：</p><p><img src="example.png"></p><p>在本文中，作者证明了模式崩溃问题不仅存在于GM-VAE中，而是具有指数族混合先验分布的VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的DEM-VAE，在EM-VAE的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE虽然适度减小了句子的似然（由于引入了新的损失项），但是在rPPL（reverse perplexity）与BLEU得到了更好的结果，并且能够有效地避免模式崩溃问题。</p><h2 id="模式崩溃vs后验崩塌">模式崩溃vs后验崩塌</h2><p>普通的VAE会面临后验坍塌（KL散度消失）的问题，具体而言，KL损失项在训练之初迅速变为0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p><p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个KL损失项。</p><h2 id="解决方法">解决方法</h2><h3 id="混合指数族vae">混合指数族VAE</h3><p>混合指数族VAE是指使用混合指数族分布作为先验分布的VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE使用一个分散变量<span class="math inline">\(c\)</span>代表不同的高斯成分，连续隐变量<span class="math inline">\(z\)</span>依赖于<span class="math inline">\(c\)</span>。如下图所示：</p><p><img src="gm-vae.png"></p><p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p><p>测试时：从先验分布<span class="math inline">\(p(c)\)</span>中采样一个<span class="math inline">\(c\)</span>，然后从<span class="math inline">\(c\)</span>对应的高斯分布中采样隐变量<span class="math inline">\(p(z|c)\)</span>，接着投喂到解码器<span class="math inline">\(p(x|z)\)</span>中。</p><p>训练时：通过最大化边际似然<span class="math inline">\(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与VAE一样，使用近似后验分布<span class="math inline">\(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline">\(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p><p><img src="elbo.png"></p><h3 id="模式崩溃问题">模式崩溃问题</h3><p>作者通过研究ELBO目标函数，将导致模式崩溃的原因定位到<span class="math inline">\(\mathcal R_c\)</span>与<span class="math inline">\(\mathcal R_z\)</span>中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline">\(\mathcal R_z,\mathcal R_c\)</span>​重写为KL平均正则项与分散项<span class="math inline">\(\mathcal L_d\)</span>​​。 <span class="math display">\[\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0\]</span> 作者得出结论，最小化分散项<span class="math inline">\(\mathcal L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示： <span class="math display">\[L(\theta;x)=ELBO+\beta \cdot \mathcal L_d\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline">\(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p><h3 id="dem-vae">DEM-VAE</h3><p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解KL散度消失的问题，定义如下： <span class="math display">\[\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))\]</span> 公式部分介绍完毕。在模型结构上，编码器为GRU等循环单元、解码器为一个语言模型。</p><h2 id="实验">实验</h2><h3 id="模式崩溃实验结果">模式崩溃实验结果</h3><p><img src="mode-collapse-result.png"></p><p>可以看出，同时引入互信息项和分散项的VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p><h3 id="文本生成">文本生成</h3><p>作者使用四个指标：逆困惑度、BLEU、词级KL散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个LSTM语言模型，从VAE的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p><p><img src="lg-result.png"></p><p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得NLL（负对数似然）相较基线模型更大，但是rPPL，BLEU等指标上取得了更好的结果。</p><h2 id="总结">总结</h2><p>这篇论文也是离散VAE的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得EQ-VAE相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p><h2 id="参考">参考</h2><p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC智库 (iczhiku.com)</a></p>]]></content>
     
