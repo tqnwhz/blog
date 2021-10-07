@@ -646,6 +646,97 @@ h_t=f(Ux_t+Wh_{t-1})
       </tags>
   </entry>
   <entry>
+    <title>变分自编码器VAE</title>
+    <url>/blog/2021/10/07/VAE/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>今天来回顾一下变分自编码器（Variational Autoencoder，VAE），这是2013年提出的一种生成模型，时至今日，它的各类变体还活跃在各类会议上。之前我读过它的离散变体VQ-VAE，这里再回顾一下原本的VAE。 <span id="more"></span></p>
+<h2 id="数学知识">数学知识</h2>
+<p>理解VAE需要一些信息论和概率论的知识，这里总结一下。</p>
+<h3 id="概率统计">概率统计</h3>
+<h4 id="数值计算-vs-采样计算">数值计算 vs 采样计算</h4>
+<p>对于一个随机变量X，如果我们想知道X的期望<span class="math inline">\(E(X)\)</span>。如果我们已知X的分布函数，很容易可以计算出准确的期望<span class="math inline">\(E(X)=\sum p(x)x\)</span>（连续型变量替换为积分即可），这当然是最好的。然而很多情况下，我们无法得知准确的分布函数，那么我们可以采用统计量进行估计，对于n个随机样本<span class="math inline">\(x_1,x_2,\dots,x_n\)</span>，<span class="math inline">\(\overline X=\frac{1}{n}\sum x_i\)</span>就是期望<span class="math inline">\(E(X)\)</span>的无偏估计。</p>
+<h3 id="信息论">信息论</h3>
+<h4 id="信息熵">信息熵</h4>
+<p>在信息论中，信息熵衡量了信息的不确定性，公式为<span class="math inline">\(H(X)=-\sum_{x\in X}p(x)logp(x)\)</span>。以单个事件x为例，概率越小的事件的信息熵越大。当一个事件必定会发生时（<span class="math inline">\(p(x)=1\)</span>），其信息熵为0，没有任何不确定性。对随机变量X而说，其信息熵就是<span class="math inline">\(-logp(x)\)</span>的期望，熵越大代表随机变量越不确定，很自然可以想到，分布越均匀，变量的状态越不容易确定，其熵越大。</p>
+<p>在通信领域，信息熵可以看作对随机变量X进行编码所需的最短期望位数，这也被称为编码定理。在通信编码问题中，将随机变量X的每个值编码为一个二进制序列，使得序列长度期望最短。同时为了避免混乱，一个序列不能是其他序列的延申。这时编码位数的最短期望位数就是信息熵，有兴趣的同学可以去看看证明。</p>
+<h4 id="交叉熵">交叉熵</h4>
+<p>对于随机变量<span class="math inline">\(X\)</span>的真实分布<span class="math inline">\(p(x)\)</span>，有时是未知的，我们只有它的近似分布<span class="math inline">\(q(x)\)</span>，如果按照<span class="math inline">\(q(x)\)</span>对变量X进行编码，得到的编码长度的期望称为交叉熵，记为<span class="math inline">\(H(p,q)=-\sum_x p(x)logq(x)\)</span>。容易知道交叉熵是大于等于信息熵的，因为信息熵是最短编码长度。</p>
+<h4 id="相对熵kl散度">相对熵（KL散度）</h4>
+<p>对于真实分布<span class="math inline">\(p\)</span>和近似分布<span class="math inline">\(q\)</span>，相对熵为使用近似分布编码得到的编码长度与最短编码长度的差，即交叉熵与信息熵的差，定义为<span class="math inline">\(D(p||q)=H(p,q)-H(p)\)</span>。KL散度衡量了两个分布之间的差异，两个分布差异越大，KL散度越大。不过KL散度并不是距离，因为它不是对称的。因此，KL散度可以用于分类任务中计算真实概率分布与预测的概率分布之间的差异。事实上，<strong>由于这时信息熵为常数，往往将其略去使用交叉熵作为损失函数</strong>。</p>
+<h2 id="变分自编码器">变分自编码器</h2>
+<p>对于数据<span class="math inline">\(X={x_1,x_2,\dots,x_n}\)</span>（假设是很多张猫的图片），我们希望得到其概率分布<span class="math inline">\(p(x)\)</span>，进而可以用于采样生成带猫的图片。假设有个隐变量<span class="math inline">\(z\)</span>控制着数据<span class="math inline">\(x\)</span>的生成。那么根据<span class="math inline">\(p(x)=\int p(z)p(x|z)dz\)</span>可以计算得到<span class="math inline">\(p(x)\)</span>。然而这个边界似然是不可解的，每一项都不知道具体的数学形式，更不要说还要积分。</p>
+<p>那么求其次，我们可以用一个分布<span class="math inline">\(q(x,z)\)</span>近似联合概率分布<span class="math inline">\(p(x,z)\)</span>，那么我们的优化目标就是<span class="math inline">\(KL(p||q)\)</span>最小。 <span class="math display">\[
+\begin{align}
+KL(p||q)&amp;=\int\int p(x,z)log\frac{p(x,z)}{q(x,z)}dzdx \\
+&amp;=\int p(x)\int p(z|x)log\frac{p(x,z)}{q(x,z)}dzdx \\
+&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(x)p(z|x)}{q(x,z)}dz \\
+&amp;=E_{x\sim p(x)}\int p(z|x)(log\frac{p(z|x)}{q(x,z)}+logp(x))dz 
+\end{align}
+\]</span> 而 <span class="math display">\[
+\begin{align}
+E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int q(z|x)dz\\
+&amp;=E_{x\sim p(x)}logp(x)
+\end{align}
+\]</span> 为一个常数，可以略去。令 <span class="math display">\[
+\begin{align}
+\mathcal{L}&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(x,z)}dz\\
+&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(z)q(x|z)}dz\\
+&amp;=E_{x\sim p(x)}[\int -p(z|x)log(x|z)  dz+ \int p(z|x)log\frac{p(z|x)}{q(z)}]dz\\
+&amp;=E_{x\sim p(x)}[E_{z\sim p(z|x)}(-log(q(x|z)))+KL(p(z|x)||q(z))]
+\end{align}
+\]</span> 最小化KL与最小化<span class="math inline">\(\mathcal{L}\)</span>等价。进而得到了VAE的损失函数。只不过与原论文中的符号有些出入，将最后的KL项的p与q调换，即得到了论文中VAE的损失函数： <span class="math display">\[
+\mathcal{L}=E_{x\sim p(x)}[E_{z\sim p(z|x)}(-log(q(x|z)))+KL(q(z|x)||p(z))]
+\]</span> 符号的差别是由于论文直接引入的<span class="math inline">\(q(z|x)\)</span>，而这里引入的是联合概率分布<span class="math inline">\(q(x,z)\)</span>。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/34998569">变分自编码器VAE：原来是这么一回事 | 附开源代码</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/35210280">再谈变分自编码器VAE：从贝叶斯观点出发</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>生成模型</category>
+      </categories>
+      <tags>
+        <tag>VAE</tag>
+        <tag>生成模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>对抗自编码器AAE</title>
+    <url>/blog/2021/10/05/aae/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>对抗自编码器（Adversarial Autoencoders，AAE）出自2015年的《Adversarial Autoencoders》，其核心想法是将VAE与GAN结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化VAE。事实上这篇论文是在CV上生成的，这里只是简单分析下其提出的聚合后验分布及与VAE的比较。 <span id="more"></span></p>
+<h2 id="对抗自编码器">对抗自编码器</h2>
+<p>符号定义：</p>
+<ul>
+<li><span class="math inline">\(p(z)\)</span>：隐变量<span class="math inline">\(z\)</span>的先验分布</li>
+<li><span class="math inline">\(q(z|x)\)</span>：编码器分布</li>
+<li><span class="math inline">\(p(x|z)\)</span>：解码器分布</li>
+<li><span class="math inline">\(p_d(x)\)</span>：数据<span class="math inline">\(x\)</span>分布</li>
+<li><span class="math inline">\(p(x)\)</span>：模型的分布</li>
+</ul>
+<p>定义聚合分布<span class="math inline">\(q(z)\)</span>为<span class="math inline">\(q(z)=\int_xq(z|x)p_d(x)dx\)</span>，AAE添加了<span class="math inline">\(q(z)\)</span>与<span class="math inline">\(p(z)\)</span>进行匹配的正则化项，模型结构如下：</p>
+<p><img src="architecture.png"></p>
+<p>可以看到与VAE最大的区别是，VAE是从后验分布<span class="math inline">\(q(z|x)\)</span>中采样、使用KL散度逼近后验分布与先验分布，AAE是使用对抗网络来逼近<span class="math inline">\(q(z)\)</span>与<span class="math inline">\(p(z)\)</span>。在此基础上，引入了一个对抗网络判断隐藏状态来自随机先验分布<span class="math inline">\(p(z)\)</span>的采样，还是来自<span class="math inline">\(q(z)\)</span>。在编码器<span class="math inline">\(q(z|x)\)</span>的选择上，论文提供了三种候选：</p>
+<ul>
+<li>确定性函数，<span class="math inline">\(z\)</span>仅与<span class="math inline">\(x\)</span>相关。</li>
+<li>高斯分布，与分布参数和随机性相关。</li>
+<li>通用近似后验，<span class="math inline">\(z\)</span>与<span class="math inline">\(x\)</span>和随机噪声<span class="math inline">\(\eta\)</span>相关。通用近似是一种近似分布的方法，确定性函数<span class="math inline">\(f(x,\eta)\)</span>，<span class="math inline">\(\eta\)</span>是一个随机噪声，因而其可以看作分布的通用近似。</li>
+</ul>
+<p>论文中最终使用了确定性函数，个人猜测是更好收敛一些。</p>
+<h2 id="section"></h2>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>生成模型</category>
+      </categories>
+      <tags>
+        <tag>VAE</tag>
+        <tag>GAN</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>EA-VQ-VAE 代码学习（1）</title>
     <url>/blog/2021/07/17/ea-vq-vae-code/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -752,6 +843,39 @@ logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
       </tags>
   </entry>
   <entry>
+    <title>NLP必备网站Hugging Face</title>
+    <url>/blog/2021/09/27/huggingface/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>今天来分享一个网站吧，<a href="https://huggingface.co/">Hugging Face</a>，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。</p>
+<span id="more"></span>
+<h2 id="为什么需要hugging-face">为什么需要Hugging Face</h2>
+<p><img src="intro.png"></p>
+<p>Hugging Face不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
+<ul>
+<li>开箱即用：对于常见的NLP任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
+<li>多后端支持：Transformers支持Pytorch、Jax、Tensorflow三种框架，无需再为框架微调苦恼。</li>
+<li>可定制性：高效封装的同时，Transformers支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
+</ul>
+<p>鉴于现在NLP方向的研究、工程基本都是大规模预训练模型相关，Hugging Face的重要性就一目了然了。如果你是学生党，Hugging Face能让你在各类NLP比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging Face也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
+<h2 id="有用的链接">有用的链接</h2>
+<ol type="1">
+<li><a href="https://github.com/huggingface/transformers">github链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
+<li><a href="https://huggingface.co/">Hugging Face 官网</a>，试试推理api、看一看文档。</li>
+<li><a href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face Course</a>，Hugging Face出品的官方课程，目前更新了前四章，基本上是step-by-step的教你从推理到微调任务如何构建和完成。</li>
+</ol>
+<h2 id="总结">总结</h2>
+<p>没错，这么短的一篇博客还有总结。今天刚刚看完Hugging Face 的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>Hugging Face</tag>
+        <tag>工程</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>语言模型</title>
     <url>/blog/2021/07/22/language-model/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -812,39 +936,6 @@ h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
       </categories>
       <tags>
         <tag>语言模型</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>NLP必备网站Hugging Face</title>
-    <url>/blog/2021/09/27/huggingface/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天来分享一个网站吧，<a href="https://huggingface.co/">Hugging Face</a>，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。</p>
-<span id="more"></span>
-<h2 id="为什么需要hugging-face">为什么需要Hugging Face</h2>
-<p><img src="intro.png"></p>
-<p>Hugging Face不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
-<ul>
-<li>开箱即用：对于常见的NLP任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
-<li>多后端支持：Transformers支持Pytorch、Jax、Tensorflow三种框架，无需再为框架微调苦恼。</li>
-<li>可定制性：高效封装的同时，Transformers支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
-</ul>
-<p>鉴于现在NLP方向的研究、工程基本都是大规模预训练模型相关，Hugging Face的重要性就一目了然了。如果你是学生党，Hugging Face能让你在各类NLP比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging Face也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
-<h2 id="有用的链接">有用的链接</h2>
-<ol type="1">
-<li><a href="https://github.com/huggingface/transformers">github链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
-<li><a href="https://huggingface.co/">Hugging Face 官网</a>，试试推理api、看一看文档。</li>
-<li><a href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face Course</a>，Hugging Face出品的官方课程，目前更新了前四章，基本上是step-by-step的教你从推理到微调任务如何构建和完成。</li>
-</ol>
-<h2 id="总结">总结</h2>
-<p>没错，这么短的一篇博客还有总结。今天刚刚看完Hugging Face 的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>预训练模型</category>
-      </categories>
-      <tags>
-        <tag>Hugging Face</tag>
-        <tag>工程</tag>
       </tags>
   </entry>
   <entry>
