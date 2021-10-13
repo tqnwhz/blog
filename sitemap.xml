@@ -72,13 +72,6 @@
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/links/index.html</loc>
-    
-    <lastmod>2021-08-14</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://tqnwhz.github.io/blog/tags/index.html</loc>
     
     <lastmod>2021-08-14</lastmod>
@@ -86,7 +79,7 @@
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/categories/index.html</loc>
+    <loc>https://tqnwhz.github.io/blog/links/index.html</loc>
     
     <lastmod>2021-08-14</lastmod>
     
@@ -94,6 +87,13 @@
   
   <url>
     <loc>https://tqnwhz.github.io/blog/about/index.html</loc>
+    
+    <lastmod>2021-08-14</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/categories/index.html</loc>
     
     <lastmod>2021-08-14</lastmod>
     
@@ -158,7 +158,7 @@
 
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/tags/BERT/</loc>
+    <loc>https://tqnwhz.github.io/blog/tags/BART/</loc>
     <lastmod>2021-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -172,7 +172,7 @@
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/tags/BART/</loc>
+    <loc>https://tqnwhz.github.io/blog/tags/BERT/</loc>
     <lastmod>2021-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -363,7 +363,7 @@
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BERT/</loc>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BART/</loc>
     <lastmod>2021-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -391,14 +391,14 @@
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BART/</loc>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/seq2seq/</loc>
     <lastmod>2021-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/seq2seq/</loc>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BERT/</loc>
     <lastmod>2021-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
