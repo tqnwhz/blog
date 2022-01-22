@@ -291,22 +291,28 @@
 <p>今天来看一篇对话系统的文章，收录于2020年的ACL。这篇文章是常识对话模型（CCM）的后续工作，我之前粗读过一次，还有很多疑惑，今天正好借着这个机会细读一遍。在此之前，先梳理一下对话系统的发展历史。</p>
 <span id="more"></span>
 <h2 id="对话系统发展简介">对话系统发展简介</h2>
-<p>对话系统，即能够与人进行对话的计算机系统，是自然语言处理中的一个重要方向。在前神经网络时期，对话系统主要基于模板生成回复。即使是现在，仍由一些场景下在使用基于模板的回复生成。在2014年，seq2seq（Sequence to sequence）模型被提出。seq2seq提供了一种序列间进行转换映射的通用方法。此后，seq2seq被广泛用于各类序列任务，包含对话系统。但是seq2seq应用于对话系统任务时会有以下问题：</p>
+<p>对话系统，即能够与人进行对话的计算机系统，是自然语言处理中的一个重要方向。在前神经网络时期，对话系统主要基于模板生成回复。即使是现在，仍由一些场景下在使用基于模板的回复生成。在2014年，seq2seq（Sequence
+to
+sequence）模型被提出。seq2seq提供了一种序列间进行转换映射的通用方法。此后，seq2seq被广泛用于各类序列任务，包含对话系统。但是seq2seq应用于对话系统任务时会有以下问题：</p>
 <ul>
 <li>对同一输入，只能生成单一回复。而理想的对话系统间输入与回复间的关系应该是一对多的。</li>
 <li>倾向于生成通用性回复（例如，我不知道）。</li>
 </ul>
-<p>此后，构建能够生成多样性回复的对话系统一直是研究人员研究的重点。2017年，zhao等人将条件变分自编码器（Condition vae，CVAE）应用于对话生成，通过在隐变量分布中采样不同的隐变量，模型能够生成多样的回复。</p>
+<p>此后，构建能够生成多样性回复的对话系统一直是研究人员研究的重点。2017年，zhao等人将条件变分自编码器（Condition
+vae，CVAE）应用于对话生成，通过在隐变量分布中采样不同的隐变量，模型能够生成多样的回复。</p>
 <p>另外，有研究指出，对话模型生成通用性回复的原因之一是语料中缺少人类拥有的知识背景，这使得模型无法学习知识进而理解对话。基于此，一部分工作开始探索在对话模型中引入外部知识。2018年zhou等提出的常识对话模型（CCM）就是这类研究的典型代表。</p>
 <p>常识对话模型CCM虽然比传统模型取得了更好的效果，但是CCM在检索知识实体相关知识事实时，没有考虑到实体单词所在的上下文，而复杂实体单词的具体含义往往是由其上下文决定的。这就来到了本文要介绍的ConKADI。</p>
 <p><img src="apple.png"></p>
 <h2 id="研究方法">研究方法</h2>
 <p>本文提出了：</p>
 <ul>
-<li>Felicitous Fact mechanism（恰当事实机制）帮助模型关注在上下文高度相关的知识事实。</li>
+<li>Felicitous Fact
+mechanism（恰当事实机制）帮助模型关注在上下文高度相关的知识事实。</li>
 <li>上下文知识融合以及灵活模式融合技术，促进知识的集成。</li>
 </ul>
-<p>ConKADI（Context Knowledge-Aware Diverse and Informative conversation generation model），别的不说，这个名字真的跟叠buff一样。。。模型的流程如下：</p>
+<p>ConKADI（Context Knowledge-Aware Diverse and Informative conversation
+generation
+model），别的不说，这个名字真的跟叠buff一样。。。模型的流程如下：</p>
 <ol type="1">
 <li>恰当事实机制根据知识实体词所在上下文计算得到知识事实的概率分布。（此过程中，使用真实回复作为后验来监督学习）。</li>
 <li>上下文融合机制在解码之前将上下文与知识融合。</li>
@@ -317,18 +323,25 @@
 <p>主要由以下几部分组成：</p>
 <ul>
 <li>知识检索器（Knowledge Retriever）：给定输入<span class="math inline">\(X\)</span>，对于每一个单词<span class="math inline">\(x_i\)</span>，检索<span class="math inline">\(x_i\)</span>​作为头实体或者尾实体的知识事实，若不为实体词，则返回一个空事实。</li>
-<li>上下文编码器（Context Encoder）：使用双向GRU进行编码，特殊的是，GRU的输入加入了当前实体词的嵌入向量。</li>
+<li>上下文编码器（Context
+Encoder）：使用双向GRU进行编码，特殊的是，GRU的输入加入了当前实体词的嵌入向量。</li>
 <li>恰当知识识别器（Felicitous Fact Recognizer）：计算检索事实<span class="math inline">\(F=\{f_1,f_2,\dots,f_n\}\)</span>​上的概率分布<span class="math inline">\(z\)</span>，计算过程如下:</li>
 </ul>
 <p><span class="math display">\[
-z_{post}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^x_n}^\intercal;{h^y_m}^\intercal]\cdot W_{post}))^\intercal
+z_{post}=\eta(\phi(F\cdot
+W_{ft})\cdot\phi([{h^x_n}^\intercal;{h^y_m}^\intercal]\cdot
+W_{post}))^\intercal
 \]</span></p>
 <p><span class="math display">\[
-z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot W_{prior}))^\intercal
+z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot
+W_{prior}))^\intercal
 \]</span></p>
-<p>其中，<span class="math inline">\(\eta\)</span>​​是softmax函数，<span class="math inline">\(\phi\)</span>​​是tanh激活函数，<span class="math inline">\(F\in R^{l*(d_e+d_r+d_e)}\)</span>​​是知识事实矩阵，<span class="math inline">\(W_{ft},W_{post},W_{prior}\)</span>​​​​​是训练参数​。直观来看，上下文、知识事实都包含在公式中，但是也不好进一步解释公式的由来，更像是两部分拼凑在一起的。与VAE一样，在得到先后验分布后，使用KL散度作为损失函数<span class="math inline">\(\mathcal L_k\)</span>，达到逼近先后验分布的效果。</p>
+<p>其中，<span class="math inline">\(\eta\)</span>​​是softmax函数，<span class="math inline">\(\phi\)</span>​​是tanh激活函数，<span class="math inline">\(F\in
+R^{l*(d_e+d_r+d_e)}\)</span>​​是知识事实矩阵，<span class="math inline">\(W_{ft},W_{post},W_{prior}\)</span>​​​​​是训练参数​。直观来看，上下文、知识事实都包含在公式中，但是也不好进一步解释公式的由来，更像是两部分拼凑在一起的。与VAE一样，在得到先后验分布后，使用KL散度作为损失函数<span class="math inline">\(\mathcal
+L_k\)</span>，达到逼近先后验分布的效果。</p>
 <ul>
-<li>上下文知识融合：为了增强解码器对知识背景的理解，将输入上下文与知识融合作为解码器的初始权重，即<span class="math inline">\({h^y_0}^\intercal=tanh([{h^x_n}^\intercal;f_z^\intercal]\cdot W_{init})\)</span>​</li>
+<li>上下文知识融合：为了增强解码器对知识背景的理解，将输入上下文与知识融合作为解码器的初始权重，即<span class="math inline">\({h^y_0}^\intercal=tanh([{h^x_n}^\intercal;f_z^\intercal]\cdot
+W_{init})\)</span>​</li>
 </ul>
 <p>此外，为了保证<span class="math inline">\({h^x_n}^\intercal,f_z^\intercal\)</span>是有意义的，模型中还引入了词袋损失（参考CVAE）。为了监督<span class="math inline">\(z_{post}\)</span>​的概率分布的计算，引入了监督的条件信号（参考CCM），二者之和为损失函数<span class="math inline">\(\mathcal L_f\)</span>。​</p>
 <h3 id="知识解码器">知识解码器</h3>
@@ -338,10 +351,13 @@ z_{prior}=\eta(\phi(F\cdot W_{ft})\cdot\phi({h^x_n}^\intercal\cdot W_{prior}))^\
 <li>知识实体单词，计算过程如下：</li>
 </ul>
 <p><span class="math display">\[
-z_{d,t}=\eta(\phi(F\cdot W_{ft})\cdot\phi([{h^y_t}^\intercal;{u_{t-1}}^\intercal]\cdot W_{d}))^\intercal
+z_{d,t}=\eta(\phi(F\cdot
+W_{ft})\cdot\phi([{h^y_t}^\intercal;{u_{t-1}}^\intercal]\cdot
+W_{d}))^\intercal
 \]</span></p>
 <p><span class="math display">\[
-\gamma_t=sigmoid([{h^y_t}^\intercal;u_t^\intercal;c_t^\intercal]\cdot W_{gate})\in R^1
+\gamma_t=sigmoid([{h^y_t}^\intercal;u_t^\intercal;c_t^\intercal]\cdot
+W_{gate})\in R^1
 \]</span></p>
 <p><span class="math display">\[
 p_{k,t}=\gamma_t*z+(1.0-\gamma_t)*z_d
@@ -351,18 +367,23 @@ p_{k,t}=\gamma_t*z+(1.0-\gamma_t)*z_d
 <li>复制单词。解码器可从输入中复制一个单词作为输出，计算过程如下：</li>
 </ul>
 <p><span class="math display">\[
-p_{c,t}=\eta(\phi(H^x\cdot W_{cs})\cdot\phi({u_t^c}^\intercal\cdot W_{ct})^\intercal)
+p_{c,t}=\eta(\phi(H^x\cdot W_{cs})\cdot\phi({u_t^c}^\intercal\cdot
+W_{ct})^\intercal)
 \]</span></p>
 <p><span class="math display">\[
 {u^c_t}^\intercal=[{h^y_t}^\intercal,{u_{t-1}}^\intercal,{c_t}^\intercal]
 \]</span></p>
 <p>计算形式与前文知识事实概率分布的计算相似。</p>
 <h3 id="灵活模式融合">灵活模式融合</h3>
-<p>最终输出的概率分布为三种模式的加权和（其中，<span class="math inline">\((\gamma_{w,t},\gamma_{k,t},\gamma_{c,t})\)</span>是由灵活模式融合计算得出的概率分布，即三者之和为1。）： <span class="math display">\[
+<p>最终输出的概率分布为三种模式的加权和（其中，<span class="math inline">\((\gamma_{w,t},\gamma_{k,t},\gamma_{c,t})\)</span>是由灵活模式融合计算得出的概率分布，即三者之和为1。）：
+<span class="math display">\[
 p_{out,t}=\gamma_{w,t}*p_{w,t}+\gamma_{k,t}*p_{k,t}+\gamma_{c,t}*p_{c,t}
-\]</span> 这一部分损失函数为<span class="math inline">\(\mathcal L_n\)</span>： <span class="math display">\[
+\]</span> 这一部分损失函数为<span class="math inline">\(\mathcal
+L_n\)</span>： <span class="math display">\[
 -\sum_t\lambda_tlogp_{out,t}(y_t|y_{t-1:1},X,F)+\frac{\mathcal L_m}{2}
-\]</span> 其中，<span class="math inline">\(\mathcal L_m\)</span>为解码器输出与真实回复间的交叉熵，<span class="math inline">\(\lambda_t\)</span>​为词表外单词（unk）的惩罚项权重： <span class="math display">\[
+\]</span> 其中，<span class="math inline">\(\mathcal
+L_m\)</span>为解码器输出与真实回复间的交叉熵，<span class="math inline">\(\lambda_t\)</span>​为词表外单词（unk）的惩罚项权重：
+<span class="math display">\[
 \lambda_t=
 \begin{cases}
 \frac{1}{\#(unk\in Y)}^3,\ if\ y_t=unk\\
@@ -541,7 +562,7 @@ p_{out,t}=\gamma_{w,t}*p_{w,t}+\gamma_{k,t}*p_{k,t}+\gamma_{c,t}*p_{c,t}
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

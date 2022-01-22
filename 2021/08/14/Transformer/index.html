@@ -289,7 +289,9 @@
 
       
         <h2 id="简介">简介</h2>
-<p>今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention Is All You Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
+<p>今天读的是大名鼎鼎的BERT-------的组件之一Transformer，出自论文Google团队2017年的论文《Attention
+Is All You
+Need》。与传统的GRU、LSTM等相比，Transformer只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
 <span id="more"></span>
 <h2 id="题外话">题外话</h2>
 <p>之前由于换电脑的原因，断更了一段时间。BERT与Transformer的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p>
@@ -299,9 +301,11 @@
 <p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中N=6，嵌入向量维度为512。</p>
 <p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个Masked的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有6个解码器组成。</p>
 <h3 id="注意力机制">注意力机制</h3>
-<p>多头注意力机制可谓是Transformer的核心，详细过程可以参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解Transformer完整版</a>。这里只做核心部分介绍，单头计算过程为： <span class="math display">\[
+<p>多头注意力机制可谓是Transformer的核心，详细过程可以参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解Transformer完整版</a>。这里只做核心部分介绍，单头计算过程为：
+<span class="math display">\[
 Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span> Q，K，V分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline">\(\sqrt{d_k}\)</span>​​​。这个标量是softmax的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下softmax的温度系数。</p>
+\]</span>
+Q，K，V分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline">\(\sqrt{d_k}\)</span>​​​。这个标量是softmax的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下softmax的温度系数。</p>
 <p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用8个注意力机制，每个注意力机制的输出为512/8=64维嵌入向量。</p>
 <h3 id="注意力机制的使用">注意力机制的使用</h3>
 <p>多头注意力机制以三种方式在模型中使用：</p>
@@ -311,11 +315,14 @@ Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
 <li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline">\(-\infty\)</span>​，进而经过softmax后概率值为0。</li>
 </ul>
 <h3 id="前馈神经网络">前馈神经网络</h3>
-<p>在编码器和解码器中的前馈神经网络，搭配relu激活函数来为模型构造非线性计算。计算过程如下所示： <span class="math display">\[
+<p>在编码器和解码器中的前馈神经网络，搭配relu激活函数来为模型构造非线性计算。计算过程如下所示：
+<span class="math display">\[
 FFN(x)=\max(0,xW_1+b_1)W2+b_2
-\]</span> 其中，输入和输出的维度均为512，隐藏层维度为1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
+\]</span>
+其中，输入和输出的维度均为512，隐藏层维度为1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
 <h3 id="位置编码">位置编码</h3>
-<p>由于Transformer中不存在RNN中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用sin与cos函数： <span class="math display">\[
+<p>由于Transformer中不存在RNN中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用sin与cos函数：
+<span class="math display">\[
 PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})
 \]</span></p>
 <p><span class="math display">\[
@@ -357,7 +364,8 @@ h_t=f(Ux_t+Wh_{t-1})
 <p>这篇论文提出了完全依赖于注意力机制的序列转换模型Transformer，相较于RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了state-of-the-art，在英语成分分析上也取得了比RNN更优的结果。</p>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer） - 西多士NLP - 博客园 (cnblogs.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer）
+- 西多士NLP - 博客园 (cnblogs.com)</a></li>
 <li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN的对比（时间复杂度，序列操作数，最大路径长度）</a></li>
 </ul>
 
@@ -530,7 +538,7 @@ h_t=f(Ux_t+Wh_{t-1})
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

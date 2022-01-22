@@ -286,15 +286,20 @@
 <p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
 <span id="more"></span>
 <h2 id="定义">定义</h2>
-<p>对于一串语言序列<span class="math inline">\(w_1w_2\dots w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline">\(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子“学生们打开了书”的概率应该比“学生们打开了玛卡巴卡”高得多，即更像是人说的话。</p>
-<p>在之前的VQ-VAE中，我们提到过自回归模型，按照自回归的思路，如果第n个单词只与前n-1个单词相关，那么句子的概率可以转化为如下形式： <span class="math display">\[
+<p>对于一串语言序列<span class="math inline">\(w_1w_2\dots
+w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline">\(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子“学生们打开了书”的概率应该比“学生们打开了玛卡巴卡”高得多，即更像是人说的话。</p>
+<p>在之前的VQ-VAE中，我们提到过自回归模型，按照自回归的思路，如果第n个单词只与前n-1个单词相关，那么句子的概率可以转化为如下形式：
+<span class="math display">\[
 P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})
 \]</span> 那么怎么求解右侧的式子呢？</p>
 <h2 id="n-gram">N-gram</h2>
-<p>首先要提到的是N-gram模型。为了解决上面这个问题，N-gram模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline">\(N-1\)</span>个词有关。以4-gram为例，即每个词只与其之前的3个词有关，即： <span class="math display">\[
+<p>首先要提到的是N-gram模型。为了解决上面这个问题，N-gram模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline">\(N-1\)</span>个词有关。以4-gram为例，即每个词只与其之前的3个词有关，即：
+<span class="math display">\[
 P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})
-\]</span> 换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计： <span class="math display">\[
-P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})} 
+\]</span>
+换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计：
+<span class="math display">\[
+P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})}
 \]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[
 P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
 \]</span> 上述的方法虽然简单直接，但是有以下缺点：</p>
@@ -303,18 +308,21 @@ P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
 <li>存储问题：随着n的增大，存储量指数级上升，而n过小时模型性能又会很差。</li>
 </ul>
 <h2 id="基于窗口的神经网络">基于窗口的神经网络</h2>
-<p>在N-gram的基础上，使用神经网络来计算条件概率。同样以4-gram为例，计算用公式表达如下: <span class="math display">\[
+<p>在N-gram的基础上，使用神经网络来计算条件概率。同样以4-gram为例，计算用公式表达如下:
+<span class="math display">\[
 \begin{align}
 P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\
 &amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])
 \end{align}
-\]</span> 思路非常简单，即将前N-1个词输入到神经网络，由神经网络计算得到第N个词的概率分布。这样做解决了N-gram的稀疏问题与存储问题，但也存在一些问题：</p>
+\]</span>
+思路非常简单，即将前N-1个词输入到神经网络，由神经网络计算得到第N个词的概率分布。这样做解决了N-gram的稀疏问题与存储问题，但也存在一些问题：</p>
 <ul>
 <li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
 <li>需要变化窗口大小时，矩阵W的形状也需要变化，进而需要重新训练。</li>
 </ul>
 <h2 id="循环神经网络rnn">循环神经网络RNN</h2>
-<p>RNN的思路同样也很直接，使用同一个矩阵<span class="math inline">\(W\)</span>来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN的公式如下: <span class="math display">\[
+<p>RNN的思路同样也很直接，使用同一个矩阵<span class="math inline">\(W\)</span>来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN的公式如下:
+<span class="math display">\[
 h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
 \]</span></p>
 <p><span class="math display">\[
@@ -332,7 +340,8 @@ h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
 <li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li>
 </ul>
 <h2 id="参考">参考</h2>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/63397627">CS224N笔记(六)：语言模型与RNN - 知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/63397627">CS224N笔记(六)：语言模型与RNN
+- 知乎 (zhihu.com)</a></p>
 
     </div>
 
@@ -501,7 +510,7 @@ h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

@@ -292,7 +292,9 @@
 
       
         <h2 id="简介">简介</h2>
-<p>BART是Facebook AI 于2019年发表的《Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension》论文中提出的预训练模型，论文收录于2020年ACL。顾名思义，BART是一个基于seq2seq的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的“Denoising”直译为降噪，实际上是模型的预训练目标。</p>
+<p>BART是Facebook AI 于2019年发表的《Denoising Sequence-to-Sequence
+Pre-training for Natural Language Generation, Translation, and
+Comprehension》论文中提出的预训练模型，论文收录于2020年ACL。顾名思义，BART是一个基于seq2seq的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的“Denoising”直译为降噪，实际上是模型的预训练目标。</p>
 <span id="more"></span>
 <p>一个水逆的周末，博客更新不能停！</p>
 <h2 id="模型">模型</h2>
@@ -314,12 +316,14 @@
 <p>总结一下就是个Transformer。与BERT的主要区别在于有解码器，可以用于生成任务，与GPT的主要区别在于有编码器，可以更好地用于监督的生成任务，如下图所示。</p>
 <p><img src="architecture.png"></p>
 <h3 id="预训练目标">预训练目标</h3>
-<p>BART的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的“降噪”的由来。 在实验过程中，噪声可能是以上噪声函数的组合。几种噪声函数的示例分别如下：</p>
+<p>BART的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的“降噪”的由来。
+在实验过程中，噪声可能是以上噪声函数的组合。几种噪声函数的示例分别如下：</p>
 <p><img src="noises.png"></p>
 <h3 id="适用任务">适用任务</h3>
 <p>BART可适用于以下任务：</p>
 <ul>
-<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似BERT中的[CLS] token。</li>
+<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似BERT中的[CLS]
+token。</li>
 <li>符号分类，输入输出均为该序列，将解码器每个位置的隐藏状态拿去分类即可。</li>
 <li>序列生成，例如文本摘要、问答等任务，给定输入输出进行fine-tune即可。</li>
 <li>目标语言为英语的机器翻译，这个任务其实也属于序列生成，不过有点不太一样。具体做法为，将BART的编码器随机初始化（就是丢弃本来的权重），然后冻结其他参数只更新编码器权重，后面再微调所有权重。这里限制为英语主要是BART本身在英文语料上训练的。</li>
@@ -348,8 +352,10 @@
 <h4 id="判别任务">判别任务</h4>
 <p>在两个数据集上进行实验：</p>
 <ul>
-<li>SQuAD（Stanford Question Answering Dataset，斯坦福问答数据集）：给定一篇文章和一个问题，从原文中选取部分文字作为问题的答案（答案一定原文中）。虽然是问答任务，但是并不是生成式的任务，而是判别式的任务。</li>
-<li>GLUE（General Language Understanding Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如CoLA对单句子是否符合文法进行评估，QQP评估一对问题是否等价。</li>
+<li>SQuAD（Stanford Question Answering
+Dataset，斯坦福问答数据集）：给定一篇文章和一个问题，从原文中选取部分文字作为问题的答案（答案一定原文中）。虽然是问答任务，但是并不是生成式的任务，而是判别式的任务。</li>
+<li>GLUE（General Language Understanding
+Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如CoLA对单句子是否符合文法进行评估，QQP评估一对问题是否等价。</li>
 </ul>
 <p><img src="nlu.png"></p>
 <p>两个数据集上的实验结果显示，BART可以和RoBERTa打的有来有回。</p>
@@ -540,7 +546,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

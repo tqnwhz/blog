@@ -33,7 +33,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/22/rnns/gru.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/22/rnns/lstm.png">
 <meta property="article:published_time" content="2021-07-22T13:54:40.000Z">
-<meta property="article:modified_time" content="2021-08-14T02:31:58.328Z">
+<meta property="article:modified_time" content="2022-01-21T09:44:30.159Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="RNN">
 <meta property="article:tag" content="GRU">
@@ -240,7 +240,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-08-14 10:31:58" itemprop="dateModified" datetime="2021-08-14T10:31:58+08:00">2021-08-14</time>
+                <time title="修改时间：2022-01-21 17:44:30" itemprop="dateModified" datetime="2022-01-21T17:44:30+08:00">2022-01-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -289,11 +289,13 @@
 
       
         <h2 id="序言">序言</h2>
-<p>同样，借着复习面试，把RNN家族再梳理回顾一下，包含RNN、GRU、LSTM。 <span id="more"></span></p>
+<p>同样，借着复习面试，把RNN家族再梳理回顾一下，包含RNN、GRU、LSTM。
+<span id="more"></span></p>
 <h2 id="循环神经网络rnn">循环神经网络RNN</h2>
 <h3 id="模型结构">模型结构</h3>
 <p><img src="rnn.png"></p>
-<p>RNN的结构如上图所示，其核心思想是使用同一套参数来更新状态<span class="math inline">\(s\)</span>与计算输出<span class="math inline">\(o\)</span>，箭头右侧是按时序展开的模型结构图。可以看到，RNN仅使用了一个状态<span class="math inline">\(s\)</span>​来保存序列信息，共有三个参数矩阵。这一部分公式化描述如下: <span class="math display">\[
+<p>RNN的结构如上图所示，其核心思想是使用同一套参数来更新状态<span class="math inline">\(s\)</span>与计算输出<span class="math inline">\(o\)</span>，箭头右侧是按时序展开的模型结构图。可以看到，RNN仅使用了一个状态<span class="math inline">\(s\)</span>​来保存序列信息，共有三个参数矩阵。这一部分公式化描述如下:
+<span class="math display">\[
 s_t=f(Ux_t+Ws_{t-1})
 \]</span></p>
 <p><span class="math display">\[
@@ -316,18 +318,26 @@ o_t=g(Vs_t)
 <li>LSTM、GRU等结构。</li>
 </ul>
 <h4 id="批标准化-batch-normalization">批标准化 Batch Normalization</h4>
-<p>Batch Normalization是一种常用于CNN的正则化方法，可以分为两个步骤：</p>
+<p>Batch
+Normalization是一种常用于CNN的正则化方法，可以分为两个步骤：</p>
 <p>（1）标准化：对batch的数据求均值与标准差，将数据标准化到标准正态分布</p>
 <p>（2）进行放缩与平移</p>
 <p>整个过程类似于VAE的重参数化，先获得一个正态分布的变量，再进行放缩平移，达到从任意正态分布中取样的效果。</p>
-<p>也就是说，batch normlization 假设每个batch的数据服从一个正态分布（参数γ和β学习得来，即通过batch数据计算得来），先将数据标准化，再放缩与平移，使得数据“看起来”是从这个正态分布中取样而来的。</p>
+<p>也就是说，batch normlization
+假设每个batch的数据服从一个正态分布（参数γ和β学习得来，即通过batch数据计算得来），先将数据标准化，再放缩与平移，使得数据“看起来”是从这个正态分布中取样而来的。</p>
 <p>在预测阶段，所有参数的取值是固定的，对BN层而言，意味着μ、σ、γ、β都是固定值。γ和β比较好理解，随着训练结束，两者最终收敛，预测阶段使用训练结束时的值即可。</p>
-<p>对于μ和σ，在训练阶段，它们为当前mini batch的统计量，随着输入batch的不同，μ和σ一直在变化。在预测阶段，输入数据可能只有1条，该使用哪个μ和σ，或者说，每个BN层的μ和σ该如何取值？可以采用训练收敛最后几批mini batch的 μ和σ的期望，作为预测阶段的μ和σ。</p>
+<p>对于μ和σ，在训练阶段，它们为当前mini
+batch的统计量，随着输入batch的不同，μ和σ一直在变化。在预测阶段，输入数据可能只有1条，该使用哪个μ和σ，或者说，每个BN层的μ和σ该如何取值？可以采用训练收敛最后几批mini
+batch的 μ和σ的期望，作为预测阶段的μ和σ。</p>
 <h3 id="层标准化-layer-normalization">层标准化 Layer Normalization</h3>
-<p>Batch Normalization是在Batch的方向上进行Normalization。这种方法在NLP中不是很适合。由于文本序列的长度可变性，一个batch中的数据往往长度不同，进而对每个位置进行标准化不是很合适。</p>
-<p>而Layer Normalization则是在序列的方向上进行Normalization。这使得它可以处理变长序列。</p>
+<p>Batch
+Normalization是在Batch的方向上进行Normalization。这种方法在NLP中不是很适合。由于文本序列的长度可变性，一个batch中的数据往往长度不同，进而对每个位置进行标准化不是很合适。</p>
+<p>而Layer
+Normalization则是在序列的方向上进行Normalization。这使得它可以处理变长序列。</p>
 <h3 id="激活函数">激活函数</h3>
-<p>对于激活函数而言，sigmoid的最大梯度为0.25，因此很容易发生梯度消失现象，而tanh虽然最大梯度为1，但也只有0处取得，也熔岩发生梯度消失。因此RNN常使用relu作为激活函数。relu的梯度非0即1，这能够缓解梯度消失现象，但也有一定的问题：1. 容易发生梯度爆炸。（梯度恒为1时）2. 负数部分梯度恒为0，部分神经元无法激活。elu能够缓解relu的0梯度的问题，但是由于加入了幂运算，会更慢一点。</p>
+<p>对于激活函数而言，sigmoid的最大梯度为0.25，因此很容易发生梯度消失现象，而tanh虽然最大梯度为1，但也只有0处取得，也容易发生梯度消失。因此RNN常使用relu作为激活函数。relu的梯度非0即1，这能够缓解梯度消失现象，但也有一定的问题：1.
+容易发生梯度爆炸。（梯度恒为1时）2.
+负数部分梯度恒为0，部分神经元无法激活。elu能够缓解relu的0梯度的问题，但是由于加入了幂运算，会更慢一点。</p>
 <h2 id="门控循环单元gru">门控循环单元GRU</h2>
 <h3 id="模型结构-1">模型结构</h3>
 <p>GRU的思想是在RNN的基础上，引入门控信号来缓解RNN存在的梯度消失问题。模型结构如下：</p>
@@ -366,20 +376,29 @@ c_t=f_t\odot c_{t-1}+i_t\odot \tilde c_t
 <p><span class="math display">\[
 h_t=o_t\odot tanh(c_t)
 \]</span></p>
-<p>其中，<span class="math inline">\(i_t.f_t,o_t\)</span>分别代表信息、遗忘、输出门控。信息和遗忘门控负责cell state的更新，输出门控负责hidden state的更新。具体而言，LSTM可以简单分为以下三个阶段：</p>
+<p>其中，<span class="math inline">\(i_t.f_t,o_t\)</span>分别代表信息、遗忘、输出门控。信息和遗忘门控负责cell
+state的更新，输出门控负责hidden
+state的更新。具体而言，LSTM可以简单分为以下三个阶段：</p>
 <ul>
 <li>遗忘阶段，根据遗忘门控，忘记上一个cell state的部分信息。</li>
 <li>记忆阶段，根据信息门控，将输入信息进行选择记忆。</li>
 <li>输出阶段，根据输出门控，输出最终的状态。</li>
 </ul>
 <h3 id="lstm-vs-gru">LSTM VS GRU</h3>
-<p>本质上，LSTM和GRU都是通过引入门控信号来解决RNN的梯度消失问题。在实现方法上，GRU相对于LSTM要更为简单。GRU抛弃了LSTM中的hidden state（GRU 中的hidden state 实际上是LSTM中的cell state），因为LSTM中的<span class="math inline">\(h_t\)</span>只是想保存当前时刻的信息，这一部分已经包含到GRU中的<span class="math inline">\(\tilde h_t\)</span>中了。cell state中的之前的全局信息与当前时刻的信息应当是一个此消彼长的状态，GRU因此直接使用一个门控信号<span class="math inline">\(z_t\)</span>同时控制了遗忘和更新。</p>
+<p>本质上，LSTM和GRU都是通过引入门控信号来解决RNN的梯度消失问题。在实现方法上，GRU相对于LSTM要更为简单。GRU抛弃了LSTM中的hidden
+state（GRU 中的hidden state 实际上是LSTM中的cell
+state），因为LSTM中的<span class="math inline">\(h_t\)</span>只是想保存当前时刻的信息，这一部分已经包含到GRU中的<span class="math inline">\(\tilde h_t\)</span>中了。cell
+state中的之前的全局信息与当前时刻的信息应当是一个此消彼长的状态，GRU因此直接使用一个门控信号<span class="math inline">\(z_t\)</span>同时控制了遗忘和更新。</p>
 <p>在参数上，GRU有着比LSTM更少的参数，收敛速度更快，并且与LSTM有着差不多的性能表现，因此实际工程中多使用GRU。</p>
 <h2 id="参考">参考</h2>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68579467">深度学习之3——梯度爆炸与梯度消失 - 知乎 (zhihu.com)</a></p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32481747">人人都能看懂的GRU - 知乎 (zhihu.com)</a></p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32085405">人人都能看懂的LSTM - 知乎 (zhihu.com)</a></p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/55386469#:~:text=这里归纳一下%20LSTM%20与%20GRU%20的区别：%20首先，,LSTM%20选择暴露部分信息（%20才是真正的输出，%20只是作为信息载体，并不输出">RNN vs LSTM vs GRU -- 该选哪个？ - 知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68579467">深度学习之3——梯度爆炸与梯度消失
+- 知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32481747">人人都能看懂的GRU -
+知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32085405">人人都能看懂的LSTM -
+知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/55386469#:~:text=这里归纳一下%20LSTM%20与%20GRU%20的区别：%20首先，,LSTM%20选择暴露部分信息（%20才是真正的输出，%20只是作为信息载体，并不输出">RNN
+vs LSTM vs GRU -- 该选哪个？ - 知乎 (zhihu.com)</a></p>
 
     </div>
 
@@ -550,7 +569,7 @@ h_t=o_t\odot tanh(c_t)
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

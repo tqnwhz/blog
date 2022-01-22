@@ -286,7 +286,10 @@
 
       
         <h2 id="简介">简介</h2>
-<p>VQ-VAE（Vector Quantised - Variational AutoEncoder，量子变分自编码器）出自2017年Google团队的论文Neural Discrete Representation Learning。顾名思义，VQ-VAE是VAE（ Variational AutoEncoder，变分自编码器）的变种。主要是为了解决VAE所存在的”后验坍塌“问题。VQ-VAE与VAE的主要区别在于：</p>
+<p>VQ-VAE（Vector Quantised - Variational
+AutoEncoder，量子变分自编码器）出自2017年Google团队的论文Neural Discrete
+Representation Learning。顾名思义，VQ-VAE是VAE（ Variational
+AutoEncoder，变分自编码器）的变种。主要是为了解决VAE所存在的”后验坍塌“问题。VQ-VAE与VAE的主要区别在于：</p>
 <ul>
 <li>隐变量是离散的，而非连续的</li>
 <li>先验分布是学习得来的，而非固定不变的</li>
@@ -296,20 +299,26 @@
 <h3 id="离散型隐变量">离散型隐变量</h3>
 <p>离散型隐变量对于某些任务是更为自然与恰当的，例如语言是由离散的字符组成的，图像的像素是0-255的自然数。然而，离散VAE往往难以训练，现有的训练方法无法弥补其与连续型VAE存在的性能上的差距。尽管连续型VAE会存在后验坍塌问题，但是由于从高斯分布中使用重参数化技巧采样隐变量，连续型VAE中能够获得方差更小，即更稳定的参数梯度。</p>
 <h3 id="自回归模型">自回归模型</h3>
-<p>自回归模型（<strong>A</strong>uto<strong>r</strong>egressive model）是一种处理时间序列的方法，使用<span class="math inline">\(x_1,x_2,\dots,x_{t-1}\)</span>来预测<span class="math inline">\(x_t\)</span>，并假设它们是线性关系。由于其使用<span class="math inline">\(x\)</span>本身来预测<span class="math inline">\(x\)</span>，因而得名为自回归模型。形式化来讲，自回归模型定义如下： <span class="math display">\[
+<p>自回归模型（<strong>A</strong>uto<strong>r</strong>egressive
+model）是一种处理时间序列的方法，使用<span class="math inline">\(x_1,x_2,\dots,x_{t-1}\)</span>来预测<span class="math inline">\(x_t\)</span>，并假设它们是线性关系。由于其使用<span class="math inline">\(x\)</span>本身来预测<span class="math inline">\(x\)</span>，因而得名为自回归模型。形式化来讲，自回归模型定义如下：
+<span class="math display">\[
 X_t=c+\sum_{i=1}^p\phi_iX_{t-i}+\epsilon_t
 \]</span> 其中，<span class="math inline">\(c\)</span>是常数项，<span class="math inline">\(\epsilon_t\)</span>假设为一个均值为0，标准差为<span class="math inline">\(\sigma\)</span>的随机误差。</p>
-<p>典型的自回归模型有循环神经网络（Recurrent Neural Network, RNN），PixelCNN等。下面以文中提到的PixelCNN为例进行介绍。</p>
-<p>PixelCNN是虽然是CNN，但它与传统的CNN不同，而是参考了RNN的思路，将图片扁平化为一维后，将其看成时间序列进行逐像素的生成。即： <span class="math display">\[
+<p>典型的自回归模型有循环神经网络（Recurrent Neural Network,
+RNN），PixelCNN等。下面以文中提到的PixelCNN为例进行介绍。</p>
+<p>PixelCNN是虽然是CNN，但它与传统的CNN不同，而是参考了RNN的思路，将图片扁平化为一维后，将其看成时间序列进行逐像素的生成。即：
+<span class="math display">\[
 \begin{align}
 p(x)&amp;=p(x_1,x_2,\dots,x_t)\\
 &amp;=p(x_1)p(x_2|x_1)\dots p(x_t|x_1,x_2,\dots,x_{t-1})
 \end{align}
 \]</span> 可以看到，符合上述的自回归模型的定义（令<span class="math inline">\(X_t=p(x_1,x_2,\dots,x_t)\)</span>）。</p>
 <h3 id="变分自编码器">变分自编码器</h3>
-<p>变分自编码器（Variational AutoEncoder，VAE）是一类重要的生成模型。由于篇幅原因这里只做简单介绍，后面可能会单独出一篇博客介绍。VAE假设存在一个无法观测的隐变量<span class="math inline">\(z\)</span>控制数据<span class="math inline">\(x\)</span>的生成，它主要由以下几部分组成：</p>
+<p>变分自编码器（Variational
+AutoEncoder，VAE）是一类重要的生成模型。由于篇幅原因这里只做简单介绍，后面可能会单独出一篇博客介绍。VAE假设存在一个无法观测的隐变量<span class="math inline">\(z\)</span>控制数据<span class="math inline">\(x\)</span>的生成，它主要由以下几部分组成：</p>
 <ul>
-<li>编码网络，拟合后验分布<span class="math inline">\(q(z|x)\)</span> ，将数据<span class="math inline">\(x\)</span>映射到连续隐变量<span class="math inline">\(z\)</span></li>
+<li>编码网络，拟合后验分布<span class="math inline">\(q(z|x)\)</span>
+，将数据<span class="math inline">\(x\)</span>映射到连续隐变量<span class="math inline">\(z\)</span></li>
 <li>生成网络，拟合分布<span class="math inline">\(p(x|z)\)</span></li>
 <li>隐变量的先验分布<span class="math inline">\(p(z)\)</span></li>
 </ul>
@@ -327,7 +336,9 @@ q(z=k|x) = \begin{cases}
 z_q(x)=e_k, where\ k=\arg\min_j||z_e(x)-e_j||
 \]</span></p>
 <h3 id="梯度计算">梯度计算</h3>
-<p>注意到上述公式中的<span class="math inline">\(\arg\min\)</span>操作是无法求梯度的，这使得模型无法进行反向传播。VQ-VAE采取直通估计（straight-through estimator ）来解决这个问题。原论文中具体做法描述为<strong>”将解码器输入<span class="math inline">\(z_q(x)\)</span>的梯度复制到解码器的输出<span class="math inline">\(z_e(x)\)</span>“</strong>。对应上述结构图中的红线。</p>
+<p>注意到上述公式中的<span class="math inline">\(\arg\min\)</span>操作是无法求梯度的，这使得模型无法进行反向传播。VQ-VAE采取直通估计（straight-through
+estimator
+）来解决这个问题。原论文中具体做法描述为<strong>”将解码器输入<span class="math inline">\(z_q(x)\)</span>的梯度复制到解码器的输出<span class="math inline">\(z_e(x)\)</span>“</strong>。对应上述结构图中的红线。</p>
 <h3 id="损失函数">损失函数</h3>
 <p>损失函数表示如下： <span class="math display">\[
 L=logp(x|z_q(x))+||sg[z_e(x)]-e||_2^2+\beta||z_e(x)-sg[e]||^2_2
@@ -335,16 +346,20 @@ L=logp(x|z_q(x))+||sg[z_e(x)]-e||_2^2+\beta||z_e(x)-sg[e]||^2_2
 <p>损失函数的各项含义解释如下：</p>
 <ul>
 <li>第一项为重构损失，用以训练编码器和解码器，个人感觉这里是不是少了个负号，这一部分是似然函数，按理说应该是要最大化的。</li>
-<li>第二项为L2范数损失函数。通过矢量量化（Vector Quantisation，VQ）学习嵌入空间的字典，即希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与最近邻算法得到的<span class="math inline">\(e\)</span>距离越近越好，用以优化嵌入空间。</li>
+<li>第二项为L2范数损失函数。通过矢量量化（Vector
+Quantisation，VQ）学习嵌入空间的字典，即希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与最近邻算法得到的<span class="math inline">\(e\)</span>距离越近越好，用以优化嵌入空间。</li>
 <li>第三项为L2范数损失函数。与第二项的区别在于优化的是编码器。原论文中的说法是，由于嵌入空间是无量纲的，当仅存在第二项时，若<span class="math inline">\(e\)</span>的参数训练速度慢于编码器参数，会使得<span class="math inline">\(e\)</span>的参数向任意方向增长。</li>
 </ul>
 <p>第二项和第三项本质上都是希望编码器的输出<span class="math inline">\(z_e(x)\)</span>与离散化隐变量<span class="math inline">\(e\)</span>相互接近，相较于<span class="math inline">\(||z_e(x)-e||_2^2\)</span>，个人理解这里的设计是为了控制二者的优化速度。如果希望编码器输出相对稳定，则调小<span class="math inline">\(\beta\)</span>，让嵌入空间更多地靠近编码器的输出，也可以反之。</p>
 <p>论文中实验发现<span class="math inline">\(\beta\)</span>从0.1-2.0都是非常鲁棒的，实验设置<span class="math inline">\(\beta=0.25\)</span>，可能意味着二者靠近的速度影响不大（这也更符合直观认知）。</p>
 <h3 id="先验分布pz">先验分布<span class="math inline">\(p(z)\)</span></h3>
-<p>先验分布<span class="math inline">\(p(z)\)</span>是个分类分布（categotical distribution），在训练过程中保持不变。在训练结束后，在隐变量<span class="math inline">\(z\)</span>上拟合一个自回归分布，即<span class="math inline">\(p(z)\)</span>，进而通过祖先采样（ancestral sampling）来生成<span class="math inline">\(x\)</span>。</p>
+<p>先验分布<span class="math inline">\(p(z)\)</span>是个分类分布（categotical
+distribution），在训练过程中保持不变。在训练结束后，在隐变量<span class="math inline">\(z\)</span>上拟合一个自回归分布，即<span class="math inline">\(p(z)\)</span>，进而通过祖先采样（ancestral
+sampling）来生成<span class="math inline">\(x\)</span>。</p>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/自迴歸模型">自回归模型 - 维基百科，自由的百科全书 (wikipedia.org)</a></li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/自迴歸模型">自回归模型 -
+维基百科，自由的百科全书 (wikipedia.org)</a></li>
 </ul>
 
     </div>
@@ -512,7 +527,7 @@ L=logp(x|z_q(x))+||sg[z_e(x)]-e||_2^2+\beta||z_e(x)-sg[e]||^2_2
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

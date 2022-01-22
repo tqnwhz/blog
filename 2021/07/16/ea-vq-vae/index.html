@@ -288,7 +288,9 @@
         <h2 id="题外话">题外话</h2>
 <p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
 <h2 id="简介">简介</h2>
-<p>EA-VQ-VAE是微软团队于2020年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在ACL上。该文的主要工作是利用VQ-VAE进行推理文本生成。推理文本生成定义为，给定一个事件（例如“A偷看了B的日记”），从多个维度对该事件进行推断（“A的心理状态”，“A的目的”）。而EA-VQ-VAE中的EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
+<p>EA-VQ-VAE是微软团队于2020年发表的《Evidence-Aware Inferential Text
+Generation with Vector Quantised Variational
+AutoEncoder》中提出的模型，该文发表在ACL上。该文的主要工作是利用VQ-VAE进行推理文本生成。推理文本生成定义为，给定一个事件（例如“A偷看了B的日记”），从多个维度对该事件进行推断（“A的心理状态”，“A的目的”）。而EA-VQ-VAE中的EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
 <span id="more"></span>
 <h2 id="实现方法">实现方法</h2>
 <p>下图展示了整个模型的流程：给定事件<span class="math inline">\(x\)</span>后，经过VQ-VAE将其映射为离散的隐变量<span class="math inline">\(z\)</span>，根据事件<span class="math inline">\(x\)</span>从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline">\(y\)</span>。下面逐项介绍模型的细节。</p>
@@ -302,8 +304,10 @@
 <li>先验分布<span class="math inline">\(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如RoBERTa）将事件编码为隐藏状态<span class="math inline">\(h\)</span>，，再将其映射为k个类别，即<span class="math inline">\(p_\theta(z|x)=softmax(hW_k)\)</span></li>
 </ul>
 <h3 id="证据的检索与选择">证据的检索与选择</h3>
-<p>去除事件中的停用词后，在大规模文本语料中使用Elastic Search引擎检索事件，并选取前K个得分最高的句子。论文使用的语料库基于BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
-<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline">\(x\)</span>与推理文本<span class="math inline">\(y\)</span>均已知，例如给定事件“A读了B的日记”，与推理文本“A感到很愧疚”，那么证据“A偷了B的日记”就比“B把日记给A看”更合理，此时我们想要建模的就是<span class="math inline">\(q(c|x,y)\)</span>（c代表事件上下文，即证据）与<span class="math inline">\(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline">\(p(c|z)\)</span>,而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span>代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用Transformer将其编码为向量<span class="math inline">\(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span>与<span class="math inline">\(q_\phi(z|x,y)\)</span>类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即： <span class="math display">\[
+<p>去除事件中的停用词后，在大规模文本语料中使用Elastic
+Search引擎检索事件，并选取前K个得分最高的句子。论文使用的语料库基于BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
+<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline">\(x\)</span>与推理文本<span class="math inline">\(y\)</span>均已知，例如给定事件“A读了B的日记”，与推理文本“A感到很愧疚”，那么证据“A偷了B的日记”就比“B把日记给A看”更合理，此时我们想要建模的就是<span class="math inline">\(q(c|x,y)\)</span>（c代表事件上下文，即证据）与<span class="math inline">\(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline">\(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline">\(p(c|z)\)</span>,而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span>代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用Transformer将其编码为向量<span class="math inline">\(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span>与<span class="math inline">\(q_\phi(z|x,y)\)</span>类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即：
+<span class="math display">\[
 p_s(c_k|z)=
 \begin{cases}
 1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\
@@ -334,7 +338,9 @@ loss_{prior}=KL(p(z|x)||p_\theta(z|x))
 logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\
 &amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')
 \end{align}
-\]</span> 然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline">\(z'\)</span>最近的<span class="math inline">\(c_{z'}\)</span>不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline">\(c\)</span>，损失函数中应该还有一项是<span class="math inline">\(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法： <span class="math display">\[
+\]</span>
+然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline">\(z'\)</span>最近的<span class="math inline">\(c_{z'}\)</span>不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline">\(c\)</span>，损失函数中应该还有一项是<span class="math inline">\(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法：
+<span class="math display">\[
 R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))
 \]</span></p>
 <p><span class="math display">\[
@@ -513,7 +519,7 @@ logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

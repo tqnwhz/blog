@@ -286,7 +286,8 @@
 
       
         <h2 id="序言">序言</h2>
-<p>序列到序列模型（sequence to sequence, seq2seq）是自然语言处理中的一个重要模型，在机器翻译、对话系统等多个领域都有着广泛的应用。今天借着准备面试的机会，将这一部分知识整理出一篇博客。</p>
+<p>序列到序列模型（sequence to sequence,
+seq2seq）是自然语言处理中的一个重要模型，在机器翻译、对话系统等多个领域都有着广泛的应用。今天借着准备面试的机会，将这一部分知识整理出一篇博客。</p>
 <span id="more"></span>
 <h2 id="seq2seq">seq2seq</h2>
 <p><img src="basemodel.png"></p>
@@ -304,7 +305,9 @@
 </ul>
 <h2 id="贪婪解码问题">贪婪解码问题</h2>
 <p>对于seq2seq模型，我们希望得到概率最大的输出序列，即建模的是<span class="math inline">\(\arg\max_YP(Y|X)\)</span>（<span class="math inline">\(X\)</span>为输入序列，<span class="math inline">\(Y\)</span>为输出序列）。然而事实上，解码器每一步求解的是<span class="math inline">\(\arg\max_{y_t}P(y_t|y_{t-1:1},X)\)</span>​，即当前时间步概率最大的单词。这样以来，整个解码的过程就是贪婪的，每一步的单词概率最大并不意味着整个句子的概率最大。</p>
-<p>怎么解决这个问题呢？解决方法是beam search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道ground truth），</p>
+<p>怎么解决这个问题呢？解决方法是beam
+search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道ground
+truth），</p>
 <p>保留k个可能性最大的序列（可能性以概率相乘的对数作为分数，即<span class="math inline">\(\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​）。</p>
 <p>当某个序列输出终止符号时，可以认作该序列已经结束，继续维护其他序列。</p>
 <p>搜索的终止条件可以根据任务具体选择，例如：</p>
@@ -330,13 +333,18 @@ e^t=[s_t^\intercal h_1,\dots,s_t^\intercal h_N]\in \mathbb R^N
 <p>广义的attention定义如下：给定一组向量values，一个向量query，attention是value的加权和，权重是某个相似性度量函数，例如点积、加性注意力等。</p>
 <p>度量函数可以为：</p>
 <ul>
-<li><p>点乘：<span class="math inline">\(e_i=s^\intercal h_i\in \mathbb R\)</span></p></li>
-<li><p>乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in \mathbb R\)</span>​（其中<span class="math inline">\(W\in \mathbb R^{d_2*d_1}\)</span>为权重矩阵）</p></li>
-<li><p>加法注意力：<span class="math inline">\(e_i=v^\intercal tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline">\(W_1,W_2\)</span>为权重矩阵，<span class="math inline">\(v\)</span>是权重向量）</p></li>
+<li><p>点乘：<span class="math inline">\(e_i=s^\intercal h_i\in \mathbb
+R\)</span></p></li>
+<li><p>乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in
+\mathbb R\)</span>​（其中<span class="math inline">\(W\in \mathbb
+R^{d_2*d_1}\)</span>为权重矩阵）</p></li>
+<li><p>加法注意力：<span class="math inline">\(e_i=v^\intercal
+tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline">\(W_1,W_2\)</span>为权重矩阵，<span class="math inline">\(v\)</span>是权重向量）</p></li>
 </ul>
 <p>对应到seq2seq的Attention机制中，query向量为解码器隐藏状态，values为编码器的全部隐藏状态，度量函数为点乘。</p>
 <p>联想一下BERT的自注意力机制：</p>
-<p>对于每个单词向量，通过Query、Key、Value三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的query向量与每个位置的key做点乘，作为相似性度量，再对value矩阵加权求和。公式如下： <span class="math display">\[
+<p>对于每个单词向量，通过Query、Key、Value三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的query向量与每个位置的key做点乘，作为相似性度量，再对value矩阵加权求和。公式如下：
+<span class="math display">\[
 Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
 \]</span></p>
 
@@ -507,7 +515,7 @@ Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
