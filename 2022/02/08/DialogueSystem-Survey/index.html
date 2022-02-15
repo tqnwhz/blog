@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/home.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/home.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="rvfzsLqxbNVD-hnRTFX3IwC0lO2MHDtGkm4dUjsF-n4">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="简介 今天来读一篇对话系统综述。《Recent Advances in Deep Learning Based Dialogue Systems: A Systematic Survey》是由南洋理工大学于2021年发表的论文，目前收录在arxiv中。该文调研了对话系统中的历史研究工作，并从模型和系统两个方面进行分析，确定了可能的未来研究方向。此外，本文还涵盖了相关框架、数据集的介绍。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对话系统综述">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 今天来读一篇对话系统综述。《Recent Advances in Deep Learning Based Dialogue Systems: A Systematic Survey》是由南洋理工大学于2021年发表的论文，目前收录在arxiv中。该文调研了对话系统中的历史研究工作，并从模型和系统两个方面进行分析，确定了可能的未来研究方向。此外，本文还涵盖了相关框架、数据集的介绍。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/CNN.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/HRED.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/MemoryNetwork.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/Attention.png">
+<meta property="article:published_time" content="2022-02-08T04:32:26.000Z">
+<meta property="article:modified_time" content="2022-02-15T13:04:48.826Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="自然语言处理">
+<meta property="article:tag" content="对话系统">
+<meta property="article:tag" content="综述">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/CNN.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/","path":"2022/02/08/DialogueSystem-Survey/","title":"对话系统综述"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>对话系统综述 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/blog/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">2.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A5%9E%E7%BB%8F%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">神经模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#cnn"><span class="nav-number">3.1.</span> <span class="nav-text">CNN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rnn"><span class="nav-number">3.2.</span> <span class="nav-text">RNN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hred"><span class="nav-number">3.3.</span> <span class="nav-text">HRED</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#memory-network"><span class="nav-number">3.4.</span> <span class="nav-text">Memory Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B-transformer"><span class="nav-number">3.5.</span> <span class="nav-text">注意力 &amp; Transformer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          对话系统综述
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-02-08 12:32:26" itemprop="dateCreated datePublished" datetime="2022-02-08T12:32:26+08:00">2022-02-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-02-15 21:04:48" itemprop="dateModified" datetime="2022-02-15T21:04:48+08:00">2022-02-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">对话系统</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/%E7%BB%BC%E8%BF%B0/" itemprop="url" rel="index"><span itemprop="name">综述</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="简介">简介</h2>
+<p>今天来读一篇对话系统综述。《Recent Advances in Deep Learning Based
+Dialogue Systems: A Systematic
+Survey》是由南洋理工大学于2021年发表的论文，目前收录在arxiv中。该文调研了对话系统中的历史研究工作，并从模型和系统两个方面进行分析，确定了可能的未来研究方向。此外，本文还涵盖了相关框架、数据集的介绍。</p>
+<span id="more"></span>
+<p>具体而言：</p>
+<ul>
+<li>模型类型层面，分析广泛应用于对话系统的不同模型的原理、特点和应用。</li>
+<li>系统类型层面，讨论对比面向任务的对话系统和开放域对话系统。</li>
+</ul>
+<h2 id="背景">背景</h2>
+<p>按照应用，对话系统通常可以分为两类：</p>
+<p><strong>面向任务的对话系统（Task-oriented dialogue
+systems）</strong>，用于解决特定领域的特定问题，例如机票预订等。传统的面向任务的对话系统往往以流水线结构组织，包含四个基本模块：自然语言理解、对话状态跟踪、策略学习和自然语言生成。近期工作探索使用端到端的方法，以实现更好的效果。</p>
+<p><strong>开放域对话系统（Open-domain dialogue
+systems）</strong>，旨在不受域的限制地与用户聊天，通常完全由数据驱动。开放域对话系统通常可以分为三类：</p>
+<ul>
+<li><strong>生成系统。</strong>使用Seq2Seq模型将用户输入和历史消息生成回复，可以灵活生成上下文相关的回复，但有时缺乏连贯性并且乏味（例如我不知道）。</li>
+<li><strong>基于检索的系统。</strong>根据用户输入从语料库中检索回复，受有限语料库的影响，有时检索到的回复与对话上下文相关性较弱。</li>
+<li><strong>集成系统。</strong>结合生成和检索的方法，从二者中选出最优的。</li>
+</ul>
+<p>此外，生成系统还可以用于改进检索得到的回复。</p>
+<p>传统的对话系统大多基于有限状态的、基于统计学习和机器学习方法。基于有限状态的系统易于实现并且可以生成自然的回复，应用于早期的一些场景固定、对话流程确定的产品中。基于统计学习与机器学习的方法通常使用模板填充来处理任务，相较基于有限状态的系统，要更为灵活。但由于模板固定，应用场景和回复的多样性也受到限制。</p>
+<p>深度学习的发展则提高了对话系统的性能，其广泛应用于各种NLP任务中，也是近些年的研究热点。</p>
+<h2 id="神经模型">神经模型</h2>
+<p>本节讨论的模型包括：卷积神经网络 (CNNs)、循环神经网络 (RNNs)、Vanilla
+序列到序列模型、分层循环编码器-解码器
+(HRED)、记忆网络、注意力网络、Transformer、指针网络和
+CopyNet、深度强化学习模型、生成对抗网络 (GAN)、知识图增强神经网络。</p>
+<h3 id="cnn">CNN</h3>
+<p><strong>卷积神经网络</strong>（<strong>Convolutional Neural
+Networks，CNN</strong>）包含卷积层，池化层和前向层，架构如下图所示。输入为长度为7，特征维度为5的序列，使用6个卷积核得到6个特征图，池化后拼接得到6维向量，接一个全连接层后进行分类。</p>
+<p><img src="CNN.png"></p>
+<p>卷积核的操作如下。其中，m和n代表结果矩阵行列的索引，f是输入矩阵，h是卷积核。滑动窗口使得卷积层能够捕获局部特征，池化层则用于扫描产生全局特征，赋予了CNN局部和全局感知能力。而参数共享机制可以降低模型的复杂度。
+<span class="math display">\[
+G(m,n)=(f*h)(m,n)=\sum_j\sum_k h(j,k)f(m-j,n-k)
+\]</span>
+由于这些特性，CNN广泛应用于CV中，在NLP中也得到了一定应用。CNN是很好的文本特征提取器，但它们可能不是理想的序列编码器。虽然一些对话系统直接使用CNN作为编码器编码语言和知识，但是大多数历史最佳对话系统选择在编码文本信息之后，使用CNN作为层次特征抽取器。这是由于CNN的固定输入长度（输入尺寸改变，全连接层参数也需要改变）和有限的卷积跨度（难以捕捉长距离依赖）。</p>
+<p>通常，CNN 用于处理编码信息的对话系统主要有两种情况：</p>
+<ul>
+<li>应用 CNN 基于来自编码器的特征向量提取特征。从character-level
+embeddings中抽取特征，证明了CNN的层级抽取能力。</li>
+<li>在响应检索任务中提取特征图。使用单独的编码器对对话上下文和候选响应进行编码，使用
+CNN
+作为从编码对话上下文和候选响应计算的相似度矩阵的提取器。实验表明，该方法可以在响应检索任务中取得良好的性能。</li>
+</ul>
+<p>近几年较新的工作不选择CNN作为对话编码器的主要原因是，它们无法连续、灵活地跨时间序列提取信息。</p>
+<h3 id="rnn">RNN</h3>
+<p>标准神经网络和CNN的两个限制在于：假设数据不同位置相互独立；输入为固定长度。对于存在依赖、长度可变的输入序列，网络性能受到限制。循环神经网络（RNN）应运而生。公式的介绍可以参考我的博客<a href="https://tqnwhz.github.io/blog/2021/07/22/rnns/#more">循环神经网络RNN及其变体GRU、LSTM
+| 一隅 (tqnwhz.github.io)</a>，这里就不再赘述。</p>
+<p>在对话系统中，RNN多用于编码器和解码器。编码器用于编码对话上下文、对话状态、对话历史以及外部知识等信息。解码器通过greedy
+search或者beam search进行解码。</p>
+<h3 id="hred">HRED</h3>
+<p><strong>HRED（Hierarchical Recurrent
+Encoder-Decoder）</strong>是一个上下文感知的Seq2Seq模型，使用两个层次的RNN对token-level和turn-level的序列进行建模，架构如下图所示。token-level
+RNN编码器序列得到序列表征（同时也是解码器），turn-level
+RNN编码对话历史的序列表征，得到当前的上下文向量，并作为解码器的初始状态。</p>
+<p><img src="HRED.png"></p>
+<p>HRED还有一些变体。例如VHRED在解码阶段引入隐变量，以建模更复杂的序列依赖关系。最近在对话相关任务中的许多工作都应用了基于
+HRED
+的框架来捕获分层对话特征。其中有一些改进工作，例如参考Transformer引入自注意力，引入新的层次捕获全局知识、主题信息等。</p>
+<h3 id="memory-network">Memory Network</h3>
+<p>记忆网络（Memory
+Network）是解决有关外部知识问题的重要网络。诸如LSTM类的模型，虽然有记忆功能，但记忆模块太小（只有一个固定维度的向量），无法精确地记录全部内容。因此Weston
+et al. (2014) 提出了记忆网络，包含四个模块：</p>
+<ul>
+<li>记忆模块：存储记忆事实表示</li>
+<li>I（Input）模块：将输入的记忆事实映射到嵌入式表示</li>
+<li>G（Generalization）模块：决定记忆模块的更新，简单起见可以直接将新记忆插入，不进行遗忘和更新</li>
+<li>O（Output）模块：根据输入和现有的记忆状态输出</li>
+<li>R（Response）模块：根据O模块输出产生最终响应</li>
+</ul>
+<p>端到端的记忆网络架构如下，流程分为三个阶段：</p>
+<ul>
+<li><strong>权重计算：</strong>使用模型A、B分别将输入记忆和输入查询映射为向量，计算权重<span class="math inline">\(p_i=Softmax(u^Tm_i)\)</span>代表查询<span class="math inline">\(u\)</span>与记忆<span class="math inline">\(m_i\)</span>的关系。</li>
+<li><strong>记忆选择：</strong>使用模型C将输入记忆编码为嵌入向量<span class="math inline">\(c_i\)</span>，并计算加权和<span class="math inline">\(o=\sum
+p_ic_i\)</span>。这实际上跟Attention类似，是一种soft-alignment。</li>
+<li><strong>最终预测：</strong>将记忆和查询的和映射为概率向量，即<span class="math inline">\(\hat \alpha=Softmax(W(o+u))\)</span>。</li>
+</ul>
+<p><img src="MemoryNetwork.png"></p>
+<p>记忆网络广泛用于QA、面向任务的对话系统中，记忆模块用于存储外部知识等信息。记忆网络的思想也在很多模型中得到了体现。</p>
+<h3 id="注意力-transformer">注意力 &amp; Transformer</h3>
+<p>为解决Seq2Seq将输入序列编码为固定维度向量带来的信息损失，Bahdanau et
+al. (2014)
+提出注意力机制用于机器翻译任务。其思想是解码的每一步与整个输入序列关联，公式描述如下：
+<span class="math display">\[
+P(y_i|y_{t&lt;i})=g(y_{i-1},s_i,c_i)\\
+s_i=f(s_{i-1},y_{i-1},c_i)\\
+c_i=\sum_{j=1}^{T_x}\alpha_{ij}h_j
+\]</span> 其中，h和s分别为编码器和解码器的隐藏状态，i代表时间步，<span class="math inline">\(y\)</span>代表输出的token。g和f为计算输出和更新隐藏状态的函数，由RNN的种类决定。<span class="math inline">\(c_i\)</span>为解码的第i步与整个输入序列的注意力结果，<span class="math inline">\(\alpha_{ij}\)</span>为注意力分数，计算公式为：
+<span class="math display">\[
+\alpha_{ij}=\frac{exp(e_{ij})}{\sum_{k=1}^{T_x}exp(e_{ik})} \\
+e_{ij}=a(s_{i-1},h_j)\\
+\]</span> a是相关性度量函数，根据注意力的类型有不同的形式，<span class="math inline">\(\alpha_{ij}\)</span>即是相关性上进行归一化（Softmax）。注意力的图示如下：</p>
+<p><img src="Attention.png"></p>
+<p>此后，注意力机制大行其道，基本成为Seq2Seq的标配。但是由于RNN的不可并行性、难以捕捉长距离依赖等缺点，研究者提出了Transformer，详细的介绍可参考我的博客<a href="https://tqnwhz.github.io/blog/2021/08/14/Transformer/">Transformer
+| 一隅</a>。</p>
+<p>...待补充</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/u014577702/article/details/117825782">Recent
+Advances in Deep Learning-based Dialogue
+Systems_北风吹过的秋-CSDN博客</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/31170263">论文笔记 - HRED 与
+VHRED - 知乎 (zhihu.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32257642">论文笔记 - Memory
+Networks 系列 - 知乎 (zhihu.com)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/" title="对话系统综述">https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 自然语言处理</a>
+              <a href="/blog/tags/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 对话系统</a>
+              <a href="/blog/tags/%E7%BB%BC%E8%BF%B0/" rel="tag"><i class="fa fa-tag"></i> 综述</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/01/22/PTM-Study/" rel="prev" title="预训练模型综述">
+                  <i class="fa fa-chevron-left"></i> 预训练模型综述
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">73k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">2:12</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

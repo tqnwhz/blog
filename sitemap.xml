@@ -2,9 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/</loc>
+    
+    <lastmod>2022-02-15</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/2022/02/08/DialogueSystem-Survey/</loc>
+    
+    <lastmod>2022-02-15</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://tqnwhz.github.io/blog/2022/01/22/PTM-Study/</loc>
     
-    <lastmod>2022-01-30</lastmod>
+    <lastmod>2022-02-08</lastmod>
     
   </url>
   
@@ -19,13 +33,6 @@
     <loc>https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/</loc>
     
     <lastmod>2022-01-21</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/</loc>
-    
-    <lastmod>2021-10-25</lastmod>
     
   </url>
   
@@ -165,7 +172,7 @@
 
   <url>
     <loc>https://tqnwhz.github.io/blog</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -173,189 +180,196 @@
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/BART/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/BERT/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E5%B8%B8%E8%AF%86%E5%AF%B9%E8%AF%9D/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/CopyNet/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/VAE/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/tags/GPT/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/tags/%E9%97%AE%E7%AD%94/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/tags/KBQA/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E7%BB%BC%E8%BF%B0/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/GPT/</loc>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/%E9%97%AE%E7%AD%94/</loc>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/</loc>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/KBQA/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/RoBERTa/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/tags/%E4%BB%A3%E7%A0%81/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/Transformer/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/tags/%E4%BB%A3%E7%A0%81/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E7%94%9F%E6%88%90%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/GAN/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/VQ-VAE/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/Hugging-Face/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E5%B7%A5%E7%A8%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/RNN/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/GRU/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/LSTM/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/seq2seq/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/tags/%E8%AE%BA%E6%96%87/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -364,112 +378,126 @@
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E6%96%87%E6%9C%AC%E7%94%9F%E6%88%90/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%97%AE%E7%AD%94%E6%A3%80%E7%B4%A2/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/Transformer/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%97%AE%E7%AD%94%E6%A3%80%E7%B4%A2/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/BERT/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/Transformer/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E7%94%9F%E6%88%90%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BART/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F/%E7%BB%BC%E8%BF%B0/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/GPT/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/</loc>
-    <lastmod>2022-02-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/seq2seq/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/BERT/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/seq2seq/</loc>
+    <lastmod>2022-02-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tqnwhz.github.io/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/%E7%BB%BC%E8%BF%B0/</loc>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E7%94%9F%E6%88%90%E6%A8%A1%E5%9E%8B/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://tqnwhz.github.io/blog/categories/%E7%94%9F%E6%88%90%E6%A8%A1%E5%9E%8B/VAE/</loc>
-    <lastmod>2022-02-03</lastmod>
+    <lastmod>2022-02-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
