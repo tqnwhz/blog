@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -21,16 +21,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 今天来分享一个网站吧，Hugging Face，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。">
+<meta name="description" content="简介 今天来分享一个网站吧，Hugging Face，最大的 NLP 社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的 NLP 任务。其提供的 transformers 框架提供了简洁高效的 api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face 至今在 github 上已有超过 5 万个 star，可见其影响力。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="NLP必备网站Hugging Face">
+<meta property="og:title" content="NLP 必备网站 Hugging Face">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/09/27/huggingface/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 今天来分享一个网站吧，Hugging Face，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face至今在github上已有超过5万个star，可见其影响力。">
+<meta property="og:description" content="简介 今天来分享一个网站吧，Hugging Face，最大的 NLP 社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的 NLP 任务。其提供的 transformers 框架提供了简洁高效的 api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging Face 至今在 github 上已有超过 5 万个 star，可见其影响力。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/09/27/huggingface/intro.png">
 <meta property="article:published_time" content="2021-09-27T11:58:30.000Z">
-<meta property="article:modified_time" content="2021-09-27T13:01:14.245Z">
+<meta property="article:modified_time" content="2022-02-19T07:03:44.535Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="Hugging Face">
 <meta property="article:tag" content="工程">
@@ -42,10 +42,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2021/09/27/huggingface/","path":"2021/09/27/huggingface/","title":"NLP必备网站Hugging Face"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2021/09/27/huggingface/","path":"2021/09/27/huggingface/","title":"NLP 必备网站 Hugging Face"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>NLP必备网站Hugging Face | 一隅</title>
+<title>NLP 必备网站 Hugging Face | 一隅</title>
   
 
 
@@ -55,9 +55,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -156,7 +153,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81hugging-face"><span class="nav-number">2.</span> <span class="nav-text">为什么需要Hugging Face</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E7%94%A8%E7%9A%84%E9%93%BE%E6%8E%A5"><span class="nav-number">3.</span> <span class="nav-text">有用的链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81hugging-face"><span class="nav-number">2.</span> <span class="nav-text">为什么需要 Hugging Face</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E7%94%A8%E7%9A%84%E9%93%BE%E6%8E%A5"><span class="nav-number">3.</span> <span class="nav-text">有用的链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -171,18 +168,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -245,7 +242,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          NLP必备网站Hugging Face
+          NLP 必备网站 Hugging Face
         </h1>
 
         <div class="post-meta-container">
@@ -255,9 +252,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2021-09-27 19:58:30 / 修改时间：21:01:14" itemprop="dateCreated datePublished" datetime="2021-09-27T19:58:30+08:00">2021-09-27</time>
+      <time title="创建时间：2021-09-27 19:58:30" itemprop="dateCreated datePublished" datetime="2021-09-27T19:58:30+08:00">2021-09-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-02-19 15:03:44" itemprop="dateModified" datetime="2022-02-19T15:03:44+08:00">2022-02-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -307,33 +310,33 @@
     <div class="post-body" itemprop="articleBody">
         <h2 id="简介">简介</h2>
 <p>今天来分享一个网站吧，<a target="_blank" rel="noopener" href="https://huggingface.co/">Hugging
-Face</a>，最大的NLP社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的NLP任务。其提供的transformers框架提供了简洁高效的api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging
-Face至今在github上已有超过5万个star，可见其影响力。</p>
+Face</a>，最大的 NLP 社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的 NLP 任务。其提供的 transformers 框架提供了简洁高效的 api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging
+Face 至今在 github 上已有超过 5 万个 star，可见其影响力。</p>
 <span id="more"></span>
-<h2 id="为什么需要hugging-face">为什么需要Hugging Face</h2>
+<h2 id="为什么需要hugging-face">为什么需要 Hugging Face</h2>
 <p><img src="intro.png"></p>
 <p>Hugging
-Face不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
+Face 不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
 <ul>
-<li>开箱即用：对于常见的NLP任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
-<li>多后端支持：Transformers支持Pytorch、Jax、Tensorflow三种框架，无需再为框架微调苦恼。</li>
-<li>可定制性：高效封装的同时，Transformers支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
+<li>开箱即用：对于常见的 NLP 任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
+<li>多后端支持：Transformers 支持 Pytorch、Jax、Tensorflow 三种框架，无需再为框架微调苦恼。</li>
+<li>可定制性：高效封装的同时，Transformers 支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
 </ul>
-<p>鉴于现在NLP方向的研究、工程基本都是大规模预训练模型相关，Hugging
-Face的重要性就一目了然了。如果你是学生党，Hugging
-Face能让你在各类NLP比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging
-Face也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
+<p>鉴于现在 NLP 方向的研究、工程基本都是大规模预训练模型相关，Hugging
+Face 的重要性就一目了然了。如果你是学生党，Hugging
+Face 能让你在各类 NLP 比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging
+Face 也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
 <h2 id="有用的链接">有用的链接</h2>
 <ol type="1">
-<li><a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers">github链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers">github 链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
 <li><a target="_blank" rel="noopener" href="https://huggingface.co/">Hugging Face
-官网</a>，试试推理api、看一看文档。</li>
+官网</a>，试试推理 api、看一看文档。</li>
 <li><a target="_blank" rel="noopener" href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face
 Course</a>，Hugging
-Face出品的官方课程，目前更新了前四章，基本上是step-by-step的教你从推理到微调任务如何构建和完成。</li>
+Face 出品的官方课程，目前更新了前四章，基本上是 step-by-step 的教你从推理到微调任务如何构建和完成。</li>
 </ol>
 <h2 id="总结">总结</h2>
-<p>没错，这么短的一篇博客还有总结。今天刚刚看完Hugging Face
+<p>没错，这么短的一篇博客还有总结。今天刚刚看完 Hugging Face
 的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>
 
     </div>
@@ -352,7 +355,7 @@ Face出品的官方课程，目前更新了前四章，基本上是step-by-step�
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://tqnwhz.github.io/blog/2021/09/27/huggingface/" title="NLP必备网站Hugging Face">https://tqnwhz.github.io/blog/2021/09/27/huggingface/</a>
+      <a href="https://tqnwhz.github.io/blog/2021/09/27/huggingface/" title="NLP 必备网站 Hugging Face">https://tqnwhz.github.io/blog/2021/09/27/huggingface/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -374,8 +377,8 @@ Face出品的官方课程，目前更新了前四章，基本上是step-by-step�
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/blog/2021/10/05/aae/" rel="next" title="对抗自编码器AAE">
-                  对抗自编码器AAE <i class="fa fa-chevron-right"></i>
+                <a href="/blog/2021/10/05/aae/" rel="next" title="对抗自编码器 AAE">
+                  对抗自编码器 AAE <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
@@ -409,13 +412,13 @@ Face出品的官方课程，目前更新了前四章，基本上是step-by-step�
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

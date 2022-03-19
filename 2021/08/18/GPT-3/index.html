@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -21,12 +21,12 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 GPT系列是OpenAI推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是GPT系列第三部，出自2020年发表在NeurIPS上的论文《Language Models are Few-Shot Learners》。秉着最新的成果往往更重要的原则，GPT系列我打算倒着读。从名字可以看出，GPT-3关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成果，但是下游任务的微调">
+<meta name="description" content="简介 GPT 系列是 OpenAI 推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是 GPT 系列第三部，出自 2020 年发表在 NeurIPS 上的论文《Language Models are Few-Shot Learners》。秉着最新的成果往往更重要的原则，GPT 系列我打算倒着读。从名字可以看出，GPT-3 关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成">
 <meta property="og:type" content="article">
-<meta property="og:title" content="GPT三部曲之三">
+<meta property="og:title" content="GPT 三部曲之三">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 GPT系列是OpenAI推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是GPT系列第三部，出自2020年发表在NeurIPS上的论文《Language Models are Few-Shot Learners》。秉着最新的成果往往更重要的原则，GPT系列我打算倒着读。从名字可以看出，GPT-3关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成果，但是下游任务的微调">
+<meta property="og:description" content="简介 GPT 系列是 OpenAI 推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是 GPT 系列第三部，出自 2020 年发表在 NeurIPS 上的论文《Language Models are Few-Shot Learners》。秉着最新的成果往往更重要的原则，GPT 系列我打算倒着读。从名字可以看出，GPT-3 关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/meta-learning.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/learning-type.png">
@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/learning-type.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/gpt-1.png">
 <meta property="article:published_time" content="2021-08-18T15:35:17.000Z">
-<meta property="article:modified_time" content="2021-08-25T14:15:24.264Z">
+<meta property="article:modified_time" content="2022-02-19T07:03:44.528Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="GPT">
 <meta name="twitter:card" content="summary">
@@ -45,10 +45,10 @@
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2021/08/18/GPT-3/","path":"2021/08/18/GPT-3/","title":"GPT三部曲之三"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2021/08/18/GPT-3/","path":"2021/08/18/GPT-3/","title":"GPT 三部曲之三"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>GPT三部曲之三 | 一隅</title>
+<title>GPT 三部曲之三 | 一隅</title>
   
 
 
@@ -58,9 +58,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -174,18 +171,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -248,7 +245,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          GPT三部曲之三
+          GPT 三部曲之三
         </h1>
 
         <div class="post-meta-container">
@@ -266,7 +263,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2021-08-25 22:15:24" itemprop="dateModified" datetime="2021-08-25T22:15:24+08:00">2021-08-25</time>
+      <time title="修改时间：2022-02-19 15:03:44" itemprop="dateModified" datetime="2022-02-19T15:03:44+08:00">2022-02-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -319,29 +316,29 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="简介">简介</h2>
-<p>GPT系列是OpenAI推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是GPT系列第三部，出自2020年发表在NeurIPS上的论文《Language
+<p>GPT 系列是 OpenAI 推出的预训练模型，时至今日已经包含了三个模型，今天我来读的是 GPT 系列第三部，出自 2020 年发表在 NeurIPS 上的论文《Language
 Models are Few-Shot
-Learners》。秉着最新的成果往往更重要的原则，GPT系列我打算倒着读。从名字可以看出，GPT-3关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成果，但是下游任务的微调往往也需要一定规模的数据集。GPT-3希望能够用更大的模型（1750亿）来将微调任务转变为少样本学习任务。</p>
+Learners》。秉着最新的成果往往更重要的原则，GPT 系列我打算倒着读。从名字可以看出，GPT-3 关注点在于少样本学习，虽然预训练模型在下游任务微调上取得了很好的成果，但是下游任务的微调往往也需要一定规模的数据集。GPT-3 希望能够用更大的模型（1750 亿）来将微调任务转变为少样本学习任务。</p>
 <span id="more"></span>
 <h3 id="预训练模型">预训练模型</h3>
-<p>像BERT、GPT此类的预训练模型，虽然经过微调后能够很好地应用于各种下游任务。但是微调任务往往也需要数万规模的标注数据集。而对于人类来说，并不需要大规模的数据集才能学习到特定任务，只需要一个简单的描述（例如，请告诉我这些句子的情绪是开心的还是低落的）或者很少的数据（这是两个勇敢的人的例子，请再给出一个勇敢的例子）。因此，如何让预训练模型能够像人一样灵活、通用地解决问题，成了研究者追求的目标。</p>
+<p>像 BERT、GPT 此类的预训练模型，虽然经过微调后能够很好地应用于各种下游任务。但是微调任务往往也需要数万规模的标注数据集。而对于人类来说，并不需要大规模的数据集才能学习到特定任务，只需要一个简单的描述（例如，请告诉我这些句子的情绪是开心的还是低落的）或者很少的数据（这是两个勇敢的人的例子，请再给出一个勇敢的例子）。因此，如何让预训练模型能够像人一样灵活、通用地解决问题，成了研究者追求的目标。</p>
 <p>解决上述问题的想法之一是通过元学习（meta-learning）。元学习的。在语言模型中，元学习意味着模型在训练阶段能够拥有识别通用模式的能力，并在推理阶段快速识别并适应特定任务，如下图所示。</p>
 <p><img src="meta-learning.png"></p>
-<p>GPT-2就是通过上下文学习来达到上述效果，具体来说，GPT-2会将任务嵌入到预料中，例如一个英语到法语的翻译任务的语料为：“”I’m
+<p>GPT-2 就是通过上下文学习来达到上述效果，具体来说，GPT-2 会将任务嵌入到预料中，例如一个英语到法语的翻译任务的语料为：“”I’m
 not the cleverest man in the world, but like they say <strong>in
 French</strong>: Je ne suis pas un imbecile [I’m not a
-fool].”，进而避免了显式的任务枚举、编码等操作。在这样的语料上训练语言模型，来达到多任务学习的效果。但是这样的一个问题就是模型（虽然有十几亿参数）可能很难学习到这样复杂的依赖关系。虽然GPT-2取得了一些初步的结果，但是效果仍远不如微调。</p>
+fool].”，进而避免了显式的任务枚举、编码等操作。在这样的语料上训练语言模型，来达到多任务学习的效果。但是这样的一个问题就是模型（虽然有十几亿参数）可能很难学习到这样复杂的依赖关系。虽然 GPT-2 取得了一些初步的结果，但是效果仍远不如微调。</p>
 <p><img src="learning-type.png"></p>
 <h3 id="参数膨胀">参数膨胀</h3>
-<p>自从NLP中预训练模型提出以来，参数越多，性能越好基本成为了大家的共识。参数膨胀也成为了预训练模型更新换代的趋势。从2018年BERT的3亿参数，到GPT-2的15亿参数，再到2020年GPT-3的1750亿参数，每次模型增大都带来了下游任务的改进。其算力的要求也让预训练模型成为大公司垄断的研究方向。</p>
-<p>在论文中，作者还实验了从1.25亿参数到130亿参数间的一系列小模型，并对其在零样本、单样本、少样本实验上的性能进行了评估，结果如下图所示：</p>
+<p>自从 NLP 中预训练模型提出以来，参数越多，性能越好基本成为了大家的共识。参数膨胀也成为了预训练模型更新换代的趋势。从 2018 年 BERT 的 3 亿参数，到 GPT-2 的 15 亿参数，再到 2020 年 GPT-3 的 1750 亿参数，每次模型增大都带来了下游任务的改进。其算力的要求也让预训练模型成为大公司垄断的研究方向。</p>
+<p>在论文中，作者还实验了从 1.25 亿参数到 130 亿参数间的一系列小模型，并对其在零样本、单样本、少样本实验上的性能进行了评估，结果如下图所示：</p>
 <p><img src="model-size.png"></p>
 <p>可以看到，三种任务上的性能都随参数的增加而得到提升。</p>
 <h3 id="数据污染">数据污染</h3>
-<p>在使用像Common
-Crawl这样大规模数据集的时候，可能会出现数据污染问题：由于数据规模过大，测试集的一些样本出现在训练集之中，使得评估不准确。GPT-3使用的是来自互联网上的文本数据，更有可能出现这样的问题。因此，作者开发了工具来量化数据污染对实验的影响，并对受较大影响的数据集进行了标注。</p>
+<p>在使用像 Common
+Crawl 这样大规模数据集的时候，可能会出现数据污染问题：由于数据规模过大，测试集的一些样本出现在训练集之中，使得评估不准确。GPT-3 使用的是来自互联网上的文本数据，更有可能出现这样的问题。因此，作者开发了工具来量化数据污染对实验的影响，并对受较大影响的数据集进行了标注。</p>
 <h2 id="实验方法">实验方法</h2>
-<p>实验的设置与GPT-2类似，不同的是，GPT-3对比了上下文学习的不同设置，包含以下四种方法（单样本与零样本学习区分开来的原因在于，在某些任务例如与人类对话中，单样本学习更匹配）：</p>
+<p>实验的设置与 GPT-2 类似，不同的是，GPT-3 对比了上下文学习的不同设置，包含以下四种方法（单样本与零样本学习区分开来的原因在于，在某些任务例如与人类对话中，单样本学习更匹配）：</p>
 <table>
 <colgroup>
 <col style="width: 6%">
@@ -366,7 +363,7 @@ Crawl这样大规模数据集的时候，可能会出现数据污染问题：由
 </tr>
 <tr class="even">
 <td>少样本学习</td>
-<td>在下游任务推理时提供K个样本（10-100）作为演示，不更新权重</td>
+<td>在下游任务推理时提供 K 个样本（10-100）作为演示，不更新权重</td>
 <td>减少了对监督数据规模的要求</td>
 <td>效果比微调差的多</td>
 </tr>
@@ -387,12 +384,12 @@ Crawl这样大规模数据集的时候，可能会出现数据污染问题：由
 <p>四种方式介绍如下图所示：</p>
 <p><img src="learning-type.png"></p>
 <h3 id="模型">模型</h3>
-<p>"GPT-3的模型与GPT-2类似，除了GPT-3是交替使用密集Transformer与局部带状稀疏注意力机制的Transformer"。这基本就是论文中对GPT-3模型的全部介绍了。我翻到GPT-2的论文，"GPT-2是基于Transformer的语言模型架构，模型细节大体与GPT类似，除了将层标准化提前到子块的输入位置，并在最后一个自注意力机制块后加入层标准化"。套娃现象属实有点严重。</p>
-<p>下面是GPT-1的结构，看起来就是个12层的Transformer。上面提到的那些局部带状系数注意力机制的Transformer等到后面再补充吧。</p>
+<p>"GPT-3 的模型与 GPT-2 类似，除了 GPT-3 是交替使用密集 Transformer 与局部带状稀疏注意力机制的 Transformer"。这基本就是论文中对 GPT-3 模型的全部介绍了。我翻到 GPT-2 的论文，"GPT-2 是基于 Transformer 的语言模型架构，模型细节大体与 GPT 类似，除了将层标准化提前到子块的输入位置，并在最后一个自注意力机制块后加入层标准化"。套娃现象属实有点严重。</p>
+<p>下面是 GPT-1 的结构，看起来就是个 12 层的 Transformer。上面提到的那些局部带状系数注意力机制的 Transformer 等到后面再补充吧。</p>
 <p><img src="gpt-1.png"></p>
 <h2 id="总结">总结</h2>
-<p>GPT系列的模型结构变化不大，重要的一直是实验部分，从普通的预训练语言模型到试图通过少样本学习解决各种下游任务的庞然大物。整个GPT-3的论文，只有十页左右在介绍非实验部分，剩下的几十页都是实验。这次因为时间原因先介绍到这里，实验部分等后续有时间再补充吧。</p>
-<p>这篇论文一个最大的写作特点在于引用非常的奇怪。可能是我见识比较少，但是word2vec，glove这种写出来非常直观的方法，后面加个引用也非常清晰，论文中却不提缩写，只使用的作者姓首字母加年份的引用，像word2vec、glove的引用名分别为MCCD13、PSM14。只看这个引用让人不知所云，还要点超链接浪费时间。</p>
+<p>GPT 系列的模型结构变化不大，重要的一直是实验部分，从普通的预训练语言模型到试图通过少样本学习解决各种下游任务的庞然大物。整个 GPT-3 的论文，只有十页左右在介绍非实验部分，剩下的几十页都是实验。这次因为时间原因先介绍到这里，实验部分等后续有时间再补充吧。</p>
+<p>这篇论文一个最大的写作特点在于引用非常的奇怪。可能是我见识比较少，但是 word2vec，glove 这种写出来非常直观的方法，后面加个引用也非常清晰，论文中却不提缩写，只使用的作者姓首字母加年份的引用，像 word2vec、glove 的引用名分别为 MCCD13、PSM14。只看这个引用让人不知所云，还要点超链接浪费时间。</p>
 <h2 id="参考">参考</h2>
 
     </div>
@@ -411,7 +408,7 @@ Crawl这样大规模数据集的时候，可能会出现数据污染问题：由
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/" title="GPT三部曲之三">https://tqnwhz.github.io/blog/2021/08/18/GPT-3/</a>
+      <a href="https://tqnwhz.github.io/blog/2021/08/18/GPT-3/" title="GPT 三部曲之三">https://tqnwhz.github.io/blog/2021/08/18/GPT-3/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -467,13 +464,13 @@ Crawl这样大规模数据集的时候，可能会出现数据污染问题：由
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

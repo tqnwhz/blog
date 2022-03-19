@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/home.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/home.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="rvfzsLqxbNVD-hnRTFX3IwC0lO2MHDtGkm4dUjsF-n4">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="简介 《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库">
+<meta property="og:type" content="article">
+<meta property="og:title" content="复杂知识库问答（KBQA）中的问题迁移">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/framework.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/exper-result.png">
+<meta property="article:published_time" content="2022-03-13T06:54:03.000Z">
+<meta property="article:modified_time" content="2022-03-19T07:49:49.648Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="自然语言处理">
+<meta property="article:tag" content="问答">
+<meta property="article:tag" content="知识图谱">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/example.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/","path":"2022/03/13/Program-Transfer/","title":"复杂知识库问答（KBQA）中的问题迁移"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>复杂知识库问答（KBQA）中的问题迁移 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/blog/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">2.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%86%E6%9E%B6%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">框架结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BA%90%E5%9F%9F%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.1.</span> <span class="nav-text">源域预训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E5%9F%9F%E5%BE%AE%E8%B0%83"><span class="nav-number">3.2.</span> <span class="nav-text">目标域微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">4.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF"><span class="nav-number">4.2.</span> <span class="nav-text">基线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87"><span class="nav-number">4.3.</span> <span class="nav-text">评估指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.4.</span> <span class="nav-text">实验结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          复杂知识库问答（KBQA）中的问题迁移
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-03-13 14:54:03" itemprop="dateCreated datePublished" datetime="2022-03-13T14:54:03+08:00">2022-03-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-03-19 15:49:49" itemprop="dateModified" datetime="2022-03-19T15:49:49+08:00">2022-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%97%AE%E7%AD%94/" itemprop="url" rel="index"><span itemprop="name">问答</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="简介">简介</h2>
+<p>《Program Transfer for Answering Complex Questionsover Knowledge
+Bases》是由清华大学和华为合作完成的工作，收录于 ACL
+2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上的 KBQA 性能。
+<span id="more"></span></p>
+<p>本文所讲的方法是语义解析的思想，将 query 先转化为知识库的操作序列，如下图所示。分析出 query 对应的操作序列（Find，Relate..），再为每个操作填入参数（实体、关系等），执行操作即可得到结果。</p>
+<p><img src="example.png"></p>
+<h2 id="背景">背景</h2>
+<p>知识库问答，即 KBQA，旨在利用结构化的知识库来解答 query。在<a href="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/#more">基于知识库的问答综述（KBQA）</a>中提到了，KBQA 有两种主流方法，<strong>语义解析</strong>的方法将 query 转化为 SQL 语句，执行即可得到结果；信息检索的方法在特定子图中将实体按相关性排序，最终得到结果。复杂 KBQA 是指需要处理多跳逻辑的 KBQA 问题。这种情况下，KBQA 所面临的推理路径的监督数据缺失、语义理解能力不足、检索空间过大等问题会更为突出。</p>
+<p>程序规约是指将 KBQA 问题规约为某个可执行的程序，也就是语义解析的思想。近些年来，一些知识库提供了监督的程序规约信号，在这些知识库上的程序规约问答取得了大幅性能提升。如何使用这些监督信号，提升低资源知识库上的性能呢？本文将其定义为程序迁移任务，该任务面临以下挑战：</p>
+<ul>
+<li><strong>域异构</strong>：由于语言和知识的多样性，源知识库和目标知识库上的知识、问题的表现形式可能相去甚远。</li>
+<li><strong>未知的元素</strong>：源知识库的知识覆盖率往往相当有限，例如 KBQA
+Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
+<li><strong>过大的搜索空间</strong>：每个知识库操作可选的参数很多，搜索知识库和操作和可选参数不现实。</li>
+</ul>
+<p>本文的贡献包括：</p>
+<ul>
+<li>首次提出复杂 KBQA 的程序迁移方法</li>
+<li>为程序迁移提出一个两阶段解析框架和本体剪枝策略</li>
+<li>通过扩展实验和消融实验证实了程序迁移的有效性</li>
+</ul>
+<h2 id="框架结构">框架结构</h2>
+<p>这一部分其实非常简单，对着下面这张图就能解释清楚，不需要任何数学公式。</p>
+<p><img src="framework.png"></p>
+<ol type="1">
+<li>BERT+GRU 将 query 映射为无参数操作序列（与知识库无关）</li>
+<li>利用上一步每个操作的 hidden
+state 投影后在可选参数空间做 softmax，选择参数</li>
+<li>参数剪枝：根据 query 维护可能的域、关系、实体集合，并随着参数序列的自回归过程迭代更新。</li>
+</ol>
+<h3 id="源域预训练">源域预训练</h3>
+<p>损失函数包含两部分：操作序列的交叉熵和参数位置的交叉熵，即两个分类任务损失之和。
+<span class="math display">\[
+\mathcal {L}^{pretrain}=-\sum_{(x^S,y^S)\in
+D^S}(logp(y^S_s|x^S)+\sum_{t=1}^{|y_s|}logp(arg_t^S|x^S,o_t^S,\mathcal
+P))
+\]</span></p>
+<h3 id="目标域微调">目标域微调</h3>
+<p>由于目标域缺少源域的监督程序归纳信号，因此需要通过强化学习 / EM 算法来微调。主要步骤是先搜索得到若干个可能的程序，然后执行程序根据结果更新参数。</p>
+<h2 id="实验">实验</h2>
+<h3 id="数据集">数据集</h3>
+<ul>
+<li>源域：KBQA Pro</li>
+<li> 目标域：WebQuestionSP，ComplexWebQuestions (CWQ)</li>
+<li> 知识库：Freebase</li>
+</ul>
+<h3 id="基线">基线</h3>
+<ul>
+<li>语义解析：TEX-TRAY，QGG，TeacherNet</li>
+<li> 信息检索：Graft-Net，PullNet</li>
+<li> 消融实验基线：<span class="math inline">\(Ours_{-f}\)</span>（未微调），<span class="math inline">\(Ours_{-p}\)</span>（未预训练），<span class="math inline">\(Ours_{-pa}\)</span>（未预训练参数解析器），<span class="math inline">\(Ours_{-o}\)</span>（缺少本体剪枝）</li>
+</ul>
+<h3 id="评估指标">评估指标</h3>
+<ul>
+<li>F1</li>
+<li>Hits@1：Hits@n 是指正例中处在前 n 个结果中的比例，Hits@1 也就是模型结果第一名为正确结果的比例</li>
+</ul>
+<p>由于数据集中的问题有多个答案，F1 更好地反映了答案的覆盖程度。</p>
+<h3 id="实验结果">实验结果</h3>
+<p><img src="exper-result.png"></p>
+<p>值得关注的是<span class="math inline"> \(Ours_{-p}\)</span> 极差的结果和<span class="math inline"> \(Ours_{-f}\)</span> 的一般表现，表明了预训练的重要性。并且移去预训练参数解析器和本体剪枝策略都会对模型效果有较大影响。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是蛮有意思的，用一个比较贴近人认知的框架，把迁移学习应用到 KBQA 中并证实了其有效性。</p>
+<p>近期还会从各高校 ACL2022 录取宣传中找一些值得读的论文。等到 ACL
+2022 公布 accepted list 了就不用这么折腾了。</p>
+<p>碎碎念：我也好想发一篇论文啊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/" title="复杂知识库问答（KBQA）中的问题迁移">https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 自然语言处理</a>
+              <a href="/blog/tags/%E9%97%AE%E7%AD%94/" rel="tag"><i class="fa fa-tag"></i> 问答</a>
+              <a href="/blog/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag"><i class="fa fa-tag"></i> 知识图谱</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/02/19/PLATO-XL/" rel="prev" title="PLATO-XL">
+                  <i class="fa fa-chevron-left"></i> PLATO-XL
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/03/19/LaMDA/" rel="next" title="谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人">
+                  谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">81k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">2:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

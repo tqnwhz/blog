@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -21,18 +21,18 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 今天来读一篇2021年的知识库问答的综述，《A Survey on Complex Knowledge Base Question Answering:Methods, Challenges and Solutions》，论文收录在IJCAI 2021中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic parsing-based，SP-ba">
+<meta name="description" content="简介 今天来读一篇 2021 年的知识库问答的综述，《A Survey on Complex Knowledge Base Question Answering:Methods, Challenges and Solutions》，论文收录在 IJCAI 2021 中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic parsing-based，S">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于知识库的问答综述（KBQA）">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 今天来读一篇2021年的知识库问答的综述，《A Survey on Complex Knowledge Base Question Answering:Methods, Challenges and Solutions》，论文收录在IJCAI 2021中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic parsing-based，SP-ba">
+<meta property="og:description" content="简介 今天来读一篇 2021 年的知识库问答的综述，《A Survey on Complex Knowledge Base Question Answering:Methods, Challenges and Solutions》，论文收录在 IJCAI 2021 中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic parsing-based，S">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/multi-hop.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/methods.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/summary.png">
 <meta property="article:published_time" content="2021-10-25T05:48:30.000Z">
-<meta property="article:modified_time" content="2022-02-15T13:06:48.367Z">
+<meta property="article:modified_time" content="2022-03-04T01:18:28.461Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="问答">
 <meta property="article:tag" content="知识库">
@@ -58,9 +58,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -174,18 +171,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -266,7 +263,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-02-15 21:06:48" itemprop="dateModified" datetime="2022-02-15T21:06:48+08:00">2022-02-15</time>
+      <time title="修改时间：2022-03-04 09:18:28" itemprop="dateModified" datetime="2022-03-04T09:18:28+08:00">2022-03-04</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -315,24 +312,24 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="简介">简介</h2>
-<p>今天来读一篇2021年的知识库问答的综述，《A Survey on Complex Knowledge
+<p>今天来读一篇 2021 年的知识库问答的综述，《A Survey on Complex Knowledge
 Base Question Answering:Methods, Challenges and
-Solutions》，论文收录在IJCAI
-2021中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic
+Solutions》，论文收录在 IJCAI
+2021 中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic
 parsing-based，SP-based）和基于信息检索（information
 retrivel-based，IR-based）。 <span id="more"></span></p>
 <h2 id="知识库问答">知识库问答</h2>
-<p>知识库是一个结构化的数据库，它与知识图谱类似，由（主体Subject，关系Relation，客体Object）三元组组成，例如（JK罗琳，出生地，英国），常见的知识库有Freebase等。这个三元组可以用来回答“JK罗琳出生在哪里？”的问题。与简单的、答案与主体直接相连的简单QA不同，复杂QA查询任务涉及多跳推理甚至一些聚合关系。例如下图知识库，“谁是The
-Jeff Probst Show提名的TV
-Producer的第一任妻子”问题的答案，包含多个实体和多跳处理逻辑。 <img src="multi-hop.png"></p>
-<p>KBQA的第一步是识别问题中的主体并链接到知识库中的实体，然后根据实体的邻域推导问题答案。这里分为两种方法基于语义解析和基于信息检索的两种方法。语义解析的思想是将自然语言问题表示为可以在知识库中进行查询的符号化的逻辑形式，然后再用逻辑语言进行查询（例如SQL）。基于信息检索的方法思想是构建一个问题特定的知识图包含了相关的所有信息，然后将所有实体按相关性进行排序。然而，这些方法会面临以下挑战：</p>
+<p>知识库是一个结构化的数据库，它与知识图谱类似，由（主体 Subject，关系 Relation，客体 Object）三元组组成，例如（JK 罗琳，出生地，英国），常见的知识库有 Freebase 等。这个三元组可以用来回答 “JK 罗琳出生在哪里？” 的问题。与简单的、答案与主体直接相连的简单 QA 不同，复杂 QA 查询任务涉及多跳推理甚至一些聚合关系。例如下图知识库，“谁是 The
+Jeff Probst Show 提名的 TV
+Producer 的第一任妻子” 问题的答案，包含多个实体和多跳处理逻辑。 <img src="multi-hop.png"></p>
+<p>KBQA 的第一步是识别问题中的主体并链接到知识库中的实体，然后根据实体的邻域推导问题答案。这里分为两种方法基于语义解析和基于信息检索的两种方法。语义解析的思想是将自然语言问题表示为可以在知识库中进行查询的符号化的逻辑形式，然后再用逻辑语言进行查询（例如 SQL）。基于信息检索的方法思想是构建一个问题特定的知识图包含了相关的所有信息，然后将所有实体按相关性进行排序。然而，这些方法会面临以下挑战：</p>
 <ul>
 <li>基于语义解析的方法很难覆盖复杂的查询（多跳推理、约束关系、数值计算等）。类似的，基于信息检索的方法也很难回答复杂的问题，检索的实体范围可能太小，而且解释性差。</li>
 <li>复杂的实体和关系会使得搜索空间过大（逻辑形式、候选结果等），搜索开销过大。</li>
 <li>两种方法将问题理解看作重要的步骤，当问题的语法和语义复杂时，模型需要有很强的自然语言理解和生成能力。</li>
 <li>弱监督问题。问答数据集中往往只存在问题和答案，缺少推理路径，而标注这样的推理路径成本过于高昂。弱监督问题给两种方法都带来了困难。</li>
 </ul>
-<p>评估指标上，KBQA往往是从答案集合上选出置信度最高的，常见的评估指标由F1、准确率、召回率、Hits@1等。</p>
+<p>评估指标上，KBQA 往往是从答案集合上选出置信度最高的，常见的评估指标由 F1、准确率、召回率、Hits@1 等。</p>
 <h2 id="主流方法">主流方法</h2>
 <p>流程图如下图所示。 <img src="methods.png"></p>
 <h3 id="基于语义解析的方法">基于语义解析的方法</h3>
@@ -342,8 +339,8 @@ Producer的第一任妻子”问题的答案，包含多个实体和多跳处理
 <li>逻辑解析</li>
 <li>逻辑验证</li>
 <li>逻辑执行</li>
-<li>优点：解释性强</li>
 </ol>
+<p>优点：解释性强</p>
 <p>缺点：严重依赖逻辑形式和解析算法的设计，成为性能提升的瓶颈</p>
 <h3 id="基于信息检索的方法">基于信息检索的方法</h3>
 <p>旨在根据问题检索候选答案集合并对其进行排序，按照以下步骤：</p>
@@ -359,11 +356,11 @@ Producer的第一任妻子”问题的答案，包含多个实体和多跳处理
 <p>论文总结了两种方法面临的挑战和解决方案，汇总成下面的表格。</p>
 <p><img src="summary.png"></p>
 <h2 id="总结和展望">总结和展望</h2>
-<p>论文主要介绍了两种典型的知识库问答方法，总结了它们面临的挑战及解决方案，并指出复杂KBQA未来的可能研究方向：</p>
+<p>论文主要介绍了两种典型的知识库问答方法，总结了它们面临的挑战及解决方案，并指出复杂 KBQA 未来的可能研究方向：</p>
 <ul>
-<li>在线学习。已有的复杂KBQA系统都是离线学习、在线部署。然而用户的反馈可能是改进KBQA的方法。基于此，一些工作开始利用用户反馈去纠正KBQA的回答。还有一些工作直接让用户参与到了问题解析过程中。</li>
+<li>在线学习。已有的复杂 KBQA 系统都是离线学习、在线部署。然而用户的反馈可能是改进 KBQA 的方法。基于此，一些工作开始利用用户反馈去纠正 KBQA 的回答。还有一些工作直接让用户参与到了问题解析过程中。</li>
 <li>鲁棒性和可解释性。已有的方法虽然可以在基准数据集上可以取得很好的结果，但是遇到分布之外的情况可能无法很好处理。有研究人员开始提出相关的数据集来解决该问题。</li>
-<li>更通用的知识库。知识库往往是不完整的，一些工作开始引入文本、图像来进行更复杂的KBQA推理。关于知识库更普遍的定义和更灵活的使用方法能让KBQA发展的更好。</li>
+<li>更通用的知识库。知识库往往是不完整的，一些工作开始引入文本、图像来进行更复杂的 KBQA 推理。关于知识库更普遍的定义和更灵活的使用方法能让 KBQA 发展的更好。</li>
 </ul>
 
     </div>
@@ -400,8 +397,8 @@ Producer的第一任妻子”问题的答案，包含多个实体和多跳处理
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/blog/2021/10/07/VAE/" rel="prev" title="变分自编码器VAE">
-                  <i class="fa fa-chevron-left"></i> 变分自编码器VAE
+                <a href="/blog/2021/10/07/VAE/" rel="prev" title="变分自编码器 VAE">
+                  <i class="fa fa-chevron-left"></i> 变分自编码器 VAE
                 </a>
             </div>
             <div class="post-nav-item">
@@ -440,13 +437,13 @@ Producer的第一任妻子”问题的答案，包含多个实体和多跳处理
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

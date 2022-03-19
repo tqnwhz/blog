@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -21,18 +21,18 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 BART是Facebook AI 于2019年发表的《Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension》论文中提出的预训练模型，论文收录于2020年ACL。顾名思义，BART是一个基于seq2seq的预训练模型，可以用于自然语言">
+<meta name="description" content="简介 BART 是 Facebook AI 于 2019 年发表的《Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension》论文中提出的预训练模型，论文收录于 2020 年 ACL。顾名思义，BART 是一个基于 seq2seq 的预训练模">
 <meta property="og:type" content="article">
 <meta property="og:title" content="BART">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/08/29/BART/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 BART是Facebook AI 于2019年发表的《Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension》论文中提出的预训练模型，论文收录于2020年ACL。顾名思义，BART是一个基于seq2seq的预训练模型，可以用于自然语言">
+<meta property="og:description" content="简介 BART 是 Facebook AI 于 2019 年发表的《Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension》论文中提出的预训练模型，论文收录于 2020 年 ACL。顾名思义，BART 是一个基于 seq2seq 的预训练模">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/29/BART/architecture.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/29/BART/noises.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/29/BART/nlu.png">
 <meta property="article:published_time" content="2021-08-29T11:55:53.000Z">
-<meta property="article:modified_time" content="2021-09-03T01:31:15.626Z">
+<meta property="article:modified_time" content="2022-02-19T07:03:44.525Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="BART">
 <meta property="article:tag" content="预训练模型">
@@ -57,9 +57,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -173,18 +170,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -265,7 +262,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2021-09-03 09:31:15" itemprop="dateModified" datetime="2021-09-03T09:31:15+08:00">2021-09-03</time>
+      <time title="修改时间：2022-02-19 15:03:44" itemprop="dateModified" datetime="2022-02-19T15:03:44+08:00">2022-02-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -318,61 +315,61 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="简介">简介</h2>
-<p>BART是Facebook AI 于2019年发表的《Denoising Sequence-to-Sequence
+<p>BART 是 Facebook AI 于 2019 年发表的《Denoising Sequence-to-Sequence
 Pre-training for Natural Language Generation, Translation, and
-Comprehension》论文中提出的预训练模型，论文收录于2020年ACL。顾名思义，BART是一个基于seq2seq的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的“Denoising”直译为降噪，实际上是模型的预训练目标。</p>
+Comprehension》论文中提出的预训练模型，论文收录于 2020 年 ACL。顾名思义，BART 是一个基于 seq2seq 的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的 “Denoising” 直译为降噪，实际上是模型的预训练目标。</p>
 <span id="more"></span>
 <p>一个水逆的周末，博客更新不能停！</p>
 <h2 id="模型">模型</h2>
-<p>预训练模型之前已经介绍过了，参考<a href="https://tqnwhz.github.io/blog/2021/08/16/BERT/#more">BERT</a>。这里只做简单的介绍。预训练模型的目的是在大量数据上预训练一个能够解决通用任务的模型，下游任务可以在预训练模型的基础上进行调整适配，无需从头训练。预训练模型往往有几个关键因素：</p>
+<p>预训练模型之前已经介绍过了，参考 <a href="https://tqnwhz.github.io/blog/2021/08/16/BERT/#more">BERT</a>。这里只做简单的介绍。预训练模型的目的是在大量数据上预训练一个能够解决通用任务的模型，下游任务可以在预训练模型的基础上进行调整适配，无需从头训练。预训练模型往往有几个关键因素：</p>
 <ul>
-<li>模型架构。Transformer是公认的特征抽取能力很强的架构，因此常见的预训练模型都是用的Transformer架构。</li>
-<li>预训练目标。在BERT之前，预训练模型往往都是按照标准的语言模型进行训练，例如ELMO。BERT第一次提出了掩码语言模型这样的预训练任务，不仅能够更好地适配下游任务，而且取得了更优的效果。如何能够挑选一个更好的预训练目标来建模通用任务，也是预训练模型的关键。</li>
+<li>模型架构。Transformer 是公认的特征抽取能力很强的架构，因此常见的预训练模型都是用的 Transformer 架构。</li>
+<li>预训练目标。在 BERT 之前，预训练模型往往都是按照标准的语言模型进行训练，例如 ELMO。BERT 第一次提出了掩码语言模型这样的预训练任务，不仅能够更好地适配下游任务，而且取得了更优的效果。如何能够挑选一个更好的预训练目标来建模通用任务，也是预训练模型的关键。</li>
 <li>适用任务及使用方法。虽然预训练模型是为建模通用任务而存在的，然而还是存在适用任务的限制，具体任务对使用方法也有要求。</li>
 <li>数据集。要求很简单，大而全。大就不用说了，数据集最好能够涵盖多个领域的数据，这样适配下游任务也会更简单。</li>
-<li>效果。事实上没有个state-of-the-art都不太可能发出来，相对没有那么重要。</li>
+<li>效果。事实上没有个 state-of-the-art 都不太可能发出来，相对没有那么重要。</li>
 </ul>
-<p>按照这个顺序，我们来介绍一下BART模型。</p>
+<p>按照这个顺序，我们来介绍一下 BART 模型。</p>
 <h3 id="架构">架构</h3>
-<p>基于Transformer的seq2seq模型，与GPT和BERT一样，使用的激活函数是gelu而不是relu。与BERT的区别在于：</p>
+<p>基于 Transformer 的 seq2seq 模型，与 GPT 和 BERT 一样，使用的激活函数是 gelu 而不是 relu。与 BERT 的区别在于：</p>
 <ul>
-<li>有解码器、在解码器的每一层，添加了对编码器最后一层输出的注意力，跟seq2seq的注意力一致。</li>
-<li>BART去掉了在词预测之前的前馈神经网络。</li>
+<li>有解码器、在解码器的每一层，添加了对编码器最后一层输出的注意力，跟 seq2seq 的注意力一致。</li>
+<li>BART 去掉了在词预测之前的前馈神经网络。</li>
 </ul>
-<p>总结一下就是个Transformer。与BERT的主要区别在于有解码器，可以用于生成任务，与GPT的主要区别在于有编码器，可以更好地用于监督的生成任务，如下图所示。</p>
+<p>总结一下就是个 Transformer。与 BERT 的主要区别在于有解码器，可以用于生成任务，与 GPT 的主要区别在于有编码器，可以更好地用于监督的生成任务，如下图所示。</p>
 <p><img src="architecture.png"></p>
 <h3 id="预训练目标">预训练目标</h3>
-<p>BART的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的“降噪”的由来。
+<p>BART 的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的 “降噪” 的由来。
 在实验过程中，噪声可能是以上噪声函数的组合。几种噪声函数的示例分别如下：</p>
 <p><img src="noises.png"></p>
 <h3 id="适用任务">适用任务</h3>
-<p>BART可适用于以下任务：</p>
+<p>BART 可适用于以下任务：</p>
 <ul>
-<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似BERT中的[CLS]
+<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似 BERT 中的 [CLS]
 token。</li>
 <li>符号分类，输入输出均为该序列，将解码器每个位置的隐藏状态拿去分类即可。</li>
-<li>序列生成，例如文本摘要、问答等任务，给定输入输出进行fine-tune即可。</li>
-<li>目标语言为英语的机器翻译，这个任务其实也属于序列生成，不过有点不太一样。具体做法为，将BART的编码器随机初始化（就是丢弃本来的权重），然后冻结其他参数只更新编码器权重，后面再微调所有权重。这里限制为英语主要是BART本身在英文语料上训练的。</li>
+<li>序列生成，例如文本摘要、问答等任务，给定输入输出进行 fine-tune 即可。</li>
+<li>目标语言为英语的机器翻译，这个任务其实也属于序列生成，不过有点不太一样。具体做法为，将 BART 的编码器随机初始化（就是丢弃本来的权重），然后冻结其他参数只更新编码器权重，后面再微调所有权重。这里限制为英语主要是 BART 本身在英文语料上训练的。</li>
 </ul>
 <h2 id="实验">实验</h2>
 <h3 id="预训练目标比较">预训练目标比较</h3>
-<p>为了评估各种预训练目标的有效性，BART在尽量控制变量（分别调优，学习率、正则化可能有所差别）的前提下比较了如下几种预训练目标：</p>
+<p>为了评估各种预训练目标的有效性，BART 在尽量控制变量（分别调优，学习率、正则化可能有所差别）的前提下比较了如下几种预训练目标：</p>
 <ul>
-<li>语言模型，与GPT类似，从左向右的语言模型</li>
-<li>置换语言模型，基于XLNET，对1/6的符号进行采样，再进行自回归预测</li>
-<li>掩码语言模型，与BERT类似</li>
-<li>多任务掩码语言模型，与uniLM类似</li>
-<li>掩码seq2seq：掩码50%的序列，由seq2seq预测</li>
+<li>语言模型，与 GPT 类似，从左向右的语言模型</li>
+<li>置换语言模型，基于 XLNET，对 1/6 的符号进行采样，再进行自回归预测</li>
+<li>掩码语言模型，与 BERT 类似</li>
+<li>多任务掩码语言模型，与 uniLM 类似</li>
+<li>掩码 seq2seq：掩码 50% 的序列，由 seq2seq 预测</li>
 </ul>
 <p>通过在问答、对话、摘要等多项任务上进行比较，论文得出以下结论：</p>
 <ul>
 <li>预训练目标的性能与下游任务有着很密切的关系，一个简单的语言模型可以在生成式问答上取得最优效果，在抽取式问答上效果确实最差的</li>
 <li>符号遮挡是至关重要的，没有符号遮挡的文档旋转、句子重排的预训练目标表现较差</li>
 <li>从左到右的语言模型预训练任务能改善生成任务，像掩码语言模型和置换语言模型不包含自回归语言模型训练任务，生成任务效果就会比较差</li>
-<li>双向编码器对SQuAD数据集是非常重要的</li>
+<li>双向编码器对 SQuAD 数据集是非常重要的</li>
 <li>预训练目标并非唯一重要的因素，任务性能也与模型结构等因素有很大关系</li>
-<li>纯粹的语言模型在ELI5数据集上取得了最好的性能</li>
-<li>使用文本填充预训练的BART取得了大部分数据集上的最优性能</li>
+<li>纯粹的语言模型在 ELI5 数据集上取得了最好的性能</li>
+<li>使用文本填充预训练的 BART 取得了大部分数据集上的最优性能</li>
 </ul>
 <h3 id="大规模预训练">大规模预训练</h3>
 <h4 id="判别任务">判别任务</h4>
@@ -381,28 +378,28 @@ token。</li>
 <li>SQuAD（Stanford Question Answering
 Dataset，斯坦福问答数据集）：给定一篇文章和一个问题，从原文中选取部分文字作为问题的答案（答案一定原文中）。虽然是问答任务，但是并不是生成式的任务，而是判别式的任务。</li>
 <li>GLUE（General Language Understanding
-Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如CoLA对单句子是否符合文法进行评估，QQP评估一对问题是否等价。</li>
+Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如 CoLA 对单句子是否符合文法进行评估，QQP 评估一对问题是否等价。</li>
 </ul>
 <p><img src="nlu.png"></p>
-<p>两个数据集上的实验结果显示，BART可以和RoBERTa打的有来有回。</p>
+<p>两个数据集上的实验结果显示，BART 可以和 RoBERTa 打的有来有回。</p>
 <h4 id="生成任务">生成任务</h4>
 <p>分别在摘要生成、对话、问答生成、翻译多个任务上进行了实验，数据集分别介绍如下：</p>
 <ul>
-<li>CNN/DailyMail和XSum是摘要生成的两个英文数据集。每个数据样本由文档与人工总结的摘要组成。与抽取式摘要任务不同，摘要中可以出现文档中未出现的单词或者句子。</li>
-<li>CONVAI是一个对话数据集，回复不仅取决于上下文，还取决于对话人的角色信息，换而言之，模型需要根据上下文和角色信息生成合适的回复。</li>
-<li>ELI5是一个生成式问答数据集，根据文档回答指定的问题。</li>
-<li>WMT16是一个翻译数据集，涵盖了多种语料到英语的翻译数据。</li>
+<li>CNN/DailyMail 和 XSum 是摘要生成的两个英文数据集。每个数据样本由文档与人工总结的摘要组成。与抽取式摘要任务不同，摘要中可以出现文档中未出现的单词或者句子。</li>
+<li>CONVAI 是一个对话数据集，回复不仅取决于上下文，还取决于对话人的角色信息，换而言之，模型需要根据上下文和角色信息生成合适的回复。</li>
+<li>ELI5 是一个生成式问答数据集，根据文档回答指定的问题。</li>
+<li>WMT16 是一个翻译数据集，涵盖了多种语料到英语的翻译数据。</li>
 </ul>
-<p>在四项生成任务上的评估表明，BART都取得了SOTA的性能。</p>
+<p>在四项生成任务上的评估表明，BART 都取得了 SOTA 的性能。</p>
 <h2 id="总结">总结</h2>
-<p>BART是一个基于Transformer架构的去噪seq2seq模型，通过破坏和重建原始文本进行预训练，在自然语言理解任务上与现有模型难分伯仲，但在自然语言生成任务上达到了SOTA的性能。</p>
+<p>BART 是一个基于 Transformer 架构的去噪 seq2seq 模型，通过破坏和重建原始文本进行预训练，在自然语言理解任务上与现有模型难分伯仲，但在自然语言生成任务上达到了 SOTA 的性能。</p>
 <p>预训练模型简单分为三类：</p>
 <ul>
-<li>仅编码器，如BERT，可以直接用于自然语言理解任务，或者加个解码器再用于生成任务。</li>
-<li>仅解码器，如GPT，可以直接用于自然语言生成任务，或者加个编码器可以用于条件生成任务。</li>
-<li>编码器+解码器，如BART，可以同时直接用于两种任务。</li>
+<li>仅编码器，如 BERT，可以直接用于自然语言理解任务，或者加个解码器再用于生成任务。</li>
+<li>仅解码器，如 GPT，可以直接用于自然语言生成任务，或者加个编码器可以用于条件生成任务。</li>
+<li>编码器 + 解码器，如 BART，可以同时直接用于两种任务。</li>
 </ul>
-<p>后面可能会读一下RoBERTa的论文。</p>
+<p>后面可能会读一下 RoBERTa 的论文。</p>
 
     </div>
 
@@ -437,8 +434,8 @@ Evaluation，通用语言理解评估）：由九个任务组成，每个任务�
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/blog/2021/08/18/GPT-3/" rel="prev" title="GPT三部曲之三">
-                  <i class="fa fa-chevron-left"></i> GPT三部曲之三
+                <a href="/blog/2021/08/18/GPT-3/" rel="prev" title="GPT 三部曲之三">
+                  <i class="fa fa-chevron-left"></i> GPT 三部曲之三
                 </a>
             </div>
             <div class="post-nav-item">
@@ -477,13 +474,13 @@ Evaluation，通用语言理解评估）：由九个任务组成，每个任务�
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

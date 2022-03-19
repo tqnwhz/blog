@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -21,19 +21,19 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 RoBERTa是华盛顿大学和FaceBook在论文《RoBERTa: A Robustly Optimized BERT Pretraining Approach》提出的预训练模型，论文似乎仅存在arxiv版本。RoBERTa本质上是BERT的一个改进版本。论文发现BERT是未充分训练的，改进训练之后的RoBERTa在GLUE、RACE、SQuAD数据集上达到了SOTA。代码和模型公开在了g">
+<meta name="description" content="简介 RoBERTa 是华盛顿大学和 FaceBook 在论文《RoBERTa: A Robustly Optimized BERT Pretraining Approach》提出的预训练模型，论文似乎仅存在 arxiv 版本。RoBERTa 本质上是 BERT 的一个改进版本。论文发现 BERT 是未充分训练的，改进训练之后的 RoBERTa 在 GLUE、RACE、SQuAD 数据集上达到了">
 <meta property="og:type" content="article">
 <meta property="og:title" content="RoBERTa">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 RoBERTa是华盛顿大学和FaceBook在论文《RoBERTa: A Robustly Optimized BERT Pretraining Approach》提出的预训练模型，论文似乎仅存在arxiv版本。RoBERTa本质上是BERT的一个改进版本。论文发现BERT是未充分训练的，改进训练之后的RoBERTa在GLUE、RACE、SQuAD数据集上达到了SOTA。代码和模型公开在了g">
+<meta property="og:description" content="简介 RoBERTa 是华盛顿大学和 FaceBook 在论文《RoBERTa: A Robustly Optimized BERT Pretraining Approach》提出的预训练模型，论文似乎仅存在 arxiv 版本。RoBERTa 本质上是 BERT 的一个改进版本。论文发现 BERT 是未充分训练的，改进训练之后的 RoBERTa 在 GLUE、RACE、SQuAD 数据集上达到了">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/mask-result.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/nsp.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/batch-size.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/09/03/RoBERTa/roberta.png">
 <meta property="article:published_time" content="2021-09-03T01:36:41.000Z">
-<meta property="article:modified_time" content="2022-01-21T09:44:33.251Z">
+<meta property="article:modified_time" content="2022-02-19T07:03:44.529Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="预训练模型">
 <meta property="article:tag" content="BERT">
@@ -59,9 +59,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -160,7 +157,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">2.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">2.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E6%8E%A9%E7%A0%81vs%E5%8A%A8%E6%80%81%E6%8E%A9%E7%A0%81"><span class="nav-number">2.2.</span> <span class="nav-text">静态掩码vs动态掩码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E5%8F%A5%E9%A2%84%E6%B5%8B"><span class="nav-number">2.3.</span> <span class="nav-text">下句预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E5%A4%A7%E7%9A%84batch"><span class="nav-number">2.4.</span> <span class="nav-text">更大的Batch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E6%9C%AC%E7%BC%96%E7%A0%81"><span class="nav-number">2.5.</span> <span class="nav-text">文本编码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#roberta"><span class="nav-number">3.</span> <span class="nav-text">RoBERTa</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">2.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">2.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E6%8E%A9%E7%A0%81vs%E5%8A%A8%E6%80%81%E6%8E%A9%E7%A0%81"><span class="nav-number">2.2.</span> <span class="nav-text">静态掩码 vs 动态掩码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E5%8F%A5%E9%A2%84%E6%B5%8B"><span class="nav-number">2.3.</span> <span class="nav-text">下句预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E5%A4%A7%E7%9A%84batch"><span class="nav-number">2.4.</span> <span class="nav-text">更大的 Batch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E6%9C%AC%E7%BC%96%E7%A0%81"><span class="nav-number">2.5.</span> <span class="nav-text">文本编码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#roberta"><span class="nav-number">3.</span> <span class="nav-text">RoBERTa</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -175,18 +172,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -267,7 +264,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-21 17:44:33" itemprop="dateModified" datetime="2022-01-21T17:44:33+08:00">2022-01-21</time>
+      <time title="修改时间：2022-02-19 15:03:44" itemprop="dateModified" datetime="2022-02-19T15:03:44+08:00">2022-02-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -320,59 +317,59 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="简介">简介</h2>
-<p>RoBERTa是华盛顿大学和FaceBook在论文《RoBERTa: A Robustly Optimized
+<p>RoBERTa 是华盛顿大学和 FaceBook 在论文《RoBERTa: A Robustly Optimized
 BERT Pretraining
-Approach》提出的预训练模型，论文似乎仅存在arxiv版本。RoBERTa本质上是BERT的一个改进版本。论文发现BERT是未充分训练的，改进训练之后的RoBERTa在GLUE、RACE、SQuAD数据集上达到了SOTA。代码和模型公开在了<a target="_blank" rel="noopener" href="https://github.com/pytorch/fairseq">github</a>上。</p>
+Approach》提出的预训练模型，论文似乎仅存在 arxiv 版本。RoBERTa 本质上是 BERT 的一个改进版本。论文发现 BERT 是未充分训练的，改进训练之后的 RoBERTa 在 GLUE、RACE、SQuAD 数据集上达到了 SOTA。代码和模型公开在了 <a target="_blank" rel="noopener" href="https://github.com/pytorch/fairseq">github</a> 上。</p>
 <span id="more"></span>
-<p>相对于BERT的修改主要有以下方面：</p>
+<p>相对于 BERT 的修改主要有以下方面：</p>
 <ul>
-<li>训练时间更长、数据更大（提出了一个新的数据集CC-News）、batch更大（有论文指出更大的batch模型训练结果越好）</li>
+<li>训练时间更长、数据更大（提出了一个新的数据集 CC-News）、batch 更大（有论文指出更大的 batch 模型训练结果越好）</li>
 <li>移除下句预测预训练任务</li>
 <li>训练序列更长</li>
-<li>动态改变数据的MASK，而BERT的MASK是固定的</li>
+<li>动态改变数据的 MASK，而 BERT 的 MASK 是固定的</li>
 </ul>
-<p>在不使用额外的训练数据的情况下，RoBERTa在GLUE和SQuAD数据集上取得了优于BERT的性能。引入额外的训练数据后，RoBERTa在GLUE中的四项任务、SQuAD、RACE数据集上达到了SOTA。</p>
+<p>在不使用额外的训练数据的情况下，RoBERTa 在 GLUE 和 SQuAD 数据集上取得了优于 BERT 的性能。引入额外的训练数据后，RoBERTa 在 GLUE 中的四项任务、SQuAD、RACE 数据集上达到了 SOTA。</p>
 <h2 id="实验">实验</h2>
 <h3 id="数据集">数据集</h3>
 <ul>
 <li>GLUE（ General Language Understanding
-Evaluation，通用语言理解评估）：由9个句子或句子对的分类任务组成。</li>
+Evaluation，通用语言理解评估）：由 9 个句子或句子对的分类任务组成。</li>
 <li>SQuAD（ Stanford Question Answering
 Dataset，斯坦福问答数据集）：抽取式问答任务。给出文档和问题，从文档中选择部分文本作为问题答案。</li>
 <li>RACE（ ReAding Comprehension from
 Examinations，考试阅读理解数据集）：顾名思义，数据集来自考试题目，是一个分类任务。单个样本由文档、问题和若干个候选答案组成。正确答案不一定直接体现在文章中，需要深层理解文章并进行推断。</li>
 </ul>
-<h3 id="静态掩码vs动态掩码">静态掩码vs动态掩码</h3>
-<p>论文将RoBERTa与参数量相近的<span class="math inline">\(BERT_{BASE}\)</span>进行了比较，结果如下所示。可以看出，动态掩码的效果与静态掩码持平或者略优于。个人猜测原因是动态掩码虽然能够使得模型模型接触到更多数据、更加鲁棒，但频繁的动态掩码会使得某些样本无法得到充足的训练。</p>
+<h3 id="静态掩码vs动态掩码">静态掩码 vs 动态掩码</h3>
+<p>论文将 RoBERTa 与参数量相近的<span class="math inline"> \(BERT_{BASE}\)</span> 进行了比较，结果如下所示。可以看出，动态掩码的效果与静态掩码持平或者略优于。个人猜测原因是动态掩码虽然能够使得模型模型接触到更多数据、更加鲁棒，但频繁的动态掩码会使得某些样本无法得到充足的训练。</p>
 <p><img src="mask-result.png"></p>
 <h3 id="下句预测">下句预测</h3>
-<p>下句预测任务是BERT中提出的预训练任务，用于判断两句话是否构成连续上下句的关系。BERT论文中认为下句预测任务是非常重要的，它提升了QNLI、MNLI、SQuAD数据集的性能。然而，一些工作开始质疑下句预测任务的有效性。RoBERTa论文中比较了以下几种训练方法：</p>
+<p>下句预测任务是 BERT 中提出的预训练任务，用于判断两句话是否构成连续上下句的关系。BERT 论文中认为下句预测任务是非常重要的，它提升了 QNLI、MNLI、SQuAD 数据集的性能。然而，一些工作开始质疑下句预测任务的有效性。RoBERTa 论文中比较了以下几种训练方法：</p>
 <ul>
-<li>句子段（连续多个句子）对+下句预测，也就是原版BERT的训练方法。</li>
-<li>句子对+下句预测。</li>
+<li>句子段（连续多个句子）对 + 下句预测，也就是原版 BERT 的训练方法。</li>
+<li>句子对 + 下句预测。</li>
 <li>跨文档完整句子，将多篇文档拼接在一起，从中连续采样句子，可能跨文档也可能来自同一篇文档。</li>
 <li>单文档句子，从单个文档中连续采样句子。</li>
 </ul>
 <p>实验结果如下：</p>
 <p><img src="nsp.png"></p>
-<p>前两种训练方法比较，前者优于后者，说明独立的句子会损害下流任务的性能。接下来比较有无NSP任务的训练方法，分析后可以看出，完整句子移除了NSP任务，与拥有NSP任务的性能基本持平，在某些任务上还略胜一筹。而单文档句子任务甚至优于跨文档完整句子。</p>
-<h3 id="更大的batch">更大的Batch</h3>
-<p>机器翻译上的部分工作证实了大batch-size能够同时提高优化速度和任务性能，近期工作证实这同样适用于BERT，论文在<span class="math inline">\(BERT_{BASE}\)</span>上进行了Batch-size的实验，结果如下：</p>
+<p>前两种训练方法比较，前者优于后者，说明独立的句子会损害下流任务的性能。接下来比较有无 NSP 任务的训练方法，分析后可以看出，完整句子移除了 NSP 任务，与拥有 NSP 任务的性能基本持平，在某些任务上还略胜一筹。而单文档句子任务甚至优于跨文档完整句子。</p>
+<h3 id="更大的batch">更大的 Batch</h3>
+<p>机器翻译上的部分工作证实了大 batch-size 能够同时提高优化速度和任务性能，近期工作证实这同样适用于 BERT，论文在<span class="math inline"> \(BERT_{BASE}\)</span> 上进行了 Batch-size 的实验，结果如下：</p>
 <p><img src="batch-size.png"></p>
-<p>可以看出，2k的batch size
-确实要优于256，但8k却差于2k。论文中也没有进行解释，迷惑。</p>
+<p>可以看出，2k 的 batch size
+确实要优于 256，但 8k 却差于 2k。论文中也没有进行解释，迷惑。</p>
 <h3 id="文本编码">文本编码</h3>
 <p>字节对编码（Byte-Pair
-Encoding）是一种字词模型，BERT使用它来构建词表。然而当语料规模很大时，unicode字符会占据词表中相当大部分。2019年GPT2论文指出，可以使用unicode字节而非unicode字符来作为基本字词单元，然而这种方法可能会有轻微的性能损失（毕竟破坏了字符的完整结构），但是由于其能减小词表规模，RoBERTa还是基于此进行的词表构建。</p>
+Encoding）是一种字词模型，BERT 使用它来构建词表。然而当语料规模很大时，unicode 字符会占据词表中相当大部分。2019 年 GPT2 论文指出，可以使用 unicode 字节而非 unicode 字符来作为基本字词单元，然而这种方法可能会有轻微的性能损失（毕竟破坏了字符的完整结构），但是由于其能减小词表规模，RoBERTa 还是基于此进行的词表构建。</p>
 <h2 id="roberta">RoBERTa</h2>
-<p>RoBERTa=BERT+动态掩码+跨文档完整句子+更大batch
-size+字节编码+更大数据+更长训练时间</p>
+<p>RoBERTa=BERT + 动态掩码 + 跨文档完整句子 + 更大 batch
+size + 字节编码 + 更大数据 + 更长训练时间</p>
 <p>实验结果如下：</p>
 <p><img src="roberta.png"></p>
-<p>控制训练数据时，RoBERTa已经优于<span class="math inline">\(BERT_{LARGE}\)</span>了（但在SQuAD上逊于XLNET），在增加数据和训练更长时间后，三个数据集上全面超越XLNET。</p>
-<p>后面就是GLUE、SQuAD上各项指标的实验和比较了，基本RoBERTa也是最优的，这里就略去了。</p>
+<p>控制训练数据时，RoBERTa 已经优于<span class="math inline"> \(BERT_{LARGE}\)</span> 了（但在 SQuAD 上逊于 XLNET），在增加数据和训练更长时间后，三个数据集上全面超越 XLNET。</p>
+<p>后面就是 GLUE、SQuAD 上各项指标的实验和比较了，基本 RoBERTa 也是最优的，这里就略去了。</p>
 <h2 id="总结">总结</h2>
-<p>RoBERTa可以看作是BERT真正的完全体吧，弥补了原生BERT的缺陷。可能是因为创新性不足？没有被会议接受。看来预训练模型也还是很卷的。。。</p>
+<p>RoBERTa 可以看作是 BERT 真正的完全体吧，弥补了原生 BERT 的缺陷。可能是因为创新性不足？没有被会议接受。看来预训练模型也还是很卷的。。。</p>
 
     </div>
 
@@ -448,13 +445,13 @@ size+字节编码+更大数据+更长训练时间</p>
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

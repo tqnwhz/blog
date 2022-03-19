@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
@@ -31,7 +31,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/22/seq2seq/basemodel.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/22/seq2seq/model.png">
 <meta property="article:published_time" content="2021-07-22T08:18:00.000Z">
-<meta property="article:modified_time" content="2021-08-14T02:31:58.331Z">
+<meta property="article:modified_time" content="2022-02-19T07:03:44.537Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="seq2seq">
 <meta name="twitter:card" content="summary">
@@ -55,9 +55,6 @@
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
   </noscript>
-
-<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
-<link rel="alternate" href="/blog/atom.xml" title="一隅" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -156,7 +153,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%8F%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">序言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#seq2seq"><span class="nav-number">2.</span> <span class="nav-text">seq2seq</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%AA%E5%A9%AA%E8%A7%A3%E7%A0%81%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">贪婪解码问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">4.</span> <span class="nav-text">注意力机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%BF%E4%B9%89%E7%9A%84attention%E6%9C%BA%E5%88%B6"><span class="nav-number">4.1.</span> <span class="nav-text">广义的Attention机制</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%8F%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">序言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#seq2seq"><span class="nav-number">2.</span> <span class="nav-text">seq2seq</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%AA%E5%A9%AA%E8%A7%A3%E7%A0%81%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">贪婪解码问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">4.</span> <span class="nav-text">注意力机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%BF%E4%B9%89%E7%9A%84attention%E6%9C%BA%E5%88%B6"><span class="nav-number">4.1.</span> <span class="nav-text">广义的 Attention 机制</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -171,18 +168,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -263,7 +260,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2021-08-14 10:31:58" itemprop="dateModified" datetime="2021-08-14T10:31:58+08:00">2021-08-14</time>
+      <time title="修改时间：2022-02-19 15:03:44" itemprop="dateModified" datetime="2022-02-19T15:03:44+08:00">2022-02-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -317,59 +314,59 @@ seq2seq）是自然语言处理中的一个重要模型，在机器翻译、对�
 <span id="more"></span>
 <h2 id="seq2seq">seq2seq</h2>
 <p><img src="basemodel.png"></p>
-<p>seq2seq模型常用语序列间的转化任务，其结构如上图所示，主要由两部分组成：</p>
+<p>seq2seq 模型常用语序列间的转化任务，其结构如上图所示，主要由两部分组成：</p>
 <ul>
 <li>编码器，常见为循环神经网络，用以将输入序列编码为固定维度的向量（即最后时刻编码器的隐藏状态），进而投喂给解码器进行解码。</li>
-<li>解码器，同样常见为循环神经网络，用以根据向量输出最终序列。可以看做一个条件语言模型，“条件”即为输入序列。因此，可以使用预训练的语言模型初始化权重，再进行fine-tune。</li>
+<li>解码器，同样常见为循环神经网络，用以根据向量输出最终序列。可以看做一个条件语言模型，“条件” 即为输入序列。因此，可以使用预训练的语言模型初始化权重，再进行 fine-tune。</li>
 </ul>
-<p>在训练阶段，解码器的输出仅用于计算损失，解码器的输入是编码器得到的上下文状态向量(最后一个时间步的隐藏状态)和目标序列当前的单词。换而言之，训练时，解码器的输出一定是与目标序列等长的。</p>
-<p>在推理阶段，解码器每一个时间步的输出是下一个时间步的输入。可以通过限制输出序列的最大长度或者在输出结束标志后停止。对于batch的数据，往往使用限制最大长度，再删去结束标志之后的部分。</p>
-<p>seq2seq虽然简单有效，但存在以下的缺点：</p>
+<p>在训练阶段，解码器的输出仅用于计算损失，解码器的输入是编码器得到的上下文状态向量 (最后一个时间步的隐藏状态) 和目标序列当前的单词。换而言之，训练时，解码器的输出一定是与目标序列等长的。</p>
+<p>在推理阶段，解码器每一个时间步的输出是下一个时间步的输入。可以通过限制输出序列的最大长度或者在输出结束标志后停止。对于 batch 的数据，往往使用限制最大长度，再删去结束标志之后的部分。</p>
+<p>seq2seq 虽然简单有效，但存在以下的缺点：</p>
 <ul>
 <li>输入序列过长时，固定长度的向量无法存储全部的信息，进而造成信息丢失。</li>
 <li>贪婪解码问题，下面会提到。</li>
 </ul>
 <h2 id="贪婪解码问题">贪婪解码问题</h2>
-<p>对于seq2seq模型，我们希望得到概率最大的输出序列，即建模的是<span class="math inline">\(\arg\max_YP(Y|X)\)</span>（<span class="math inline">\(X\)</span>为输入序列，<span class="math inline">\(Y\)</span>为输出序列）。然而事实上，解码器每一步求解的是<span class="math inline">\(\arg\max_{y_t}P(y_t|y_{t-1:1},X)\)</span>​，即当前时间步概率最大的单词。这样以来，整个解码的过程就是贪婪的，每一步的单词概率最大并不意味着整个句子的概率最大。</p>
-<p>怎么解决这个问题呢？解决方法是beam
-search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道ground
+<p>对于 seq2seq 模型，我们希望得到概率最大的输出序列，即建模的是<span class="math inline"> \(\arg\max_YP(Y|X)\)</span>（<span class="math inline">\(X\)</span> 为输入序列，<span class="math inline">\(Y\)</span> 为输出序列）。然而事实上，解码器每一步求解的是<span class="math inline"> \(\arg\max_{y_t}P(y_t|y_{t-1:1},X)\)</span>​，即当前时间步概率最大的单词。这样以来，整个解码的过程就是贪婪的，每一步的单词概率最大并不意味着整个句子的概率最大。</p>
+<p>怎么解决这个问题呢？解决方法是 beam
+search（光束搜索）。核心思想是，在推理阶段（训练时不需要，因为知道 ground
 truth），</p>
-<p>保留k个可能性最大的序列（可能性以概率相乘的对数作为分数，即<span class="math inline">\(\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​）。</p>
+<p>保留 k 个可能性最大的序列（可能性以概率相乘的对数作为分数，即<span class="math inline"> \(\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​）。</p>
 <p>当某个序列输出终止符号时，可以认作该序列已经结束，继续维护其他序列。</p>
 <p>搜索的终止条件可以根据任务具体选择，例如：</p>
 <ul>
-<li>最多搜索多长时间步（例如30步）。</li>
-<li>至少拥有多少个候选序列（例如10个）。</li>
+<li>最多搜索多长时间步（例如 30 步）。</li>
+<li>至少拥有多少个候选序列（例如 10 个）。</li>
 </ul>
-<p>在搜索结束，得到若干个候选序列后，将序列分数标准化后，即<span class="math inline">\(\frac{1}{t}\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​作为最终的分数。这样是为了避免短序列概率更大（概率连乘的数量小），然后选择概率最大的序列。</p>
+<p>在搜索结束，得到若干个候选序列后，将序列分数标准化后，即<span class="math inline"> \(\frac{1}{t}\sum_{i=1}^tlogP_{I,M}(y_i|y_{i-1:1},X)\)</span>​作为最终的分数。这样是为了避免短序列概率更大（概率连乘的数量小），然后选择概率最大的序列。</p>
 <p>在搜索时，分数不需要进行标准化，因为搜索时处理的序列总是等长的。</p>
 <h2 id="注意力机制">注意力机制</h2>
-<p>为了解决seq2seq在面对长序列时的信息丢失问题，研究者们在seq2seq中引入了注意力（Attention）机制。借助于注意力机制，解码器能够在解码时与输入序列直接相连，还可以关注到输入序列的不同部分。公式化描述如下：</p>
-<p>首先根据编码器状态<span class="math inline">\({h_1,\dots,h_N}\)</span>与当前解码器状态<span class="math inline">\(s_t\)</span>点乘计算分数 <span class="math display">\[
+<p>为了解决 seq2seq 在面对长序列时的信息丢失问题，研究者们在 seq2seq 中引入了注意力（Attention）机制。借助于注意力机制，解码器能够在解码时与输入序列直接相连，还可以关注到输入序列的不同部分。公式化描述如下：</p>
+<p>首先根据编码器状态<span class="math inline"> \({h_1,\dots,h_N}\)</span> 与当前解码器状态<span class="math inline"> \(s_t\)</span> 点乘计算分数 <span class="math display">\[
 e^t=[s_t^\intercal h_1,\dots,s_t^\intercal h_N]\in \mathbb R^N
 \]</span> 将分数归一化后作为输入序列与当前位置相关性的概率分布： <span class="math display">\[
 \alpha^t=softmax(e^t)\in \mathbb R ^N
 \]</span> 加权求和后作为最终的注意力结果： <span class="math display">\[
 \alpha_t=\sum_{i=1}^N\alpha_i^th_i\in \mathbb R^h
-\]</span> 将注意力结果与解码器隐藏状态拼接后计算新的隐藏状态<span class="math inline">\(\hat s_t\)</span>，再计算输出。 <span class="math display">\[
+\]</span> 将注意力结果与解码器隐藏状态拼接后计算新的隐藏状态<span class="math inline"> \(\hat s_t\)</span>，再计算输出。 <span class="math display">\[
 [\alpha_t;s_t]\in \mathbb R^{2h}
-\]</span> 带有Attention 的seq2seq的简单示意图如下：</p>
+\]</span> 带有 Attention 的 seq2seq 的简单示意图如下：</p>
 <p><img src="model.png"></p>
-<h3 id="广义的attention机制">广义的Attention机制</h3>
-<p>广义的attention定义如下：给定一组向量values，一个向量query，attention是value的加权和，权重是某个相似性度量函数，例如点积、加性注意力等。</p>
+<h3 id="广义的attention机制">广义的 Attention 机制</h3>
+<p>广义的 attention 定义如下：给定一组向量 values，一个向量 query，attention 是 value 的加权和，权重是某个相似性度量函数，例如点积、加性注意力等。</p>
 <p>度量函数可以为：</p>
 <ul>
 <li><p>点乘：<span class="math inline">\(e_i=s^\intercal h_i\in \mathbb
 R\)</span></p></li>
-<li><p>乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in
-\mathbb R\)</span>​（其中<span class="math inline">\(W\in \mathbb
-R^{d_2*d_1}\)</span>为权重矩阵）</p></li>
+<li><p> 乘法注意力：<span class="math inline">\(e_i=s^\intercal Wh_i \in
+\mathbb R\)</span>​（其中<span class="math inline"> \(W\in \mathbb
+R^{d_2*d_1}\)</span> 为权重矩阵）</p></li>
 <li><p>加法注意力：<span class="math inline">\(e_i=v^\intercal
-tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline">\(W_1,W_2\)</span>为权重矩阵，<span class="math inline">\(v\)</span>是权重向量）</p></li>
+tanh(W_1h_i+W_2s)\in \mathbb R\)</span>​（其中<span class="math inline"> \(W_1,W_2\)</span> 为权重矩阵，<span class="math inline">\(v\)</span> 是权重向量）</p></li>
 </ul>
-<p>对应到seq2seq的Attention机制中，query向量为解码器隐藏状态，values为编码器的全部隐藏状态，度量函数为点乘。</p>
-<p>联想一下BERT的自注意力机制：</p>
-<p>对于每个单词向量，通过Query、Key、Value三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的query向量与每个位置的key做点乘，作为相似性度量，再对value矩阵加权求和。公式如下：
+<p>对应到 seq2seq 的 Attention 机制中，query 向量为解码器隐藏状态，values 为编码器的全部隐藏状态，度量函数为点乘。</p>
+<p>联想一下 BERT 的自注意力机制：</p>
+<p>对于每个单词向量，通过 Query、Key、Value 三个参数矩阵计算得到三个向量：q,k,v。在每个位置，使用当前位置的 query 向量与每个位置的 key 做点乘，作为相似性度量，再对 value 矩阵加权求和。公式如下：
 <span class="math display">\[
 Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
 \]</span></p>
@@ -411,8 +408,8 @@ Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/blog/2021/07/22/rnns/" rel="next" title="循环神经网络RNN及其变体GRU、LSTM">
-                  循环神经网络RNN及其变体GRU、LSTM <i class="fa fa-chevron-right"></i>
+                <a href="/blog/2021/07/22/rnns/" rel="next" title="循环神经网络 RNN 及其变体 GRU、LSTM">
+                  循环神经网络 RNN 及其变体 GRU、LSTM <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
@@ -446,13 +443,13 @@ Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">73k</span>
+    <span title="站点总字数">81k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">2:12</span>
+    <span title="站点阅读时长">2:27</span>
   </span>
 </div>
 <div class="busuanzi-count">
