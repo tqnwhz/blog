@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/finetune.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/toolset.png">
 <meta property="article:published_time" content="2022-03-19T07:55:15.000Z">
-<meta property="article:modified_time" content="2022-03-19T10:41:48.898Z">
+<meta property="article:modified_time" content="2022-03-21T07:30:34.298Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="自然语言处理">
 <meta property="article:tag" content="对话生成">
@@ -257,9 +257,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2022-03-19 15:55:15 / 修改时间：18:41:48" itemprop="dateCreated datePublished" datetime="2022-03-19T15:55:15+08:00">2022-03-19</time>
+      <time title="创建时间：2022-03-19 15:55:15" itemprop="dateCreated datePublished" datetime="2022-03-19T15:55:15+08:00">2022-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-03-21 15:30:34" itemprop="dateModified" datetime="2022-03-21T15:30:34+08:00">2022-03-21</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -338,11 +344,11 @@ LaMDA，尽管模型的性能仍然低于人类水平在安全性和接地性的
 <p><img src="pretraining.png"></p>
 <h2 id="评价指标">评价指标</h2>
 <h3 id="ssi">SSI</h3>
-<p><strong>SSI</strong> 是敏感性、特异性、趣味性三项指标（Sensibleness,
+<p><strong>SSI</strong> 是合理性、特异性、趣味性三项指标（Sensibleness,
 Specificity,
-Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（敏感性、特异性两项平均）的改进。各项指标具体含义如下：</p>
+Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（合理性、特异性两项平均）的改进。各项指标具体含义如下：</p>
 <ul>
-<li><strong>敏感性</strong>：衡量模型的回复在上下文和不要与前面所说的任何内容相矛盾。然而，通用和无聊的回复，例如 “我不知道” 的敏感性分数可能很高。因此只有这一项指标是远远不够的。</li>
+<li><strong>合理性</strong>：衡量模型的回复在上下文和不要与前面所说的任何内容相矛盾。然而，通用和无聊的回复，例如 “我不知道” 的合理性分数可能很高。因此只有这一项指标是远远不够的。</li>
 <li><strong>特异性</strong>：衡量模型的回复是否特定于上下文。例如，如果用户说 “我爱欧洲电视网”，而模型回答 “我也是”，那么它的特异性得分为
 0。因为这种句式适用于很多上下文。</li>
 <li><strong>趣味性</strong>：衡量模型的回复是否有趣。例如，对 “我如何扔球？” 的回应可能是 “你可以先捡起然后扔球来扔球”，这是有道理的，并且是针对问题的。另一个更深层次和更令人满意的答案可能是 “扔球的一种方法是用双手牢牢握住它，然后再向下摆动你的手臂，伸展你的肘部，然后向上释放球”。</li>
@@ -350,7 +356,7 @@ Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（敏感性�
 <p>每项指标对应一个 0/1 标签，正例为 1，负例为 0，算术平均后就是 SSI 的值。</p>
 <h3 id="角色特定指标">角色特定指标</h3>
 <p><strong>有用性</strong>：如果模型的响应包含基于用户使用信息检索系统进行的独立研究的正确信息，并且用户认为它们有帮助，则它们被标记为有用。<strong>有用的响应是信息性响应的子集</strong>，由用户判断为正确且有用。</p>
-<p><strong>角色一致性</strong>：如果模型的响应看起来像执行目标角色的代理会说的话，则它们被标记为角色一致。这个与敏感性中的一致性不同，这里的一致性是指，例如让模型扮演珠穆朗玛峰，模型的回复中的语气词、设定等都要以珠穆朗玛峰为准。</p>
+<p><strong>角色一致性</strong>：如果模型的响应看起来像执行目标角色的代理会说的话，则它们被标记为角色一致。这个与合理性中的一致性不同，这里的一致性是指，例如让模型扮演珠穆朗玛峰，模型的回复中的语气词、设定等都要以珠穆朗玛峰为准。</p>
 <h3 id="其他">其他</h3>
 <p><strong>安全性</strong>是根据 Google
 人工智能原则设定的，用以以避免造成伤害风险的意外结果，并避免产生或加强不公平的偏见，这个对应很多条规则，比较复杂，就略过了。</p>
@@ -359,7 +365,7 @@ Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（敏感性�
 <p><strong>引用准确度</strong>：引用其来源 URL 的模型回应在所有明确声称外部世界的回应中所占的百分比，不包括众所周知的事实（如 “马有四条腿”）。</p>
 <h2 id="微调">微调</h2>
 <h3 id="判别式生成式微调">判别式 / 生成式微调</h3>
-<p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（敏感性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
+<p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（合理性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
 <p>LaMDA 生成回复的时候按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;</code> 的模板进行生成，按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;&lt;属性&gt;&lt;分数&gt;</code> 的模板进行判别式微调，例如 "What’s
 up? RESPONSE not much. SENSIBLE 1"。</p>
 <p>得到众包数据后，按照上述模板进行微调。这样在生成时，就能够预测出对应属性值作为筛选的辅助信息。将生成的候选序列按照<span class="math inline"> \(3 *P(sensible) + P(specific) +
