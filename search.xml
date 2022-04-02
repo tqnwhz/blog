@@ -1,6 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>有错误论文 - ACL2020：交叉 VAE 用于答案检索</title>
+    <url>/blog/2022/03/31/Crossing-VAE/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
+<p>《Crossing Variational Autoencoders for Answer
+Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL
+2020 中。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<p>先按照正常的步骤介绍其背景和方法。</p>
+<p>答案检索，即从答案候选集合中，选择最匹配问题的答案。解决该问题的一个关键因素在于，如何学习到一个好的问题 / 答案的向量表示。传统的方法使用两个编码器 / 变分自编码器（孪生网络）分别学习二者的向量表征。这种方法过于分离，无法捕捉二者之间的对齐语义。因此，本文提出了交叉变分自编码器，类似 Seq2Seq 的方法，学习二者间的语义对齐。</p>
+<p><img src="structure.png"></p>
+<p>如上图所示。左一为孪生编码器，分别将答案和问题进行编码，得到向量表征后再判断是否匹配。中间的孪生自编码器也类似，区别在于使用自编码器学习到性质更好的向量表征。但是他们有个共同点：<strong>答案和问题的向量表征是分开编码得到的</strong>。这意味着编码过程中只有单个问题或答案的信息（语义、句法等），而我们关心的是答案和问题是否语义对齐。因此按前一种方法训练得到的向量表征，并不能很好地满足任务的需要。右一为本文提出的孪生交叉 VAE，即在 VAE 的基础上，使用问题和答案的隐变量重构彼此，而非重构自身。从模型结构上，该模型不像 VAE 而更像 Seq2Seq。</p>
+<p>举个例子，在问答中，相似的问题的答案可能相去甚远，相似的答案的问题形式可能也差别很大。下图展示了 SQuAD 数据集上的例子，同一个答案与 17 个不同的问题相对齐。只看这些问题的语义，可能差别很大。也就是<span class="math inline"> \(z_q\)</span> 是分开的，而答案却相同，即<span class="math inline"> \(z_q\)</span> 是固定的。这种情况下，希望<span class="math inline"> \(p(y|z_q,z_a)\)</span> 对这些不同的<span class="math inline"> \(z_q\)</span> 都有较好的对齐效果是比较困难的。</p>
+<p><img src="SQuAD-example.png"></p>
+<p>究其根本，是<strong>同一个答案与不同的问题对齐时，其语义信息侧重点各不相同。</strong>当提问词是 "how
+many"是，答案侧重点为"three"，当提问词为"three
+cities"时，答案侧重点为"New
+Orleans"... 而分开编码得到的向量表征是固定的。要解决这个问题，必须要将答案和问题的编码结合起来。</p>
+<p>论文的方法在 MRR 和 R@1 上分别取得了 SOTA，分别提升了 1.46% 和 3.65%。不过对比工作里的 BERT 我怀疑是未做 finetune 的，效果太差了。</p>
+<h2 id="方法">方法</h2>
+<h3 id="问题定义">问题定义</h3>
+<p>问题集合：<span class="math inline">\(q\in \mathcal
+Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal
+A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\sub \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
+<h3 id="交叉vae">交叉 VAE</h3>
+<p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为：
+<span class="math display">\[
+p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\\
+p(a|q)=\mathbb E_{z_q\sim p(z_q|q)}[p(a|z_q)]
+\]</span> 问答对的匹配，即计算条件分布<span class="math inline"> \(p(y|a,q)\)</span>，等价于 <span class="math display">\[
+p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
+\]</span> 目标函数包含三部分：</p>
+<p><strong>交叉重构损失</strong>，即两个交叉熵损失之和，公式如下。其中<span class="math inline"> \(E,D\)</span> 分别代表编码器、解码器。 <span class="math display">\[
+\mathcal L_{cross}(\theta_E,\theta_D)=y\cdot \mathbb E_{q\sim
+Q}[-logp_D(q|a,E(a))]+ y\cdot\mathbb E_{a\sim A}[-logp_D(a|q,E(q))]
+\]</span>
+<strong>KL 散度损失</strong>，两部分后先验 KL 散度之和，公式如下： <span class="math display">\[
+\mathcal L_{KL}(\theta_E)=y\cdot \mathbb E_{q\sim
+Q}[D_{KL}((p(z_q|q)||p(z_q))]+ y\cdot \mathbb E_{a\sim
+A}[D_{KL}((p(z_a|a)||p(z_a))]
+\]</span>
+<strong> 问答匹配损失</strong>，最后输出的匹配结果的交叉熵损失，公式如下。其中，<span class="math inline">\(f\)</span> 为匹配函数。 <span class="math display">\[
+\mathcal L_{matching}(\phi_f)=-[y\cdot
+logp_{f_\phi}p(y|z_q,z_a)+(1-y)\cdot logp_{f_\phi}(1-p(y|z_q,z_a))]
+\]</span>
+最后，将三个损失相加，即得到了最终的目标函数，并引入超参数控制权重：
+<span class="math display">\[
+\mathcal J=-\alpha \mathcal L_{cross}-\beta\mathcal
+L_{KL}+\gamma\mathcal L_{matching}
+\]</span></p>
+<h2 id="问题">问题</h2>
+<p>细心的读者可能会发现了，你是要<strong>最小化匹配损失，最后的<span class="math inline"> \(\mathcal
+J\)</span> 应该也是要最小化的。那不就变成最大化 KL 和重构损失了吗？</strong>对，这就是问题所在。论文中提到是要最大化 ELBO 和最小化匹配损失，得到了最后的<span class="math inline"> \(\mathcal J\)</span>。然而事实上，<span class="math inline">\(\mathcal L_{crosss}+\mathcal
+L_{KL}=-ELBO\)</span>，最小化<span class="math inline"> \(\mathcal
+L_{crosss}+\mathcal
+L_{KL}\)</span> 才是在最大化 ELBO。论文作者根本没有分清楚 VAE 的 ELBO 和损失，最后闹出了这种笑话。加之论文中有将 objective 和 loss 混用且使用错误的情况。也侧面印证了这一事实。正确的损失函数应该形如：
+<span class="math display">\[
+\mathcal J=\alpha \mathcal L_{cross}+\beta\mathcal L_{KL}+\gamma\mathcal
+L_{matching}
+\]</span>
+复现性上，我问了实验室的一个师兄，说是论文的结果是复现不出来的，论文也没有公开代码。再加上我本人看到这篇论文第一感觉的强烈违和感，将 VAE 改为 Seq2Seq 的形式，整个 VAE 的公式可能都要重新推导，只改最后的 ELBO 如何保证过程正确？CVAE 可能才是更自然的想法。</p>
+<h2 id="总结">总结</h2>
+<p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
+<p>科研路漫，诸君共勉。</p>
+<h2 id="section"></h2>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>问答</category>
+      </categories>
+      <tags>
+        <tag>自然语言处理</tag>
+        <tag>VAE</tag>
+        <tag>问答</tag>
+        <tag>负面案例</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>智源 EVA2.0: 聊天机器人 EVA 加强版</title>
+    <url>/blog/2022/03/24/EVA2-0/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese
+Dialogue Systems withLarge-Scale
+Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA
+2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
+<span id="more"></span>
+<h2 id="数据">数据</h2>
+<p>论文提出了相关性、通顺性、娱乐性等指标用于分析数据质量，并进行数据处理。</p>
+<h3 id="质量指标">质量指标</h3>
+<h4 id="相关性">相关性</h4>
+<p>相关性可以反映上下文和回复间的连贯性、参与度，可以通过一些直觉公式进行估计，或者训练一个 NLU 分类模型。</p>
+<p>直觉来看，上下文和回复越相关，同时包含在二者中的单词越多。因此，这一部分分数定义为上下文<span class="math inline"> \(C\)</span> 和回复<span class="math inline"> \(R\)</span> 之间的单词覆盖率，具体公式为: <span class="math display">\[
+S_1=\sum_{w_i\in C,w_j\in R} dist(w_i,w_j)^\tau I(w_i=w_j)
+\]</span> 其中，<span class="math inline">\(dist(w_i,w_j)\)</span> 为<span class="math inline"> \(w_i\)</span> 和<span class="math inline"> \(w_j\)</span> 在对话中的轮次距离，<span class="math inline">\(\tau\)</span> 用于调整分数。</p>
+<p>训练模型的方法，论文在 LCCC 数据集上训练了一个<span class="math inline"> \(BERT_{BASE}\)</span> 模型，用于判别上下文和回复是否对应，在测试集上得到了 93.0% 的准确度和 0.86 的 F1 分数。这一部分分数公式如下，也就是分类的<span class="math inline"> \(logits\)</span>。 <span class="math display">\[
+S_2=logp(1|C,R)
+\]</span>
+很显然，神经网络的方法更健壮一些。训练过程和细节论文未提，猜测应该就是正例 + 随机构建负例进行分类吧。不过这里也有一个有趣的地方。LCCC 数据集数据集是 BERT 分类 + 规则过滤进行清洗的，BERT 是在人工标注的 10w 条数据上训练的。EVA
+1.0 版本中的 WDC-Dialog 只提到了规则过滤。2.0 从 LCCC 数据集去训练分类器，相当于是逆向了 LCCC 的分类模型，省去了人工标注数据的成本。</p>
+<h4 id="通顺性">通顺性</h4>
+<p>论文使用 kenlm，一个统计语言模型工具，来计算每个句子的概率，对话的通顺分数是每轮次分数之和，公式如下：
+<span class="math display">\[
+S_3=-\frac1n\sum logP(w_1^i,w_2^i,\dots,w_{|u_i|}^i)
+\]</span></p>
+<h4 id="娱乐性">娱乐性</h4>
+<p>由于中文社交媒体上有很多娱乐明星的粉丝（点名微博了属于是），相关对话中会包含一些不想要的信息，并且这些语言习惯也和正常聊天有所差异。因此，论文计算娱乐明星在对话中的占比，计算娱乐分数。</p>
+<h3 id="数据改进">数据改进</h3>
+<ul>
+<li><strong>数据集改进</strong>：作者发现有些数据集不适合开放域对话场景，例如京东客服对话 JDDC 数据集，使用它训练会导致说话口吻像电商客服，因此将其从 WDC-Dialog 中移除。</li>
+<li><strong>回复数量改进</strong>：来自微博等社交媒体的数据集中，存在一个上下文对应相当多回复的情况。这些回复非常相似有时会严重影响性能。因此作者为每个上下文设置了最大回复数量并进行过滤。</li>
+<li><strong>规则过滤</strong>：作者在 EVA
+1.0 的规则上做了进一步的改进，例如将繁体字转为简体字，移除不合理的连续标点符号等。</li>
+<li><strong>基于分类器的过滤</strong>：根据质量分数的加权<span class="math inline"> \(S=\alpha S_1+\beta S_2+\gamma
+S_3\)</span> 对样本进行过滤，去除质量分数低于阈值的样本。</li>
+</ul>
+<h3 id="数据扩展">数据扩展</h3>
+<p>来自社交媒体的数据会夹杂很多的流行语，而它们在日常对话中并不常见，这会导致偏差。因此，作者还从公开来源收集了以下四种数据，共计 12GB。</p>
+<ul>
+<li>电影和电视剧的对话字幕</li>
+<li>小说和故事中的对话</li>
+<li>百度知道的问答对</li>
+<li>已有的公开众包对话：DuConv，KdConv，DuRecDial，NaturalConv</li>
+</ul>
+<h3 id="数据统计信息">数据统计信息</h3>
+<p>下表展示了 EVA 2.0 和 1.0 的数据集对比。可以看到 EVA
+2.0 的数据集不足 1.0 版本的<span class="math inline"> \(1/3\)</span>，但显著提升了质量。相关性、通顺性的提升与数据调整中的过滤方式大致有个对应关系，例如规则过滤主要改善通顺性。另外，个人感觉数据调整中会根据质量分数过滤，再采用质量分数来评估似乎欠妥。可能再各自随机采样样本进行人工标注更有说服力一些。</p>
+<p><img src="statistics.png"></p>
+<h2 id="模型">模型</h2>
+<p>模型还是 Seq2Seq 的 Transformer，不过和 EVA
+1.0、t5 不一样的是，使用的是 scaled
+Attention，即计算 Attention 的时候除以了<span class="math inline"> \(\sqrt
+d\)</span>。论文主要讨论了两个模型的两个配置：层数和角色信息。</p>
+<p>基于 Seq2Seq 的对话模型的编码器和解码器层数往往不是一致，解码器要比编码器更深以达到更好的生成效果。但是，更深的编码器也能提高对话上下文理解能力。因此，论文在控制参数规模情况下，尝试了不同的层数比例。</p>
+<p>近期工作指出，在长对话中，预训练模型可能会混淆它们的角色，因为模型是在角色信息复杂的社交媒体数据上训练得到的。因此，需要为对话模型添加角色信息保证一致性。例如，PLATO-XL 在多角色对话中添加了角色嵌入。不过由于 WDC-Dialog 数据集角色信息的缺失（例如字幕中一般不会包含角色信息），如果要添加角色信息，只能强制将对话认定为两个角色间进行的对话。论文同时使用了角色嵌入和角色标识符并测试效果。</p>
+<h3 id="预训练">预训练</h3>
+<p>论文研究了两种预训练方法：从头开始预训练或者从长文档预训练的模型再进行预训练。直觉来看，在长文档上预训练的模型已经学到了一些知识。但是由于文档和对话的差异性，不清楚这对对话任务是否会起到正面作用。</p>
+<h3 id="解码策略">解码策略</h3>
+<p>论文在上尝试了以下几种不同的解码策略。虽然有研究在英文对话机器人上对这些策略进行了实验，论文认为解码策略是语言相关的，中文的结论可能不同。</p>
+<ul>
+<li><strong>贪心搜索（Greedy
+Search）</strong>：朴素解码，每步选概率最大的 token，公式为<span class="math inline"> \(y_t=\arg\max_{y_t}
+P(y_t|x;y_{&lt;t})=softmax(h_t)\)</span></li>
+<li><strong> 采样（Sampling）</strong>：每步根据概率分布采样 token，公式为<span class="math inline"> \(y_t\sim
+P(y_t|x;y_{&lt;t})=softmax(h_t/T)\)</span>，<span class="math inline">\(T\)</span> 为温度系数，增大低概率 token 被采样的概率。</li>
+<li><strong>光束搜索（Beam
+Search）</strong>：贪心搜索的改进，避免局部最优。同时维护多个解码序列，最终选择概率最大的序列。</li>
+<li><strong>长度控制（Length
+Control）</strong>：朴素解码策略倾向于生成短而通用的序列，长度控制可改善这一问题，常与光束搜索搭配使用。<strong>最小长度约束方法</strong>：在解码时将 &lt;EOS&gt; 的概率置 0 直至达到最小长度要求。<strong>长度惩罚</strong>：光束搜索时对候选序列分数除以<span class="math inline"> \(l^\alpha\)</span>，其中<span class="math inline"> \(l\)</span> 为序列长度，<span class="math inline">\(alpha\)</span> 越高越偏向长序列（beam
+search 的 score 是<span class="math inline"> \(logp\)</span>，为负数）。</li>
+<li><strong>处理重复（Handling
+Repetitions）</strong>：语言模型生成普遍会出现重复现象。No-Repeat-N-Gram
+策略禁止生成对话历史中存在的 n-gram。</li>
+</ul>
+<h2 id="实验">实验</h2>
+<ul>
+<li><strong>自动评估指标</strong>：uni-gram F1 (F1), ROUGE-L
+(R-L),BLEU-4 (B-4), distinct 4-grams (D-4)</li>
+<li><strong> 人工评估指标</strong>：合理性、特异性、一致性</li>
+</ul>
+<h3 id="层数">层数</h3>
+<p>6-18 代表编码器 6 层，解码器 18 层。表格可以看出，层数平衡的架构是最优的。</p>
+<p><img src="layer.png"></p>
+<h3 id="角色信息">角色信息</h3>
+<p>还是上面的表格，加入角色信息后性能有所下降。作者解释为由于数据集中角色信息的缺失，强迫模型将多角色对话认作两个角色间进行的对话反而会带来反面效果。</p>
+<h3 id="预训练策略">预训练策略</h3>
+<p>下两表为两种训练策略的自动和人工评估结果。可以看出，在文档预训练的模型继续训练的模型只在知识指标上效果更优，在对话指标上都不如从头训练模型。</p>
+<p><img src="pretraining-auto.png"></p>
+<p><img src="pretraining-human.png"></p>
+<h3 id="解码策略-1">解码策略</h3>
+<p>下两表为解码策略的自动和人工评估结果。贪婪搜索默认与 no-repeat-n-gram
+结合起来，因为简单的贪婪搜索通常会导致重复。</p>
+<p>结论：</p>
+<ul>
+<li>没有在所有指标上最优的解码策略</li>
+<li>采样能够生成多样的回复，但会损失合理性</li>
+<li>无重复 n-gram 的简单贪心解码在人类评估中产生了令人惊讶的良好性能</li>
+<li>模型在最小长度约束下倾向于生成自相矛盾的响应（与英文不同）</li>
+<li>光束搜索结合采样、长度惩罚、禁止重复取得了相对均衡的性能</li>
+</ul>
+<p><img src="decode-auto.png"></p>
+<p><img src="decode-human.png"></p>
+<h3 id="最终评估">最终评估</h3>
+<p>论文将 EVA
+2.0 和 1.0、CPM 进行了对比。结果如下两表。baseline 还是有点少。</p>
+<p><img src="evaluation.png"></p>
+<h2 id="举个栗子">举个栗子</h2>
+<p>下面举几个栗子来具体展示一下。可以看到，EVA
+2.0 虽然有时能取得较好的对话效果，但还是会有不一致、幻觉、不安全、缺少同理心这些问题。这正是谷歌 LaMDA 想要解决的问题，可以参考我的另一篇博客<a href="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/#more">谷歌
+LaMDA：高达 137B 参数的 “全能型” 聊天机器人</a>。</p>
+<h3 id="好">好</h3>
+<p><img src="nice-example.png"></p>
+<h3 id="不一致">不一致</h3>
+<p><img src="inconsistent-example.png"></p>
+<h3 id="幻觉">幻觉</h3>
+<p><img src="hallucination.png"></p>
+<h3 id="不安全">不安全</h3>
+<p><img src="unsafe-example.png"></p>
+<h3 id="缺少同理心">缺少同理心</h3>
+<p><img src="lack-empathy.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是蛮有价值的，讨论了模型规模和数据规模之外，影响模型性能的因素。类似 RoBERTa 之于 BERT，可以作为炼丹的参考。不过读完之后我最关心的几个问题还是没有解决：</p>
+<ul>
+<li>模型架构上，PLATO 采用的 unified
+Transformer 和 EVA 的 Seq2Seq，孰优孰劣？虽然有论文做过实验，但是其模型规模、数据规模都达不到预训练模型的水平。</li>
+<li>基线对比上，还是没有跟 PLATO-XL 进行比较。虽然感觉 EVA
+2.0 大概率是比不过 PLATO-XL 的，但还是想了解一下差距、可能的解释、改进等。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>对话生成</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>预训练模型</tag>
+        <tag>自然语言处理</tag>
+        <tag>对话生成</tag>
+        <tag>Transformer</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人</title>
     <url>/blog/2022/03/19/LaMDA/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -270,8 +492,8 @@ size，论文还使用了梯度检查点，即不保存一部分前向过程中�
       <tags>
         <tag>预训练模型</tag>
         <tag>对话生成</tag>
-        <tag>闲聊</tag>
         <tag>Transformer</tag>
+        <tag>闲聊</tag>
         <tag>PLATO</tag>
       </tags>
   </entry>
@@ -738,9 +960,9 @@ PTM。这种领域专业知识通常被认为对于解决许多特定领域的�
         <category>综述</category>
       </categories>
       <tags>
-        <tag>BART</tag>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
+        <tag>BART</tag>
         <tag>自然语言处理</tag>
         <tag>综述</tag>
         <tag>GPT</tag>
@@ -866,6 +1088,13 @@ p(z|x)log\frac{p(z|x)}{q(z)}]dz\\
 \mathcal{L}=E_{x\sim p(x)}[E_{z\sim
 p(z|x)}(-log(q(x|z)))+KL(q(z|x)||p(z))]
 \]</span> 符号的差别是由于论文直接引入的<span class="math inline"> \(q(z|x)\)</span>，而这里引入的是联合概率分布<span class="math inline"> \(q(x,z)\)</span>。</p>
+<p>注意上面的<span class="math inline"> \(\mathcal
+L\)</span> 是损失函数，而不是<strong>变分下界 ELBO</strong>，VAE 的 ELBO 是损失函数的相反数，引用 VAE 原文中的公式：
+<span class="math display">\[
+\mathcal{L}(\theta,\phi;x^{(i)})=-D_{KL}(q_\phi(z|x^{(i)})||p(z))+\mathbb
+E_{q_\phi(z|x^{(i)})}[-log(p_\theta(x^{(i)}|z))]
+\]</span></p>
+<p><strong>ELBO 是要最大化的，而损失函数是要最小化的</strong>。上面的 ELBO 是单个样本的公式，没有对所有样本计算期望，所以形式上有所差异。</p>
 <h3 id="说明">说明</h3>
 <p>值得注意的是，VAE 的两个损失函数项并不是割裂的。换而言之，VAE 并不是独立地优化每项损失。这很容易理解，如果 VAE 独立优化第二项损失至最小，<span class="math inline">\(p(z)=q(z|x)\)</span>，那么<span class="math inline"> \(q(z|x)\)</span> 将不具备任何<span class="math inline"> \(x\)</span> 的信息，这显然会使得第一项重构损失很大。同理，如果第一项重构损失很小，就意味着<span class="math inline"> \(q(z|x)\)</span> 包含了过多<span class="math inline"> \(x\)</span> 的信息，与<span class="math inline"> \(p(z)\)</span> 的差异（即 KL 项）就会很大。因此，VAE 是在两项损失的相互作用下，取得一个最优解。</p>
 <h2 id="参考">参考</h2>
@@ -1103,8 +1332,8 @@ size + 字节编码 + 更大数据 + 更长训练时间</p>
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
         <tag>RoBERTa</tag>
       </tags>
   </entry>
@@ -1204,8 +1433,8 @@ Evaluation，通用语言理解评估）：由九个任务组成，每个任务�
         <category>BART</category>
       </categories>
       <tags>
-        <tag>BART</tag>
         <tag>预训练模型</tag>
+        <tag>BART</tag>
       </tags>
   </entry>
   <entry>
@@ -1410,8 +1639,8 @@ MNLI 等涉及句子对的任务上的性能损失严重，证明下句预测对
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
       </tags>
   </entry>
   <entry>

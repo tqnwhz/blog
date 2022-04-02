@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="简介 EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese Dialogue Systems withLarge-Scale Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="智源 EVA2.0: 聊天机器人 EVA 加强版">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="简介 EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese Dialogue Systems withLarge-Scale Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/statistics.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/layer.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/pretraining-auto.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/pretraining-human.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/decode-auto.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/decode-human.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/evaluation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/nice-example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/inconsistent-example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/hallucination.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/unsafe-example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/lack-empathy.png">
+<meta property="article:published_time" content="2022-03-24T12:28:32.000Z">
+<meta property="article:modified_time" content="2022-04-01T12:17:17.403Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="预训练模型">
+<meta property="article:tag" content="自然语言处理">
+<meta property="article:tag" content="对话生成">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/statistics.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/","path":"2022/03/24/EVA2-0/","title":"智源 EVA2.0: 聊天机器人 EVA 加强版"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>智源 EVA2.0: 聊天机器人 EVA 加强版 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE"><span class="nav-number">2.</span> <span class="nav-text">数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%A8%E9%87%8F%E6%8C%87%E6%A0%87"><span class="nav-number">2.1.</span> <span class="nav-text">质量指标</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%80%A7"><span class="nav-number">2.1.1.</span> <span class="nav-text">相关性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E9%A1%BA%E6%80%A7"><span class="nav-number">2.1.2.</span> <span class="nav-text">通顺性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A8%B1%E4%B9%90%E6%80%A7"><span class="nav-number">2.1.3.</span> <span class="nav-text">娱乐性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%94%B9%E8%BF%9B"><span class="nav-number">2.2.</span> <span class="nav-text">数据改进</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%89%A9%E5%B1%95"><span class="nav-number">2.3.</span> <span class="nav-text">数据扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF"><span class="nav-number">2.4.</span> <span class="nav-text">数据统计信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.1.</span> <span class="nav-text">预训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.</span> <span class="nav-text">解码策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B1%82%E6%95%B0"><span class="nav-number">4.1.</span> <span class="nav-text">层数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E4%BF%A1%E6%81%AF"><span class="nav-number">4.2.</span> <span class="nav-text">角色信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E7%AD%96%E7%95%A5"><span class="nav-number">4.3.</span> <span class="nav-text">预训练策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81%E7%AD%96%E7%95%A5-1"><span class="nav-number">4.4.</span> <span class="nav-text">解码策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E8%AF%84%E4%BC%B0"><span class="nav-number">4.5.</span> <span class="nav-text">最终评估</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BE%E4%B8%AA%E6%A0%97%E5%AD%90"><span class="nav-number">5.</span> <span class="nav-text">举个栗子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A5%BD"><span class="nav-number">5.1.</span> <span class="nav-text">好</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="nav-number">5.2.</span> <span class="nav-text">不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%BB%E8%A7%89"><span class="nav-number">5.3.</span> <span class="nav-text">幻觉</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E5%AE%89%E5%85%A8"><span class="nav-number">5.4.</span> <span class="nav-text">不安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%BA%E5%B0%91%E5%90%8C%E7%90%86%E5%BF%83"><span class="nav-number">5.5.</span> <span class="nav-text">缺少同理心</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          智源 EVA2.0: 聊天机器人 EVA 加强版
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-03-24 20:28:32" itemprop="dateCreated datePublished" datetime="2022-03-24T20:28:32+08:00">2022-03-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-01 20:17:17" itemprop="dateModified" datetime="2022-04-01T20:17:17+08:00">2022-04-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90/" itemprop="url" rel="index"><span itemprop="name">对话生成</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/" itemprop="url" rel="index"><span itemprop="name">预训练模型</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="简介">简介</h2>
+<p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese
+Dialogue Systems withLarge-Scale
+Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA
+2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a target="_blank" rel="noopener" href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
+<span id="more"></span>
+<h2 id="数据">数据</h2>
+<p>论文提出了相关性、通顺性、娱乐性等指标用于分析数据质量，并进行数据处理。</p>
+<h3 id="质量指标">质量指标</h3>
+<h4 id="相关性">相关性</h4>
+<p>相关性可以反映上下文和回复间的连贯性、参与度，可以通过一些直觉公式进行估计，或者训练一个 NLU 分类模型。</p>
+<p>直觉来看，上下文和回复越相关，同时包含在二者中的单词越多。因此，这一部分分数定义为上下文<span class="math inline"> \(C\)</span> 和回复<span class="math inline"> \(R\)</span> 之间的单词覆盖率，具体公式为: <span class="math display">\[
+S_1=\sum_{w_i\in C,w_j\in R} dist(w_i,w_j)^\tau I(w_i=w_j)
+\]</span> 其中，<span class="math inline">\(dist(w_i,w_j)\)</span> 为<span class="math inline"> \(w_i\)</span> 和<span class="math inline"> \(w_j\)</span> 在对话中的轮次距离，<span class="math inline">\(\tau\)</span> 用于调整分数。</p>
+<p>训练模型的方法，论文在 LCCC 数据集上训练了一个<span class="math inline"> \(BERT_{BASE}\)</span> 模型，用于判别上下文和回复是否对应，在测试集上得到了 93.0% 的准确度和 0.86 的 F1 分数。这一部分分数公式如下，也就是分类的<span class="math inline"> \(logits\)</span>。 <span class="math display">\[
+S_2=logp(1|C,R)
+\]</span>
+很显然，神经网络的方法更健壮一些。训练过程和细节论文未提，猜测应该就是正例 + 随机构建负例进行分类吧。不过这里也有一个有趣的地方。LCCC 数据集数据集是 BERT 分类 + 规则过滤进行清洗的，BERT 是在人工标注的 10w 条数据上训练的。EVA
+1.0 版本中的 WDC-Dialog 只提到了规则过滤。2.0 从 LCCC 数据集去训练分类器，相当于是逆向了 LCCC 的分类模型，省去了人工标注数据的成本。</p>
+<h4 id="通顺性">通顺性</h4>
+<p>论文使用 kenlm，一个统计语言模型工具，来计算每个句子的概率，对话的通顺分数是每轮次分数之和，公式如下：
+<span class="math display">\[
+S_3=-\frac1n\sum logP(w_1^i,w_2^i,\dots,w_{|u_i|}^i)
+\]</span></p>
+<h4 id="娱乐性">娱乐性</h4>
+<p>由于中文社交媒体上有很多娱乐明星的粉丝（点名微博了属于是），相关对话中会包含一些不想要的信息，并且这些语言习惯也和正常聊天有所差异。因此，论文计算娱乐明星在对话中的占比，计算娱乐分数。</p>
+<h3 id="数据改进">数据改进</h3>
+<ul>
+<li><strong>数据集改进</strong>：作者发现有些数据集不适合开放域对话场景，例如京东客服对话 JDDC 数据集，使用它训练会导致说话口吻像电商客服，因此将其从 WDC-Dialog 中移除。</li>
+<li><strong>回复数量改进</strong>：来自微博等社交媒体的数据集中，存在一个上下文对应相当多回复的情况。这些回复非常相似有时会严重影响性能。因此作者为每个上下文设置了最大回复数量并进行过滤。</li>
+<li><strong>规则过滤</strong>：作者在 EVA
+1.0 的规则上做了进一步的改进，例如将繁体字转为简体字，移除不合理的连续标点符号等。</li>
+<li><strong>基于分类器的过滤</strong>：根据质量分数的加权<span class="math inline"> \(S=\alpha S_1+\beta S_2+\gamma
+S_3\)</span> 对样本进行过滤，去除质量分数低于阈值的样本。</li>
+</ul>
+<h3 id="数据扩展">数据扩展</h3>
+<p>来自社交媒体的数据会夹杂很多的流行语，而它们在日常对话中并不常见，这会导致偏差。因此，作者还从公开来源收集了以下四种数据，共计 12GB。</p>
+<ul>
+<li>电影和电视剧的对话字幕</li>
+<li>小说和故事中的对话</li>
+<li>百度知道的问答对</li>
+<li>已有的公开众包对话：DuConv，KdConv，DuRecDial，NaturalConv</li>
+</ul>
+<h3 id="数据统计信息">数据统计信息</h3>
+<p>下表展示了 EVA 2.0 和 1.0 的数据集对比。可以看到 EVA
+2.0 的数据集不足 1.0 版本的<span class="math inline"> \(1/3\)</span>，但显著提升了质量。相关性、通顺性的提升与数据调整中的过滤方式大致有个对应关系，例如规则过滤主要改善通顺性。另外，个人感觉数据调整中会根据质量分数过滤，再采用质量分数来评估似乎欠妥。可能再各自随机采样样本进行人工标注更有说服力一些。</p>
+<p><img src="statistics.png"></p>
+<h2 id="模型">模型</h2>
+<p>模型还是 Seq2Seq 的 Transformer，不过和 EVA
+1.0、t5 不一样的是，使用的是 scaled
+Attention，即计算 Attention 的时候除以了<span class="math inline"> \(\sqrt
+d\)</span>。论文主要讨论了两个模型的两个配置：层数和角色信息。</p>
+<p>基于 Seq2Seq 的对话模型的编码器和解码器层数往往不是一致，解码器要比编码器更深以达到更好的生成效果。但是，更深的编码器也能提高对话上下文理解能力。因此，论文在控制参数规模情况下，尝试了不同的层数比例。</p>
+<p>近期工作指出，在长对话中，预训练模型可能会混淆它们的角色，因为模型是在角色信息复杂的社交媒体数据上训练得到的。因此，需要为对话模型添加角色信息保证一致性。例如，PLATO-XL 在多角色对话中添加了角色嵌入。不过由于 WDC-Dialog 数据集角色信息的缺失（例如字幕中一般不会包含角色信息），如果要添加角色信息，只能强制将对话认定为两个角色间进行的对话。论文同时使用了角色嵌入和角色标识符并测试效果。</p>
+<h3 id="预训练">预训练</h3>
+<p>论文研究了两种预训练方法：从头开始预训练或者从长文档预训练的模型再进行预训练。直觉来看，在长文档上预训练的模型已经学到了一些知识。但是由于文档和对话的差异性，不清楚这对对话任务是否会起到正面作用。</p>
+<h3 id="解码策略">解码策略</h3>
+<p>论文在上尝试了以下几种不同的解码策略。虽然有研究在英文对话机器人上对这些策略进行了实验，论文认为解码策略是语言相关的，中文的结论可能不同。</p>
+<ul>
+<li><strong>贪心搜索（Greedy
+Search）</strong>：朴素解码，每步选概率最大的 token，公式为<span class="math inline"> \(y_t=\arg\max_{y_t}
+P(y_t|x;y_{&lt;t})=softmax(h_t)\)</span></li>
+<li><strong> 采样（Sampling）</strong>：每步根据概率分布采样 token，公式为<span class="math inline"> \(y_t\sim
+P(y_t|x;y_{&lt;t})=softmax(h_t/T)\)</span>，<span class="math inline">\(T\)</span> 为温度系数，增大低概率 token 被采样的概率。</li>
+<li><strong>光束搜索（Beam
+Search）</strong>：贪心搜索的改进，避免局部最优。同时维护多个解码序列，最终选择概率最大的序列。</li>
+<li><strong>长度控制（Length
+Control）</strong>：朴素解码策略倾向于生成短而通用的序列，长度控制可改善这一问题，常与光束搜索搭配使用。<strong>最小长度约束方法</strong>：在解码时将 &lt;EOS&gt; 的概率置 0 直至达到最小长度要求。<strong>长度惩罚</strong>：光束搜索时对候选序列分数除以<span class="math inline"> \(l^\alpha\)</span>，其中<span class="math inline"> \(l\)</span> 为序列长度，<span class="math inline">\(alpha\)</span> 越高越偏向长序列（beam
+search 的 score 是<span class="math inline"> \(logp\)</span>，为负数）。</li>
+<li><strong>处理重复（Handling
+Repetitions）</strong>：语言模型生成普遍会出现重复现象。No-Repeat-N-Gram
+策略禁止生成对话历史中存在的 n-gram。</li>
+</ul>
+<h2 id="实验">实验</h2>
+<ul>
+<li><strong>自动评估指标</strong>：uni-gram F1 (F1), ROUGE-L
+(R-L),BLEU-4 (B-4), distinct 4-grams (D-4)</li>
+<li><strong> 人工评估指标</strong>：合理性、特异性、一致性</li>
+</ul>
+<h3 id="层数">层数</h3>
+<p>6-18 代表编码器 6 层，解码器 18 层。表格可以看出，层数平衡的架构是最优的。</p>
+<p><img src="layer.png"></p>
+<h3 id="角色信息">角色信息</h3>
+<p>还是上面的表格，加入角色信息后性能有所下降。作者解释为由于数据集中角色信息的缺失，强迫模型将多角色对话认作两个角色间进行的对话反而会带来反面效果。</p>
+<h3 id="预训练策略">预训练策略</h3>
+<p>下两表为两种训练策略的自动和人工评估结果。可以看出，在文档预训练的模型继续训练的模型只在知识指标上效果更优，在对话指标上都不如从头训练模型。</p>
+<p><img src="pretraining-auto.png"></p>
+<p><img src="pretraining-human.png"></p>
+<h3 id="解码策略-1">解码策略</h3>
+<p>下两表为解码策略的自动和人工评估结果。贪婪搜索默认与 no-repeat-n-gram
+结合起来，因为简单的贪婪搜索通常会导致重复。</p>
+<p>结论：</p>
+<ul>
+<li>没有在所有指标上最优的解码策略</li>
+<li>采样能够生成多样的回复，但会损失合理性</li>
+<li>无重复 n-gram 的简单贪心解码在人类评估中产生了令人惊讶的良好性能</li>
+<li>模型在最小长度约束下倾向于生成自相矛盾的响应（与英文不同）</li>
+<li>光束搜索结合采样、长度惩罚、禁止重复取得了相对均衡的性能</li>
+</ul>
+<p><img src="decode-auto.png"></p>
+<p><img src="decode-human.png"></p>
+<h3 id="最终评估">最终评估</h3>
+<p>论文将 EVA
+2.0 和 1.0、CPM 进行了对比。结果如下两表。baseline 还是有点少。</p>
+<p><img src="evaluation.png"></p>
+<h2 id="举个栗子">举个栗子</h2>
+<p>下面举几个栗子来具体展示一下。可以看到，EVA
+2.0 虽然有时能取得较好的对话效果，但还是会有不一致、幻觉、不安全、缺少同理心这些问题。这正是谷歌 LaMDA 想要解决的问题，可以参考我的另一篇博客<a href="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/#more">谷歌
+LaMDA：高达 137B 参数的 “全能型” 聊天机器人</a>。</p>
+<h3 id="好">好</h3>
+<p><img src="nice-example.png"></p>
+<h3 id="不一致">不一致</h3>
+<p><img src="inconsistent-example.png"></p>
+<h3 id="幻觉">幻觉</h3>
+<p><img src="hallucination.png"></p>
+<h3 id="不安全">不安全</h3>
+<p><img src="unsafe-example.png"></p>
+<h3 id="缺少同理心">缺少同理心</h3>
+<p><img src="lack-empathy.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是蛮有价值的，讨论了模型规模和数据规模之外，影响模型性能的因素。类似 RoBERTa 之于 BERT，可以作为炼丹的参考。不过读完之后我最关心的几个问题还是没有解决：</p>
+<ul>
+<li>模型架构上，PLATO 采用的 unified
+Transformer 和 EVA 的 Seq2Seq，孰优孰劣？虽然有论文做过实验，但是其模型规模、数据规模都达不到预训练模型的水平。</li>
+<li>基线对比上，还是没有跟 PLATO-XL 进行比较。虽然感觉 EVA
+2.0 大概率是比不过 PLATO-XL 的，但还是想了解一下差距、可能的解释、改进等。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/" title="智源 EVA2.0: 聊天机器人 EVA 加强版">https://tqnwhz.github.io/blog/2022/03/24/EVA2-0/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/" rel="tag"><i class="fa fa-tag"></i> 预训练模型</a>
+              <a href="/blog/tags/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 自然语言处理</a>
+              <a href="/blog/tags/%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90/" rel="tag"><i class="fa fa-tag"></i> 对话生成</a>
+              <a href="/blog/tags/Transformer/" rel="tag"><i class="fa fa-tag"></i> Transformer</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/03/19/LaMDA/" rel="prev" title="谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人">
+                  <i class="fa fa-chevron-left"></i> 谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/03/31/Crossing-VAE/" rel="next" title="有错误论文 - ACL2020：交叉 VAE 用于答案检索">
+                  有错误论文 - ACL2020：交叉 VAE 用于答案检索 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">88k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">2:39</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
