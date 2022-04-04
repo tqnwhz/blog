@@ -4,7 +4,8 @@
     <title>Sentence-BERT: 减小语义相似度的计算开销</title>
     <url>/blog/2022/04/04/Sentence-BERT/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
-<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP 2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。 <span id="more"></span> ## 介绍</p>
+<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP 2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。 <span id="more"></span></p>
+<h2 id="介绍">介绍</h2>
 <p>BERT 的结构限制了其不适用于某些任务：大规模文本相似度比较、聚类、信息检索。摘要中已经提到了第一种的例子。聚类和信息检索通常需要将句子映射为一个固定维度的向量，使得相似的句子在语义空间中相近。BERT 虽然也能将句子映射为特定的向量，例如取最后一层 [CLS] 的 token embedding，或者做平均池化。但是，实验证明，这样的到的向量甚至差于 GloVe 嵌入的平均。</p>
 <p>SBERT 通过以下步骤解决这个问题：</p>
 <ol type="1">
