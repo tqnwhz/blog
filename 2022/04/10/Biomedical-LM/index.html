@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ACM 2021: 生物医学域的语言模型">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/task-intro.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/task-specific-finetune.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/tasks.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/baselines.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/overview-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/vocab-wwm.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/vocab-length.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/ptr-method.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/adversial.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/ner-ablation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/relation-extraction.png">
+<meta property="article:published_time" content="2022-04-10T07:08:08.000Z">
+<meta property="article:modified_time" content="2022-04-18T01:47:05.021Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="BERT">
+<meta property="article:tag" content="迁移学习">
+<meta property="article:tag" content="生物医学">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/comparison.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/","path":"2022/04/10/Biomedical-LM/","title":"ACM 2021: 生物医学域的语言模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ACM 2021: 生物医学域的语言模型 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%9F%9F%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">混合域方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%A4%B4%E5%BC%80%E5%A7%8B%E8%AE%AD%E7%BB%83"><span class="nav-number">2.2.</span> <span class="nav-text">从头开始训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%B9%E5%AE%9A%E4%BB%BB%E5%8A%A1%E5%BE%AE%E8%B0%83"><span class="nav-number">3.1.</span> <span class="nav-text">特定任务微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.1.</span> <span class="nav-text">基线模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.2.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.3.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%8D%E8%A1%A8"><span class="nav-number">4.3.1.</span> <span class="nav-text">词表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.3.2.</span> <span class="nav-text">预训练方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.4.</span> <span class="nav-text">微调方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">38</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ACM 2021: 生物医学域的语言模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-10 15:08:08" itemprop="dateCreated datePublished" datetime="2022-04-10T15:08:08+08:00">2022-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-18 09:47:05" itemprop="dateModified" datetime="2022-04-18T09:47:05+08:00">2022-04-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/" itemprop="url" rel="index"><span itemprop="name">预训练模型</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>《Domain-Specific Language Model Pretraining for Biomedical Natural
+Language Processing》为微软研究院发表的论文，收录于 2021 年
+ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<p>NLP 中，在未标记文本上自监督地训练预训练模型，加之以目标域微调，已经被证实为是行之有效的迁移学习策略，尤其是在目标域数据稀缺、源域和目标域高度相关的情况下。尚不清楚特定领域的预训练是否可以从通用领域的迁移中受益。在生物医学领域，已有的工作表明使用域内文本可以提供超过通用域语言模型的额外收益。然而，这些工作都基于一个普遍的假设 -- 域外文本依然是有用的，并且通常采用混合域方法，例如，通过从现有的通用域语言模型开始特定域的预训练。</p>
+<h3 id="混合域方法">混合域方法</h3>
+<p>混合域方法如下图上半部分所示。基于在互联网、维基百科等预训练得到的通用语言模型，继续进行特定域的预训练。</p>
+<p><img src="comparison.png"></p>
+<p>然而，这种方法存在以下问题：</p>
+<ul>
+<li><strong>文本差异</strong>。生物医学领域的文本和通用域文本有较大差异，混合域方法增加了负迁移的可能性。</li>
+<li><strong>词表差距</strong>。目标域与通用域的词表差距较大。以 BERT 为例，BERT 的词表是从
+Wikipedia 和 BookCorpus
+生成的，这与生物医学域的词汇差距较大。例如 "naloxone" 一词（纳洛酮），医学里的常用名词，在 BERT 中被拆为四块：[na,
+##lo, ##xon, ##e]</li>
+</ul>
+<h3 id="从头开始训练">从头开始训练</h3>
+<p>上图的下半部分是从头开始进行特定域的预训练的例子（train from
+scratch）。from
+scratch 是从头开始的意思，引申一下就是不使用预训练模型，从头开始训练。</p>
+<p>如果目标域本身的文本很少，则混合域预训练方法是有意义的，因为可以从使用相关领域的预训练中受益。但是，生物医学并非如此，它在
+PubMed 中拥有超过 3000
+万个摘要。因此，从头开始的特定领域预训练可能是更好的训练策略。它的优点有：</p>
+<ul>
+<li><strong>域内数据</strong>。使用的数据全部来自域内，不受其他领域文本的影响。</li>
+<li><strong>域内词表</strong>。不受通用域词表限制。</li>
+<li><strong>随机初始化</strong>。神经网络训练使用非凸优化，这意味着<strong>持续的预训练可能无法从通用域语言模型中完全撤消次优初始化</strong>。</li>
+</ul>
+<p>论文实验表明，在生物医学领域，从头开始的特定领域预训练大大优于通用语言模型的继续预训练，从而证明支持混合领域预训练的普遍假设并不总是适用。</p>
+<p>此外，论文在提出了一个生物医学语言理解和推理基准 BLURB（Biomedical
+Language Understanding &amp; Reasoning
+Benchmark），并在 https://aka.ms/BLURB 创建了排行榜。基准中包含：命名实体识别（NER）、循证医学信息提取（PICO）、关系抽取、句子相似度、文档分类、问答等子任务。将子任务得分加权后得到总分数。</p>
+<p>BLURB 涉及到的任务类型、数据规模和评估指标如下表所示。</p>
+<p><img src="task-intro.png"></p>
+<h2 id="方法">方法</h2>
+<p>采用<strong>预训练 + 特定任务微调</strong>的范式： ### 模型设置</p>
+<ul>
+<li>词表：Word Piece 子词模型</li>
+<li>预训练任务包含下局预测（NSP）任务，以便与 BERT 比较</li>
+<li>全词掩码 (WWM)，掩码率为 15%</li>
+<li> 数据集：PubMed5 摘要，包含 1400 万个摘要，32 亿个单词，21 GB。</li>
+</ul>
+<h3 id="特定任务微调">特定任务微调</h3>
+<p>从同一个预训练 BERT 开始，按照下图的架构，依次执行</p>
+<ul>
+<li><strong>输入转换</strong>：转换为任务所需的输入。例如关系抽取任务中，需要用特殊符号替换实体词；QA 中需要加入特殊分隔符等。</li>
+<li><strong>模型计算</strong>：得到编码向量。</li>
+<li><strong>特征抽取</strong>：从向量中选择任务所需的特征。例如，分类任务取 [CLS] 符号的表征向量，NER 取每个 token 的表征向量。</li>
+<li><strong>预测</strong>：根据任务 + 特征进行预测。例如，NER 使用线性层 / LSTM/CRF 进行分类，句子相似度使用线性层执行回归等。</li>
+</ul>
+<p><img src="task-specific-finetune.png"></p>
+<p>BLURB 中的六个任务可分别定义为 token / 句子级别的分类 / 回归任务，如下表所示。</p>
+<p><img src="tasks.png"></p>
+<h2 id="实验">实验</h2>
+<h3 id="基线模型">基线模型</h3>
+<p>实验涉及到的一些基线模型如下：</p>
+<p><img src="baselines.png"></p>
+<p>其中，SciBERT
+是使用生物医学和计算机科学的数据，从头开始生成词汇和预训练。
+然而，从生物医学应用的角度来看，SciBERT
+仍然采用混合域预训练方法，因为计算机科学文本显然是域外的。<code>Wiki +
+Books</code> 的词表，即 BERT 的词表，意味着模型都是从 BERT 继续预训练的。</p>
+<p>可以看到，除了本文的 <code>PubMedBERT</code>，其他模型都是混合域训练的方法。</p>
+<h3 id="实验结果">实验结果</h3>
+<p>BLURB 上的结果如下表所示，其中所有的 BERT 模型都经过了相同的微调过程。通过从头开始进行特定领域的预训练，PubMedBERT
+在大多数生物医学 NLP 任务中明显优于其他 BERT 模型。与使用域外文本训练的
+BERT 模型相比，收益最为显着。</p>
+<p><img src="overview-result.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<h4 id="词表">词表</h4>
+<p>针对两种词表 &amp; 两种掩码方式，论文使用
+PubMedBERT 进行了消融实验。换而言之，两边的预训练方法都是从头开始的，不过是词表和掩码方式有所差异。结果如下表。可以看出，全词掩码是明显优于普通掩码的。从 PubMed 构建的词表在大多数任务上都是优于原始 BERT 的词表的。</p>
+<p><img src="vocab-wwm.png"></p>
+<p>从词表将句子编码后的平均长度也可以看出来，如下表，可以看出 PubMed 构建的词表的句子平均长度更短，在 QA 上达到了上百的差异。这里也可以看出，原始的 BERT 的词表在 BioASQ 任务上的 tokenize 后的平均句子长度为 <strong>702.4&gt;512，句子被截断了</strong>，怪不得在这个数据集上跟 PubMedBERT 差了十几个点。。。</p>
+<p><img src="vocab-length.png"></p>
+<h4 id="预训练方法">预训练方法</h4>
+<p>下表展示了预训练预料、训练时间对性能的影响。前两列均使用从通用语料 + 生物医学语料混合域预训练的方法，不过词表不同。两列性能比较互有来回，猜测是由于只根据单一域构建词表，混合域预训练性能受限，与只训练一半时间的 PubMed 类似。</p>
+<p><img src="ptr-method.png"></p>
+<p><strong>对抗预训练</strong></p>
+<p>结果如下表所示。对抗预训练还损害了性能。作者认为可能是由于域内语料类别单一，如果预训练语料库更加多样化且相对域外，则对抗性训练更有用。</p>
+<p><img src="adversial.png"></p>
+<h3 id="微调方法">微调方法</h3>
+<p>以 NER、关系抽取为例，在 BERT 之前，都是使用 LSTM 和 CRF 进行标注。由于 BERT 横扫榜单，这种显式建模方法的实用性遭到了质疑。BERT
+模型的顶层已经捕获了整个文本范围内的许多非线性依赖关系。直接进行分类也可以取得很好的效果。在下表中（F1 分数）也可以看出，线性层对在 5 个数据集上都取得了最优。而且线性层是可并行的，LSTM 还要引入额外的串行开销。</p>
+<p><img src="ner-ablation.png"></p>
+<p><strong>关系抽取中的虚拟化方法和关系编码的影响</strong>。虚拟化（dummify）方法是指在关系抽取中，为了防止过拟合，往往使用特殊符号（例如 $DRUG 和 $GENE）替换实体词。关系编码是指用于关系分类的向量，例如 [CLS] 或者特殊实体开始标记。</p>
+<p>论文对关系编码的三种方法：[CLS]、实体词向量的最大池化、实体首符号的向量，以及输入实体符号的方法：虚拟化、原始文本、在实体前后添加标记进行了比较实验。结果如下表所示。简单地使用原始文本确实会使神经方法面临过拟合风险。对原始文本使用
+[CLS]
+是最糟糕的选择，因为很难判定要抽取哪两个实体间的关系。虚拟化仍然是最可靠的方法，它适用于任何一种关系编码方法。有趣的是，使用实体标记会在两个数据集中产生稍好的结果，因为它似乎可以防止过度拟合，同时保留有用的实体信息。</p>
+<p><img src="relation-extraction.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文研究了” 通用域预训练模型，对于拥有大量未标记文本的特定域的迁移学习，是否有效 “的问题。在生物医学领域的实验表明，从头开始训练（train
+from
+scratch）是更好的选择。论文中还做了非常详细的消融实验，逐个探究词表、训练数据等的影响。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/" title="ACM 2021: 生物医学域的语言模型">https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/BERT/" rel="tag"><i class="fa fa-tag"></i> BERT</a>
+              <a href="/blog/tags/%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/" rel="tag"><i class="fa fa-tag"></i> 迁移学习</a>
+              <a href="/blog/tags/%E7%94%9F%E7%89%A9%E5%8C%BB%E5%AD%A6/" rel="tag"><i class="fa fa-tag"></i> 生物医学</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/04/04/Sentence-BERT/" rel="prev" title="Sentence-BERT: 减小语义相似度的计算开销">
+                  <i class="fa fa-chevron-left"></i> Sentence-BERT: 减小语义相似度的计算开销
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/04/17/XLNET/" rel="next" title="XLNET：基于置换语言任务的自回归模型">
+                  XLNET：基于置换语言任务的自回归模型 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

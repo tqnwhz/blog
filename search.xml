@@ -1,6 +1,382 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>XLNET：基于置换语言任务的自回归模型</title>
+    <url>/blog/2022/04/17/XLNET/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet:
+Generalized Autoregressive Pretraining for Language
+Understanding》，收录于 2019
+NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 <strong>[MASK]
+token 间的依赖关系</strong>以及 [MASK] 导致的预训练 - 微调差异。 XLNet 在 20
+项任务上的表现优于
+BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排名。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<h3 id="自编码vs自回归">自编码 vs 自回归</h3>
+<p>预训练模型常在大规模语料上，通过构建无监督的预训练目标进行训练。其中，自回归
+(AR) 语言建模和自编码 (AE) 是两个最成功的预训练目标。</p>
+<p>自编码方法旨在通过从被破坏的输入重建数据，典型的例子为 BERT 的掩码语言模型（MLM），将若干 token 掩码为 [MASK]，通过上下文的其他 token 预测被掩码的 token。类似完形填空任务，将 “我吃饭了” 掩码为 "我吃 [MASK] 了"，预测 [MASK] 为 "饭"。但 BERT 的缺点在于，它对于多个 [MASK] 标记分开预测，换而言之，<strong>假设它们是互相独立的，没有考虑它们间的依赖关系</strong>。而且，在预训练过程中，[MASK] 的 token
+embedding 为空，对其后续的上下文表征没有任何帮助。而在下游微调任务中，当前 token 的 token
+embedding 对其上下文表征是最重要的。这就导致了上下游间的差异。</p>
+<p>自回归的方法旨在使用自回归模型拟合语料的概率分布，典型的例子为 GPT 的语言模型。将句子概率<span class="math inline"> \(p(x)\)</span> 分解为条件概率的乘积，即<span class="math inline"> \(p(x)=\prod_t
+p(x_t|x_{&lt;t})\)</span>。这种方法非常符合人的认知，但是缺点是无法利用双向的上下文信息。而双向的上下文信息对于下游的理解任务是至关重要的。</p>
+<p>XLNET 希望将 AR 和 AE 的优点结合起来，避免它们的局限性。XLNET 提出了一种名为置换语言模型的预训练目标，即<strong>打乱句子的 token 顺序并使用自回归的方法预测</strong>。这种方法不依赖于掩码、结合了双向上下文信息、自回归训练。XLNet
+在许多下游任务上比 BERT 表现出色，包括 GLUE 语言理解任务、阅读理解任务（如
+SQuAD 和
+RACE），Yelp 和 IMDB 等文本分类任务，以及 ClueWeb09-B 文档排名任务。</p>
+<h2 id="方法">方法</h2>
+<h3 id="置换语言模型">置换语言模型</h3>
+<p>对于长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \(x\)</span>，存在<span class="math inline"> \(T!\)</span> 种排列可用于自回归生成。用<span class="math inline"> \(\mathcal Z_T\)</span> 代表所有长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \([1,2,\cdots,T]\)</span> 的排列集合，<span class="math inline">\(z_t\)</span> 和<span class="math inline"> \(z_{&lt;t}\)</span> 分别代表排列<span class="math inline"> \(z\in\mathcal Z_T\)</span> 的第<span class="math inline"> \(t\)</span> 个和前<span class="math inline"> \(t-1\)</span> 个元素。置换语言模型的目标可形式化定义为：
+<span class="math display">\[
+\max_\theta \mathbb E_{z\sim\mathcal
+Z_T}[\sum_{t=1}^Tlogp(x_{z_t}|x_{z_{&lt;t}})]
+\]</span> 事实上，只需要每次随机采样一个排列序列<span class="math inline"> \(z\)</span>，优化对数似然即可。而且我们也不需要显式地改变句子顺序，只需要对 Attention 进行掩码即可。后面会介绍到。</p>
+<h3 id="双流自注意力机制">双流自注意力机制</h3>
+<p>虽然已经得到了形式化的训练目标，但是直接使用 Transformer-XL 优化上述目标可能是没什么用的。具体而言，如果使用标准的 softmax 计算下一个 token 的概率分布，即<span class="math inline"> \(p(X_{z_t}|x_{z_{&lt;t}})\)</span>，公式为 <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Th_\theta(x_{z_{&lt;t}}))}{\sum_{x'}\exp(e(x')^Th_\theta(x_{z_{&lt;t}})}
+\]</span> 其中，<strong><span class="math inline">\(h_\theta(x_{z_{&lt;t}})\)</span> 是<span class="math inline"> \(x_{z_{t}}\)</span> 的隐藏状态表征，<span class="math inline">\(e(x)\)</span> 是<span class="math inline"> \(x\)</span> 的嵌入向量。可以看到<span class="math inline"> \(h_\theta(x_{z_{&lt;t}})\)</span> 是与要预测的 token 的位置<span class="math inline"> \(z_t\)</span> 无关的。也就是</strong>无论下一个预测的 token 是哪个位置的，得到的概率分布都是相同的<strong>。这显然与我们的期望是相悖的。为了解决这个问题，需要</strong>重参数化<strong>这个概率分布，加入<span class="math inline"> \(z_t\)</span> 的信息： <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Tg_\theta(x_{z_{&lt;t}},z_t))}{\sum_{x'}\exp(e(x')^Tg_\theta(x_{z_{&lt;t}},z_t)}
+\]</span> 其中，</strong><span class="math inline">\(g_\theta\)</span> 是一种新的、依赖于下一个 token 位置的表征 **。</p>
+<p>那么新的问题就来了，怎么建模这个<span class="math inline"> \(g_\theta\)</span> 呢？从形式上可以看出，<span class="math inline">\(g_\theta\)</span> 希望在根据位置<span class="math inline"> \(z_t\)</span> 从已有的上下文<span class="math inline"> \(x_{z_{&lt;t}}\)</span> 中通过注意力机制收集信息。这样就有了两种略显矛盾的需求：</p>
+<ul>
+<li>预测<span class="math inline"> \(x_{z_t}\)</span> 时，<span class="math inline">\(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 只能依赖位置<span class="math inline"> \(z_t\)</span> 而非内容<span class="math inline"> \(x_{z_t}\)</span></li>
+<li> 预测<span class="math inline"> \(j&gt;t\)</span> 的其他标记<span class="math inline"> \(x_{z_j}\)</span> 时，也需要<span class="math inline"> \(x_{z_t}\)</span> 的隐藏表征，此时<span class="math inline"> \(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 应该编码<span class="math inline"> \(x_{z_t}\)</span> 的内容以充分利用上下文信息</li>
+</ul>
+<p>那么，就需要两种上下文表征：</p>
+<ul>
+<li><strong>内容表征</strong><span class="math inline"> \(h_\theta(x_{z_{\le t}})\)</span>，简写为<span class="math inline"> \(h_{z_{\le
+t}}\)</span>，类似标准 Transformer 中的隐藏状态，同时编码上下文和位置</li>
+<li><strong>查询表征</strong><span class="math inline"> \(g_\theta(x_{z_t})\)</span>，简写为<span class="math inline"> \(g_{z_t}\)</span>，只根据<span class="math inline"> \(h_{z_{&lt;t}}\)</span> 和位置<span class="math inline"> \(z_t\)</span> 计算得到</li>
+</ul>
+<p>为便于计算，查询流的第一层初始化为可训练的向量，即<span class="math inline"> \(g_i^{(0)}=w\)</span>，内容流初始化为嵌入向量，即<span class="math inline"> \(h_i^{(0)}=e(x_i)\)</span>。对于其它层<span class="math inline"> \(m=1,\cdots,M\)</span>，使用共享参数更新两种流的向量表征，示意图如下所示：</p>
+<p><img src="two-stream.png"></p>
+<ul>
+<li>图 (a) 为内容流注意力，类比标准 Transformer 中的自注意力，query、key、value 均为有内容的向量表征。</li>
+<li>图 (b) 为查询流注意力，不能获取当前位置的内容<span class="math inline"> \(x_{z_t}\)</span>，以其位置<span class="math inline"> \(z_t\)</span> 为 query，key、value 也均为有内容的向量表征。</li>
+<li>图 (c) 为置换语言模型的训练过程。采样一个排列<span class="math inline"> \(3,2,4,1\)</span>，内容流中，1 可以看到 3,2,4，且根据 1 的内容计算双向自注意力，其 Attention 不需要遮挡；2 只能看到 3 和它本身，因此位置 1,4 需要被遮挡。以此类推。查询流与内容流类似，不过需要额外去掉当前位置的内容，即矩阵中的主对角线全部被遮挡。</li>
+</ul>
+<p>更新公式可以示意为（<strong>注意 KV 里下标<span class="math inline"> \(&lt;,\le\)</span> 的差异</strong>）： <span class="math display">\[
+g_{z_t}^{(m)}\leftarrow
+Attention(Q=g_{z_t}^{(m-1)},KV=h_{z_{&lt;t}}^{(m-1)};\theta)\\
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=h_{z_{\le
+t}}^{(m-1)};\theta)
+\]</span> 使用最后一层的<span class="math inline"> \(g_{z_t}^{(M)}\)</span> 来计算上述的条件概率<span class="math inline"> \(p(X_{z_t}=x|x_{z_{&lt;t}})\)</span>。在微调的时候，可以直接将查询流丢弃。</p>
+<h3 id="部分预测">部分预测</h3>
+<p>虽然上述理论很美好，但是早期实验证实其收敛很慢。很容易理解，排列中前一部分的 token 的上下文位置随机，预测下一随机位置的 token 是困难的。为了优化方便，论文只预测排列中最后一部分的 token，它们的上下文最为丰富。形式化而言，将排列<span class="math inline"> \(z\)</span> 划分为上下文<span class="math inline"> \(z_{\le c}\)</span> 和目标<span class="math inline"> \(z_{&gt; c}\)</span>，c 为切分点。使用超参数<span class="math inline"> \(|z|/(|z|-c)\approx
+K\)</span> 控制这个比例。这里类似 BERT 里控制 [MASK] 比例，理论上当然是越大越好，但是太大了不易收敛。上下文部分<span class="math inline"> \(z_{\le
+c}\)</span> 的查询流也不需要计算了，可以节省时间和内存。</p>
+<h3 id="集成transformer-xl">集成 Transformer-XL</h3>
+<p>在 Transformer-XL 的基础上，添加：</p>
+<ul>
+<li><strong>相对位置编码</strong></li>
+<li><strong>段循环机制</strong></li>
+</ul>
+<p>主要介绍下段循环机制。对于过长的输入，往往需要以固定长度 T（如 512）将其分段（segment）。假设两段输入分别为<span class="math inline"> \(\tilde x=s_{1:T},x=s_{T+1:2T}\)</span>，<span class="math inline">\(\tilde z,z\)</span> 分别为其排列顺序，<span class="math inline">\(\tilde
+h^{(m)}\)</span> 为 m 层的向量表征。对于段<span class="math inline"> \(x\)</span>，计算注意力时可以添加<span class="math inline"> \(\tilde
+h^{(m-1)}\)</span> 的注意力，类似记忆网络（Memory Network），如下式所示：
+<span class="math display">\[
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde
+h^{(m-1)},h_{z_{\le t}}^{(m-1)}];\theta)
+\]</span> 这样可以缓存和重用前一段的模型结果。</p>
+<h3 id="多段建模">多段建模</h3>
+<p>许多下游任务以多个段为输入，例如问答、对话等。XLNET 参考 BERT，构建 [CLS,
+A, SEP, B,
+SEP] 的输入，用以进行置换语言模型训练。不过事实上，XLNET 并没有使用下句预测的预训练任务，因为它在消融实验里并没有带来帮助。</p>
+<p>继承自相对位置编码的思想，XLNET 引入了<strong>相对段编码</strong>。与为每个段显式加入绝对段编码的 BERT 不同，XLNET 使用两个相对段编码<span class="math inline"> \(s_+,s_-\)</span> 衡量两个位置<span class="math inline"> \(i,j\)</span> 是否来自同一个段，<span class="math inline">\(s_+,s_-\)</span> 是每个注意力头可学习的参数。换而言之，XLNET 只考虑两个位置是否来自一个段，不关心它们来自哪两个段。当位置<span class="math inline"> \(i\)</span> 向<span class="math inline"> \(j\)</span> 计算注意力时，段编码<span class="math inline"> \(s_{ij}\)</span> 用以计算权重<span class="math inline"> \(a_{ij}=(q_i+b)^Ts_{ij}\)</span>，<span class="math inline">\(q_i\)</span> 是标准的查询向量，<span class="math inline">\(b\)</span> 为特定于注意力头的可学习的偏差向量，得到的<span class="math inline"> \(a_{ij}\)</span> 被添加到注意力 ij 间的权重上。直观而言，如果 ij 来自同一个段，这个权重应该更大，反之则更小。相较于绝对段编码，相对段编码更易扩展，而且可以提高泛化能力。</p>
+<h2 id="实验">实验</h2>
+<h3 id="设置">设置</h3>
+<ul>
+<li>预训练数据：包含 BookCorpus、Wikipedia、Giga5、ClueWeb
+2012-B 等，共 126GB。BERT 只使用了前两项共 13GB。</li>
+<li>参数规模：XLNET-Large 和 BERT-Large 架构一致</li>
+<li>训练成本：512 块 TPU，500k 步，5.5 天，完了还是欠拟合</li>
+<li> K=6，即只预测一个句子排列的末尾<span class="math inline"> \(1/6\approx 17%\)</span>，与 BERT
+15% 的掩码率相近</li>
+</ul>
+<h3 id="与bert的公平比较">与 BERT 的公平比较</h3>
+<p>XLNET 与 BERT 在相同数据集上训练、架构一致。BERT 选取原生 BERT、全词掩码、无下句预测三种版本中的最优结果。下表为 GLUE、SQuAD 数据集的结果。可以看到在不同下游任务上，XLNET 均超越 BERT，一般一两个点。</p>
+<p><img src="fair-comparison.png"></p>
+<h3 id="其他结果">其他结果</h3>
+<p>下面的 XLNET 就是全量数据上的结果了。</p>
+<p>下表为在 RACE（阅读理解任务）和
+onClueWeb09-B（文档排序任务）测试集的最新结果的比较。RACE 数据集以长度著称，考验了模型的长片段信息捕捉能力。ClueWeb09-B
+文档排序数据集，主要用于测试模型生成的词向量效果。可以看到 XLNET 都是最优的。</p>
+<p><img src="scaling.png"></p>
+<p>下表为在 SQuAD 数据集上的结果，大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="SQuAD.png"></p>
+<p>下表为在多个文本分类数据集上的实验结果，主要与 BERT 比较。</p>
+<p><img src="text-classification.png"></p>
+<p>下表为在 GLEU 数据集上，与 RoBERTa 等模型的比较结果。还是大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="GLEU.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<p>消融实验旨在具体探究：</p>
+<ul>
+<li>置换语言模型的有效性，对比 MLM</li>
+<li>Transformer-XL 架构的重要性</li>
+<li>一些其他细节：基于跨度预测、双向输入、下句预测</li>
+</ul>
+<p>为了公平比较，所有模型都基于 12 层架构，具有与 BERT-Base
+相同的模型超参数，并且仅在 Wikipedia 和 BooksCorpus
+上进行训练。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/71916499">飞跃芝麻街：XLNet
+详解 - 知乎 (zhihu.com)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>category</category>
+      </categories>
+      <tags>
+        <tag>tag</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ACM 2021: 生物医学域的语言模型</title>
+    <url>/blog/2022/04/10/Biomedical-LM/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>《Domain-Specific Language Model Pretraining for Biomedical Natural
+Language Processing》为微软研究院发表的论文，收录于 2021 年
+ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<p>NLP 中，在未标记文本上自监督地训练预训练模型，加之以目标域微调，已经被证实为是行之有效的迁移学习策略，尤其是在目标域数据稀缺、源域和目标域高度相关的情况下。尚不清楚特定领域的预训练是否可以从通用领域的迁移中受益。在生物医学领域，已有的工作表明使用域内文本可以提供超过通用域语言模型的额外收益。然而，这些工作都基于一个普遍的假设 -- 域外文本依然是有用的，并且通常采用混合域方法，例如，通过从现有的通用域语言模型开始特定域的预训练。</p>
+<h3 id="混合域方法">混合域方法</h3>
+<p>混合域方法如下图上半部分所示。基于在互联网、维基百科等预训练得到的通用语言模型，继续进行特定域的预训练。</p>
+<p><img src="comparison.png"></p>
+<p>然而，这种方法存在以下问题：</p>
+<ul>
+<li><strong>文本差异</strong>。生物医学领域的文本和通用域文本有较大差异，混合域方法增加了负迁移的可能性。</li>
+<li><strong>词表差距</strong>。目标域与通用域的词表差距较大。以 BERT 为例，BERT 的词表是从
+Wikipedia 和 BookCorpus
+生成的，这与生物医学域的词汇差距较大。例如 "naloxone" 一词（纳洛酮），医学里的常用名词，在 BERT 中被拆为四块：[na,
+##lo, ##xon, ##e]</li>
+</ul>
+<h3 id="从头开始训练">从头开始训练</h3>
+<p>上图的下半部分是从头开始进行特定域的预训练的例子（train from
+scratch）。from
+scratch 是从头开始的意思，引申一下就是不使用预训练模型，从头开始训练。</p>
+<p>如果目标域本身的文本很少，则混合域预训练方法是有意义的，因为可以从使用相关领域的预训练中受益。但是，生物医学并非如此，它在
+PubMed 中拥有超过 3000
+万个摘要。因此，从头开始的特定领域预训练可能是更好的训练策略。它的优点有：</p>
+<ul>
+<li><strong>域内数据</strong>。使用的数据全部来自域内，不受其他领域文本的影响。</li>
+<li><strong>域内词表</strong>。不受通用域词表限制。</li>
+<li><strong>随机初始化</strong>。神经网络训练使用非凸优化，这意味着<strong>持续的预训练可能无法从通用域语言模型中完全撤消次优初始化</strong>。</li>
+</ul>
+<p>论文实验表明，在生物医学领域，从头开始的特定领域预训练大大优于通用语言模型的继续预训练，从而证明支持混合领域预训练的普遍假设并不总是适用。</p>
+<p>此外，论文在提出了一个生物医学语言理解和推理基准 BLURB（Biomedical
+Language Understanding &amp; Reasoning
+Benchmark），并在 https://aka.ms/BLURB 创建了排行榜。基准中包含：命名实体识别（NER）、循证医学信息提取（PICO）、关系抽取、句子相似度、文档分类、问答等子任务。将子任务得分加权后得到总分数。</p>
+<p>BLURB 涉及到的任务类型、数据规模和评估指标如下表所示。</p>
+<p><img src="task-intro.png"></p>
+<h2 id="方法">方法</h2>
+<p>采用<strong>预训练 + 特定任务微调</strong>的范式： ### 模型设置</p>
+<ul>
+<li>词表：Word Piece 子词模型</li>
+<li>预训练任务包含下局预测（NSP）任务，以便与 BERT 比较</li>
+<li>全词掩码 (WWM)，掩码率为 15%</li>
+<li> 数据集：PubMed5 摘要，包含 1400 万个摘要，32 亿个单词，21 GB。</li>
+</ul>
+<h3 id="特定任务微调">特定任务微调</h3>
+<p>从同一个预训练 BERT 开始，按照下图的架构，依次执行</p>
+<ul>
+<li><strong>输入转换</strong>：转换为任务所需的输入。例如关系抽取任务中，需要用特殊符号替换实体词；QA 中需要加入特殊分隔符等。</li>
+<li><strong>模型计算</strong>：得到编码向量。</li>
+<li><strong>特征抽取</strong>：从向量中选择任务所需的特征。例如，分类任务取 [CLS] 符号的表征向量，NER 取每个 token 的表征向量。</li>
+<li><strong>预测</strong>：根据任务 + 特征进行预测。例如，NER 使用线性层 / LSTM/CRF 进行分类，句子相似度使用线性层执行回归等。</li>
+</ul>
+<p><img src="task-specific-finetune.png"></p>
+<p>BLURB 中的六个任务可分别定义为 token / 句子级别的分类 / 回归任务，如下表所示。</p>
+<p><img src="tasks.png"></p>
+<h2 id="实验">实验</h2>
+<h3 id="基线模型">基线模型</h3>
+<p>实验涉及到的一些基线模型如下：</p>
+<p><img src="baselines.png"></p>
+<p>其中，SciBERT
+是使用生物医学和计算机科学的数据，从头开始生成词汇和预训练。
+然而，从生物医学应用的角度来看，SciBERT
+仍然采用混合域预训练方法，因为计算机科学文本显然是域外的。<code>Wiki +
+Books</code> 的词表，即 BERT 的词表，意味着模型都是从 BERT 继续预训练的。</p>
+<p>可以看到，除了本文的 <code>PubMedBERT</code>，其他模型都是混合域训练的方法。</p>
+<h3 id="实验结果">实验结果</h3>
+<p>BLURB 上的结果如下表所示，其中所有的 BERT 模型都经过了相同的微调过程。通过从头开始进行特定领域的预训练，PubMedBERT
+在大多数生物医学 NLP 任务中明显优于其他 BERT 模型。与使用域外文本训练的
+BERT 模型相比，收益最为显着。</p>
+<p><img src="overview-result.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<h4 id="词表">词表</h4>
+<p>针对两种词表 &amp; 两种掩码方式，论文使用
+PubMedBERT 进行了消融实验。换而言之，两边的预训练方法都是从头开始的，不过是词表和掩码方式有所差异。结果如下表。可以看出，全词掩码是明显优于普通掩码的。从 PubMed 构建的词表在大多数任务上都是优于原始 BERT 的词表的。</p>
+<p><img src="vocab-wwm.png"></p>
+<p>从词表将句子编码后的平均长度也可以看出来，如下表，可以看出 PubMed 构建的词表的句子平均长度更短，在 QA 上达到了上百的差异。这里也可以看出，原始的 BERT 的词表在 BioASQ 任务上的 tokenize 后的平均句子长度为 <strong>702.4&gt;512，句子被截断了</strong>，怪不得在这个数据集上跟 PubMedBERT 差了十几个点。。。</p>
+<p><img src="vocab-length.png"></p>
+<h4 id="预训练方法">预训练方法</h4>
+<p>下表展示了预训练预料、训练时间对性能的影响。前两列均使用从通用语料 + 生物医学语料混合域预训练的方法，不过词表不同。两列性能比较互有来回，猜测是由于只根据单一域构建词表，混合域预训练性能受限，与只训练一半时间的 PubMed 类似。</p>
+<p><img src="ptr-method.png"></p>
+<p><strong>对抗预训练</strong></p>
+<p>结果如下表所示。对抗预训练还损害了性能。作者认为可能是由于域内语料类别单一，如果预训练语料库更加多样化且相对域外，则对抗性训练更有用。</p>
+<p><img src="adversial.png"></p>
+<h3 id="微调方法">微调方法</h3>
+<p>以 NER、关系抽取为例，在 BERT 之前，都是使用 LSTM 和 CRF 进行标注。由于 BERT 横扫榜单，这种显式建模方法的实用性遭到了质疑。BERT
+模型的顶层已经捕获了整个文本范围内的许多非线性依赖关系。直接进行分类也可以取得很好的效果。在下表中（F1 分数）也可以看出，线性层对在 5 个数据集上都取得了最优。而且线性层是可并行的，LSTM 还要引入额外的串行开销。</p>
+<p><img src="ner-ablation.png"></p>
+<p><strong>关系抽取中的虚拟化方法和关系编码的影响</strong>。虚拟化（dummify）方法是指在关系抽取中，为了防止过拟合，往往使用特殊符号（例如 $DRUG 和 $GENE）替换实体词。关系编码是指用于关系分类的向量，例如 [CLS] 或者特殊实体开始标记。</p>
+<p>论文对关系编码的三种方法：[CLS]、实体词向量的最大池化、实体首符号的向量，以及输入实体符号的方法：虚拟化、原始文本、在实体前后添加标记进行了比较实验。结果如下表所示。简单地使用原始文本确实会使神经方法面临过拟合风险。对原始文本使用
+[CLS]
+是最糟糕的选择，因为很难判定要抽取哪两个实体间的关系。虚拟化仍然是最可靠的方法，它适用于任何一种关系编码方法。有趣的是，使用实体标记会在两个数据集中产生稍好的结果，因为它似乎可以防止过度拟合，同时保留有用的实体信息。</p>
+<p><img src="relation-extraction.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文研究了” 通用域预训练模型，对于拥有大量未标记文本的特定域的迁移学习，是否有效 “的问题。在生物医学领域的实验表明，从头开始训练（train
+from
+scratch）是更好的选择。论文中还做了非常详细的消融实验，逐个探究词表、训练数据等的影响。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>BERT</tag>
+        <tag>迁移学习</tag>
+        <tag>生物医学</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Sentence-BERT: 减小语义相似度的计算开销</title>
+    <url>/blog/2022/04/04/Sentence-BERT/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT:
+Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP
+2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。
+<span id="more"></span></p>
+<h2 id="介绍">介绍</h2>
+<p>BERT 的结构限制了其不适用于某些任务：大规模文本相似度比较、聚类、信息检索。摘要中已经提到了第一种的例子。聚类和信息检索通常需要将句子映射为一个固定维度的向量，使得相似的句子在语义空间中相近。BERT 虽然也能将句子映射为特定的向量，例如取最后一层 [CLS] 的 token
+embedding，或者做平均池化。但是，实验证明，这样的到的向量甚至差于 GloVe 嵌入的平均。</p>
+<p>SBERT 通过以下步骤解决这个问题：</p>
+<ol type="1">
+<li><p>孪生 BERT 将句子映射为固定维度向量</p></li>
+<li><p>使用相似度度量（余弦相似度、欧氏距离、曼哈顿距离...）</p></li>
+</ol>
+<p>换而言之，即取消两个句子同时馈入网络的要求，利用相似度度量控制学习得到好的单个句子的嵌入。结构如下图所示：</p>
+<figure>
+<img src="architecture.png" alt="结构">
+<figcaption aria-hidden="true">结构</figcaption>
+</figure>
+<p>两个句子被分别编码 + 平均池化得到向量表证后，构建计算语义相似度的分类任务（左图）或者回归任务（有图）。</p>
+<p>作者在 NLI 数据上微调 SBERT，在 7 个 STS 任务上，SBERT 取得了 11.7 个点的提升，相较于 InferSent 和 Universal
+Sentence Encoder。在 SentEval 上，SBERT 分别取得了 2.1 和 2.6 个点的提升。</p>
+<h2 id="方法">方法</h2>
+<p>SBERT 的核心步骤已经在上面介绍了，但还有一些细节需要考虑：</p>
+<ol type="1">
+<li>如何得到固定维度的向量：[CLS]/ 平均池化 / 最大池化</li>
+<li>训练目标：分类 / 回归 / 三元组</li>
+</ol>
+<p>其中，模型的结构（孪生、三胞胎）、训练目标与可用的训练数据息息相关。</p>
+<p><strong>分类目标</strong>：将两个句子向量及逐元素差<span class="math inline"> \(u,v,|u-v|\)</span> 馈入 MLP，并进行 SoftMax 进行分类，公式为：
+<span class="math display">\[
+o_t=softmax(W_t(u,v,|u-v|))
+\]</span> <strong> 回归目标</strong>：与分类类似，区别在于计算<span class="math inline"> \(u,v\)</span> 的余弦相似度，使用 MSE 损失。</p>
+<p><strong>三元组目标</strong>：给定一个原始句子<span class="math inline"> \(a\)</span>，一个正面句子<span class="math inline"> \(p\)</span>，一个负面例子<span class="math inline"> \(n\)</span>，减小<span class="math inline"> \(a,p\)</span> 之间的距离，增大<span class="math inline"> \(a,n\)</span> 之间的距离，即要<strong>最小化下式的损失</strong>：
+<span class="math display">\[
+\max(||s_a-s_p||-||s_a-s_n||+\epsilon,0)
+\]</span> 其中，<span class="math inline">\(s_x\)</span> 为句子<span class="math inline"> \(x\)</span> 的嵌入向量，<span class="math inline">\(||\cdot||\)</span> 为句子度量，<span class="math inline">\(\epsilon\)</span> 为边界，用以保证<span class="math inline"> \(s_p\)</span> 至少<span class="math inline"> \(\epsilon\)</span> 比<span class="math inline"> \(s_n\)</span> 更靠近<span class="math inline"> \(s_a\)</span>，即<span class="math inline"> \(||s_a-s_p||+\epsilon&lt;||s_a-s_n||\)</span>。当这个式子不成立时，损失为 0，参数不进行更新。实验中使用的距离度量为欧氏距离，<span class="math inline">\(\epsilon=1\)</span>。</p>
+<h3 id="训练细节">训练细节</h3>
+<p>作者使用 SNLI、Multi-Genre
+NLI 数据集训练 SBERT。其中，SNLI 数据集由 57 万个句子对 + 标签组成，MultiNLI 由 43 万个句子对组成，带有文本蕴含信息。</p>
+<h2 id="实验">实验</h2>
+<p>在语义文本相似度任务上进行实验验证。传统方法通常学习一个（复杂的）回归函数，将句子嵌入映射到相似性分数。
+然而，这些回归函数以句子对为输入，难以扩展且面临组合爆炸问题。SBERT 则总是使用余弦相似度来比较两个句子之间的相似度嵌入。
+负曼哈顿距离和负欧几里得距离的实验结果也大致相同。</p>
+<h3 id="无监督sts">无监督 STS</h3>
+<p>不使用任何 STS 特定的训练数据。评估数据集为 STS tasks 2012 - 2016， STS
+benchmark，SICK-Relatedness。每个数据集的句子对包含 0 到 5 的的语义关联标签。评估指标上（两个相似度分数），不使用皮尔逊相关系数（Pearson
+correlation
+coefficient），因为它主要衡量随机变量间的<strong>线性相关性</strong>。而是使用斯皮尔曼等级相关系数（Spearman's
+rank correlation
+coefficient），它可以衡量<strong>等级变量间的单调性</strong>，因而更适用于 STS 场景。毕竟两个分数间的相关性不一定是线性的。</p>
+<p>实验结果如下表所示。可以看到 naive 的 BERT embedding 差于 GloVe
+embedding，SBERT 和 SRoBERTa 几乎全面领先，除了 SICK-R。这可能与 Universal
+Sentence Encoder 训练的新闻、问答等语料有关。</p>
+<p><img src="unsupervised-result.png"></p>
+<h3 id="监督sts">监督 STS</h3>
+<p>使用 STS benchmark (STSb)
+数据集进行训练。该数据集包括来自标题、新闻和论坛三个类别的 8,628
+个句子对，分为训练集（5,749）、验证集（1,500）和测试集（1,379）。</p>
+<p>实验结果如下表所示。作者实验了两种训练策略，只在 STSb 上进行训练和在 NLI 数据集上预训练，再在 STSb 数据集上微调。后者能够带来 1-2 个点的提升。可以看到 SBERT 和 BERT 之间的差距不大。</p>
+<p><img src="supervised-result.png"></p>
+<h3 id="争论方面的相似性">争论方面的相似性</h3>
+<p>Argument Facet Similarity （AFS）语料库注释了来自社交媒体对话的 6,000
+个句子论点对，涉及三个有争议的主题：枪支管制、同性婚姻和死刑。数据的标签范围从
+0（“不同主题”）到 5（“完全等效”）。 AFS 语料库中的相似性概念与 SemEval
+的 STS 数据集中的相似性概念完全不同。 STS 数据通常是描述性的，而 AFS
+数据是对话中的争论性摘录。要被认为是相似的，争论不仅必须提出相似的主张，而且还必须提供相似的论证。此外，AFS
+中句子之间的词汇差距要大得多。因此，简单的无监督方法以及最先进的 STS
+系统在该数据集上表现不佳。</p>
+<p>作者使用 10 折交叉验证和跨主题评估（2 个主题用于训练，剩余一个用于评估）进行实验验证。10
+折交叉验证设置中的 SBERT 的性能几乎与 BERT 相当。但是，在跨主题评估中，
+SBERT 的 Spearman 相关性下降了大约 7 个点的
+。这可能是由于缺失主题的情况下，BERT 依然能够通过逐字符比较得到较好的结果，SBERT 只能从单一句子推断主题、主张等，这更具有挑战性。</p>
+<p><img src="argument-result.png"></p>
+<h3 id="维基百科章节">维基百科章节</h3>
+<p>利用维基百科的章节构建三元组数据：<strong>假设文章同一部分中的句子在主题上比不同部分中的句子更接近</strong>，锚点和正例来自文章同一个部分，而负例来自同一篇文章的不同部分。作者在 180
+万个训练三元组上训练 SBERT 一个 epoch，并在 222,957
+个测试三元组上对其进行评估。测试三元组来自一组不同的 Wikipedia
+文章。以准确率为评估指标。实验结果如下表所示。</p>
+<p><img src="wikipedia-result.png"></p>
+<p>可以看出，SBERT 明显优于 Dor 等人的 BiLSTM 方法。</p>
+<h3 id="senteval">SentEval</h3>
+<p>SentEval 是一个流行的工具包，用于评估句子嵌入的质量。
+句子嵌入用作<strong>逻辑回归分类器的特征</strong>。 逻辑回归分类器在 10
+折交叉验证设置中针对各种任务进行训练，并计算测试折的预测准确度。</p>
+<p>尽管 SBERT 的句子嵌入的目标不是用于基于特征的迁移学习，微调是更好的方法。但是 SentEval 依然能够在不同任务上评估句子嵌入的质量。作者在 7 个 SentEval 的句子嵌入任务中比较了 SBERT 的性能：</p>
+<ul>
+<li>MR：电影评论情感预测</li>
+<li> CR：客户产品评论的情绪预测</li>
+<li> SUBJ：来自电影评论和情节句子的主题预测</li>
+<li> MPQA：来自新闻专线的短语级别意见极性分类</li>
+<li> SST：斯坦福情绪树库二分类</li>
+<li> TREC ：来自 TREC 的细粒度问题类型分类</li>
+<li> MRPC：来自平行新闻来源的微软研究院释义语料库</li>
+</ul>
+<p>实验结果如下表所示。可以看到 SBERT 在 5/7 的任务上取得了最优性能，带来平均两个点的性能提升。尽管这种迁移学习并非是 SBERT 的目标，SBERT 依然取得了 SOTA 的性能。SBERT
+明显比 Universal Sentence Encoder 差的数据集是 TREC 数据集。 Universal
+Sentence Encoder 在问答数据上进行了预训练，这似乎有利于 TREC
+数据集的问题类型分类任务。</p>
+<p><img src="senteval-result.png"></p>
+<p>另外，这里的 BERT 的 [CLS] 优于 GloVe 嵌入平均，似乎与前文得到的结论相违背。这是因为任务设置不同。对于
+STS
+任务，论文使用余弦相似度来估计句子嵌入之间的相似度。余弦相似性平等地对待所有维度。相比之下，SentEval
+将逻辑回归分类器与句子嵌入相匹配。这使得某些维度可以对分类结果产生更高或更低的影响。</p>
+<p>观察上表还可以得出结论，BERT 的平均嵌入或者 [CLS] 符号嵌入搭配余弦相似度、欧氏距离、曼哈顿距离是不可行的。对于特征迁移学习，它们产生的结果也比
+InferSent 或 Universal Sentence Encoder
+稍差。然而，使用 SBERT 的孪生网络 + NLI 微调的方法能够得到 SOTA 的句嵌入。</p>
+<h2 id="消融实验">消融实验</h2>
+<p>作者对池化策略、训练目标、拼接结果（分类目标时使用）进行了消融实验。其中，NLI 对应分类任务，STSb 对应回归任务。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<p>可以看到，分类任务下，池化策略影响不大，用于分类的特征拼接结果影响很大。InferSent 和 Universal
+Sentence Encoder 都是使用<span class="math inline"> \((u,v,|u −v|,u
+∗v)\)</span>，然而，在 SBERT 里，<span class="math inline">\(u
+∗v\)</span> 的加入还会损失性能。其中，最重要的特征是逐元素差<span class="math inline"> \(|u - v|\)</span>。</p>
+<p>在回归任务下，池化策略具有很大的影响：最大池化的表现比平均池化或
+CLS-token 策略要差得多。</p>
+<h2 id="计算效率">计算效率</h2>
+<p>下表比较了不同模型在不同设备上每秒可以处理的句子嵌入。越高越好。可以看到 SBERT 在 GPU 上是最快的，相较于 InferSent 的 LSTM，这也得益于 Transformer 的并行性。</p>
+<p><img src="computation-efficiency.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是非常扎实的。从非常现实的计算效率问题出发，使用简单的方法，在不同的任务上取得与 BERT 相似甚至超越 BERT 的性能。其影响力也不容小觑，时至今日已经有 2000 + 的引用。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>语义相似度</category>
+      </categories>
+      <tags>
+        <tag>BERT</tag>
+        <tag>语义相似度</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>有错误论文 - ACL2020：交叉 VAE 用于答案检索</title>
     <url>/blog/2022/03/31/Crossing-VAE/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -66,7 +442,6 @@ L_{matching}
 <h2 id="总结">总结</h2>
 <p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
 <p>科研路漫，诸君共勉。</p>
-<h2 id="section"></h2>
 ]]></content>
       <categories>
         <category>自然语言处理</category>

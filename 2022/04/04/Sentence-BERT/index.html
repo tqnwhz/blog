@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks》，来自">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sentence-BERT: 减小语义相似度的计算开销">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks》，来自">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/unsupervised-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/supervised-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/argument-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/wikipedia-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/senteval-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/ablation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/computation-efficiency.png">
+<meta property="article:published_time" content="2022-04-04T01:52:45.000Z">
+<meta property="article:modified_time" content="2022-04-06T01:45:05.438Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="BERT">
+<meta property="article:tag" content="语义相似度">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/architecture.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/","path":"2022/04/04/Sentence-BERT/","title":"Sentence-BERT: 减小语义相似度的计算开销"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Sentence-BERT: 减小语义相似度的计算开销 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E7%BB%86%E8%8A%82"><span class="nav-number">3.1.</span> <span class="nav-text">训练细节</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A0%E7%9B%91%E7%9D%A3sts"><span class="nav-number">4.1.</span> <span class="nav-text">无监督 STS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%91%E7%9D%A3sts"><span class="nav-number">4.2.</span> <span class="nav-text">监督 STS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%89%E8%AE%BA%E6%96%B9%E9%9D%A2%E7%9A%84%E7%9B%B8%E4%BC%BC%E6%80%A7"><span class="nav-number">4.3.</span> <span class="nav-text">争论方面的相似性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E7%AB%A0%E8%8A%82"><span class="nav-number">4.4.</span> <span class="nav-text">维基百科章节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#senteval"><span class="nav-number">4.5.</span> <span class="nav-text">SentEval</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">消融实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E6%95%88%E7%8E%87"><span class="nav-number">6.</span> <span class="nav-text">计算效率</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">38</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Sentence-BERT: 减小语义相似度的计算开销
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-04 09:52:45" itemprop="dateCreated datePublished" datetime="2022-04-04T09:52:45+08:00">2022-04-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-06 09:45:05" itemprop="dateModified" datetime="2022-04-06T09:45:05+08:00">2022-04-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E8%AF%AD%E4%B9%89%E7%9B%B8%E4%BC%BC%E5%BA%A6/" itemprop="url" rel="index"><span itemprop="name">语义相似度</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT:
+Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP
+2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。
+<span id="more"></span></p>
+<h2 id="介绍">介绍</h2>
+<p>BERT 的结构限制了其不适用于某些任务：大规模文本相似度比较、聚类、信息检索。摘要中已经提到了第一种的例子。聚类和信息检索通常需要将句子映射为一个固定维度的向量，使得相似的句子在语义空间中相近。BERT 虽然也能将句子映射为特定的向量，例如取最后一层 [CLS] 的 token
+embedding，或者做平均池化。但是，实验证明，这样的到的向量甚至差于 GloVe 嵌入的平均。</p>
+<p>SBERT 通过以下步骤解决这个问题：</p>
+<ol type="1">
+<li><p>孪生 BERT 将句子映射为固定维度向量</p></li>
+<li><p>使用相似度度量（余弦相似度、欧氏距离、曼哈顿距离...）</p></li>
+</ol>
+<p>换而言之，即取消两个句子同时馈入网络的要求，利用相似度度量控制学习得到好的单个句子的嵌入。结构如下图所示：</p>
+<figure>
+<img src="architecture.png" alt="结构">
+<figcaption aria-hidden="true">结构</figcaption>
+</figure>
+<p>两个句子被分别编码 + 平均池化得到向量表证后，构建计算语义相似度的分类任务（左图）或者回归任务（有图）。</p>
+<p>作者在 NLI 数据上微调 SBERT，在 7 个 STS 任务上，SBERT 取得了 11.7 个点的提升，相较于 InferSent 和 Universal
+Sentence Encoder。在 SentEval 上，SBERT 分别取得了 2.1 和 2.6 个点的提升。</p>
+<h2 id="方法">方法</h2>
+<p>SBERT 的核心步骤已经在上面介绍了，但还有一些细节需要考虑：</p>
+<ol type="1">
+<li>如何得到固定维度的向量：[CLS]/ 平均池化 / 最大池化</li>
+<li>训练目标：分类 / 回归 / 三元组</li>
+</ol>
+<p>其中，模型的结构（孪生、三胞胎）、训练目标与可用的训练数据息息相关。</p>
+<p><strong>分类目标</strong>：将两个句子向量及逐元素差<span class="math inline"> \(u,v,|u-v|\)</span> 馈入 MLP，并进行 SoftMax 进行分类，公式为：
+<span class="math display">\[
+o_t=softmax(W_t(u,v,|u-v|))
+\]</span> <strong> 回归目标</strong>：与分类类似，区别在于计算<span class="math inline"> \(u,v\)</span> 的余弦相似度，使用 MSE 损失。</p>
+<p><strong>三元组目标</strong>：给定一个原始句子<span class="math inline"> \(a\)</span>，一个正面句子<span class="math inline"> \(p\)</span>，一个负面例子<span class="math inline"> \(n\)</span>，减小<span class="math inline"> \(a,p\)</span> 之间的距离，增大<span class="math inline"> \(a,n\)</span> 之间的距离，即要<strong>最小化下式的损失</strong>：
+<span class="math display">\[
+\max(||s_a-s_p||-||s_a-s_n||+\epsilon,0)
+\]</span> 其中，<span class="math inline">\(s_x\)</span> 为句子<span class="math inline"> \(x\)</span> 的嵌入向量，<span class="math inline">\(||\cdot||\)</span> 为句子度量，<span class="math inline">\(\epsilon\)</span> 为边界，用以保证<span class="math inline"> \(s_p\)</span> 至少<span class="math inline"> \(\epsilon\)</span> 比<span class="math inline"> \(s_n\)</span> 更靠近<span class="math inline"> \(s_a\)</span>，即<span class="math inline"> \(||s_a-s_p||+\epsilon&lt;||s_a-s_n||\)</span>。当这个式子不成立时，损失为 0，参数不进行更新。实验中使用的距离度量为欧氏距离，<span class="math inline">\(\epsilon=1\)</span>。</p>
+<h3 id="训练细节">训练细节</h3>
+<p>作者使用 SNLI、Multi-Genre
+NLI 数据集训练 SBERT。其中，SNLI 数据集由 57 万个句子对 + 标签组成，MultiNLI 由 43 万个句子对组成，带有文本蕴含信息。</p>
+<h2 id="实验">实验</h2>
+<p>在语义文本相似度任务上进行实验验证。传统方法通常学习一个（复杂的）回归函数，将句子嵌入映射到相似性分数。
+然而，这些回归函数以句子对为输入，难以扩展且面临组合爆炸问题。SBERT 则总是使用余弦相似度来比较两个句子之间的相似度嵌入。
+负曼哈顿距离和负欧几里得距离的实验结果也大致相同。</p>
+<h3 id="无监督sts">无监督 STS</h3>
+<p>不使用任何 STS 特定的训练数据。评估数据集为 STS tasks 2012 - 2016， STS
+benchmark，SICK-Relatedness。每个数据集的句子对包含 0 到 5 的的语义关联标签。评估指标上（两个相似度分数），不使用皮尔逊相关系数（Pearson
+correlation
+coefficient），因为它主要衡量随机变量间的<strong>线性相关性</strong>。而是使用斯皮尔曼等级相关系数（Spearman's
+rank correlation
+coefficient），它可以衡量<strong>等级变量间的单调性</strong>，因而更适用于 STS 场景。毕竟两个分数间的相关性不一定是线性的。</p>
+<p>实验结果如下表所示。可以看到 naive 的 BERT embedding 差于 GloVe
+embedding，SBERT 和 SRoBERTa 几乎全面领先，除了 SICK-R。这可能与 Universal
+Sentence Encoder 训练的新闻、问答等语料有关。</p>
+<p><img src="unsupervised-result.png"></p>
+<h3 id="监督sts">监督 STS</h3>
+<p>使用 STS benchmark (STSb)
+数据集进行训练。该数据集包括来自标题、新闻和论坛三个类别的 8,628
+个句子对，分为训练集（5,749）、验证集（1,500）和测试集（1,379）。</p>
+<p>实验结果如下表所示。作者实验了两种训练策略，只在 STSb 上进行训练和在 NLI 数据集上预训练，再在 STSb 数据集上微调。后者能够带来 1-2 个点的提升。可以看到 SBERT 和 BERT 之间的差距不大。</p>
+<p><img src="supervised-result.png"></p>
+<h3 id="争论方面的相似性">争论方面的相似性</h3>
+<p>Argument Facet Similarity （AFS）语料库注释了来自社交媒体对话的 6,000
+个句子论点对，涉及三个有争议的主题：枪支管制、同性婚姻和死刑。数据的标签范围从
+0（“不同主题”）到 5（“完全等效”）。 AFS 语料库中的相似性概念与 SemEval
+的 STS 数据集中的相似性概念完全不同。 STS 数据通常是描述性的，而 AFS
+数据是对话中的争论性摘录。要被认为是相似的，争论不仅必须提出相似的主张，而且还必须提供相似的论证。此外，AFS
+中句子之间的词汇差距要大得多。因此，简单的无监督方法以及最先进的 STS
+系统在该数据集上表现不佳。</p>
+<p>作者使用 10 折交叉验证和跨主题评估（2 个主题用于训练，剩余一个用于评估）进行实验验证。10
+折交叉验证设置中的 SBERT 的性能几乎与 BERT 相当。但是，在跨主题评估中，
+SBERT 的 Spearman 相关性下降了大约 7 个点的
+。这可能是由于缺失主题的情况下，BERT 依然能够通过逐字符比较得到较好的结果，SBERT 只能从单一句子推断主题、主张等，这更具有挑战性。</p>
+<p><img src="argument-result.png"></p>
+<h3 id="维基百科章节">维基百科章节</h3>
+<p>利用维基百科的章节构建三元组数据：<strong>假设文章同一部分中的句子在主题上比不同部分中的句子更接近</strong>，锚点和正例来自文章同一个部分，而负例来自同一篇文章的不同部分。作者在 180
+万个训练三元组上训练 SBERT 一个 epoch，并在 222,957
+个测试三元组上对其进行评估。测试三元组来自一组不同的 Wikipedia
+文章。以准确率为评估指标。实验结果如下表所示。</p>
+<p><img src="wikipedia-result.png"></p>
+<p>可以看出，SBERT 明显优于 Dor 等人的 BiLSTM 方法。</p>
+<h3 id="senteval">SentEval</h3>
+<p>SentEval 是一个流行的工具包，用于评估句子嵌入的质量。
+句子嵌入用作<strong>逻辑回归分类器的特征</strong>。 逻辑回归分类器在 10
+折交叉验证设置中针对各种任务进行训练，并计算测试折的预测准确度。</p>
+<p>尽管 SBERT 的句子嵌入的目标不是用于基于特征的迁移学习，微调是更好的方法。但是 SentEval 依然能够在不同任务上评估句子嵌入的质量。作者在 7 个 SentEval 的句子嵌入任务中比较了 SBERT 的性能：</p>
+<ul>
+<li>MR：电影评论情感预测</li>
+<li> CR：客户产品评论的情绪预测</li>
+<li> SUBJ：来自电影评论和情节句子的主题预测</li>
+<li> MPQA：来自新闻专线的短语级别意见极性分类</li>
+<li> SST：斯坦福情绪树库二分类</li>
+<li> TREC ：来自 TREC 的细粒度问题类型分类</li>
+<li> MRPC：来自平行新闻来源的微软研究院释义语料库</li>
+</ul>
+<p>实验结果如下表所示。可以看到 SBERT 在 5/7 的任务上取得了最优性能，带来平均两个点的性能提升。尽管这种迁移学习并非是 SBERT 的目标，SBERT 依然取得了 SOTA 的性能。SBERT
+明显比 Universal Sentence Encoder 差的数据集是 TREC 数据集。 Universal
+Sentence Encoder 在问答数据上进行了预训练，这似乎有利于 TREC
+数据集的问题类型分类任务。</p>
+<p><img src="senteval-result.png"></p>
+<p>另外，这里的 BERT 的 [CLS] 优于 GloVe 嵌入平均，似乎与前文得到的结论相违背。这是因为任务设置不同。对于
+STS
+任务，论文使用余弦相似度来估计句子嵌入之间的相似度。余弦相似性平等地对待所有维度。相比之下，SentEval
+将逻辑回归分类器与句子嵌入相匹配。这使得某些维度可以对分类结果产生更高或更低的影响。</p>
+<p>观察上表还可以得出结论，BERT 的平均嵌入或者 [CLS] 符号嵌入搭配余弦相似度、欧氏距离、曼哈顿距离是不可行的。对于特征迁移学习，它们产生的结果也比
+InferSent 或 Universal Sentence Encoder
+稍差。然而，使用 SBERT 的孪生网络 + NLI 微调的方法能够得到 SOTA 的句嵌入。</p>
+<h2 id="消融实验">消融实验</h2>
+<p>作者对池化策略、训练目标、拼接结果（分类目标时使用）进行了消融实验。其中，NLI 对应分类任务，STSb 对应回归任务。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<p>可以看到，分类任务下，池化策略影响不大，用于分类的特征拼接结果影响很大。InferSent 和 Universal
+Sentence Encoder 都是使用<span class="math inline"> \((u,v,|u −v|,u
+∗v)\)</span>，然而，在 SBERT 里，<span class="math inline">\(u
+∗v\)</span> 的加入还会损失性能。其中，最重要的特征是逐元素差<span class="math inline"> \(|u - v|\)</span>。</p>
+<p>在回归任务下，池化策略具有很大的影响：最大池化的表现比平均池化或
+CLS-token 策略要差得多。</p>
+<h2 id="计算效率">计算效率</h2>
+<p>下表比较了不同模型在不同设备上每秒可以处理的句子嵌入。越高越好。可以看到 SBERT 在 GPU 上是最快的，相较于 InferSent 的 LSTM，这也得益于 Transformer 的并行性。</p>
+<p><img src="computation-efficiency.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是非常扎实的。从非常现实的计算效率问题出发，使用简单的方法，在不同的任务上取得与 BERT 相似甚至超越 BERT 的性能。其影响力也不容小觑，时至今日已经有 2000 + 的引用。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/" title="Sentence-BERT: 减小语义相似度的计算开销">https://tqnwhz.github.io/blog/2022/04/04/Sentence-BERT/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/BERT/" rel="tag"><i class="fa fa-tag"></i> BERT</a>
+              <a href="/blog/tags/%E8%AF%AD%E4%B9%89%E7%9B%B8%E4%BC%BC%E5%BA%A6/" rel="tag"><i class="fa fa-tag"></i> 语义相似度</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/03/31/Crossing-VAE/" rel="prev" title="有错误论文 - ACL2020：交叉 VAE 用于答案检索">
+                  <i class="fa fa-chevron-left"></i> 有错误论文 - ACL2020：交叉 VAE 用于答案检索
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/04/10/Biomedical-LM/" rel="next" title="ACM 2021: 生物医学域的语言模型">
+                  ACM 2021: 生物医学域的语言模型 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的自回归预训练模型，论文名为《XLNet: Generalized Autoregressive Pretraining for Language Understanding》，收录于 2019 NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 [MASK] token 间的依赖关系以及 [MASK] 导致的预训练 -">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XLNET：基于置换语言任务的自回归模型">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的自回归预训练模型，论文名为《XLNet: Generalized Autoregressive Pretraining for Language Understanding》，收录于 2019 NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 [MASK] token 间的依赖关系以及 [MASK] 导致的预训练 -">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/two-stream.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/fair-comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/scaling.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/SQuAD.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/text-classification.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/GLEU.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/ablation.png">
+<meta property="article:published_time" content="2022-04-17T12:29:39.000Z">
+<meta property="article:modified_time" content="2022-04-18T12:51:29.751Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="tag">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/04/17/XLNET/two-stream.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/04/17/XLNET/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/04/17/XLNET/","path":"2022/04/17/XLNET/","title":"XLNET：基于置换语言任务的自回归模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>XLNET：基于置换语言任务的自回归模型 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E7%BC%96%E7%A0%81vs%E8%87%AA%E5%9B%9E%E5%BD%92"><span class="nav-number">2.1.</span> <span class="nav-text">自编码 vs 自回归</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%AE%E6%8D%A2%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.1.</span> <span class="nav-text">置换语言模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E6%B5%81%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">3.2.</span> <span class="nav-text">双流自注意力机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%83%A8%E5%88%86%E9%A2%84%E6%B5%8B"><span class="nav-number">3.3.</span> <span class="nav-text">部分预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E6%88%90transformer-xl"><span class="nav-number">3.4.</span> <span class="nav-text">集成 Transformer-XL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E6%AE%B5%E5%BB%BA%E6%A8%A1"><span class="nav-number">3.5.</span> <span class="nav-text">多段建模</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE"><span class="nav-number">4.1.</span> <span class="nav-text">设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8Ebert%E7%9A%84%E5%85%AC%E5%B9%B3%E6%AF%94%E8%BE%83"><span class="nav-number">4.2.</span> <span class="nav-text">与 BERT 的公平比较</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%BB%93%E6%9E%9C"><span class="nav-number">4.3.</span> <span class="nav-text">其他结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.4.</span> <span class="nav-text">消融实验</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">38</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/04/17/XLNET/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          XLNET：基于置换语言任务的自回归模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-04-17 20:29:39" itemprop="dateCreated datePublished" datetime="2022-04-17T20:29:39+08:00">2022-04-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-18 20:51:29" itemprop="dateModified" datetime="2022-04-18T20:51:29+08:00">2022-04-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/category/" itemprop="url" rel="index"><span itemprop="name">category</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>9 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet:
+Generalized Autoregressive Pretraining for Language
+Understanding》，收录于 2019
+NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 <strong>[MASK]
+token 间的依赖关系</strong>以及 [MASK] 导致的预训练 - 微调差异。 XLNet 在 20
+项任务上的表现优于
+BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排名。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<h3 id="自编码vs自回归">自编码 vs 自回归</h3>
+<p>预训练模型常在大规模语料上，通过构建无监督的预训练目标进行训练。其中，自回归
+(AR) 语言建模和自编码 (AE) 是两个最成功的预训练目标。</p>
+<p>自编码方法旨在通过从被破坏的输入重建数据，典型的例子为 BERT 的掩码语言模型（MLM），将若干 token 掩码为 [MASK]，通过上下文的其他 token 预测被掩码的 token。类似完形填空任务，将 “我吃饭了” 掩码为 "我吃 [MASK] 了"，预测 [MASK] 为 "饭"。但 BERT 的缺点在于，它对于多个 [MASK] 标记分开预测，换而言之，<strong>假设它们是互相独立的，没有考虑它们间的依赖关系</strong>。而且，在预训练过程中，[MASK] 的 token
+embedding 为空，对其后续的上下文表征没有任何帮助。而在下游微调任务中，当前 token 的 token
+embedding 对其上下文表征是最重要的。这就导致了上下游间的差异。</p>
+<p>自回归的方法旨在使用自回归模型拟合语料的概率分布，典型的例子为 GPT 的语言模型。将句子概率<span class="math inline"> \(p(x)\)</span> 分解为条件概率的乘积，即<span class="math inline"> \(p(x)=\prod_t
+p(x_t|x_{&lt;t})\)</span>。这种方法非常符合人的认知，但是缺点是无法利用双向的上下文信息。而双向的上下文信息对于下游的理解任务是至关重要的。</p>
+<p>XLNET 希望将 AR 和 AE 的优点结合起来，避免它们的局限性。XLNET 提出了一种名为置换语言模型的预训练目标，即<strong>打乱句子的 token 顺序并使用自回归的方法预测</strong>。这种方法不依赖于掩码、结合了双向上下文信息、自回归训练。XLNet
+在许多下游任务上比 BERT 表现出色，包括 GLUE 语言理解任务、阅读理解任务（如
+SQuAD 和
+RACE），Yelp 和 IMDB 等文本分类任务，以及 ClueWeb09-B 文档排名任务。</p>
+<h2 id="方法">方法</h2>
+<h3 id="置换语言模型">置换语言模型</h3>
+<p>对于长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \(x\)</span>，存在<span class="math inline"> \(T!\)</span> 种排列可用于自回归生成。用<span class="math inline"> \(\mathcal Z_T\)</span> 代表所有长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \([1,2,\cdots,T]\)</span> 的排列集合，<span class="math inline">\(z_t\)</span> 和<span class="math inline"> \(z_{&lt;t}\)</span> 分别代表排列<span class="math inline"> \(z\in\mathcal Z_T\)</span> 的第<span class="math inline"> \(t\)</span> 个和前<span class="math inline"> \(t-1\)</span> 个元素。置换语言模型的目标可形式化定义为：
+<span class="math display">\[
+\max_\theta \mathbb E_{z\sim\mathcal
+Z_T}[\sum_{t=1}^Tlogp(x_{z_t}|x_{z_{&lt;t}})]
+\]</span> 事实上，只需要每次随机采样一个排列序列<span class="math inline"> \(z\)</span>，优化对数似然即可。而且我们也不需要显式地改变句子顺序，只需要对 Attention 进行掩码即可。后面会介绍到。</p>
+<h3 id="双流自注意力机制">双流自注意力机制</h3>
+<p>虽然已经得到了形式化的训练目标，但是直接使用 Transformer-XL 优化上述目标可能是没什么用的。具体而言，如果使用标准的 softmax 计算下一个 token 的概率分布，即<span class="math inline"> \(p(X_{z_t}|x_{z_{&lt;t}})\)</span>，公式为 <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Th_\theta(x_{z_{&lt;t}}))}{\sum_{x'}\exp(e(x')^Th_\theta(x_{z_{&lt;t}})}
+\]</span> 其中，<strong><span class="math inline">\(h_\theta(x_{z_{&lt;t}})\)</span> 是<span class="math inline"> \(x_{z_{t}}\)</span> 的隐藏状态表征，<span class="math inline">\(e(x)\)</span> 是<span class="math inline"> \(x\)</span> 的嵌入向量。可以看到<span class="math inline"> \(h_\theta(x_{z_{&lt;t}})\)</span> 是与要预测的 token 的位置<span class="math inline"> \(z_t\)</span> 无关的。也就是</strong>无论下一个预测的 token 是哪个位置的，得到的概率分布都是相同的<strong>。这显然与我们的期望是相悖的。为了解决这个问题，需要</strong>重参数化<strong>这个概率分布，加入<span class="math inline"> \(z_t\)</span> 的信息： <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Tg_\theta(x_{z_{&lt;t}},z_t))}{\sum_{x'}\exp(e(x')^Tg_\theta(x_{z_{&lt;t}},z_t)}
+\]</span> 其中，</strong><span class="math inline">\(g_\theta\)</span> 是一种新的、依赖于下一个 token 位置的表征 **。</p>
+<p>那么新的问题就来了，怎么建模这个<span class="math inline"> \(g_\theta\)</span> 呢？从形式上可以看出，<span class="math inline">\(g_\theta\)</span> 希望在根据位置<span class="math inline"> \(z_t\)</span> 从已有的上下文<span class="math inline"> \(x_{z_{&lt;t}}\)</span> 中通过注意力机制收集信息。这样就有了两种略显矛盾的需求：</p>
+<ul>
+<li>预测<span class="math inline"> \(x_{z_t}\)</span> 时，<span class="math inline">\(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 只能依赖位置<span class="math inline"> \(z_t\)</span> 而非内容<span class="math inline"> \(x_{z_t}\)</span></li>
+<li> 预测<span class="math inline"> \(j&gt;t\)</span> 的其他标记<span class="math inline"> \(x_{z_j}\)</span> 时，也需要<span class="math inline"> \(x_{z_t}\)</span> 的隐藏表征，此时<span class="math inline"> \(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 应该编码<span class="math inline"> \(x_{z_t}\)</span> 的内容以充分利用上下文信息</li>
+</ul>
+<p>那么，就需要两种上下文表征：</p>
+<ul>
+<li><strong>内容表征</strong><span class="math inline"> \(h_\theta(x_{z_{\le t}})\)</span>，简写为<span class="math inline"> \(h_{z_{\le
+t}}\)</span>，类似标准 Transformer 中的隐藏状态，同时编码上下文和位置</li>
+<li><strong>查询表征</strong><span class="math inline"> \(g_\theta(x_{z_t})\)</span>，简写为<span class="math inline"> \(g_{z_t}\)</span>，只根据<span class="math inline"> \(h_{z_{&lt;t}}\)</span> 和位置<span class="math inline"> \(z_t\)</span> 计算得到</li>
+</ul>
+<p>为便于计算，查询流的第一层初始化为可训练的向量，即<span class="math inline"> \(g_i^{(0)}=w\)</span>，内容流初始化为嵌入向量，即<span class="math inline"> \(h_i^{(0)}=e(x_i)\)</span>。对于其它层<span class="math inline"> \(m=1,\cdots,M\)</span>，使用共享参数更新两种流的向量表征，示意图如下所示：</p>
+<p><img src="two-stream.png"></p>
+<ul>
+<li>图 (a) 为内容流注意力，类比标准 Transformer 中的自注意力，query、key、value 均为有内容的向量表征。</li>
+<li>图 (b) 为查询流注意力，不能获取当前位置的内容<span class="math inline"> \(x_{z_t}\)</span>，以其位置<span class="math inline"> \(z_t\)</span> 为 query，key、value 也均为有内容的向量表征。</li>
+<li>图 (c) 为置换语言模型的训练过程。采样一个排列<span class="math inline"> \(3,2,4,1\)</span>，内容流中，1 可以看到 3,2,4，且根据 1 的内容计算双向自注意力，其 Attention 不需要遮挡；2 只能看到 3 和它本身，因此位置 1,4 需要被遮挡。以此类推。查询流与内容流类似，不过需要额外去掉当前位置的内容，即矩阵中的主对角线全部被遮挡。</li>
+</ul>
+<p>更新公式可以示意为（<strong>注意 KV 里下标<span class="math inline"> \(&lt;,\le\)</span> 的差异</strong>）： <span class="math display">\[
+g_{z_t}^{(m)}\leftarrow
+Attention(Q=g_{z_t}^{(m-1)},KV=h_{z_{&lt;t}}^{(m-1)};\theta)\\
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=h_{z_{\le
+t}}^{(m-1)};\theta)
+\]</span> 使用最后一层的<span class="math inline"> \(g_{z_t}^{(M)}\)</span> 来计算上述的条件概率<span class="math inline"> \(p(X_{z_t}=x|x_{z_{&lt;t}})\)</span>。在微调的时候，可以直接将查询流丢弃。</p>
+<h3 id="部分预测">部分预测</h3>
+<p>虽然上述理论很美好，但是早期实验证实其收敛很慢。很容易理解，排列中前一部分的 token 的上下文位置随机，预测下一随机位置的 token 是困难的。为了优化方便，论文只预测排列中最后一部分的 token，它们的上下文最为丰富。形式化而言，将排列<span class="math inline"> \(z\)</span> 划分为上下文<span class="math inline"> \(z_{\le c}\)</span> 和目标<span class="math inline"> \(z_{&gt; c}\)</span>，c 为切分点。使用超参数<span class="math inline"> \(|z|/(|z|-c)\approx
+K\)</span> 控制这个比例。这里类似 BERT 里控制 [MASK] 比例，理论上当然是越大越好，但是太大了不易收敛。上下文部分<span class="math inline"> \(z_{\le
+c}\)</span> 的查询流也不需要计算了，可以节省时间和内存。</p>
+<h3 id="集成transformer-xl">集成 Transformer-XL</h3>
+<p>在 Transformer-XL 的基础上，添加：</p>
+<ul>
+<li><strong>相对位置编码</strong></li>
+<li><strong>段循环机制</strong></li>
+</ul>
+<p>主要介绍下段循环机制。对于过长的输入，往往需要以固定长度 T（如 512）将其分段（segment）。假设两段输入分别为<span class="math inline"> \(\tilde x=s_{1:T},x=s_{T+1:2T}\)</span>，<span class="math inline">\(\tilde z,z\)</span> 分别为其排列顺序，<span class="math inline">\(\tilde
+h^{(m)}\)</span> 为 m 层的向量表征。对于段<span class="math inline"> \(x\)</span>，计算注意力时可以添加<span class="math inline"> \(\tilde
+h^{(m-1)}\)</span> 的注意力，类似记忆网络（Memory Network），如下式所示：
+<span class="math display">\[
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde
+h^{(m-1)},h_{z_{\le t}}^{(m-1)}];\theta)
+\]</span> 这样可以缓存和重用前一段的模型结果。</p>
+<h3 id="多段建模">多段建模</h3>
+<p>许多下游任务以多个段为输入，例如问答、对话等。XLNET 参考 BERT，构建 [CLS,
+A, SEP, B,
+SEP] 的输入，用以进行置换语言模型训练。不过事实上，XLNET 并没有使用下句预测的预训练任务，因为它在消融实验里并没有带来帮助。</p>
+<p>继承自相对位置编码的思想，XLNET 引入了<strong>相对段编码</strong>。与为每个段显式加入绝对段编码的 BERT 不同，XLNET 使用两个相对段编码<span class="math inline"> \(s_+,s_-\)</span> 衡量两个位置<span class="math inline"> \(i,j\)</span> 是否来自同一个段，<span class="math inline">\(s_+,s_-\)</span> 是每个注意力头可学习的参数。换而言之，XLNET 只考虑两个位置是否来自一个段，不关心它们来自哪两个段。当位置<span class="math inline"> \(i\)</span> 向<span class="math inline"> \(j\)</span> 计算注意力时，段编码<span class="math inline"> \(s_{ij}\)</span> 用以计算权重<span class="math inline"> \(a_{ij}=(q_i+b)^Ts_{ij}\)</span>，<span class="math inline">\(q_i\)</span> 是标准的查询向量，<span class="math inline">\(b\)</span> 为特定于注意力头的可学习的偏差向量，得到的<span class="math inline"> \(a_{ij}\)</span> 被添加到注意力 ij 间的权重上。直观而言，如果 ij 来自同一个段，这个权重应该更大，反之则更小。相较于绝对段编码，相对段编码更易扩展，而且可以提高泛化能力。</p>
+<h2 id="实验">实验</h2>
+<h3 id="设置">设置</h3>
+<ul>
+<li>预训练数据：包含 BookCorpus、Wikipedia、Giga5、ClueWeb
+2012-B 等，共 126GB。BERT 只使用了前两项共 13GB。</li>
+<li>参数规模：XLNET-Large 和 BERT-Large 架构一致</li>
+<li>训练成本：512 块 TPU，500k 步，5.5 天，完了还是欠拟合</li>
+<li> K=6，即只预测一个句子排列的末尾<span class="math inline"> \(1/6\approx 17%\)</span>，与 BERT
+15% 的掩码率相近</li>
+</ul>
+<h3 id="与bert的公平比较">与 BERT 的公平比较</h3>
+<p>XLNET 与 BERT 在相同数据集上训练、架构一致。BERT 选取原生 BERT、全词掩码、无下句预测三种版本中的最优结果。下表为 GLUE、SQuAD 数据集的结果。可以看到在不同下游任务上，XLNET 均超越 BERT，一般一两个点。</p>
+<p><img src="fair-comparison.png"></p>
+<h3 id="其他结果">其他结果</h3>
+<p>下面的 XLNET 就是全量数据上的结果了。</p>
+<p>下表为在 RACE（阅读理解任务）和
+onClueWeb09-B（文档排序任务）测试集的最新结果的比较。RACE 数据集以长度著称，考验了模型的长片段信息捕捉能力。ClueWeb09-B
+文档排序数据集，主要用于测试模型生成的词向量效果。可以看到 XLNET 都是最优的。</p>
+<p><img src="scaling.png"></p>
+<p>下表为在 SQuAD 数据集上的结果，大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="SQuAD.png"></p>
+<p>下表为在多个文本分类数据集上的实验结果，主要与 BERT 比较。</p>
+<p><img src="text-classification.png"></p>
+<p>下表为在 GLEU 数据集上，与 RoBERTa 等模型的比较结果。还是大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="GLEU.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<p>消融实验旨在具体探究：</p>
+<ul>
+<li>置换语言模型的有效性，对比 MLM</li>
+<li>Transformer-XL 架构的重要性</li>
+<li>一些其他细节：基于跨度预测、双向输入、下句预测</li>
+</ul>
+<p>为了公平比较，所有模型都基于 12 层架构，具有与 BERT-Base
+相同的模型超参数，并且仅在 Wikipedia 和 BooksCorpus
+上进行训练。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/71916499">飞跃芝麻街：XLNet
+详解 - 知乎 (zhihu.com)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/04/17/XLNET/" title="XLNET：基于置换语言任务的自回归模型">https://tqnwhz.github.io/blog/2022/04/17/XLNET/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/tag/" rel="tag"><i class="fa fa-tag"></i> tag</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/04/10/Biomedical-LM/" rel="prev" title="ACM 2021: 生物医学域的语言模型">
+                  <i class="fa fa-chevron-left"></i> ACM 2021: 生物医学域的语言模型
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
