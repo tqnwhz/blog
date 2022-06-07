@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 今天来读一篇关于条件计算的论文，《Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer》，收录于 2017 年 ICLR。神经网络模型的容量（ capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MoE：通过条件计算增加模型容量">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 今天来读一篇关于条件计算的论文，《Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer》，收录于 2017 年 ICLR。神经网络模型的容量（ capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/table-comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/google.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/en-fr-translation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/multi-translation.png">
+<meta property="article:published_time" content="2022-06-05T12:13:08.000Z">
+<meta property="article:modified_time" content="2022-06-07T12:51:31.018Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="条件计算">
+<meta property="article:tag" content="门控">
+<meta property="article:tag" content="MoE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/06/05/MoE/architecture.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/06/05/MoE/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/06/05/MoE/","path":"2022/06/05/MoE/","title":"MoE：通过条件计算增加模型容量"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MoE：通过条件计算增加模型容量 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#moe%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">MoE 结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#softmax-%E9%97%A8%E6%8E%A7"><span class="nav-number">3.1.</span> <span class="nav-text">Softmax 门控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%99%AA%E5%A3%B0top-k%E9%97%A8%E6%8E%A7"><span class="nav-number">3.2.</span> <span class="nav-text">噪声 Top-k 门控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E9%97%A8%E6%8E%A7%E7%BD%91%E7%BB%9C"><span class="nav-number">3.3.</span> <span class="nav-text">训练门控网络</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%80%A7%E8%83%BD%E6%8C%91%E6%88%98"><span class="nav-number">4.</span> <span class="nav-text">解决性能挑战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%B9%E5%A4%A7%E5%B0%8F%E7%BC%A9%E5%87%8F"><span class="nav-number">4.1.</span> <span class="nav-text">批大小缩减</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%B8%A6%E5%AE%BD"><span class="nav-number">4.2.</span> <span class="nav-text">网络带宽</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B9%B3%E8%A1%A1%E4%B8%93%E5%AE%B6%E5%88%A9%E7%94%A8%E7%8E%87"><span class="nav-number">5.</span> <span class="nav-text">平衡专家利用率</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%BF%E7%BA%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B"><span class="nav-number">6.1.</span> <span class="nav-text">亿级语言模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%83%E4%BA%BF%E8%B0%B7%E6%AD%8C%E8%AF%AD%E6%96%99"><span class="nav-number">6.2.</span> <span class="nav-text">千亿谷歌语料</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E8%AF%AD%E5%AF%B9%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91"><span class="nav-number">6.3.</span> <span class="nav-text">单语对机器翻译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E8%AF%AD%E5%AF%B9%E7%BF%BB%E8%AF%91"><span class="nav-number">6.4.</span> <span class="nav-text">多语对翻译</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/06/05/MoE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MoE：通过条件计算增加模型容量
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-06-05 20:13:08" itemprop="dateCreated datePublished" datetime="2022-06-05T20:13:08+08:00">2022-06-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-06-07 20:51:31" itemprop="dateModified" datetime="2022-06-07T20:51:31+08:00">2022-06-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E6%9D%A1%E4%BB%B6%E8%AE%A1%E7%AE%97/" itemprop="url" rel="index"><span itemprop="name">条件计算</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>9 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>今天来读一篇关于条件计算的论文，《<strong>Outrageously Large Neural
+Networks: The Sparsely-Gated Mixture-of-Experts
+Layer</strong>》，收录于 2017 年 ICLR。神经网络模型的容量（
+capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计算性能下降。本文提出了一种条件计算的方法，对每个样本只激活部分参数，可以在不成比例地增加计算量的情况下显着增加模型容量，实现了超过 1000 倍的容量提升，在大型语言建模和机器翻译基准上，这些模型以更低的计算成本实现了新的 SOTA。</p>
+<span id="more"></span>
+<p>具体而言，论文引入了稀疏门控混合专家层（MoE，Sparsely-Gated
+Mixture-of-Experts
+Layer），由前馈神经网络和门控网络组成。门控网络用于选择专家的稀疏组合，处理每个输入。网络的所有部分都通过反向传播联合训练。</p>
+<h2 id="介绍">介绍</h2>
+<p>正如前文所说，模型的容量受限于参数规模，简单扩大参数会导致训练成本大致呈二次增长。条件计算基于每个样本选择网络的不同部分激活。用于选择的门控决策可以是二元的、稀疏的、连续的、随机的或确定的。各种形式的强化学习和反向传播策略可用于训练门控决策。然而，该方法面临很多的挑战：</p>
+<ul>
+<li><strong>分支低效</strong>：计算设备，尤其 GPU，计算要比分支快得多。熟悉流水线 CPU 的同学应该知道，分支的分支错误惩罚会导致数个时钟周期的停顿，严重影响计算效率</li>
+<li><strong>批大小受限</strong>：条件计算减少了网络条件活动块的 batch
+size</li>
+<li><strong> 网络带宽（IO）受限</strong>：GPU 的计算能力往往是网络带宽的数千倍，嵌入层，也可以看做一种条件计算，往往需要网络发送，这种参数交互受到网络带宽而非计算能力的限制</li>
+<li><strong>额外损失项</strong>：可能需要额外的损失项控制每个样本的网络稀疏程度，在模型负载和质量间做出平衡。</li>
+<li><strong>大规模数据的依赖</strong>。模型容量的扩大需要大规模数据集训练，现有的一些条件计算工作只使用了最多 60w 数据，难以为万亿计参数的模型提供足够的监督信号。</li>
+</ul>
+<p>论文提出的稀疏门控专家层 MoE，由许多专家组成，每个专家都是一个简单的前馈神经网络，以及一个可训练的门控网络，该网络选择专家的稀疏组合来处理每个输入。结构图示意如下，其中门控网络从中选择了两个，处理样本。</p>
+<p><img src="architecture.png"></p>
+<p>虽然技术是通用的，但论文主要关注在语言模型、机器翻译任务上，这些任务可以从模型规模受益。基于此，论文在堆叠的 LSTM 层上应用了一个 MoE 卷积，如上图所示。对文本的不同位置调用一次 MoE，选择不同的专家组合。不同的专家组合根据语法和语义变得高度专业化。</p>
+<h2 id="moe结构">MoE 结构</h2>
+<p>MoE 由一个门控网络<span class="math inline"> \(G\)</span>、n 个专家网络<span class="math inline"> \(E_1,E_2,\dots,E_n\)</span> 组成。门控网络的输出是一个<span class="math inline"> \(n\)</span> 维的向量。每个专家都是一个前馈网络，输入和输出的维度一致。用<span class="math inline"> \(G(x),E_i(x)\)</span> 分别代表门控网络、第 i 个专家网络的输出，<span class="math inline">\(x\)</span> 为专家网络的输入。MoE 的输出为专家网络输出的加权和，权重为门控网络对应维度的元素值，公式如下：
+<span class="math display">\[
+y=\sum_{i=1}^nG(x)_iE_i(x)
+\]</span> 稀疏性体现在<span class="math inline"> \(G(x)\)</span> 上，如果<span class="math inline"> \(G(x)_i\)</span> 为 0，就不需要计算<span class="math inline"> \(E_i(x)\)</span> 了。在实验中，有上千个专家网络，但是只需要计算少部分。如果专家的数量过多，可以通过分层 MoE 减少分支。分层 MoE 中，每个专家都是带有自己门控网络的二级专家组合。下面介绍稀疏门控是如何实现的。</p>
+<h3 id="softmax-门控">Softmax 门控</h3>
+<p>简单的非稀疏门控可以通过 Softmax 函数实现，公式如下： <span class="math display">\[
+G_\sigma(x)=Softmax(x\cdot W_g)
+\]</span></p>
+<h3 id="噪声top-k门控">噪声 Top-k 门控</h3>
+<p>在 Softmax 门控网络中，添加稀疏性可提高计算效率，添加噪声可以实现负载均衡，随机性使得每个专家都有激活的机会。具体是通过在取 Softmax 函数前，添加可调高斯噪声，然后只保留前 k 个值，其余置<span class="math inline"> \(-\infty\)</span>，在进行 Softmax 后，对应的门控信号就为 0,。可调高斯噪声，是指标准正态分布的噪声乘以可训练的噪声权重<span class="math inline"> \(Softplus(x\cdot W_{noise})\)</span>。公式如下：
+<span class="math display">\[
+G(x)=Softmax(KeepTopK(H(x),k))
+\]</span> <span class="math display">\[
+H(x)_i=(x\cdot W_g)_i+StandardNorm()\cdot Softplus((x\cdot W_{noise})_i)
+\]</span> <span class="math display">\[
+KeepTopK (v,k)_i=\begin {cases}
+v_i,\ 如果 v_i 是前 k 大的元素 \\
+-\infty,\ 其他
+\end {cases}
+\]</span></p>
+<h3 id="训练门控网络">训练门控网络</h3>
+<p>通过简单的反向传播以及模型的其余部分来训练门控网络。如果选择 k &gt;
+1，则前 k
+个专家的门值相对于门控网络的权重具有非零导数。梯度通过门控网络反向传播到其输入。</p>
+<h2 id="解决性能挑战">解决性能挑战</h2>
+<h3 id="批大小缩减">批大小缩减</h3>
+<p>大的 batch
+size 对于计算效率是非常重要的，能够减小参数加载和更新的开销。如果门控网络每次只从专家网络中选择 k 个，每个专家对应的 batch
+size 会小得多，这会使得参数的更新更为低效。虽然这个问题可以通过暴力加大 batch
+size 缓解，但这又受限于 GPU 的显存限制。</p>
+<p>论文提出了以下两种增加 batch size 的技术：</p>
+<p><strong>混合数据并行和模型并行</strong>。传统的数据并行分布式训练中，不同设备上的多个模型副本<strong>异步</strong>处理不同 batch 数据，并通过一组参数服务器同步参数。论文提出同步的数据并行策略，不同设备数据同时组合应用于 MoE 层。模型标准层、门控网络都遵循平常的数据并行设置，不同的是，MoE 的每个专家只保留一份共享副本。每个专家都会收到一个组合批次，该批次包含数据并行中与该专家相关的批次。不同的设备上保存着不同的专家子集。所以这是一种混合数据并行和模型并行的方法。模型并行的设置猜测是为了减少显存开销，大量专家的情况下，每个设备上不激活的专家还是很占显存的。</p>
+<p><strong>利用卷积性</strong>。MoE 可以类似卷积操作，施加在每层的不同时间步上应用 MoE，相当于增大了 batch
+size。但对于 RNN 此类网络，其自回归性使得卷积操作无法进行。</p>
+<h3 id="网络带宽">网络带宽</h3>
+<p>分布式计算中另一个主要的性能问题是网络带宽。网络中，专家的输入和输出通过网络发送。为了保持计算效率，专家的计算量与其 IO（输入和输出）的比值必须超过计算设备的计算量与网络容量的比值。对于
+GPU，这可能是数千比一。实验中，专家是仅有一个隐藏层的感知机，权重矩阵的大小为
+input_size×hidden_size 和
+hidden_size×output_size，因此计算与输入和输出的比率等于隐藏层的大小。因此，可以简单地通过使用更大的隐藏层或更多隐藏层来提高计算效率。</p>
+<p>其实，也很容易理解，增加内部的计算量当然就相对降低了 IO 开销。</p>
+<h2 id="平衡专家利用率">平衡专家利用率</h2>
+<p>根据论文观察结果，门控网络倾向于为特定的少数专家提供较大的权重。事实上，刚开始受到关注的某些专家会训练地更快，从而会更容易被选择，我愿称其为神经网络的马太效应。为了避免这种情况，论文使用了一种软间隔的方法。定义专家的重要性为 batch 数据中在该专家上的门控值之和。额外损失项<span class="math inline"> \(L_{importance}\)</span>，定义为重要性的变异系数的平方乘以缩放系数<span class="math inline"> \(w_{impotance}\)</span>。公式如下： <span class="math display">\[
+Importance(X)=\sum_{x\in X}G(x)
+\]</span></p>
+<p><span class="math display">\[
+L_{importance}(X)=w_{importance}\cdot CV(Importance(X))^2
+\]</span> 变异系数（coefficient of
+variation，CV），定义为标准差和平均值之比，是概率分布离散程度的归一化度量。当有多个变量进行离散程度比较时，标准差会受到量纲的影响，而变异系数可以消除这种影响。上述损失类似 L2 正则项，倾向于让专家有相同的重要性，但是，专家收到的样本数量可能不同，例如一位专家收到少而权重大的数据，另一个专家收到多而权重小的数据。这会导致分布式硬件出现内存、性能的问题。</p>
+<p>为解决上述问题，论文还引入了一个损失<span class="math inline"> \(L_{load}\)</span>。公式如下： <span class="math display">\[
+P(x,i)=\Phi(\frac{(x\cdot
+W_g)_i-kth\_excluding(H(x),k,i)}{Softplus((x\cdot W_{noise})_i)})
+\]</span></p>
+<p><span class="math display">\[
+Load(X)_i=\sum_{x\in X}P(x,i)
+\]</span></p>
+<p><span class="math display">\[
+L_{load}(X)=w_{load}\cdot CV(Load(X))^2
+\]</span></p>
+<p>其中，<span class="math inline">\(P(x,i)\)</span> 定义为<span class="math inline"> \(G(x)_i\)</span> 不为 0 的概率，<span class="math inline">\(kth_excluding(H(x),k,i)\)</span> 为除了第<span class="math inline"> \(i\)</span> 个元素外，<span class="math inline">\(H(x)\)</span> 中最大的第<span class="math inline"> \(k\)</span> 个元素的值，<span class="math inline">\(\Phi\)</span> 为标准正态分布的概率分布函数。</p>
+<p><span class="math inline">\(L_{load}\)</span> 粗看可能较难理解，将其转化为下式，其中<span class="math inline"> \((x\cdot
+W_g)_{a_k}\)</span> 为第 k 大的门控值。可以看出，上式来自<span class="math inline"> \(H(x)\)</span> 的计算，<span class="math inline">\(H(x)\)</span> 中添加了高斯噪声平滑项，<span class="math inline">\(P(x,i)\)</span> 实际计算得到的是专家<span class="math inline"> \(i\)</span> 和被选中的权值最小的专家（第 k 个）门控值间的差异，并引入高斯噪声，通过标准正态的 CDF 映射得到选中第<span class="math inline"> \(i\)</span> 专家的概率。再通过变异系数计算损失，与<span class="math inline"> \(L_{importance}\)</span> 类似。 <span class="math display">\[
+P(x,i)=\Phi(\frac{(x\cdot W_g)_i-(x\cdot W_g)_{a_k}}{Softplus((x\cdot
+W_{noise})_i)}-\epsilon)
+\]</span></p>
+<h2 id="实验">实验</h2>
+<h3 id="亿级语言模型">亿级语言模型</h3>
+<ul>
+<li>数据集：约 8.29 亿 token 的新闻语料，词表约 80w</li>
+<li> 先前 SOTA：若干个堆叠的 LSTM 网络组成，参数从 200w 到 1.51 亿</li>
+<li>本文模型：两层 LSTM 堆叠，中间有一个 MoE 层，MoE 层的大小、专家数量有所不同（4-4096）。每个专家约 100w 参数，选择的专家数 k=4</li>
+</ul>
+<p>为了研究增加容量的效果，论文训练了一系列 MoE 模型，并控制它们的计算成本（约时间步每 800w 次加乘操作，该指标记作 ops/timestap）。</p>
+<p>下图展示了该任务上 LSTM 和 MoE 的比较结果。左侧图展示了同样计算成本下，模型的困惑度与参数的关系。基线 LSTM 模型只存在图左上方，少参数而高困惑度。展平的 MoE 与分层 MoE 能在同样参数规模下，获得更低的困惑度。右图为 40 亿参数下，困惑度与计算成本的关系。</p>
+<p><img src="comparison.png"></p>
+<p>下表展示了详细的对比结果，高计算成本的 MoE 能够显著降低困惑度。要注意的是，虽然 MoE 参数最多 30 倍于基础模型，但是每个样本只有 4 个专家处于激活态，这使得模型间的实际激活的参数、计算性能是可比的。</p>
+<p><img src="table-comparison.png"></p>
+<h3 id="千亿谷歌语料">千亿谷歌语料</h3>
+<p>与上述实验配置、结果相似。不过随着 MoE 层中的参数数量超过 10
+亿，增加额外容量似乎会产生递减收益，</p>
+<p><img src="google.png"></p>
+<h3 id="单语对机器翻译">单语对机器翻译</h3>
+<p>WMT'14 翻译数据集，以英法翻译结果为例。此任务使用的模型是 GNMT
+模型的修改版本。为了减少计算量，模型的编码器和解码器中的 LSTM 层数分别从
+9 层和 8 层减少到 3 层和 2 层。论文在编码器（第 2 层和第 3
+层之间）和解码器（第 1 层和第 2 层之间）中都插入了 MoE 层。每个 MoE
+层包含多达 2048 位专家，每个专家大约有 200
+万个参数，总共为模型添加了大约 80 亿个参数。</p>
+<p><img src="en-fr-translation.png"></p>
+<h3 id="多语对翻译">多语对翻译</h3>
+<p>传统方法，使用同一模型进行多语翻译的性能，要差于训练多个模型分别处理单语对翻译。这是由于多个模型提供了更大的模型容量。论文用单一的 MoE 重复了这个实验。MoE
+模型在开发集比多语言 GNMT 模型。在 BLEU 得分上，MoE 模型在 12
+个语言对中的 11 个上显着击败了多语言 GNMT 模型（高达 5.84 分），甚至在
+12 个语言对中的 8 个上击败了单语 GNMT 模型。</p>
+<p><img src="multi-translation.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文提出了一种条件计算的方法，并解决了其在实践中遇到的种种挑战（负载均衡、分布式性能等）。在语言模型、机器翻译任务上，证实了其提升模型容量同时保证计算性能的能力。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zh.m.wikipedia.org/zh-sg/变异系数">变异系数 -
+维基百科，自由的百科全书 (wikipedia.org)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/06/05/MoE/" title="MoE：通过条件计算增加模型容量">https://tqnwhz.github.io/blog/2022/06/05/MoE/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%9D%A1%E4%BB%B6%E8%AE%A1%E7%AE%97/" rel="tag"><i class="fa fa-tag"></i> 条件计算</a>
+              <a href="/blog/tags/%E9%97%A8%E6%8E%A7/" rel="tag"><i class="fa fa-tag"></i> 门控</a>
+              <a href="/blog/tags/MoE/" rel="tag"><i class="fa fa-tag"></i> MoE</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/05/03/KnowledGPT/" rel="prev" title="KnowledGPT: 基于预训练语言模型的知识对话">
+                  <i class="fa fa-chevron-left"></i> KnowledGPT: 基于预训练语言模型的知识对话
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">111k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:22</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

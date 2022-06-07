@@ -1,106 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>BART</title>
-    <url>/blog/2021/08/29/BART/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>BART 是 Facebook AI 于 2019 年发表的《Denoising Sequence-to-Sequence
-Pre-training for Natural Language Generation, Translation, and
-Comprehension》论文中提出的预训练模型，论文收录于 2020 年 ACL。顾名思义，BART 是一个基于 seq2seq 的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的 “Denoising” 直译为降噪，实际上是模型的预训练目标。</p>
-<span id="more"></span>
-<p>一个水逆的周末，博客更新不能停！</p>
-<h2 id="模型">模型</h2>
-<p>预训练模型之前已经介绍过了，参考 <a href="https://tqnwhz.github.io/blog/2021/08/16/BERT/#more">BERT</a>。这里只做简单的介绍。预训练模型的目的是在大量数据上预训练一个能够解决通用任务的模型，下游任务可以在预训练模型的基础上进行调整适配，无需从头训练。预训练模型往往有几个关键因素：</p>
-<ul>
-<li>模型架构。Transformer 是公认的特征抽取能力很强的架构，因此常见的预训练模型都是用的 Transformer 架构。</li>
-<li>预训练目标。在 BERT 之前，预训练模型往往都是按照标准的语言模型进行训练，例如 ELMO。BERT 第一次提出了掩码语言模型这样的预训练任务，不仅能够更好地适配下游任务，而且取得了更优的效果。如何能够挑选一个更好的预训练目标来建模通用任务，也是预训练模型的关键。</li>
-<li>适用任务及使用方法。虽然预训练模型是为建模通用任务而存在的，然而还是存在适用任务的限制，具体任务对使用方法也有要求。</li>
-<li>数据集。要求很简单，大而全。大就不用说了，数据集最好能够涵盖多个领域的数据，这样适配下游任务也会更简单。</li>
-<li>效果。事实上没有个 state-of-the-art 都不太可能发出来，相对没有那么重要。</li>
-</ul>
-<p>按照这个顺序，我们来介绍一下 BART 模型。</p>
-<h3 id="架构">架构</h3>
-<p>基于 Transformer 的 seq2seq 模型，与 GPT 和 BERT 一样，使用的激活函数是 gelu 而不是 relu。与 BERT 的区别在于：</p>
-<ul>
-<li>有解码器、在解码器的每一层，添加了对编码器最后一层输出的注意力，跟 seq2seq 的注意力一致。</li>
-<li>BART 去掉了在词预测之前的前馈神经网络。</li>
-</ul>
-<p>总结一下就是个 Transformer。与 BERT 的主要区别在于有解码器，可以用于生成任务，与 GPT 的主要区别在于有编码器，可以更好地用于监督的生成任务，如下图所示。</p>
-<p><img src="architecture.png"></p>
-<h3 id="预训练目标">预训练目标</h3>
-<p>BART 的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的 “降噪” 的由来。
-在实验过程中，噪声可能是以上噪声函数的组合。几种噪声函数的示例分别如下：</p>
-<p><img src="noises.png"></p>
-<h3 id="适用任务">适用任务</h3>
-<p>BART 可适用于以下任务：</p>
-<ul>
-<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似 BERT 中的 [CLS]
-token。</li>
-<li>符号分类，输入输出均为该序列，将解码器每个位置的隐藏状态拿去分类即可。</li>
-<li>序列生成，例如文本摘要、问答等任务，给定输入输出进行 fine-tune 即可。</li>
-<li>目标语言为英语的机器翻译，这个任务其实也属于序列生成，不过有点不太一样。具体做法为，将 BART 的编码器随机初始化（就是丢弃本来的权重），然后冻结其他参数只更新编码器权重，后面再微调所有权重。这里限制为英语主要是 BART 本身在英文语料上训练的。</li>
-</ul>
-<h2 id="实验">实验</h2>
-<h3 id="预训练目标比较">预训练目标比较</h3>
-<p>为了评估各种预训练目标的有效性，BART 在尽量控制变量（分别调优，学习率、正则化可能有所差别）的前提下比较了如下几种预训练目标：</p>
-<ul>
-<li>语言模型，与 GPT 类似，从左向右的语言模型</li>
-<li>置换语言模型，基于 XLNET，对 1/6 的符号进行采样，再进行自回归预测</li>
-<li>掩码语言模型，与 BERT 类似</li>
-<li>多任务掩码语言模型，与 uniLM 类似</li>
-<li>掩码 seq2seq：掩码 50% 的序列，由 seq2seq 预测</li>
-</ul>
-<p>通过在问答、对话、摘要等多项任务上进行比较，论文得出以下结论：</p>
-<ul>
-<li>预训练目标的性能与下游任务有着很密切的关系，一个简单的语言模型可以在生成式问答上取得最优效果，在抽取式问答上效果确实最差的</li>
-<li>符号遮挡是至关重要的，没有符号遮挡的文档旋转、句子重排的预训练目标表现较差</li>
-<li>从左到右的语言模型预训练任务能改善生成任务，像掩码语言模型和置换语言模型不包含自回归语言模型训练任务，生成任务效果就会比较差</li>
-<li>双向编码器对 SQuAD 数据集是非常重要的</li>
-<li>预训练目标并非唯一重要的因素，任务性能也与模型结构等因素有很大关系</li>
-<li>纯粹的语言模型在 ELI5 数据集上取得了最好的性能</li>
-<li>使用文本填充预训练的 BART 取得了大部分数据集上的最优性能</li>
-</ul>
-<h3 id="大规模预训练">大规模预训练</h3>
-<h4 id="判别任务">判别任务</h4>
-<p>在两个数据集上进行实验：</p>
-<ul>
-<li>SQuAD（Stanford Question Answering
-Dataset，斯坦福问答数据集）：给定一篇文章和一个问题，从原文中选取部分文字作为问题的答案（答案一定原文中）。虽然是问答任务，但是并不是生成式的任务，而是判别式的任务。</li>
-<li>GLUE（General Language Understanding
-Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如 CoLA 对单句子是否符合文法进行评估，QQP 评估一对问题是否等价。</li>
-</ul>
-<p><img src="nlu.png"></p>
-<p>两个数据集上的实验结果显示，BART 可以和 RoBERTa 打的有来有回。</p>
-<h4 id="生成任务">生成任务</h4>
-<p>分别在摘要生成、对话、问答生成、翻译多个任务上进行了实验，数据集分别介绍如下：</p>
-<ul>
-<li>CNN/DailyMail 和 XSum 是摘要生成的两个英文数据集。每个数据样本由文档与人工总结的摘要组成。与抽取式摘要任务不同，摘要中可以出现文档中未出现的单词或者句子。</li>
-<li>CONVAI 是一个对话数据集，回复不仅取决于上下文，还取决于对话人的角色信息，换而言之，模型需要根据上下文和角色信息生成合适的回复。</li>
-<li>ELI5 是一个生成式问答数据集，根据文档回答指定的问题。</li>
-<li>WMT16 是一个翻译数据集，涵盖了多种语料到英语的翻译数据。</li>
-</ul>
-<p>在四项生成任务上的评估表明，BART 都取得了 SOTA 的性能。</p>
-<h2 id="总结">总结</h2>
-<p>BART 是一个基于 Transformer 架构的去噪 seq2seq 模型，通过破坏和重建原始文本进行预训练，在自然语言理解任务上与现有模型难分伯仲，但在自然语言生成任务上达到了 SOTA 的性能。</p>
-<p>预训练模型简单分为三类：</p>
-<ul>
-<li>仅编码器，如 BERT，可以直接用于自然语言理解任务，或者加个解码器再用于生成任务。</li>
-<li>仅解码器，如 GPT，可以直接用于自然语言生成任务，或者加个编码器可以用于条件生成任务。</li>
-<li>编码器 + 解码器，如 BART，可以同时直接用于两种任务。</li>
-</ul>
-<p>后面可能会读一下 RoBERTa 的论文。</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>预训练模型</category>
-        <category>BART</category>
-      </categories>
-      <tags>
-        <tag>BART</tag>
-        <tag>预训练模型</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>BERT</title>
     <url>/blog/2021/08/16/BERT/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -213,8 +113,108 @@ MNLI 等涉及句子对的任务上的性能损失严重，证明下句预测对
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>BART</title>
+    <url>/blog/2021/08/29/BART/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>BART 是 Facebook AI 于 2019 年发表的《Denoising Sequence-to-Sequence
+Pre-training for Natural Language Generation, Translation, and
+Comprehension》论文中提出的预训练模型，论文收录于 2020 年 ACL。顾名思义，BART 是一个基于 seq2seq 的预训练模型，可以用于自然语言生成、翻译、理解等任务。论文中的 “Denoising” 直译为降噪，实际上是模型的预训练目标。</p>
+<span id="more"></span>
+<p>一个水逆的周末，博客更新不能停！</p>
+<h2 id="模型">模型</h2>
+<p>预训练模型之前已经介绍过了，参考 <a href="https://tqnwhz.github.io/blog/2021/08/16/BERT/#more">BERT</a>。这里只做简单的介绍。预训练模型的目的是在大量数据上预训练一个能够解决通用任务的模型，下游任务可以在预训练模型的基础上进行调整适配，无需从头训练。预训练模型往往有几个关键因素：</p>
+<ul>
+<li>模型架构。Transformer 是公认的特征抽取能力很强的架构，因此常见的预训练模型都是用的 Transformer 架构。</li>
+<li>预训练目标。在 BERT 之前，预训练模型往往都是按照标准的语言模型进行训练，例如 ELMO。BERT 第一次提出了掩码语言模型这样的预训练任务，不仅能够更好地适配下游任务，而且取得了更优的效果。如何能够挑选一个更好的预训练目标来建模通用任务，也是预训练模型的关键。</li>
+<li>适用任务及使用方法。虽然预训练模型是为建模通用任务而存在的，然而还是存在适用任务的限制，具体任务对使用方法也有要求。</li>
+<li>数据集。要求很简单，大而全。大就不用说了，数据集最好能够涵盖多个领域的数据，这样适配下游任务也会更简单。</li>
+<li>效果。事实上没有个 state-of-the-art 都不太可能发出来，相对没有那么重要。</li>
+</ul>
+<p>按照这个顺序，我们来介绍一下 BART 模型。</p>
+<h3 id="架构">架构</h3>
+<p>基于 Transformer 的 seq2seq 模型，与 GPT 和 BERT 一样，使用的激活函数是 gelu 而不是 relu。与 BERT 的区别在于：</p>
+<ul>
+<li>有解码器、在解码器的每一层，添加了对编码器最后一层输出的注意力，跟 seq2seq 的注意力一致。</li>
+<li>BART 去掉了在词预测之前的前馈神经网络。</li>
+</ul>
+<p>总结一下就是个 Transformer。与 BERT 的主要区别在于有解码器，可以用于生成任务，与 GPT 的主要区别在于有编码器，可以更好地用于监督的生成任务，如下图所示。</p>
+<p><img src="architecture.png"></p>
+<h3 id="预训练目标">预训练目标</h3>
+<p>BART 的预训练目标定义为：给定文档，使用噪声函数（符号遮挡、符号删除、符号填充、文档排列、文档旋转）对文档施加噪声，再进行文档重构。换而言之，输入为有噪声的文档，期望输出为没有噪声的文档，这正是论文名中的 “降噪” 的由来。
+在实验过程中，噪声可能是以上噪声函数的组合。几种噪声函数的示例分别如下：</p>
+<p><img src="noises.png"></p>
+<h3 id="适用任务">适用任务</h3>
+<p>BART 可适用于以下任务：</p>
+<ul>
+<li>句子分类，输入输出均为该序列，将解码器的最终隐藏状态拿去分类即可，类似 BERT 中的 [CLS]
+token。</li>
+<li>符号分类，输入输出均为该序列，将解码器每个位置的隐藏状态拿去分类即可。</li>
+<li>序列生成，例如文本摘要、问答等任务，给定输入输出进行 fine-tune 即可。</li>
+<li>目标语言为英语的机器翻译，这个任务其实也属于序列生成，不过有点不太一样。具体做法为，将 BART 的编码器随机初始化（就是丢弃本来的权重），然后冻结其他参数只更新编码器权重，后面再微调所有权重。这里限制为英语主要是 BART 本身在英文语料上训练的。</li>
+</ul>
+<h2 id="实验">实验</h2>
+<h3 id="预训练目标比较">预训练目标比较</h3>
+<p>为了评估各种预训练目标的有效性，BART 在尽量控制变量（分别调优，学习率、正则化可能有所差别）的前提下比较了如下几种预训练目标：</p>
+<ul>
+<li>语言模型，与 GPT 类似，从左向右的语言模型</li>
+<li>置换语言模型，基于 XLNET，对 1/6 的符号进行采样，再进行自回归预测</li>
+<li>掩码语言模型，与 BERT 类似</li>
+<li>多任务掩码语言模型，与 uniLM 类似</li>
+<li>掩码 seq2seq：掩码 50% 的序列，由 seq2seq 预测</li>
+</ul>
+<p>通过在问答、对话、摘要等多项任务上进行比较，论文得出以下结论：</p>
+<ul>
+<li>预训练目标的性能与下游任务有着很密切的关系，一个简单的语言模型可以在生成式问答上取得最优效果，在抽取式问答上效果确实最差的</li>
+<li>符号遮挡是至关重要的，没有符号遮挡的文档旋转、句子重排的预训练目标表现较差</li>
+<li>从左到右的语言模型预训练任务能改善生成任务，像掩码语言模型和置换语言模型不包含自回归语言模型训练任务，生成任务效果就会比较差</li>
+<li>双向编码器对 SQuAD 数据集是非常重要的</li>
+<li>预训练目标并非唯一重要的因素，任务性能也与模型结构等因素有很大关系</li>
+<li>纯粹的语言模型在 ELI5 数据集上取得了最好的性能</li>
+<li>使用文本填充预训练的 BART 取得了大部分数据集上的最优性能</li>
+</ul>
+<h3 id="大规模预训练">大规模预训练</h3>
+<h4 id="判别任务">判别任务</h4>
+<p>在两个数据集上进行实验：</p>
+<ul>
+<li>SQuAD（Stanford Question Answering
+Dataset，斯坦福问答数据集）：给定一篇文章和一个问题，从原文中选取部分文字作为问题的答案（答案一定原文中）。虽然是问答任务，但是并不是生成式的任务，而是判别式的任务。</li>
+<li>GLUE（General Language Understanding
+Evaluation，通用语言理解评估）：由九个任务组成，每个任务都是句子或句子对的分类任务，例如 CoLA 对单句子是否符合文法进行评估，QQP 评估一对问题是否等价。</li>
+</ul>
+<p><img src="nlu.png"></p>
+<p>两个数据集上的实验结果显示，BART 可以和 RoBERTa 打的有来有回。</p>
+<h4 id="生成任务">生成任务</h4>
+<p>分别在摘要生成、对话、问答生成、翻译多个任务上进行了实验，数据集分别介绍如下：</p>
+<ul>
+<li>CNN/DailyMail 和 XSum 是摘要生成的两个英文数据集。每个数据样本由文档与人工总结的摘要组成。与抽取式摘要任务不同，摘要中可以出现文档中未出现的单词或者句子。</li>
+<li>CONVAI 是一个对话数据集，回复不仅取决于上下文，还取决于对话人的角色信息，换而言之，模型需要根据上下文和角色信息生成合适的回复。</li>
+<li>ELI5 是一个生成式问答数据集，根据文档回答指定的问题。</li>
+<li>WMT16 是一个翻译数据集，涵盖了多种语料到英语的翻译数据。</li>
+</ul>
+<p>在四项生成任务上的评估表明，BART 都取得了 SOTA 的性能。</p>
+<h2 id="总结">总结</h2>
+<p>BART 是一个基于 Transformer 架构的去噪 seq2seq 模型，通过破坏和重建原始文本进行预训练，在自然语言理解任务上与现有模型难分伯仲，但在自然语言生成任务上达到了 SOTA 的性能。</p>
+<p>预训练模型简单分为三类：</p>
+<ul>
+<li>仅编码器，如 BERT，可以直接用于自然语言理解任务，或者加个解码器再用于生成任务。</li>
+<li>仅解码器，如 GPT，可以直接用于自然语言生成任务，或者加个编码器可以用于条件生成任务。</li>
+<li>编码器 + 解码器，如 BART，可以同时直接用于两种任务。</li>
+</ul>
+<p>后面可能会读一下 RoBERTa 的论文。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+        <category>BART</category>
+      </categories>
+      <tags>
+        <tag>预训练模型</tag>
+        <tag>BART</tag>
       </tags>
   </entry>
   <entry>
@@ -447,77 +447,6 @@ L_m\)</span> 为解码器输出与真实回复间的交叉熵，<span class="mat
       </tags>
   </entry>
   <entry>
-    <title>DEM-VAE</title>
-    <url>/blog/2021/07/30/DEM-VAE/</url>
-    <content><![CDATA[<h2 id="序言">序言</h2>
-<p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential
-Family Mixture VAEs for Interpretable Text
-Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong>
-VAE ”。</p>
-<span id="more"></span>
-<h2 id="题外话">题外话</h2>
-<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
-<h2 id="简介">简介</h2>
-<p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量<span class="math inline"> \(c\)</span>​只包含<span class="math inline"> \(log(\#c)\)</span>​位的信息，其中<span class="math inline"> \(\#c\)</span>​为<span class="math inline"> \(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline"> \(-log(1/\#c)=log(\#c)\)</span>​。）</p>
-<p>混合高斯分布的 VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而 GM-VAE 容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE 退化为只有一个高斯分量的普通 VAE。如下图所示：</p>
-<p><img src="example.png"></p>
-<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse
-perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
-<h2 id="模式崩溃vs后验崩塌">模式崩溃 vs 后验崩塌</h2>
-<p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
-<p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个 KL 损失项。</p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="混合指数族vae">混合指数族 VAE</h3>
-<p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential
-family -
-Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量<span class="math inline"> \(c\)</span> 代表不同的高斯成分，连续隐变量<span class="math inline"> \(z\)</span> 依赖于<span class="math inline"> \(c\)</span>。如下图所示：</p>
-<p><img src="gm-vae.png"></p>
-<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
-<p>测试时：从先验分布<span class="math inline"> \(p(c)\)</span> 中采样一个<span class="math inline"> \(c\)</span>，然后从<span class="math inline"> \(c\)</span> 对应的高斯分布中采样隐变量<span class="math inline"> \(p(z|c)\)</span>，接着投喂到解码器<span class="math inline"> \(p(x|z)\)</span> 中。</p>
-<p>训练时：通过最大化边际似然<span class="math inline"> \(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与 VAE 一样，使用近似后验分布<span class="math inline"> \(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline"> \(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
-<p><img src="elbo.png"></p>
-<h3 id="模式崩溃问题">模式崩溃问题</h3>
-<p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到<span class="math inline"> \(\mathcal R_c\)</span> 与<span class="math inline"> \(\mathcal
-R_z\)</span> 中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline"> \(\mathcal R_z,\mathcal
-R_c\)</span>​重写为 KL 平均正则项与分散项<span class="math inline"> \(\mathcal L_d\)</span>​​。 <span class="math display">\[
-\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb
-E_{q_\phi(c|x)}\eta_c)&gt;=0
-\]</span> 作者得出结论，最小化分散项<span class="math inline"> \(\mathcal
-L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示：
-<span class="math display">\[
-L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
-\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline"> \(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
-<h3 id="dem-vae">DEM-VAE</h3>
-<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下：
-<span class="math display">\[
-\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb
-E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
-\]</span>
-公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
-<h2 id="实验">实验</h2>
-<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
-<p><img src="mode-collapse-result.png"></p>
-<p>可以看出，同时引入互信息项和分散项的 VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
-<h3 id="文本生成">文本生成</h3>
-<p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
-<p><img src="lg-result.png"></p>
-<p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得 NLL（负对数似然）相较基线模型更大，但是 rPPL，BLEU 等指标上取得了更好的结果。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
-<h2 id="参考">参考</h2>
-<p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML
-2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库
-(iczhiku.com)</a></p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
-      </categories>
-      <tags>
-        <tag>VAE</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>对话系统综述</title>
     <url>/blog/2022/02/08/DialogueSystem-Survey/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -638,6 +567,155 @@ Networks 系列 - 知乎 (zhihu.com)</a></li>
         <tag>自然语言处理</tag>
         <tag>对话系统</tag>
         <tag>综述</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>有错误论文 - ACL2020：交叉 VAE 用于答案检索</title>
+    <url>/blog/2022/03/31/Crossing-VAE/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
+<p>《Crossing Variational Autoencoders for Answer
+Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL
+2020 中。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<p>先按照正常的步骤介绍其背景和方法。</p>
+<p>答案检索，即从答案候选集合中，选择最匹配问题的答案。解决该问题的一个关键因素在于，如何学习到一个好的问题 / 答案的向量表示。传统的方法使用两个编码器 / 变分自编码器（孪生网络）分别学习二者的向量表征。这种方法过于分离，无法捕捉二者之间的对齐语义。因此，本文提出了交叉变分自编码器，类似 Seq2Seq 的方法，学习二者间的语义对齐。</p>
+<p><img src="structure.png"></p>
+<p>如上图所示。左一为孪生编码器，分别将答案和问题进行编码，得到向量表征后再判断是否匹配。中间的孪生自编码器也类似，区别在于使用自编码器学习到性质更好的向量表征。但是他们有个共同点：<strong>答案和问题的向量表征是分开编码得到的</strong>。这意味着编码过程中只有单个问题或答案的信息（语义、句法等），而我们关心的是答案和问题是否语义对齐。因此按前一种方法训练得到的向量表征，并不能很好地满足任务的需要。右一为本文提出的孪生交叉 VAE，即在 VAE 的基础上，使用问题和答案的隐变量重构彼此，而非重构自身。从模型结构上，该模型不像 VAE 而更像 Seq2Seq。</p>
+<p>举个例子，在问答中，相似的问题的答案可能相去甚远，相似的答案的问题形式可能也差别很大。下图展示了 SQuAD 数据集上的例子，同一个答案与 17 个不同的问题相对齐。只看这些问题的语义，可能差别很大。也就是<span class="math inline"> \(z_q\)</span> 是分开的，而答案却相同，即<span class="math inline"> \(z_q\)</span> 是固定的。这种情况下，希望<span class="math inline"> \(p(y|z_q,z_a)\)</span> 对这些不同的<span class="math inline"> \(z_q\)</span> 都有较好的对齐效果是比较困难的。</p>
+<p><img src="SQuAD-example.png"></p>
+<p>究其根本，是<strong>同一个答案与不同的问题对齐时，其语义信息侧重点各不相同。</strong>当提问词是 "how
+many"是，答案侧重点为"three"，当提问词为"three
+cities"时，答案侧重点为"New
+Orleans"... 而分开编码得到的向量表征是固定的。要解决这个问题，必须要将答案和问题的编码结合起来。</p>
+<p>论文的方法在 MRR 和 R@1 上分别取得了 SOTA，分别提升了 1.46% 和 3.65%。不过对比工作里的 BERT 我怀疑是未做 finetune 的，效果太差了。</p>
+<h2 id="方法">方法</h2>
+<h3 id="问题定义">问题定义</h3>
+<p>问题集合：<span class="math inline">\(q\in \mathcal
+Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal
+A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\sub \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
+<h3 id="交叉vae">交叉 VAE</h3>
+<p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为：
+<span class="math display">\[
+p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\\
+p(a|q)=\mathbb E_{z_q\sim p(z_q|q)}[p(a|z_q)]
+\]</span> 问答对的匹配，即计算条件分布<span class="math inline"> \(p(y|a,q)\)</span>，等价于 <span class="math display">\[
+p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
+\]</span> 目标函数包含三部分：</p>
+<p><strong>交叉重构损失</strong>，即两个交叉熵损失之和，公式如下。其中<span class="math inline"> \(E,D\)</span> 分别代表编码器、解码器。 <span class="math display">\[
+\mathcal L_{cross}(\theta_E,\theta_D)=y\cdot \mathbb E_{q\sim
+Q}[-logp_D(q|a,E(a))]+ y\cdot\mathbb E_{a\sim A}[-logp_D(a|q,E(q))]
+\]</span>
+<strong>KL 散度损失</strong>，两部分后先验 KL 散度之和，公式如下： <span class="math display">\[
+\mathcal L_{KL}(\theta_E)=y\cdot \mathbb E_{q\sim
+Q}[D_{KL}((p(z_q|q)||p(z_q))]+ y\cdot \mathbb E_{a\sim
+A}[D_{KL}((p(z_a|a)||p(z_a))]
+\]</span>
+<strong> 问答匹配损失</strong>，最后输出的匹配结果的交叉熵损失，公式如下。其中，<span class="math inline">\(f\)</span> 为匹配函数。 <span class="math display">\[
+\mathcal L_{matching}(\phi_f)=-[y\cdot
+logp_{f_\phi}p(y|z_q,z_a)+(1-y)\cdot logp_{f_\phi}(1-p(y|z_q,z_a))]
+\]</span>
+最后，将三个损失相加，即得到了最终的目标函数，并引入超参数控制权重：
+<span class="math display">\[
+\mathcal J=-\alpha \mathcal L_{cross}-\beta\mathcal
+L_{KL}+\gamma\mathcal L_{matching}
+\]</span></p>
+<h2 id="问题">问题</h2>
+<p>细心的读者可能会发现了，你是要<strong>最小化匹配损失，最后的<span class="math inline"> \(\mathcal
+J\)</span> 应该也是要最小化的。那不就变成最大化 KL 和重构损失了吗？</strong>对，这就是问题所在。论文中提到是要最大化 ELBO 和最小化匹配损失，得到了最后的<span class="math inline"> \(\mathcal J\)</span>。然而事实上，<span class="math inline">\(\mathcal L_{crosss}+\mathcal
+L_{KL}=-ELBO\)</span>，最小化<span class="math inline"> \(\mathcal
+L_{crosss}+\mathcal
+L_{KL}\)</span> 才是在最大化 ELBO。论文作者根本没有分清楚 VAE 的 ELBO 和损失，最后闹出了这种笑话。加之论文中有将 objective 和 loss 混用且使用错误的情况。也侧面印证了这一事实。正确的损失函数应该形如：
+<span class="math display">\[
+\mathcal J=\alpha \mathcal L_{cross}+\beta\mathcal L_{KL}+\gamma\mathcal
+L_{matching}
+\]</span>
+复现性上，我问了实验室的一个师兄，说是论文的结果是复现不出来的，论文也没有公开代码。再加上我本人看到这篇论文第一感觉的强烈违和感，将 VAE 改为 Seq2Seq 的形式，整个 VAE 的公式可能都要重新推导，只改最后的 ELBO 如何保证过程正确？CVAE 可能才是更自然的想法。</p>
+<h2 id="总结">总结</h2>
+<p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
+<p>科研路漫，诸君共勉。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>问答</category>
+      </categories>
+      <tags>
+        <tag>自然语言处理</tag>
+        <tag>VAE</tag>
+        <tag>问答</tag>
+        <tag>负面案例</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>DEM-VAE</title>
+    <url>/blog/2021/07/30/DEM-VAE/</url>
+    <content><![CDATA[<h2 id="序言">序言</h2>
+<p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential
+Family Mixture VAEs for Interpretable Text
+Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong>
+VAE ”。</p>
+<span id="more"></span>
+<h2 id="题外话">题外话</h2>
+<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
+<h2 id="简介">简介</h2>
+<p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量<span class="math inline"> \(c\)</span>​只包含<span class="math inline"> \(log(\#c)\)</span>​位的信息，其中<span class="math inline"> \(\#c\)</span>​为<span class="math inline"> \(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline"> \(-log(1/\#c)=log(\#c)\)</span>​。）</p>
+<p>混合高斯分布的 VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而 GM-VAE 容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE 退化为只有一个高斯分量的普通 VAE。如下图所示：</p>
+<p><img src="example.png"></p>
+<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse
+perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
+<h2 id="模式崩溃vs后验崩塌">模式崩溃 vs 后验崩塌</h2>
+<p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
+<p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个 KL 损失项。</p>
+<h2 id="解决方法">解决方法</h2>
+<h3 id="混合指数族vae">混合指数族 VAE</h3>
+<p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential
+family -
+Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量<span class="math inline"> \(c\)</span> 代表不同的高斯成分，连续隐变量<span class="math inline"> \(z\)</span> 依赖于<span class="math inline"> \(c\)</span>。如下图所示：</p>
+<p><img src="gm-vae.png"></p>
+<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
+<p>测试时：从先验分布<span class="math inline"> \(p(c)\)</span> 中采样一个<span class="math inline"> \(c\)</span>，然后从<span class="math inline"> \(c\)</span> 对应的高斯分布中采样隐变量<span class="math inline"> \(p(z|c)\)</span>，接着投喂到解码器<span class="math inline"> \(p(x|z)\)</span> 中。</p>
+<p>训练时：通过最大化边际似然<span class="math inline"> \(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与 VAE 一样，使用近似后验分布<span class="math inline"> \(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline"> \(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
+<p><img src="elbo.png"></p>
+<h3 id="模式崩溃问题">模式崩溃问题</h3>
+<p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到<span class="math inline"> \(\mathcal R_c\)</span> 与<span class="math inline"> \(\mathcal
+R_z\)</span> 中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline"> \(\mathcal R_z,\mathcal
+R_c\)</span>​重写为 KL 平均正则项与分散项<span class="math inline"> \(\mathcal L_d\)</span>​​。 <span class="math display">\[
+\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb
+E_{q_\phi(c|x)}\eta_c)&gt;=0
+\]</span> 作者得出结论，最小化分散项<span class="math inline"> \(\mathcal
+L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示：
+<span class="math display">\[
+L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
+\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline"> \(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
+<h3 id="dem-vae">DEM-VAE</h3>
+<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下：
+<span class="math display">\[
+\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb
+E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
+\]</span>
+公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
+<h2 id="实验">实验</h2>
+<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
+<p><img src="mode-collapse-result.png"></p>
+<p>可以看出，同时引入互信息项和分散项的 VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
+<h3 id="文本生成">文本生成</h3>
+<p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
+<p><img src="lg-result.png"></p>
+<p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得 NLL（负对数似然）相较基线模型更大，但是 rPPL，BLEU 等指标上取得了更好的结果。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
+<h2 id="参考">参考</h2>
+<p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML
+2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库
+(iczhiku.com)</a></p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>文本生成</category>
+      </categories>
+      <tags>
+        <tag>VAE</tag>
       </tags>
   </entry>
   <entry>
@@ -873,167 +951,6 @@ Crawl 这样大规模数据集的时候，可能会出现数据污染问题：�
       </tags>
   </entry>
   <entry>
-    <title>基于知识库的问答综述（KBQA）</title>
-    <url>/blog/2021/10/25/KBQA-survey/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天来读一篇 2021 年的知识库问答的综述，《A Survey on Complex Knowledge
-Base Question Answering:Methods, Challenges and
-Solutions》，论文收录在 IJCAI
-2021 中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic
-parsing-based，SP-based）和基于信息检索（information
-retrivel-based，IR-based）。 <span id="more"></span></p>
-<h2 id="知识库问答">知识库问答</h2>
-<p>知识库是一个结构化的数据库，它与知识图谱类似，由（主体 Subject，关系 Relation，客体 Object）三元组组成，例如（JK 罗琳，出生地，英国），常见的知识库有 Freebase 等。这个三元组可以用来回答 “JK 罗琳出生在哪里？” 的问题。与简单的、答案与主体直接相连的简单 QA 不同，复杂 QA 查询任务涉及多跳推理甚至一些聚合关系。例如下图知识库，“谁是 The
-Jeff Probst Show 提名的 TV
-Producer 的第一任妻子” 问题的答案，包含多个实体和多跳处理逻辑。 <img src="multi-hop.png"></p>
-<p>KBQA 的第一步是识别问题中的主体并链接到知识库中的实体，然后根据实体的邻域推导问题答案。这里分为两种方法基于语义解析和基于信息检索的两种方法。语义解析的思想是将自然语言问题表示为可以在知识库中进行查询的符号化的逻辑形式，然后再用逻辑语言进行查询（例如 SQL）。基于信息检索的方法思想是构建一个问题特定的知识图包含了相关的所有信息，然后将所有实体按相关性进行排序。然而，这些方法会面临以下挑战：</p>
-<ul>
-<li>基于语义解析的方法很难覆盖复杂的查询（多跳推理、约束关系、数值计算等）。类似的，基于信息检索的方法也很难回答复杂的问题，检索的实体范围可能太小，而且解释性差。</li>
-<li>复杂的实体和关系会使得搜索空间过大（逻辑形式、候选结果等），搜索开销过大。</li>
-<li>两种方法将问题理解看作重要的步骤，当问题的语法和语义复杂时，模型需要有很强的自然语言理解和生成能力。</li>
-<li>弱监督问题。问答数据集中往往只存在问题和答案，缺少推理路径，而标注这样的推理路径成本过于高昂。弱监督问题给两种方法都带来了困难。</li>
-</ul>
-<p>评估指标上，KBQA 往往是从答案集合上选出置信度最高的，常见的评估指标由 F1、准确率、召回率、Hits@1 等。</p>
-<h2 id="主流方法">主流方法</h2>
-<p>流程图如下图所示。 <img src="methods.png"></p>
-<h3 id="基于语义解析的方法">基于语义解析的方法</h3>
-<p>旨在将自然语言问题解析为逻辑形式，按照以下步骤：</p>
-<ol type="1">
-<li>问题编码</li>
-<li>逻辑解析</li>
-<li>逻辑验证</li>
-<li>逻辑执行</li>
-</ol>
-<p>优点：解释性强</p>
-<p>缺点：严重依赖逻辑形式和解析算法的设计，成为性能提升的瓶颈</p>
-<h3 id="基于信息检索的方法">基于信息检索的方法</h3>
-<p>旨在根据问题检索候选答案集合并对其进行排序，按照以下步骤：</p>
-<ol type="1">
-<li>确定中心实体，提取问题特定的部分知识子图</li>
-<li>问题编码</li>
-<li>图推理，沿着相邻实体关系进行语义匹配，传播和聚合信息</li>
-<li>按照置信度进行排序</li>
-</ol>
-<p>优点：端到端训练</p>
-<p>缺点：解释性差</p>
-<h2 id="挑战与解决方案">挑战与解决方案</h2>
-<p>论文总结了两种方法面临的挑战和解决方案，汇总成下面的表格。</p>
-<p><img src="summary.png"></p>
-<h2 id="总结和展望">总结和展望</h2>
-<p>论文主要介绍了两种典型的知识库问答方法，总结了它们面临的挑战及解决方案，并指出复杂 KBQA 未来的可能研究方向：</p>
-<ul>
-<li>在线学习。已有的复杂 KBQA 系统都是离线学习、在线部署。然而用户的反馈可能是改进 KBQA 的方法。基于此，一些工作开始利用用户反馈去纠正 KBQA 的回答。还有一些工作直接让用户参与到了问题解析过程中。</li>
-<li>鲁棒性和可解释性。已有的方法虽然可以在基准数据集上可以取得很好的结果，但是遇到分布之外的情况可能无法很好处理。有研究人员开始提出相关的数据集来解决该问题。</li>
-<li>更通用的知识库。知识库往往是不完整的，一些工作开始引入文本、图像来进行更复杂的 KBQA 推理。关于知识库更普遍的定义和更灵活的使用方法能让 KBQA 发展的更好。</li>
-</ul>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>问答检索</category>
-      </categories>
-      <tags>
-        <tag>问答</tag>
-        <tag>知识库</tag>
-        <tag>KBQA</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人</title>
-    <url>/blog/2022/03/19/LaMDA/</url>
-    <content><![CDATA[<h2 id="摘要">摘要</h2>
-<p>《LaMDA: Language Models for Dialog
-Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（<strong>La</strong>nguage
-<strong>M</strong>odels for <strong>D</strong>ialog
-<strong>A</strong>pplication）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和事实性方面的改进很小。而监督数据上的微调能够帮助模型利用外部知识源进行回复，显著改进了安全性和事实性两个指标。</p>
-<span id="more"></span>
-<p>LaMDA 构建了一个工具集（TS，Tool
-set），包含：信息检索系统、计算器、翻译器。通过监督数据微调，LaMDA 能够利用这些工具来回答问题，这使得模型能够根据已知知识来源做出响应，减少了幻觉现象。</p>
-<h2 id="简介">简介</h2>
-<p>LaMDA
-使用单个 Transformer 模型来执行多项任务：它生成潜在响应，然后出于安全考虑对其进行过滤、基于外部知识源并重新排序以找到最高质量的响应。LaMDA 的参数范围从
-2B 到 137B
-参数，在以上指标上进行测试。结果如下图所示。左侧为质量分数，右侧为安全性和事实性分数。</p>
-<p><img src="overview.png"></p>
-<p>可以观察到：</p>
-<ul>
-<li>单独的模型缩放提高了质量，但它在安全性和接地性方面的改进远远落后于人类表现</li>
-<li>结合缩放和微调在所有指标上显着提高了
-LaMDA，尽管模型的性能仍然低于人类水平在安全性和接地性的水平</li>
-</ul>
-<h2 id="预训练">预训练</h2>
-<p>预训练模型架构都差不多，关键参数如下：</p>
-<ul>
-<li>参数规模：137B</li>
-<li> 数据集：预训练（2.97B 文档 + 1.12B 对话）</li>
-<li>架构 &amp; 训练目标：Transformer-Decoder，语言模型（预测下一个 token），如下图所示</li>
-<li>训练成本：1024 TPU-v3 * 57.7 天</li>
-</ul>
-<p><img src="pretraining.png"></p>
-<h2 id="评价指标">评价指标</h2>
-<h3 id="ssi">SSI</h3>
-<p><strong>SSI</strong> 是合理性、特异性、趣味性三项指标（Sensibleness,
-Specificity,
-Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（合理性、特异性两项平均）的改进。各项指标具体含义如下：</p>
-<ul>
-<li><strong>合理性</strong>：衡量模型的回复在上下文和不要与前面所说的任何内容相矛盾。然而，通用和无聊的回复，例如 “我不知道” 的合理性分数可能很高。因此只有这一项指标是远远不够的。</li>
-<li><strong>特异性</strong>：衡量模型的回复是否特定于上下文。例如，如果用户说 “我爱欧洲电视网”，而模型回答 “我也是”，那么它的特异性得分为
-0。因为这种句式适用于很多上下文。</li>
-<li><strong>趣味性</strong>：衡量模型的回复是否有趣。例如，对 “我如何扔球？” 的回应可能是 “你可以先捡起然后扔球来扔球”，这是有道理的，并且是针对问题的。另一个更深层次和更令人满意的答案可能是 “扔球的一种方法是用双手牢牢握住它，然后再向下摆动你的手臂，伸展你的肘部，然后向上释放球”。</li>
-</ul>
-<p>每项指标对应一个 0/1 标签，正例为 1，负例为 0，算术平均后就是 SSI 的值。</p>
-<h3 id="角色特定指标">角色特定指标</h3>
-<p><strong>有用性</strong>：如果模型的响应包含基于用户使用信息检索系统进行的独立研究的正确信息，并且用户认为它们有帮助，则它们被标记为有用。<strong>有用的响应是信息性响应的子集</strong>，由用户判断为正确且有用。</p>
-<p><strong>角色一致性</strong>：如果模型的响应看起来像执行目标角色的代理会说的话，则它们被标记为角色一致。这个与合理性中的一致性不同，这里的一致性是指，例如让模型扮演珠穆朗玛峰，模型的回复中的语气词、设定等都要以珠穆朗玛峰为准。</p>
-<h3 id="其他">其他</h3>
-<p><strong>安全性</strong>是根据 Google
-人工智能原则设定的，用以以避免造成伤害风险的意外结果，并避免产生或加强不公平的偏见，这个对应很多条规则，比较复杂，就略过了。</p>
-<p><strong>事实性</strong>：包含外部世界声明的回复中，可由权威外部来源支持的回复的百分比。</p>
-<p><strong>信息性</strong>：在所有回复中，包含已知来源支持的外部世界信息的回复所占的百分比。信息性与事实性仅在限定词上有所不同。因此，像 “这是一个好主意” 这样的回答，如果不包含任何外部世界的信息，就不会影响其事实，但会影响其信息性。</p>
-<p><strong>引用准确度</strong>：引用其来源 URL 的模型回应在所有明确声称外部世界的回应中所占的百分比，不包括众所周知的事实（如 “马有四条腿”）。</p>
-<h2 id="微调">微调</h2>
-<h3 id="判别式生成式微调">判别式 / 生成式微调</h3>
-<p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（合理性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
-<p>LaMDA 生成回复的时候按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;</code> 的模板进行生成，按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;&lt;属性&gt;&lt;分数&gt;</code> 的模板进行判别式微调，例如 "What’s
-up? RESPONSE not much. SENSIBLE 1"。</p>
-<p>得到众包数据后，按照上述模板进行微调。这样在生成时，就能够预测出对应属性值作为筛选的辅助信息。将生成的候选序列按照<span class="math inline"> \(3 *P(sensible) + P(specific) +
-P(interesting)\)</span> 进行排名，选择排名靠前的候选序列作为下一个响应。</p>
-<p>可以看到，经过微调 + 生成筛选，LaMDA 的安全性和质量都有了较高提升。论文贴心地给出了两种类型的图。可以看到经过微调的 LaMDA 比仅预训练的基础模型在各项指标上都有提升，在对话质量上已经接近甚至超过了人类的水平，安全性上也十分接近人类的水平。不过事实性和信息性还有一定的差距。</p>
-<p><img src="finetune-line.png"></p>
-<p><img src="finetune.png"></p>
-<h3 id="调用外部信息系统">调用外部信息系统</h3>
-<p>为了避免幻觉，谷歌团队构建了一个工具集（Toolset，TS），包含：信息检索系统、计算器、翻译器。TS 接收一个字符串作为输入，输出一个字符串的列表。例如，计算器接收 135+7721”，返回 [“7856”]。类似地，翻译器可以接收 “hello
-in French” 并输出 [“Bonjour”]。信息检索系统可以接收 “Howold is Rafael
-Nadal?”，并输出 [“Rafael Nadal / Age /
-35”]。如果一个工具无法解析输入（例如，计算器无法解析 “Rafael Nadal
-几岁？”），它将返回一个空的结果列表，因此不会对最终输出列表做出贡献。</p>
-<p>团队收集了 40k 监督的对话数据用于生成，9k 条 LaMDA 的生成候选数据（标记为正确 / 不正确）用于判别排名。这些数据同样是众包人员与 LaMDA 间通过交互式和静态方法收集得到。</p>
-<p>微调分为两部分：</p>
-<ul>
-<li>根据上下文和基础模型响应，获取 TS 查询字符串。例如，Rafael Nadal
-几岁？：上下文 + 基础→“TS，Rafael Nadal 的年龄”</li>
-<li> 根据基础回复和 TS 返回结果，预测事实版本回复：例如，“他现在 31
-岁”+“Rafael Nadal / Age / 35”。然后它预测事实版本：上下文 + 基础 + 查询
-+ 片段 →“用户，他现在 35 岁”。</li>
-</ul>
-<p>实际交互的例子如下：</p>
-<p><img src="toolset.png"></p>
-<h2 id="总结">总结</h2>
-<p>这篇论文还是挺有意思的，这种生成式 + 判别式微调的方式还是第一次见，而且也可以辅助结果搜索。而且，少量的微调数据就可以取得非常好的效果。引用原文中的一句话：使用适量的人工注释微调数据（不到
-0.001%
-的预训练数据），可以在更好质量和更安全的对话模型方面取得重大进展。</p>
-<p>虽然，说是少量，也有几千上万条数据，而且就论文中的标注复杂度，标注成本也是蛮高的。不过相较于预训练数据的海量数据，微调数据可以说是少的多的多了。</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>对话生成</category>
-      </categories>
-      <tags>
-        <tag>自然语言处理</tag>
-        <tag>对话生成</tag>
-        <tag>LaMDA</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>KnowledGPT: 基于预训练语言模型的知识对话</title>
     <url>/blog/2022/05/03/KnowledGPT/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -1212,6 +1129,248 @@ KnowledGPT。另一方面，较大的 <span class="math inline">\(T_{max}\)</spa
       </tags>
   </entry>
   <entry>
+    <title>基于知识库的问答综述（KBQA）</title>
+    <url>/blog/2021/10/25/KBQA-survey/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>今天来读一篇 2021 年的知识库问答的综述，《A Survey on Complex Knowledge
+Base Question Answering:Methods, Challenges and
+Solutions》，论文收录在 IJCAI
+2021 中。这篇文章主要介绍了知识库问答的背景与挑战，并总结介绍了两大主流方法：基于语义解析（semantic
+parsing-based，SP-based）和基于信息检索（information
+retrivel-based，IR-based）。 <span id="more"></span></p>
+<h2 id="知识库问答">知识库问答</h2>
+<p>知识库是一个结构化的数据库，它与知识图谱类似，由（主体 Subject，关系 Relation，客体 Object）三元组组成，例如（JK 罗琳，出生地，英国），常见的知识库有 Freebase 等。这个三元组可以用来回答 “JK 罗琳出生在哪里？” 的问题。与简单的、答案与主体直接相连的简单 QA 不同，复杂 QA 查询任务涉及多跳推理甚至一些聚合关系。例如下图知识库，“谁是 The
+Jeff Probst Show 提名的 TV
+Producer 的第一任妻子” 问题的答案，包含多个实体和多跳处理逻辑。 <img src="multi-hop.png"></p>
+<p>KBQA 的第一步是识别问题中的主体并链接到知识库中的实体，然后根据实体的邻域推导问题答案。这里分为两种方法基于语义解析和基于信息检索的两种方法。语义解析的思想是将自然语言问题表示为可以在知识库中进行查询的符号化的逻辑形式，然后再用逻辑语言进行查询（例如 SQL）。基于信息检索的方法思想是构建一个问题特定的知识图包含了相关的所有信息，然后将所有实体按相关性进行排序。然而，这些方法会面临以下挑战：</p>
+<ul>
+<li>基于语义解析的方法很难覆盖复杂的查询（多跳推理、约束关系、数值计算等）。类似的，基于信息检索的方法也很难回答复杂的问题，检索的实体范围可能太小，而且解释性差。</li>
+<li>复杂的实体和关系会使得搜索空间过大（逻辑形式、候选结果等），搜索开销过大。</li>
+<li>两种方法将问题理解看作重要的步骤，当问题的语法和语义复杂时，模型需要有很强的自然语言理解和生成能力。</li>
+<li>弱监督问题。问答数据集中往往只存在问题和答案，缺少推理路径，而标注这样的推理路径成本过于高昂。弱监督问题给两种方法都带来了困难。</li>
+</ul>
+<p>评估指标上，KBQA 往往是从答案集合上选出置信度最高的，常见的评估指标由 F1、准确率、召回率、Hits@1 等。</p>
+<h2 id="主流方法">主流方法</h2>
+<p>流程图如下图所示。 <img src="methods.png"></p>
+<h3 id="基于语义解析的方法">基于语义解析的方法</h3>
+<p>旨在将自然语言问题解析为逻辑形式，按照以下步骤：</p>
+<ol type="1">
+<li>问题编码</li>
+<li>逻辑解析</li>
+<li>逻辑验证</li>
+<li>逻辑执行</li>
+</ol>
+<p>优点：解释性强</p>
+<p>缺点：严重依赖逻辑形式和解析算法的设计，成为性能提升的瓶颈</p>
+<h3 id="基于信息检索的方法">基于信息检索的方法</h3>
+<p>旨在根据问题检索候选答案集合并对其进行排序，按照以下步骤：</p>
+<ol type="1">
+<li>确定中心实体，提取问题特定的部分知识子图</li>
+<li>问题编码</li>
+<li>图推理，沿着相邻实体关系进行语义匹配，传播和聚合信息</li>
+<li>按照置信度进行排序</li>
+</ol>
+<p>优点：端到端训练</p>
+<p>缺点：解释性差</p>
+<h2 id="挑战与解决方案">挑战与解决方案</h2>
+<p>论文总结了两种方法面临的挑战和解决方案，汇总成下面的表格。</p>
+<p><img src="summary.png"></p>
+<h2 id="总结和展望">总结和展望</h2>
+<p>论文主要介绍了两种典型的知识库问答方法，总结了它们面临的挑战及解决方案，并指出复杂 KBQA 未来的可能研究方向：</p>
+<ul>
+<li>在线学习。已有的复杂 KBQA 系统都是离线学习、在线部署。然而用户的反馈可能是改进 KBQA 的方法。基于此，一些工作开始利用用户反馈去纠正 KBQA 的回答。还有一些工作直接让用户参与到了问题解析过程中。</li>
+<li>鲁棒性和可解释性。已有的方法虽然可以在基准数据集上可以取得很好的结果，但是遇到分布之外的情况可能无法很好处理。有研究人员开始提出相关的数据集来解决该问题。</li>
+<li>更通用的知识库。知识库往往是不完整的，一些工作开始引入文本、图像来进行更复杂的 KBQA 推理。关于知识库更普遍的定义和更灵活的使用方法能让 KBQA 发展的更好。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>问答检索</category>
+      </categories>
+      <tags>
+        <tag>问答</tag>
+        <tag>知识库</tag>
+        <tag>KBQA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人</title>
+    <url>/blog/2022/03/19/LaMDA/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>《LaMDA: Language Models for Dialog
+Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（<strong>La</strong>nguage
+<strong>M</strong>odels for <strong>D</strong>ialog
+<strong>A</strong>pplication）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和事实性方面的改进很小。而监督数据上的微调能够帮助模型利用外部知识源进行回复，显著改进了安全性和事实性两个指标。</p>
+<span id="more"></span>
+<p>LaMDA 构建了一个工具集（TS，Tool
+set），包含：信息检索系统、计算器、翻译器。通过监督数据微调，LaMDA 能够利用这些工具来回答问题，这使得模型能够根据已知知识来源做出响应，减少了幻觉现象。</p>
+<h2 id="简介">简介</h2>
+<p>LaMDA
+使用单个 Transformer 模型来执行多项任务：它生成潜在响应，然后出于安全考虑对其进行过滤、基于外部知识源并重新排序以找到最高质量的响应。LaMDA 的参数范围从
+2B 到 137B
+参数，在以上指标上进行测试。结果如下图所示。左侧为质量分数，右侧为安全性和事实性分数。</p>
+<p><img src="overview.png"></p>
+<p>可以观察到：</p>
+<ul>
+<li>单独的模型缩放提高了质量，但它在安全性和接地性方面的改进远远落后于人类表现</li>
+<li>结合缩放和微调在所有指标上显着提高了
+LaMDA，尽管模型的性能仍然低于人类水平在安全性和接地性的水平</li>
+</ul>
+<h2 id="预训练">预训练</h2>
+<p>预训练模型架构都差不多，关键参数如下：</p>
+<ul>
+<li>参数规模：137B</li>
+<li> 数据集：预训练（2.97B 文档 + 1.12B 对话）</li>
+<li>架构 &amp; 训练目标：Transformer-Decoder，语言模型（预测下一个 token），如下图所示</li>
+<li>训练成本：1024 TPU-v3 * 57.7 天</li>
+</ul>
+<p><img src="pretraining.png"></p>
+<h2 id="评价指标">评价指标</h2>
+<h3 id="ssi">SSI</h3>
+<p><strong>SSI</strong> 是合理性、特异性、趣味性三项指标（Sensibleness,
+Specificity,
+Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（合理性、特异性两项平均）的改进。各项指标具体含义如下：</p>
+<ul>
+<li><strong>合理性</strong>：衡量模型的回复在上下文和不要与前面所说的任何内容相矛盾。然而，通用和无聊的回复，例如 “我不知道” 的合理性分数可能很高。因此只有这一项指标是远远不够的。</li>
+<li><strong>特异性</strong>：衡量模型的回复是否特定于上下文。例如，如果用户说 “我爱欧洲电视网”，而模型回答 “我也是”，那么它的特异性得分为
+0。因为这种句式适用于很多上下文。</li>
+<li><strong>趣味性</strong>：衡量模型的回复是否有趣。例如，对 “我如何扔球？” 的回应可能是 “你可以先捡起然后扔球来扔球”，这是有道理的，并且是针对问题的。另一个更深层次和更令人满意的答案可能是 “扔球的一种方法是用双手牢牢握住它，然后再向下摆动你的手臂，伸展你的肘部，然后向上释放球”。</li>
+</ul>
+<p>每项指标对应一个 0/1 标签，正例为 1，负例为 0，算术平均后就是 SSI 的值。</p>
+<h3 id="角色特定指标">角色特定指标</h3>
+<p><strong>有用性</strong>：如果模型的响应包含基于用户使用信息检索系统进行的独立研究的正确信息，并且用户认为它们有帮助，则它们被标记为有用。<strong>有用的响应是信息性响应的子集</strong>，由用户判断为正确且有用。</p>
+<p><strong>角色一致性</strong>：如果模型的响应看起来像执行目标角色的代理会说的话，则它们被标记为角色一致。这个与合理性中的一致性不同，这里的一致性是指，例如让模型扮演珠穆朗玛峰，模型的回复中的语气词、设定等都要以珠穆朗玛峰为准。</p>
+<h3 id="其他">其他</h3>
+<p><strong>安全性</strong>是根据 Google
+人工智能原则设定的，用以以避免造成伤害风险的意外结果，并避免产生或加强不公平的偏见，这个对应很多条规则，比较复杂，就略过了。</p>
+<p><strong>事实性</strong>：包含外部世界声明的回复中，可由权威外部来源支持的回复的百分比。</p>
+<p><strong>信息性</strong>：在所有回复中，包含已知来源支持的外部世界信息的回复所占的百分比。信息性与事实性仅在限定词上有所不同。因此，像 “这是一个好主意” 这样的回答，如果不包含任何外部世界的信息，就不会影响其事实，但会影响其信息性。</p>
+<p><strong>引用准确度</strong>：引用其来源 URL 的模型回应在所有明确声称外部世界的回应中所占的百分比，不包括众所周知的事实（如 “马有四条腿”）。</p>
+<h2 id="微调">微调</h2>
+<h3 id="判别式生成式微调">判别式 / 生成式微调</h3>
+<p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（合理性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
+<p>LaMDA 生成回复的时候按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;</code> 的模板进行生成，按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;&lt;属性&gt;&lt;分数&gt;</code> 的模板进行判别式微调，例如 "What’s
+up? RESPONSE not much. SENSIBLE 1"。</p>
+<p>得到众包数据后，按照上述模板进行微调。这样在生成时，就能够预测出对应属性值作为筛选的辅助信息。将生成的候选序列按照<span class="math inline"> \(3 *P(sensible) + P(specific) +
+P(interesting)\)</span> 进行排名，选择排名靠前的候选序列作为下一个响应。</p>
+<p>可以看到，经过微调 + 生成筛选，LaMDA 的安全性和质量都有了较高提升。论文贴心地给出了两种类型的图。可以看到经过微调的 LaMDA 比仅预训练的基础模型在各项指标上都有提升，在对话质量上已经接近甚至超过了人类的水平，安全性上也十分接近人类的水平。不过事实性和信息性还有一定的差距。</p>
+<p><img src="finetune-line.png"></p>
+<p><img src="finetune.png"></p>
+<h3 id="调用外部信息系统">调用外部信息系统</h3>
+<p>为了避免幻觉，谷歌团队构建了一个工具集（Toolset，TS），包含：信息检索系统、计算器、翻译器。TS 接收一个字符串作为输入，输出一个字符串的列表。例如，计算器接收 135+7721”，返回 [“7856”]。类似地，翻译器可以接收 “hello
+in French” 并输出 [“Bonjour”]。信息检索系统可以接收 “Howold is Rafael
+Nadal?”，并输出 [“Rafael Nadal / Age /
+35”]。如果一个工具无法解析输入（例如，计算器无法解析 “Rafael Nadal
+几岁？”），它将返回一个空的结果列表，因此不会对最终输出列表做出贡献。</p>
+<p>团队收集了 40k 监督的对话数据用于生成，9k 条 LaMDA 的生成候选数据（标记为正确 / 不正确）用于判别排名。这些数据同样是众包人员与 LaMDA 间通过交互式和静态方法收集得到。</p>
+<p>微调分为两部分：</p>
+<ul>
+<li>根据上下文和基础模型响应，获取 TS 查询字符串。例如，Rafael Nadal
+几岁？：上下文 + 基础→“TS，Rafael Nadal 的年龄”</li>
+<li> 根据基础回复和 TS 返回结果，预测事实版本回复：例如，“他现在 31
+岁”+“Rafael Nadal / Age / 35”。然后它预测事实版本：上下文 + 基础 + 查询
++ 片段 →“用户，他现在 35 岁”。</li>
+</ul>
+<p>实际交互的例子如下：</p>
+<p><img src="toolset.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是挺有意思的，这种生成式 + 判别式微调的方式还是第一次见，而且也可以辅助结果搜索。而且，少量的微调数据就可以取得非常好的效果。引用原文中的一句话：使用适量的人工注释微调数据（不到
+0.001%
+的预训练数据），可以在更好质量和更安全的对话模型方面取得重大进展。</p>
+<p>虽然，说是少量，也有几千上万条数据，而且就论文中的标注复杂度，标注成本也是蛮高的。不过相较于预训练数据的海量数据，微调数据可以说是少的多的多了。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>对话生成</category>
+      </categories>
+      <tags>
+        <tag>自然语言处理</tag>
+        <tag>对话生成</tag>
+        <tag>LaMDA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>复杂知识库问答（KBQA）中的问题迁移</title>
+    <url>/blog/2022/03/13/Program-Transfer/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>《Program Transfer for Answering Complex Questionsover Knowledge
+Bases》是由清华大学和华为合作完成的工作，收录于 ACL
+2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上的 KBQA 性能。
+<span id="more"></span></p>
+<p>本文所讲的方法是语义解析的思想，将 query 先转化为知识库的操作序列，如下图所示。分析出 query 对应的操作序列（Find，Relate..），再为每个操作填入参数（实体、关系等），执行操作即可得到结果。</p>
+<p><img src="example.png"></p>
+<h2 id="背景">背景</h2>
+<p>知识库问答，即 KBQA，旨在利用结构化的知识库来解答 query。在<a href="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/#more">基于知识库的问答综述（KBQA）</a>中提到了，KBQA 有两种主流方法，<strong>语义解析</strong>的方法将 query 转化为 SQL 语句，执行即可得到结果；信息检索的方法在特定子图中将实体按相关性排序，最终得到结果。复杂 KBQA 是指需要处理多跳逻辑的 KBQA 问题。这种情况下，KBQA 所面临的推理路径的监督数据缺失、语义理解能力不足、检索空间过大等问题会更为突出。</p>
+<p>程序规约是指将 KBQA 问题规约为某个可执行的程序，也就是语义解析的思想。近些年来，一些知识库提供了监督的程序规约信号，在这些知识库上的程序规约问答取得了大幅性能提升。如何使用这些监督信号，提升低资源知识库上的性能呢？本文将其定义为程序迁移任务，该任务面临以下挑战：</p>
+<ul>
+<li><strong>域异构</strong>：由于语言和知识的多样性，源知识库和目标知识库上的知识、问题的表现形式可能相去甚远。</li>
+<li><strong>未知的元素</strong>：源知识库的知识覆盖率往往相当有限，例如 KBQA
+Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
+<li><strong>过大的搜索空间</strong>：每个知识库操作可选的参数很多，搜索知识库和操作和可选参数不现实。</li>
+</ul>
+<p>本文的贡献包括：</p>
+<ul>
+<li>首次提出复杂 KBQA 的程序迁移方法</li>
+<li>为程序迁移提出一个两阶段解析框架和本体剪枝策略</li>
+<li>通过扩展实验和消融实验证实了程序迁移的有效性</li>
+</ul>
+<h2 id="框架结构">框架结构</h2>
+<p>这一部分其实非常简单，对着下面这张图就能解释清楚，不需要任何数学公式。</p>
+<p><img src="framework.png"></p>
+<ol type="1">
+<li>BERT+GRU 将 query 映射为无参数操作序列（与知识库无关）</li>
+<li>利用上一步每个操作的 hidden
+state 投影后在可选参数空间做 softmax，选择参数</li>
+<li>参数剪枝：根据 query 维护可能的域、关系、实体集合，并随着参数序列的自回归过程迭代更新。</li>
+</ol>
+<h3 id="源域预训练">源域预训练</h3>
+<p>损失函数包含两部分：操作序列的交叉熵和参数位置的交叉熵，即两个分类任务损失之和。
+<span class="math display">\[
+\mathcal {L}^{pretrain}=-\sum_{(x^S,y^S)\in
+D^S}(logp(y^S_s|x^S)+\sum_{t=1}^{|y_s|}logp(arg_t^S|x^S,o_t^S,\mathcal
+P))
+\]</span></p>
+<h3 id="目标域微调">目标域微调</h3>
+<p>由于目标域缺少源域的监督程序归纳信号，因此需要通过强化学习 / EM 算法来微调。主要步骤是先搜索得到若干个可能的程序，然后执行程序根据结果更新参数。</p>
+<h2 id="实验">实验</h2>
+<h3 id="数据集">数据集</h3>
+<ul>
+<li>源域：KBQA Pro</li>
+<li> 目标域：WebQuestionSP，ComplexWebQuestions (CWQ)</li>
+<li> 知识库：Freebase</li>
+</ul>
+<h3 id="基线">基线</h3>
+<ul>
+<li>语义解析：TEX-TRAY，QGG，TeacherNet</li>
+<li> 信息检索：Graft-Net，PullNet</li>
+<li> 消融实验基线：<span class="math inline">\(Ours_{-f}\)</span>（未微调），<span class="math inline">\(Ours_{-p}\)</span>（未预训练），<span class="math inline">\(Ours_{-pa}\)</span>（未预训练参数解析器），<span class="math inline">\(Ours_{-o}\)</span>（缺少本体剪枝）</li>
+</ul>
+<h3 id="评估指标">评估指标</h3>
+<ul>
+<li>F1</li>
+<li>Hits@1：Hits@n 是指正例中处在前 n 个结果中的比例，Hits@1 也就是模型结果第一名为正确结果的比例</li>
+</ul>
+<p>由于数据集中的问题有多个答案，F1 更好地反映了答案的覆盖程度。</p>
+<h3 id="实验结果">实验结果</h3>
+<p><img src="exper-result.png"></p>
+<p>值得关注的是<span class="math inline"> \(Ours_{-p}\)</span> 极差的结果和<span class="math inline"> \(Ours_{-f}\)</span> 的一般表现，表明了预训练的重要性。并且移去预训练参数解析器和本体剪枝策略都会对模型效果有较大影响。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是蛮有意思的，用一个比较贴近人认知的框架，把迁移学习应用到 KBQA 中并证实了其有效性。</p>
+<p>近期还会从各高校 ACL2022 录取宣传中找一些值得读的论文。等到 ACL
+2022 公布 accepted list 了就不用这么折腾了。</p>
+<p>碎碎念：我也好想发一篇论文啊。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>问答</category>
+      </categories>
+      <tags>
+        <tag>自然语言处理</tag>
+        <tag>问答</tag>
+        <tag>知识图谱</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>PLATO-XL</title>
     <url>/blog/2022/02/19/PLATO-XL/</url>
     <content><![CDATA[<h2 id="前言">前言</h2>
@@ -1310,81 +1469,436 @@ size，论文还使用了梯度检查点，即不保存一部分前向过程中�
       </tags>
   </entry>
   <entry>
-    <title>有错误论文 - ACL2020：交叉 VAE 用于答案检索</title>
-    <url>/blog/2022/03/31/Crossing-VAE/</url>
+    <title>MoE：通过条件计算增加模型容量</title>
+    <url>/blog/2022/06/05/MoE/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
-<p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
-<p>《Crossing Variational Autoencoders for Answer
-Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL
-2020 中。</p>
+<p>今天来读一篇关于条件计算的论文，《<strong>Outrageously Large Neural
+Networks: The Sparsely-Gated Mixture-of-Experts
+Layer</strong>》，收录于 2017 年 ICLR。神经网络模型的容量（
+capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计算性能下降。本文提出了一种条件计算的方法，对每个样本只激活部分参数，可以在不成比例地增加计算量的情况下显着增加模型容量，实现了超过 1000 倍的容量提升，在大型语言建模和机器翻译基准上，这些模型以更低的计算成本实现了新的 SOTA。</p>
 <span id="more"></span>
+<p>具体而言，论文引入了稀疏门控混合专家层（MoE，Sparsely-Gated
+Mixture-of-Experts
+Layer），由前馈神经网络和门控网络组成。门控网络用于选择专家的稀疏组合，处理每个输入。网络的所有部分都通过反向传播联合训练。</p>
 <h2 id="介绍">介绍</h2>
-<p>先按照正常的步骤介绍其背景和方法。</p>
-<p>答案检索，即从答案候选集合中，选择最匹配问题的答案。解决该问题的一个关键因素在于，如何学习到一个好的问题 / 答案的向量表示。传统的方法使用两个编码器 / 变分自编码器（孪生网络）分别学习二者的向量表征。这种方法过于分离，无法捕捉二者之间的对齐语义。因此，本文提出了交叉变分自编码器，类似 Seq2Seq 的方法，学习二者间的语义对齐。</p>
-<p><img src="structure.png"></p>
-<p>如上图所示。左一为孪生编码器，分别将答案和问题进行编码，得到向量表征后再判断是否匹配。中间的孪生自编码器也类似，区别在于使用自编码器学习到性质更好的向量表征。但是他们有个共同点：<strong>答案和问题的向量表征是分开编码得到的</strong>。这意味着编码过程中只有单个问题或答案的信息（语义、句法等），而我们关心的是答案和问题是否语义对齐。因此按前一种方法训练得到的向量表征，并不能很好地满足任务的需要。右一为本文提出的孪生交叉 VAE，即在 VAE 的基础上，使用问题和答案的隐变量重构彼此，而非重构自身。从模型结构上，该模型不像 VAE 而更像 Seq2Seq。</p>
-<p>举个例子，在问答中，相似的问题的答案可能相去甚远，相似的答案的问题形式可能也差别很大。下图展示了 SQuAD 数据集上的例子，同一个答案与 17 个不同的问题相对齐。只看这些问题的语义，可能差别很大。也就是<span class="math inline"> \(z_q\)</span> 是分开的，而答案却相同，即<span class="math inline"> \(z_q\)</span> 是固定的。这种情况下，希望<span class="math inline"> \(p(y|z_q,z_a)\)</span> 对这些不同的<span class="math inline"> \(z_q\)</span> 都有较好的对齐效果是比较困难的。</p>
-<p><img src="SQuAD-example.png"></p>
-<p>究其根本，是<strong>同一个答案与不同的问题对齐时，其语义信息侧重点各不相同。</strong>当提问词是 "how
-many"是，答案侧重点为"three"，当提问词为"three
-cities"时，答案侧重点为"New
-Orleans"... 而分开编码得到的向量表征是固定的。要解决这个问题，必须要将答案和问题的编码结合起来。</p>
-<p>论文的方法在 MRR 和 R@1 上分别取得了 SOTA，分别提升了 1.46% 和 3.65%。不过对比工作里的 BERT 我怀疑是未做 finetune 的，效果太差了。</p>
-<h2 id="方法">方法</h2>
-<h3 id="问题定义">问题定义</h3>
-<p>问题集合：<span class="math inline">\(q\in \mathcal
-Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal
-A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\sub \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
-<h3 id="交叉vae">交叉 VAE</h3>
-<p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为：
+<p>正如前文所说，模型的容量受限于参数规模，简单扩大参数会导致训练成本大致呈二次增长。条件计算基于每个样本选择网络的不同部分激活。用于选择的门控决策可以是二元的、稀疏的、连续的、随机的或确定的。各种形式的强化学习和反向传播策略可用于训练门控决策。然而，该方法面临很多的挑战：</p>
+<ul>
+<li><strong>分支低效</strong>：计算设备，尤其 GPU，计算要比分支快得多。熟悉流水线 CPU 的同学应该知道，分支的分支错误惩罚会导致数个时钟周期的停顿，严重影响计算效率</li>
+<li><strong>批大小受限</strong>：条件计算减少了网络条件活动块的 batch
+size</li>
+<li><strong> 网络带宽（IO）受限</strong>：GPU 的计算能力往往是网络带宽的数千倍，嵌入层，也可以看做一种条件计算，往往需要网络发送，这种参数交互受到网络带宽而非计算能力的限制</li>
+<li><strong>额外损失项</strong>：可能需要额外的损失项控制每个样本的网络稀疏程度，在模型负载和质量间做出平衡。</li>
+<li><strong>大规模数据的依赖</strong>。模型容量的扩大需要大规模数据集训练，现有的一些条件计算工作只使用了最多 60w 数据，难以为万亿计参数的模型提供足够的监督信号。</li>
+</ul>
+<p>论文提出的稀疏门控专家层 MoE，由许多专家组成，每个专家都是一个简单的前馈神经网络，以及一个可训练的门控网络，该网络选择专家的稀疏组合来处理每个输入。结构图示意如下，其中门控网络从中选择了两个，处理样本。</p>
+<p><img src="architecture.png"></p>
+<p>虽然技术是通用的，但论文主要关注在语言模型、机器翻译任务上，这些任务可以从模型规模受益。基于此，论文在堆叠的 LSTM 层上应用了一个 MoE 卷积，如上图所示。对文本的不同位置调用一次 MoE，选择不同的专家组合。不同的专家组合根据语法和语义变得高度专业化。</p>
+<h2 id="moe结构">MoE 结构</h2>
+<p>MoE 由一个门控网络<span class="math inline"> \(G\)</span>、n 个专家网络<span class="math inline"> \(E_1,E_2,\dots,E_n\)</span> 组成。门控网络的输出是一个<span class="math inline"> \(n\)</span> 维的向量。每个专家都是一个前馈网络，输入和输出的维度一致。用<span class="math inline"> \(G(x),E_i(x)\)</span> 分别代表门控网络、第 i 个专家网络的输出，<span class="math inline">\(x\)</span> 为专家网络的输入。MoE 的输出为专家网络输出的加权和，权重为门控网络对应维度的元素值，公式如下：
 <span class="math display">\[
-p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\\
-p(a|q)=\mathbb E_{z_q\sim p(z_q|q)}[p(a|z_q)]
-\]</span> 问答对的匹配，即计算条件分布<span class="math inline"> \(p(y|a,q)\)</span>，等价于 <span class="math display">\[
-p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
-\]</span> 目标函数包含三部分：</p>
-<p><strong>交叉重构损失</strong>，即两个交叉熵损失之和，公式如下。其中<span class="math inline"> \(E,D\)</span> 分别代表编码器、解码器。 <span class="math display">\[
-\mathcal L_{cross}(\theta_E,\theta_D)=y\cdot \mathbb E_{q\sim
-Q}[-logp_D(q|a,E(a))]+ y\cdot\mathbb E_{a\sim A}[-logp_D(a|q,E(q))]
-\]</span>
-<strong>KL 散度损失</strong>，两部分后先验 KL 散度之和，公式如下： <span class="math display">\[
-\mathcal L_{KL}(\theta_E)=y\cdot \mathbb E_{q\sim
-Q}[D_{KL}((p(z_q|q)||p(z_q))]+ y\cdot \mathbb E_{a\sim
-A}[D_{KL}((p(z_a|a)||p(z_a))]
-\]</span>
-<strong> 问答匹配损失</strong>，最后输出的匹配结果的交叉熵损失，公式如下。其中，<span class="math inline">\(f\)</span> 为匹配函数。 <span class="math display">\[
-\mathcal L_{matching}(\phi_f)=-[y\cdot
-logp_{f_\phi}p(y|z_q,z_a)+(1-y)\cdot logp_{f_\phi}(1-p(y|z_q,z_a))]
-\]</span>
-最后，将三个损失相加，即得到了最终的目标函数，并引入超参数控制权重：
-<span class="math display">\[
-\mathcal J=-\alpha \mathcal L_{cross}-\beta\mathcal
-L_{KL}+\gamma\mathcal L_{matching}
+y=\sum_{i=1}^nG(x)_iE_i(x)
+\]</span> 稀疏性体现在<span class="math inline"> \(G(x)\)</span> 上，如果<span class="math inline"> \(G(x)_i\)</span> 为 0，就不需要计算<span class="math inline"> \(E_i(x)\)</span> 了。在实验中，有上千个专家网络，但是只需要计算少部分。如果专家的数量过多，可以通过分层 MoE 减少分支。分层 MoE 中，每个专家都是带有自己门控网络的二级专家组合。下面介绍稀疏门控是如何实现的。</p>
+<h3 id="softmax-门控">Softmax 门控</h3>
+<p>简单的非稀疏门控可以通过 Softmax 函数实现，公式如下： <span class="math display">\[
+G_\sigma(x)=Softmax(x\cdot W_g)
 \]</span></p>
-<h2 id="问题">问题</h2>
-<p>细心的读者可能会发现了，你是要<strong>最小化匹配损失，最后的<span class="math inline"> \(\mathcal
-J\)</span> 应该也是要最小化的。那不就变成最大化 KL 和重构损失了吗？</strong>对，这就是问题所在。论文中提到是要最大化 ELBO 和最小化匹配损失，得到了最后的<span class="math inline"> \(\mathcal J\)</span>。然而事实上，<span class="math inline">\(\mathcal L_{crosss}+\mathcal
-L_{KL}=-ELBO\)</span>，最小化<span class="math inline"> \(\mathcal
-L_{crosss}+\mathcal
-L_{KL}\)</span> 才是在最大化 ELBO。论文作者根本没有分清楚 VAE 的 ELBO 和损失，最后闹出了这种笑话。加之论文中有将 objective 和 loss 混用且使用错误的情况。也侧面印证了这一事实。正确的损失函数应该形如：
+<h3 id="噪声top-k门控">噪声 Top-k 门控</h3>
+<p>在 Softmax 门控网络中，添加稀疏性可提高计算效率，添加噪声可以实现负载均衡，随机性使得每个专家都有激活的机会。具体是通过在取 Softmax 函数前，添加可调高斯噪声，然后只保留前 k 个值，其余置<span class="math inline"> \(-\infty\)</span>，在进行 Softmax 后，对应的门控信号就为 0,。可调高斯噪声，是指标准正态分布的噪声乘以可训练的噪声权重<span class="math inline"> \(Softplus(x\cdot W_{noise})\)</span>。公式如下：
 <span class="math display">\[
-\mathcal J=\alpha \mathcal L_{cross}+\beta\mathcal L_{KL}+\gamma\mathcal
-L_{matching}
-\]</span>
-复现性上，我问了实验室的一个师兄，说是论文的结果是复现不出来的，论文也没有公开代码。再加上我本人看到这篇论文第一感觉的强烈违和感，将 VAE 改为 Seq2Seq 的形式，整个 VAE 的公式可能都要重新推导，只改最后的 ELBO 如何保证过程正确？CVAE 可能才是更自然的想法。</p>
+G(x)=Softmax(KeepTopK(H(x),k))
+\]</span> <span class="math display">\[
+H(x)_i=(x\cdot W_g)_i+StandardNorm()\cdot Softplus((x\cdot W_{noise})_i)
+\]</span> <span class="math display">\[
+KeepTopK (v,k)_i=\begin {cases}
+v_i,\ 如果 v_i 是前 k 大的元素 \\
+-\infty,\ 其他
+\end {cases}
+\]</span></p>
+<h3 id="训练门控网络">训练门控网络</h3>
+<p>通过简单的反向传播以及模型的其余部分来训练门控网络。如果选择 k &gt;
+1，则前 k
+个专家的门值相对于门控网络的权重具有非零导数。梯度通过门控网络反向传播到其输入。</p>
+<h2 id="解决性能挑战">解决性能挑战</h2>
+<h3 id="批大小缩减">批大小缩减</h3>
+<p>大的 batch
+size 对于计算效率是非常重要的，能够减小参数加载和更新的开销。如果门控网络每次只从专家网络中选择 k 个，每个专家对应的 batch
+size 会小得多，这会使得参数的更新更为低效。虽然这个问题可以通过暴力加大 batch
+size 缓解，但这又受限于 GPU 的显存限制。</p>
+<p>论文提出了以下两种增加 batch size 的技术：</p>
+<p><strong>混合数据并行和模型并行</strong>。传统的数据并行分布式训练中，不同设备上的多个模型副本<strong>异步</strong>处理不同 batch 数据，并通过一组参数服务器同步参数。论文提出同步的数据并行策略，不同设备数据同时组合应用于 MoE 层。模型标准层、门控网络都遵循平常的数据并行设置，不同的是，MoE 的每个专家只保留一份共享副本。每个专家都会收到一个组合批次，该批次包含数据并行中与该专家相关的批次。不同的设备上保存着不同的专家子集。所以这是一种混合数据并行和模型并行的方法。模型并行的设置猜测是为了减少显存开销，大量专家的情况下，每个设备上不激活的专家还是很占显存的。</p>
+<p><strong>利用卷积性</strong>。MoE 可以类似卷积操作，施加在每层的不同时间步上应用 MoE，相当于增大了 batch
+size。但对于 RNN 此类网络，其自回归性使得卷积操作无法进行。</p>
+<h3 id="网络带宽">网络带宽</h3>
+<p>分布式计算中另一个主要的性能问题是网络带宽。网络中，专家的输入和输出通过网络发送。为了保持计算效率，专家的计算量与其 IO（输入和输出）的比值必须超过计算设备的计算量与网络容量的比值。对于
+GPU，这可能是数千比一。实验中，专家是仅有一个隐藏层的感知机，权重矩阵的大小为
+input_size×hidden_size 和
+hidden_size×output_size，因此计算与输入和输出的比率等于隐藏层的大小。因此，可以简单地通过使用更大的隐藏层或更多隐藏层来提高计算效率。</p>
+<p>其实，也很容易理解，增加内部的计算量当然就相对降低了 IO 开销。</p>
+<h2 id="平衡专家利用率">平衡专家利用率</h2>
+<p>根据论文观察结果，门控网络倾向于为特定的少数专家提供较大的权重。事实上，刚开始受到关注的某些专家会训练地更快，从而会更容易被选择，我愿称其为神经网络的马太效应。为了避免这种情况，论文使用了一种软间隔的方法。定义专家的重要性为 batch 数据中在该专家上的门控值之和。额外损失项<span class="math inline"> \(L_{importance}\)</span>，定义为重要性的变异系数的平方乘以缩放系数<span class="math inline"> \(w_{impotance}\)</span>。公式如下： <span class="math display">\[
+Importance(X)=\sum_{x\in X}G(x)
+\]</span></p>
+<p><span class="math display">\[
+L_{importance}(X)=w_{importance}\cdot CV(Importance(X))^2
+\]</span> 变异系数（coefficient of
+variation，CV），定义为标准差和平均值之比，是概率分布离散程度的归一化度量。当有多个变量进行离散程度比较时，标准差会受到量纲的影响，而变异系数可以消除这种影响。上述损失类似 L2 正则项，倾向于让专家有相同的重要性，但是，专家收到的样本数量可能不同，例如一位专家收到少而权重大的数据，另一个专家收到多而权重小的数据。这会导致分布式硬件出现内存、性能的问题。</p>
+<p>为解决上述问题，论文还引入了一个损失<span class="math inline"> \(L_{load}\)</span>。公式如下： <span class="math display">\[
+P(x,i)=\Phi(\frac{(x\cdot
+W_g)_i-kth\_excluding(H(x),k,i)}{Softplus((x\cdot W_{noise})_i)})
+\]</span></p>
+<p><span class="math display">\[
+Load(X)_i=\sum_{x\in X}P(x,i)
+\]</span></p>
+<p><span class="math display">\[
+L_{load}(X)=w_{load}\cdot CV(Load(X))^2
+\]</span></p>
+<p>其中，<span class="math inline">\(P(x,i)\)</span> 定义为<span class="math inline"> \(G(x)_i\)</span> 不为 0 的概率，<span class="math inline">\(kth_excluding(H(x),k,i)\)</span> 为除了第<span class="math inline"> \(i\)</span> 个元素外，<span class="math inline">\(H(x)\)</span> 中最大的第<span class="math inline"> \(k\)</span> 个元素的值，<span class="math inline">\(\Phi\)</span> 为标准正态分布的概率分布函数。</p>
+<p><span class="math inline">\(L_{load}\)</span> 粗看可能较难理解，将其转化为下式，其中<span class="math inline"> \((x\cdot
+W_g)_{a_k}\)</span> 为第 k 大的门控值。可以看出，上式来自<span class="math inline"> \(H(x)\)</span> 的计算，<span class="math inline">\(H(x)\)</span> 中添加了高斯噪声平滑项，<span class="math inline">\(P(x,i)\)</span> 实际计算得到的是专家<span class="math inline"> \(i\)</span> 和被选中的权值最小的专家（第 k 个）门控值间的差异，并引入高斯噪声，通过标准正态的 CDF 映射得到选中第<span class="math inline"> \(i\)</span> 专家的概率。再通过变异系数计算损失，与<span class="math inline"> \(L_{importance}\)</span> 类似。 <span class="math display">\[
+P(x,i)=\Phi(\frac{(x\cdot W_g)_i-(x\cdot W_g)_{a_k}}{Softplus((x\cdot
+W_{noise})_i)}-\epsilon)
+\]</span></p>
+<h2 id="实验">实验</h2>
+<h3 id="亿级语言模型">亿级语言模型</h3>
+<ul>
+<li>数据集：约 8.29 亿 token 的新闻语料，词表约 80w</li>
+<li> 先前 SOTA：若干个堆叠的 LSTM 网络组成，参数从 200w 到 1.51 亿</li>
+<li>本文模型：两层 LSTM 堆叠，中间有一个 MoE 层，MoE 层的大小、专家数量有所不同（4-4096）。每个专家约 100w 参数，选择的专家数 k=4</li>
+</ul>
+<p>为了研究增加容量的效果，论文训练了一系列 MoE 模型，并控制它们的计算成本（约时间步每 800w 次加乘操作，该指标记作 ops/timestap）。</p>
+<p>下图展示了该任务上 LSTM 和 MoE 的比较结果。左侧图展示了同样计算成本下，模型的困惑度与参数的关系。基线 LSTM 模型只存在图左上方，少参数而高困惑度。展平的 MoE 与分层 MoE 能在同样参数规模下，获得更低的困惑度。右图为 40 亿参数下，困惑度与计算成本的关系。</p>
+<p><img src="comparison.png"></p>
+<p>下表展示了详细的对比结果，高计算成本的 MoE 能够显著降低困惑度。要注意的是，虽然 MoE 参数最多 30 倍于基础模型，但是每个样本只有 4 个专家处于激活态，这使得模型间的实际激活的参数、计算性能是可比的。</p>
+<p><img src="table-comparison.png"></p>
+<h3 id="千亿谷歌语料">千亿谷歌语料</h3>
+<p>与上述实验配置、结果相似。不过随着 MoE 层中的参数数量超过 10
+亿，增加额外容量似乎会产生递减收益，</p>
+<p><img src="google.png"></p>
+<h3 id="单语对机器翻译">单语对机器翻译</h3>
+<p>WMT'14 翻译数据集，以英法翻译结果为例。此任务使用的模型是 GNMT
+模型的修改版本。为了减少计算量，模型的编码器和解码器中的 LSTM 层数分别从
+9 层和 8 层减少到 3 层和 2 层。论文在编码器（第 2 层和第 3
+层之间）和解码器（第 1 层和第 2 层之间）中都插入了 MoE 层。每个 MoE
+层包含多达 2048 位专家，每个专家大约有 200
+万个参数，总共为模型添加了大约 80 亿个参数。</p>
+<p><img src="en-fr-translation.png"></p>
+<h3 id="多语对翻译">多语对翻译</h3>
+<p>传统方法，使用同一模型进行多语翻译的性能，要差于训练多个模型分别处理单语对翻译。这是由于多个模型提供了更大的模型容量。论文用单一的 MoE 重复了这个实验。MoE
+模型在开发集比多语言 GNMT 模型。在 BLEU 得分上，MoE 模型在 12
+个语言对中的 11 个上显着击败了多语言 GNMT 模型（高达 5.84 分），甚至在
+12 个语言对中的 8 个上击败了单语 GNMT 模型。</p>
+<p><img src="multi-translation.png"></p>
 <h2 id="总结">总结</h2>
-<p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
-<p>科研路漫，诸君共勉。</p>
+<p>这篇论文提出了一种条件计算的方法，并解决了其在实践中遇到的种种挑战（负载均衡、分布式性能等）。在语言模型、机器翻译任务上，证实了其提升模型容量同时保证计算性能的能力。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://zh.m.wikipedia.org/zh-sg/变异系数">变异系数 -
+维基百科，自由的百科全书 (wikipedia.org)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>条件计算</category>
+      </categories>
+      <tags>
+        <tag>条件计算</tag>
+        <tag>门控</tag>
+        <tag>MoE</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RoBERTa</title>
+    <url>/blog/2021/09/03/RoBERTa/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>RoBERTa 是华盛顿大学和 FaceBook 在论文《RoBERTa: A Robustly Optimized
+BERT Pretraining
+Approach》提出的预训练模型，论文似乎仅存在 arxiv 版本。RoBERTa 本质上是 BERT 的一个改进版本。论文发现 BERT 是未充分训练的，改进训练之后的 RoBERTa 在 GLUE、RACE、SQuAD 数据集上达到了 SOTA。代码和模型公开在了 <a href="https://github.com/pytorch/fairseq">github</a> 上。</p>
+<span id="more"></span>
+<p>相对于 BERT 的修改主要有以下方面：</p>
+<ul>
+<li>训练时间更长、数据更大（提出了一个新的数据集 CC-News）、batch 更大（有论文指出更大的 batch 模型训练结果越好）</li>
+<li>移除下句预测预训练任务</li>
+<li>训练序列更长</li>
+<li>动态改变数据的 MASK，而 BERT 的 MASK 是固定的</li>
+</ul>
+<p>在不使用额外的训练数据的情况下，RoBERTa 在 GLUE 和 SQuAD 数据集上取得了优于 BERT 的性能。引入额外的训练数据后，RoBERTa 在 GLUE 中的四项任务、SQuAD、RACE 数据集上达到了 SOTA。</p>
+<h2 id="实验">实验</h2>
+<h3 id="数据集">数据集</h3>
+<ul>
+<li>GLUE（ General Language Understanding
+Evaluation，通用语言理解评估）：由 9 个句子或句子对的分类任务组成。</li>
+<li>SQuAD（ Stanford Question Answering
+Dataset，斯坦福问答数据集）：抽取式问答任务。给出文档和问题，从文档中选择部分文本作为问题答案。</li>
+<li>RACE（ ReAding Comprehension from
+Examinations，考试阅读理解数据集）：顾名思义，数据集来自考试题目，是一个分类任务。单个样本由文档、问题和若干个候选答案组成。正确答案不一定直接体现在文章中，需要深层理解文章并进行推断。</li>
+</ul>
+<h3 id="静态掩码vs动态掩码">静态掩码 vs 动态掩码</h3>
+<p>论文将 RoBERTa 与参数量相近的<span class="math inline"> \(BERT_{BASE}\)</span> 进行了比较，结果如下所示。可以看出，动态掩码的效果与静态掩码持平或者略优于。个人猜测原因是动态掩码虽然能够使得模型模型接触到更多数据、更加鲁棒，但频繁的动态掩码会使得某些样本无法得到充足的训练。</p>
+<p><img src="mask-result.png"></p>
+<h3 id="下句预测">下句预测</h3>
+<p>下句预测任务是 BERT 中提出的预训练任务，用于判断两句话是否构成连续上下句的关系。BERT 论文中认为下句预测任务是非常重要的，它提升了 QNLI、MNLI、SQuAD 数据集的性能。然而，一些工作开始质疑下句预测任务的有效性。RoBERTa 论文中比较了以下几种训练方法：</p>
+<ul>
+<li>句子段（连续多个句子）对 + 下句预测，也就是原版 BERT 的训练方法。</li>
+<li>句子对 + 下句预测。</li>
+<li>跨文档完整句子，将多篇文档拼接在一起，从中连续采样句子，可能跨文档也可能来自同一篇文档。</li>
+<li>单文档句子，从单个文档中连续采样句子。</li>
+</ul>
+<p>实验结果如下：</p>
+<p><img src="nsp.png"></p>
+<p>前两种训练方法比较，前者优于后者，说明独立的句子会损害下流任务的性能。接下来比较有无 NSP 任务的训练方法，分析后可以看出，完整句子移除了 NSP 任务，与拥有 NSP 任务的性能基本持平，在某些任务上还略胜一筹。而单文档句子任务甚至优于跨文档完整句子。</p>
+<h3 id="更大的batch">更大的 Batch</h3>
+<p>机器翻译上的部分工作证实了大 batch-size 能够同时提高优化速度和任务性能，近期工作证实这同样适用于 BERT，论文在<span class="math inline"> \(BERT_{BASE}\)</span> 上进行了 Batch-size 的实验，结果如下：</p>
+<p><img src="batch-size.png"></p>
+<p>可以看出，2k 的 batch size
+确实要优于 256，但 8k 却差于 2k。论文中也没有进行解释，迷惑。</p>
+<h3 id="文本编码">文本编码</h3>
+<p>字节对编码（Byte-Pair
+Encoding）是一种字词模型，BERT 使用它来构建词表。然而当语料规模很大时，unicode 字符会占据词表中相当大部分。2019 年 GPT2 论文指出，可以使用 unicode 字节而非 unicode 字符来作为基本字词单元，然而这种方法可能会有轻微的性能损失（毕竟破坏了字符的完整结构），但是由于其能减小词表规模，RoBERTa 还是基于此进行的词表构建。</p>
+<h2 id="roberta">RoBERTa</h2>
+<p>RoBERTa=BERT + 动态掩码 + 跨文档完整句子 + 更大 batch
+size + 字节编码 + 更大数据 + 更长训练时间</p>
+<p>实验结果如下：</p>
+<p><img src="roberta.png"></p>
+<p>控制训练数据时，RoBERTa 已经优于<span class="math inline"> \(BERT_{LARGE}\)</span> 了（但在 SQuAD 上逊于 XLNET），在增加数据和训练更长时间后，三个数据集上全面超越 XLNET。</p>
+<p>后面就是 GLUE、SQuAD 上各项指标的实验和比较了，基本 RoBERTa 也是最优的，这里就略去了。</p>
+<h2 id="总结">总结</h2>
+<p>RoBERTa 可以看作是 BERT 真正的完全体吧，弥补了原生 BERT 的缺陷。可能是因为创新性不足？没有被会议接受。看来预训练模型也还是很卷的。。。</p>
 ]]></content>
       <categories>
         <category>自然语言处理</category>
-        <category>问答</category>
+        <category>预训练模型</category>
+        <category>BERT</category>
       </categories>
       <tags>
-        <tag>VAE</tag>
-        <tag>自然语言处理</tag>
-        <tag>问答</tag>
-        <tag>负面案例</tag>
+        <tag>BERT</tag>
+        <tag>预训练模型</tag>
+        <tag>RoBERTa</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Sentence-BERT: 减小语义相似度的计算开销</title>
+    <url>/blog/2022/04/04/Sentence-BERT/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT:
+Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP
+2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。
+<span id="more"></span></p>
+<h2 id="介绍">介绍</h2>
+<p>BERT 的结构限制了其不适用于某些任务：大规模文本相似度比较、聚类、信息检索。摘要中已经提到了第一种的例子。聚类和信息检索通常需要将句子映射为一个固定维度的向量，使得相似的句子在语义空间中相近。BERT 虽然也能将句子映射为特定的向量，例如取最后一层 [CLS] 的 token
+embedding，或者做平均池化。但是，实验证明，这样的到的向量甚至差于 GloVe 嵌入的平均。</p>
+<p>SBERT 通过以下步骤解决这个问题：</p>
+<ol type="1">
+<li><p>孪生 BERT 将句子映射为固定维度向量</p></li>
+<li><p>使用相似度度量（余弦相似度、欧氏距离、曼哈顿距离...）</p></li>
+</ol>
+<p>换而言之，即取消两个句子同时馈入网络的要求，利用相似度度量控制学习得到好的单个句子的嵌入。结构如下图所示：</p>
+<figure>
+<img src="architecture.png" alt="结构">
+<figcaption aria-hidden="true">结构</figcaption>
+</figure>
+<p>两个句子被分别编码 + 平均池化得到向量表证后，构建计算语义相似度的分类任务（左图）或者回归任务（有图）。</p>
+<p>作者在 NLI 数据上微调 SBERT，在 7 个 STS 任务上，SBERT 取得了 11.7 个点的提升，相较于 InferSent 和 Universal
+Sentence Encoder。在 SentEval 上，SBERT 分别取得了 2.1 和 2.6 个点的提升。</p>
+<h2 id="方法">方法</h2>
+<p>SBERT 的核心步骤已经在上面介绍了，但还有一些细节需要考虑：</p>
+<ol type="1">
+<li>如何得到固定维度的向量：[CLS]/ 平均池化 / 最大池化</li>
+<li>训练目标：分类 / 回归 / 三元组</li>
+</ol>
+<p>其中，模型的结构（孪生、三胞胎）、训练目标与可用的训练数据息息相关。</p>
+<p><strong>分类目标</strong>：将两个句子向量及逐元素差<span class="math inline"> \(u,v,|u-v|\)</span> 馈入 MLP，并进行 SoftMax 进行分类，公式为：
+<span class="math display">\[
+o_t=softmax(W_t(u,v,|u-v|))
+\]</span> <strong> 回归目标</strong>：与分类类似，区别在于计算<span class="math inline"> \(u,v\)</span> 的余弦相似度，使用 MSE 损失。</p>
+<p><strong>三元组目标</strong>：给定一个原始句子<span class="math inline"> \(a\)</span>，一个正面句子<span class="math inline"> \(p\)</span>，一个负面例子<span class="math inline"> \(n\)</span>，减小<span class="math inline"> \(a,p\)</span> 之间的距离，增大<span class="math inline"> \(a,n\)</span> 之间的距离，即要<strong>最小化下式的损失</strong>：
+<span class="math display">\[
+\max(||s_a-s_p||-||s_a-s_n||+\epsilon,0)
+\]</span> 其中，<span class="math inline">\(s_x\)</span> 为句子<span class="math inline"> \(x\)</span> 的嵌入向量，<span class="math inline">\(||\cdot||\)</span> 为句子度量，<span class="math inline">\(\epsilon\)</span> 为边界，用以保证<span class="math inline"> \(s_p\)</span> 至少<span class="math inline"> \(\epsilon\)</span> 比<span class="math inline"> \(s_n\)</span> 更靠近<span class="math inline"> \(s_a\)</span>，即<span class="math inline"> \(||s_a-s_p||+\epsilon&lt;||s_a-s_n||\)</span>。当这个式子不成立时，损失为 0，参数不进行更新。实验中使用的距离度量为欧氏距离，<span class="math inline">\(\epsilon=1\)</span>。</p>
+<h3 id="训练细节">训练细节</h3>
+<p>作者使用 SNLI、Multi-Genre
+NLI 数据集训练 SBERT。其中，SNLI 数据集由 57 万个句子对 + 标签组成，MultiNLI 由 43 万个句子对组成，带有文本蕴含信息。</p>
+<h2 id="实验">实验</h2>
+<p>在语义文本相似度任务上进行实验验证。传统方法通常学习一个（复杂的）回归函数，将句子嵌入映射到相似性分数。
+然而，这些回归函数以句子对为输入，难以扩展且面临组合爆炸问题。SBERT 则总是使用余弦相似度来比较两个句子之间的相似度嵌入。
+负曼哈顿距离和负欧几里得距离的实验结果也大致相同。</p>
+<h3 id="无监督sts">无监督 STS</h3>
+<p>不使用任何 STS 特定的训练数据。评估数据集为 STS tasks 2012 - 2016， STS
+benchmark，SICK-Relatedness。每个数据集的句子对包含 0 到 5 的的语义关联标签。评估指标上（两个相似度分数），不使用皮尔逊相关系数（Pearson
+correlation
+coefficient），因为它主要衡量随机变量间的<strong>线性相关性</strong>。而是使用斯皮尔曼等级相关系数（Spearman's
+rank correlation
+coefficient），它可以衡量<strong>等级变量间的单调性</strong>，因而更适用于 STS 场景。毕竟两个分数间的相关性不一定是线性的。</p>
+<p>实验结果如下表所示。可以看到 naive 的 BERT embedding 差于 GloVe
+embedding，SBERT 和 SRoBERTa 几乎全面领先，除了 SICK-R。这可能与 Universal
+Sentence Encoder 训练的新闻、问答等语料有关。</p>
+<p><img src="unsupervised-result.png"></p>
+<h3 id="监督sts">监督 STS</h3>
+<p>使用 STS benchmark (STSb)
+数据集进行训练。该数据集包括来自标题、新闻和论坛三个类别的 8,628
+个句子对，分为训练集（5,749）、验证集（1,500）和测试集（1,379）。</p>
+<p>实验结果如下表所示。作者实验了两种训练策略，只在 STSb 上进行训练和在 NLI 数据集上预训练，再在 STSb 数据集上微调。后者能够带来 1-2 个点的提升。可以看到 SBERT 和 BERT 之间的差距不大。</p>
+<p><img src="supervised-result.png"></p>
+<h3 id="争论方面的相似性">争论方面的相似性</h3>
+<p>Argument Facet Similarity （AFS）语料库注释了来自社交媒体对话的 6,000
+个句子论点对，涉及三个有争议的主题：枪支管制、同性婚姻和死刑。数据的标签范围从
+0（“不同主题”）到 5（“完全等效”）。 AFS 语料库中的相似性概念与 SemEval
+的 STS 数据集中的相似性概念完全不同。 STS 数据通常是描述性的，而 AFS
+数据是对话中的争论性摘录。要被认为是相似的，争论不仅必须提出相似的主张，而且还必须提供相似的论证。此外，AFS
+中句子之间的词汇差距要大得多。因此，简单的无监督方法以及最先进的 STS
+系统在该数据集上表现不佳。</p>
+<p>作者使用 10 折交叉验证和跨主题评估（2 个主题用于训练，剩余一个用于评估）进行实验验证。10
+折交叉验证设置中的 SBERT 的性能几乎与 BERT 相当。但是，在跨主题评估中，
+SBERT 的 Spearman 相关性下降了大约 7 个点的
+。这可能是由于缺失主题的情况下，BERT 依然能够通过逐字符比较得到较好的结果，SBERT 只能从单一句子推断主题、主张等，这更具有挑战性。</p>
+<p><img src="argument-result.png"></p>
+<h3 id="维基百科章节">维基百科章节</h3>
+<p>利用维基百科的章节构建三元组数据：<strong>假设文章同一部分中的句子在主题上比不同部分中的句子更接近</strong>，锚点和正例来自文章同一个部分，而负例来自同一篇文章的不同部分。作者在 180
+万个训练三元组上训练 SBERT 一个 epoch，并在 222,957
+个测试三元组上对其进行评估。测试三元组来自一组不同的 Wikipedia
+文章。以准确率为评估指标。实验结果如下表所示。</p>
+<p><img src="wikipedia-result.png"></p>
+<p>可以看出，SBERT 明显优于 Dor 等人的 BiLSTM 方法。</p>
+<h3 id="senteval">SentEval</h3>
+<p>SentEval 是一个流行的工具包，用于评估句子嵌入的质量。
+句子嵌入用作<strong>逻辑回归分类器的特征</strong>。 逻辑回归分类器在 10
+折交叉验证设置中针对各种任务进行训练，并计算测试折的预测准确度。</p>
+<p>尽管 SBERT 的句子嵌入的目标不是用于基于特征的迁移学习，微调是更好的方法。但是 SentEval 依然能够在不同任务上评估句子嵌入的质量。作者在 7 个 SentEval 的句子嵌入任务中比较了 SBERT 的性能：</p>
+<ul>
+<li>MR：电影评论情感预测</li>
+<li> CR：客户产品评论的情绪预测</li>
+<li> SUBJ：来自电影评论和情节句子的主题预测</li>
+<li> MPQA：来自新闻专线的短语级别意见极性分类</li>
+<li> SST：斯坦福情绪树库二分类</li>
+<li> TREC ：来自 TREC 的细粒度问题类型分类</li>
+<li> MRPC：来自平行新闻来源的微软研究院释义语料库</li>
+</ul>
+<p>实验结果如下表所示。可以看到 SBERT 在 5/7 的任务上取得了最优性能，带来平均两个点的性能提升。尽管这种迁移学习并非是 SBERT 的目标，SBERT 依然取得了 SOTA 的性能。SBERT
+明显比 Universal Sentence Encoder 差的数据集是 TREC 数据集。 Universal
+Sentence Encoder 在问答数据上进行了预训练，这似乎有利于 TREC
+数据集的问题类型分类任务。</p>
+<p><img src="senteval-result.png"></p>
+<p>另外，这里的 BERT 的 [CLS] 优于 GloVe 嵌入平均，似乎与前文得到的结论相违背。这是因为任务设置不同。对于
+STS
+任务，论文使用余弦相似度来估计句子嵌入之间的相似度。余弦相似性平等地对待所有维度。相比之下，SentEval
+将逻辑回归分类器与句子嵌入相匹配。这使得某些维度可以对分类结果产生更高或更低的影响。</p>
+<p>观察上表还可以得出结论，BERT 的平均嵌入或者 [CLS] 符号嵌入搭配余弦相似度、欧氏距离、曼哈顿距离是不可行的。对于特征迁移学习，它们产生的结果也比
+InferSent 或 Universal Sentence Encoder
+稍差。然而，使用 SBERT 的孪生网络 + NLI 微调的方法能够得到 SOTA 的句嵌入。</p>
+<h2 id="消融实验">消融实验</h2>
+<p>作者对池化策略、训练目标、拼接结果（分类目标时使用）进行了消融实验。其中，NLI 对应分类任务，STSb 对应回归任务。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<p>可以看到，分类任务下，池化策略影响不大，用于分类的特征拼接结果影响很大。InferSent 和 Universal
+Sentence Encoder 都是使用<span class="math inline"> \((u,v,|u −v|,u
+∗v)\)</span>，然而，在 SBERT 里，<span class="math inline">\(u
+∗v\)</span> 的加入还会损失性能。其中，最重要的特征是逐元素差<span class="math inline"> \(|u - v|\)</span>。</p>
+<p>在回归任务下，池化策略具有很大的影响：最大池化的表现比平均池化或
+CLS-token 策略要差得多。</p>
+<h2 id="计算效率">计算效率</h2>
+<p>下表比较了不同模型在不同设备上每秒可以处理的句子嵌入。越高越好。可以看到 SBERT 在 GPU 上是最快的，相较于 InferSent 的 LSTM，这也得益于 Transformer 的并行性。</p>
+<p><img src="computation-efficiency.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是非常扎实的。从非常现实的计算效率问题出发，使用简单的方法，在不同的任务上取得与 BERT 相似甚至超越 BERT 的性能。其影响力也不容小觑，时至今日已经有 2000 + 的引用。</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>语义相似度</category>
+      </categories>
+      <tags>
+        <tag>BERT</tag>
+        <tag>语义相似度</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Transformer</title>
+    <url>/blog/2021/08/14/Transformer/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>今天读的是大名鼎鼎的 BERT------- 的组件之一 Transformer，出自论文 Google 团队 2017 年的论文《Attention
+Is All You
+Need》。与传统的 GRU、LSTM 等相比，Transformer 只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer 达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
+<span id="more"></span>
+<h2 id="题外话">题外话</h2>
+<p>之前由于换电脑的原因，断更了一段时间。BERT 与 Transformer 的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p>
+<h2 id="模型结构">模型结构</h2>
+<p>Transformer 使用的仍然是 encoder-decoder 架构，但与 RNN 等自回归模型不同，Transformer 使用的是堆叠的多头注意力机制，全连接层等，其模型结构如下所示：</p>
+<p><img src="architecture.png"></p>
+<p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中 N=6，嵌入向量维度为 512。</p>
+<p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个 Masked 的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有 6 个解码器组成。</p>
+<h3 id="注意力机制">注意力机制</h3>
+<p>多头注意力机制可谓是 Transformer 的核心，详细过程可以参考<a href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解 Transformer 完整版</a>。这里只做核心部分介绍，单头计算过程为：
+<span class="math display">\[
+Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
+\]</span>
+Q，K，V 分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline"> \(\sqrt{d_k}\)</span>​​​。这个标量是 softmax 的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下 softmax 的温度系数。</p>
+<p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用 8 个注意力机制，每个注意力机制的输出为 512/8=64 维嵌入向量。</p>
+<h3 id="注意力机制的使用">注意力机制的使用</h3>
+<p>多头注意力机制以三种方式在模型中使用：</p>
+<ul>
+<li>编码器与解码器间的注意力：查询 q 来自解码器，键 K 与值 V 来自编码器。这里的注意力机制用以在输出的每一步关注在输入序列的不同部分，与 seq2seq 的注意力机制相似、</li>
+<li>编码器内的自注意力：查询、键、值均来自编码器。输入序列的每个位置可以得到到整个输入序列的信息。</li>
+<li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline"> \(-\infty\)</span>​，进而经过 softmax 后概率值为 0。</li>
+</ul>
+<h3 id="前馈神经网络">前馈神经网络</h3>
+<p>在编码器和解码器中的前馈神经网络，搭配 relu 激活函数来为模型构造非线性计算。计算过程如下所示：
+<span class="math display">\[
+FFN(x)=\max(0,xW_1+b_1)W2+b_2
+\]</span>
+其中，输入和输出的维度均为 512，隐藏层维度为 1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
+<h3 id="位置编码">位置编码</h3>
+<p>由于 Transformer 中不存在 RNN 中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用 sin 与 cos 函数：
+<span class="math display">\[
+PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})
+\]</span></p>
+<p><span class="math display">\[
+PE_{(pos,2i+1)}=\cos(pos/10000^{2i/d_{model}})
+\]</span></p>
+<p>其中，pos 为位置，i 为向量维度。作者称选取三角函数的原因是假设这样可以更好地使模型学到相对位置关系，对于任意固定的偏移 k，<span class="math inline">\(PE_{pos+k}\)</span> 可以表示为<span class="math inline"> \(PE_{pos}\)</span> 的线性函数。另外，作者还尝试了学习位置编码的方式，实验对比显示，二者结果差别不大。因此作者最终选择了上述编码方式，因为它可以处理更长的序列。</p>
+<h2 id="为什么使用自注意力机制">为什么使用自注意力机制</h2>
+<p>论文从计算时间复杂度、序列操作数、最长路径长度三方面对比了自注意力机制、RNN、CNN 以及受限的自注意力机制，结果如下：</p>
+<p><img src="comparison.png"></p>
+<p>这一部分计算过程论文没有给出，我参考了 <a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN 的对比（时间复杂度，序列操作数，最大路径长度）</a>，这里简单介绍一下。</p>
+<h3 id="计算时间复杂度">计算（时间）复杂度</h3>
+<p>计算复杂度主要取决于计算的规模，以矩阵乘法为例，形状为 NxM 的矩阵与形状为 MxP 的矩阵相乘，得到一个 NxP 的矩阵。结果矩阵中的每个元素为 M 维向量内积的结果，进行 M 次乘法，并求和。所以整个矩阵乘法的复杂度为<span class="math inline"> \(O(NMP)\)</span>。</p>
+<h4 id="自注意力机制">自注意力机制</h4>
+<p><span class="math display">\[
+Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
+\]</span></p>
+<p>其中，Q，K 分别为 nxd 与 dxn 的矩阵，<span class="math inline">\(QK^\intercal\)</span>​的复杂度为<span class="math inline"> \(O(n^2d)\)</span>​​，softmax 的复杂度为<span class="math inline"> \(O(n^2)\)</span>，加权求和的矩阵形状分别为 nxn 与 nxd，复杂度为<span class="math inline"> \(O(n^2d)\)</span>，因此总复杂度为<span class="math inline"> \(O(n^2d)\)</span>​。受限自注意力机制与之同理，区别在于它只使用查询最近的 k 个</p>
+<h4 id="rnn">RNN</h4>
+<p><span class="math display">\[
+h_t=f(Ux_t+Wh_{t-1})
+\]</span></p>
+<p>其中，U 与 x 的形状分别为 dxd 与 dx1（假设隐藏状态与输入维度均为 d），复杂度为<span class="math inline"> \(O(d^2)\)</span>​，W 与 h 的形状分别为 dxd 与 dx1，复杂度同样为<span class="math inline"> \(O(d^2)\)</span>。对于长度为 n 的序列，总复杂度为<span class="math inline"> \(O(nd^2)\)</span>。</p>
+<h4 id="cnn">CNN</h4>
+<p>将输入序列进行 padding 后，总共需要 n 次卷积，每次卷积计算量为 kxd，假设步长为 1，单个卷积核复杂度为<span class="math inline"> \(O(nkd)\)</span>​。为了保证维度相同，需要使用 d 个卷积核，总复杂度为<span class="math inline"> \(O(nkd^2)\)</span></p>
+<h3 id="序列操作数">序列操作数</h3>
+<p>序列操作数主要衡量了并行化的支持情况，只有 RNN 需要串行地完成 n 次序列操作，其他模型均支持并行化。</p>
+<h3 id="最长路径长度">最长路径长度</h3>
+<p>最长路径为序列中首尾 token 在模型中的路径，其长度越长，依赖越不容易被捕捉到。对于自注意力机制，序列中的任意两个元素均可以看作直接相连，路径长度为<span class="math inline"> \(O(1)\)</span>。而 RNN 中，第一个 token 的信息需要进行 n 次迭代才能到达最后一个 token，最大路径长度即为<span class="math inline"> \(O(n)\)</span>。CNN 中，通过若干个卷积层来获取不同位置的信息，每个卷积层（论文中使用的是空洞卷积）相当于让序列信息浓缩了 k 倍（卷积层的输出中的每个位置都有输入中 k 个位置的信息），最大路径长度为<span class="math inline"> \(O(log_kn)\)</span>​。受限的自注意力机制与连续卷积类似，每次卷积相当于可以获取连续 k 个位置的信息，最大路径长度为<span class="math inline"> \(O(n/k)\)</span>。</p>
+<p>这就基本解释了这个突兀的表格是怎么计算得来的了。那么可以总结自注意力机制的优点是：</p>
+<ul>
+<li>单层计算量更少。在实际应用中，序列长度 n 往往小于表征维度 d，因此，自注意力机制的单层计算量相较于 RNN 与 CNN 都要更小。</li>
+<li>支持并行化。这个就不说了，全世界都在针对 RNN。</li>
+<li>能够更好地捕捉长距离依赖。相较于 CNN 与 RNN，自注意力机制的最长路径最短。</li>
+<li>可解释性更强。作者将注意力机制的概率分布展示如下，证明多头注意力的多个头完成了与句子语义与结构相关不同的工作。</li>
+</ul>
+<p><img src="example.png"></p>
+<p>上图是作者给出的多头注意力的例子，使用了两个头。对于 its 这个单词，得到了非常尖锐的概率分布，its 主要与 law 与 application 相关联，一个头捕获到了 its 指代的主体 law，一个头捕获到了 its 的目标 application。个人感觉这个效果也太过于理想了。。。可能这就是 Transformer 吧。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文提出了完全依赖于注意力机制的序列转换模型 Transformer，相较于 RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了 state-of-the-art，在英语成分分析上也取得了比 RNN 更优的结果。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer）
+- 西多士 NLP - 博客园 (cnblogs.com)</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN 的对比（时间复杂度，序列操作数，最大路径长度）</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>BERT</category>
+      </categories>
+      <tags>
+        <tag>BERT</tag>
+        <tag>Transformer</tag>
+        <tag>多头注意力机制</tag>
       </tags>
   </entry>
   <entry>
@@ -1727,295 +2241,12 @@ PTM。这种领域专业知识通常被认为对于解决许多特定领域的�
         <category>综述</category>
       </categories>
       <tags>
-        <tag>BART</tag>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
+        <tag>BART</tag>
         <tag>自然语言处理</tag>
         <tag>综述</tag>
         <tag>GPT</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>复杂知识库问答（KBQA）中的问题迁移</title>
-    <url>/blog/2022/03/13/Program-Transfer/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>《Program Transfer for Answering Complex Questionsover Knowledge
-Bases》是由清华大学和华为合作完成的工作，收录于 ACL
-2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上的 KBQA 性能。
-<span id="more"></span></p>
-<p>本文所讲的方法是语义解析的思想，将 query 先转化为知识库的操作序列，如下图所示。分析出 query 对应的操作序列（Find，Relate..），再为每个操作填入参数（实体、关系等），执行操作即可得到结果。</p>
-<p><img src="example.png"></p>
-<h2 id="背景">背景</h2>
-<p>知识库问答，即 KBQA，旨在利用结构化的知识库来解答 query。在<a href="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/#more">基于知识库的问答综述（KBQA）</a>中提到了，KBQA 有两种主流方法，<strong>语义解析</strong>的方法将 query 转化为 SQL 语句，执行即可得到结果；信息检索的方法在特定子图中将实体按相关性排序，最终得到结果。复杂 KBQA 是指需要处理多跳逻辑的 KBQA 问题。这种情况下，KBQA 所面临的推理路径的监督数据缺失、语义理解能力不足、检索空间过大等问题会更为突出。</p>
-<p>程序规约是指将 KBQA 问题规约为某个可执行的程序，也就是语义解析的思想。近些年来，一些知识库提供了监督的程序规约信号，在这些知识库上的程序规约问答取得了大幅性能提升。如何使用这些监督信号，提升低资源知识库上的性能呢？本文将其定义为程序迁移任务，该任务面临以下挑战：</p>
-<ul>
-<li><strong>域异构</strong>：由于语言和知识的多样性，源知识库和目标知识库上的知识、问题的表现形式可能相去甚远。</li>
-<li><strong>未知的元素</strong>：源知识库的知识覆盖率往往相当有限，例如 KBQA
-Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
-<li><strong>过大的搜索空间</strong>：每个知识库操作可选的参数很多，搜索知识库和操作和可选参数不现实。</li>
-</ul>
-<p>本文的贡献包括：</p>
-<ul>
-<li>首次提出复杂 KBQA 的程序迁移方法</li>
-<li>为程序迁移提出一个两阶段解析框架和本体剪枝策略</li>
-<li>通过扩展实验和消融实验证实了程序迁移的有效性</li>
-</ul>
-<h2 id="框架结构">框架结构</h2>
-<p>这一部分其实非常简单，对着下面这张图就能解释清楚，不需要任何数学公式。</p>
-<p><img src="framework.png"></p>
-<ol type="1">
-<li>BERT+GRU 将 query 映射为无参数操作序列（与知识库无关）</li>
-<li>利用上一步每个操作的 hidden
-state 投影后在可选参数空间做 softmax，选择参数</li>
-<li>参数剪枝：根据 query 维护可能的域、关系、实体集合，并随着参数序列的自回归过程迭代更新。</li>
-</ol>
-<h3 id="源域预训练">源域预训练</h3>
-<p>损失函数包含两部分：操作序列的交叉熵和参数位置的交叉熵，即两个分类任务损失之和。
-<span class="math display">\[
-\mathcal {L}^{pretrain}=-\sum_{(x^S,y^S)\in
-D^S}(logp(y^S_s|x^S)+\sum_{t=1}^{|y_s|}logp(arg_t^S|x^S,o_t^S,\mathcal
-P))
-\]</span></p>
-<h3 id="目标域微调">目标域微调</h3>
-<p>由于目标域缺少源域的监督程序归纳信号，因此需要通过强化学习 / EM 算法来微调。主要步骤是先搜索得到若干个可能的程序，然后执行程序根据结果更新参数。</p>
-<h2 id="实验">实验</h2>
-<h3 id="数据集">数据集</h3>
-<ul>
-<li>源域：KBQA Pro</li>
-<li> 目标域：WebQuestionSP，ComplexWebQuestions (CWQ)</li>
-<li> 知识库：Freebase</li>
-</ul>
-<h3 id="基线">基线</h3>
-<ul>
-<li>语义解析：TEX-TRAY，QGG，TeacherNet</li>
-<li> 信息检索：Graft-Net，PullNet</li>
-<li> 消融实验基线：<span class="math inline">\(Ours_{-f}\)</span>（未微调），<span class="math inline">\(Ours_{-p}\)</span>（未预训练），<span class="math inline">\(Ours_{-pa}\)</span>（未预训练参数解析器），<span class="math inline">\(Ours_{-o}\)</span>（缺少本体剪枝）</li>
-</ul>
-<h3 id="评估指标">评估指标</h3>
-<ul>
-<li>F1</li>
-<li>Hits@1：Hits@n 是指正例中处在前 n 个结果中的比例，Hits@1 也就是模型结果第一名为正确结果的比例</li>
-</ul>
-<p>由于数据集中的问题有多个答案，F1 更好地反映了答案的覆盖程度。</p>
-<h3 id="实验结果">实验结果</h3>
-<p><img src="exper-result.png"></p>
-<p>值得关注的是<span class="math inline"> \(Ours_{-p}\)</span> 极差的结果和<span class="math inline"> \(Ours_{-f}\)</span> 的一般表现，表明了预训练的重要性。并且移去预训练参数解析器和本体剪枝策略都会对模型效果有较大影响。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文还是蛮有意思的，用一个比较贴近人认知的框架，把迁移学习应用到 KBQA 中并证实了其有效性。</p>
-<p>近期还会从各高校 ACL2022 录取宣传中找一些值得读的论文。等到 ACL
-2022 公布 accepted list 了就不用这么折腾了。</p>
-<p>碎碎念：我也好想发一篇论文啊。</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>问答</category>
-      </categories>
-      <tags>
-        <tag>自然语言处理</tag>
-        <tag>问答</tag>
-        <tag>知识图谱</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RoBERTa</title>
-    <url>/blog/2021/09/03/RoBERTa/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>RoBERTa 是华盛顿大学和 FaceBook 在论文《RoBERTa: A Robustly Optimized
-BERT Pretraining
-Approach》提出的预训练模型，论文似乎仅存在 arxiv 版本。RoBERTa 本质上是 BERT 的一个改进版本。论文发现 BERT 是未充分训练的，改进训练之后的 RoBERTa 在 GLUE、RACE、SQuAD 数据集上达到了 SOTA。代码和模型公开在了 <a href="https://github.com/pytorch/fairseq">github</a> 上。</p>
-<span id="more"></span>
-<p>相对于 BERT 的修改主要有以下方面：</p>
-<ul>
-<li>训练时间更长、数据更大（提出了一个新的数据集 CC-News）、batch 更大（有论文指出更大的 batch 模型训练结果越好）</li>
-<li>移除下句预测预训练任务</li>
-<li>训练序列更长</li>
-<li>动态改变数据的 MASK，而 BERT 的 MASK 是固定的</li>
-</ul>
-<p>在不使用额外的训练数据的情况下，RoBERTa 在 GLUE 和 SQuAD 数据集上取得了优于 BERT 的性能。引入额外的训练数据后，RoBERTa 在 GLUE 中的四项任务、SQuAD、RACE 数据集上达到了 SOTA。</p>
-<h2 id="实验">实验</h2>
-<h3 id="数据集">数据集</h3>
-<ul>
-<li>GLUE（ General Language Understanding
-Evaluation，通用语言理解评估）：由 9 个句子或句子对的分类任务组成。</li>
-<li>SQuAD（ Stanford Question Answering
-Dataset，斯坦福问答数据集）：抽取式问答任务。给出文档和问题，从文档中选择部分文本作为问题答案。</li>
-<li>RACE（ ReAding Comprehension from
-Examinations，考试阅读理解数据集）：顾名思义，数据集来自考试题目，是一个分类任务。单个样本由文档、问题和若干个候选答案组成。正确答案不一定直接体现在文章中，需要深层理解文章并进行推断。</li>
-</ul>
-<h3 id="静态掩码vs动态掩码">静态掩码 vs 动态掩码</h3>
-<p>论文将 RoBERTa 与参数量相近的<span class="math inline"> \(BERT_{BASE}\)</span> 进行了比较，结果如下所示。可以看出，动态掩码的效果与静态掩码持平或者略优于。个人猜测原因是动态掩码虽然能够使得模型模型接触到更多数据、更加鲁棒，但频繁的动态掩码会使得某些样本无法得到充足的训练。</p>
-<p><img src="mask-result.png"></p>
-<h3 id="下句预测">下句预测</h3>
-<p>下句预测任务是 BERT 中提出的预训练任务，用于判断两句话是否构成连续上下句的关系。BERT 论文中认为下句预测任务是非常重要的，它提升了 QNLI、MNLI、SQuAD 数据集的性能。然而，一些工作开始质疑下句预测任务的有效性。RoBERTa 论文中比较了以下几种训练方法：</p>
-<ul>
-<li>句子段（连续多个句子）对 + 下句预测，也就是原版 BERT 的训练方法。</li>
-<li>句子对 + 下句预测。</li>
-<li>跨文档完整句子，将多篇文档拼接在一起，从中连续采样句子，可能跨文档也可能来自同一篇文档。</li>
-<li>单文档句子，从单个文档中连续采样句子。</li>
-</ul>
-<p>实验结果如下：</p>
-<p><img src="nsp.png"></p>
-<p>前两种训练方法比较，前者优于后者，说明独立的句子会损害下流任务的性能。接下来比较有无 NSP 任务的训练方法，分析后可以看出，完整句子移除了 NSP 任务，与拥有 NSP 任务的性能基本持平，在某些任务上还略胜一筹。而单文档句子任务甚至优于跨文档完整句子。</p>
-<h3 id="更大的batch">更大的 Batch</h3>
-<p>机器翻译上的部分工作证实了大 batch-size 能够同时提高优化速度和任务性能，近期工作证实这同样适用于 BERT，论文在<span class="math inline"> \(BERT_{BASE}\)</span> 上进行了 Batch-size 的实验，结果如下：</p>
-<p><img src="batch-size.png"></p>
-<p>可以看出，2k 的 batch size
-确实要优于 256，但 8k 却差于 2k。论文中也没有进行解释，迷惑。</p>
-<h3 id="文本编码">文本编码</h3>
-<p>字节对编码（Byte-Pair
-Encoding）是一种字词模型，BERT 使用它来构建词表。然而当语料规模很大时，unicode 字符会占据词表中相当大部分。2019 年 GPT2 论文指出，可以使用 unicode 字节而非 unicode 字符来作为基本字词单元，然而这种方法可能会有轻微的性能损失（毕竟破坏了字符的完整结构），但是由于其能减小词表规模，RoBERTa 还是基于此进行的词表构建。</p>
-<h2 id="roberta">RoBERTa</h2>
-<p>RoBERTa=BERT + 动态掩码 + 跨文档完整句子 + 更大 batch
-size + 字节编码 + 更大数据 + 更长训练时间</p>
-<p>实验结果如下：</p>
-<p><img src="roberta.png"></p>
-<p>控制训练数据时，RoBERTa 已经优于<span class="math inline"> \(BERT_{LARGE}\)</span> 了（但在 SQuAD 上逊于 XLNET），在增加数据和训练更长时间后，三个数据集上全面超越 XLNET。</p>
-<p>后面就是 GLUE、SQuAD 上各项指标的实验和比较了，基本 RoBERTa 也是最优的，这里就略去了。</p>
-<h2 id="总结">总结</h2>
-<p>RoBERTa 可以看作是 BERT 真正的完全体吧，弥补了原生 BERT 的缺陷。可能是因为创新性不足？没有被会议接受。看来预训练模型也还是很卷的。。。</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>预训练模型</category>
-        <category>BERT</category>
-      </categories>
-      <tags>
-        <tag>预训练模型</tag>
-        <tag>BERT</tag>
-        <tag>RoBERTa</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Sentence-BERT: 减小语义相似度的计算开销</title>
-    <url>/blog/2022/04/04/Sentence-BERT/</url>
-    <content><![CDATA[<h2 id="摘要">摘要</h2>
-<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT:
-Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP
-2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。
-<span id="more"></span></p>
-<h2 id="介绍">介绍</h2>
-<p>BERT 的结构限制了其不适用于某些任务：大规模文本相似度比较、聚类、信息检索。摘要中已经提到了第一种的例子。聚类和信息检索通常需要将句子映射为一个固定维度的向量，使得相似的句子在语义空间中相近。BERT 虽然也能将句子映射为特定的向量，例如取最后一层 [CLS] 的 token
-embedding，或者做平均池化。但是，实验证明，这样的到的向量甚至差于 GloVe 嵌入的平均。</p>
-<p>SBERT 通过以下步骤解决这个问题：</p>
-<ol type="1">
-<li><p>孪生 BERT 将句子映射为固定维度向量</p></li>
-<li><p>使用相似度度量（余弦相似度、欧氏距离、曼哈顿距离...）</p></li>
-</ol>
-<p>换而言之，即取消两个句子同时馈入网络的要求，利用相似度度量控制学习得到好的单个句子的嵌入。结构如下图所示：</p>
-<figure>
-<img src="architecture.png" alt="结构">
-<figcaption aria-hidden="true">结构</figcaption>
-</figure>
-<p>两个句子被分别编码 + 平均池化得到向量表证后，构建计算语义相似度的分类任务（左图）或者回归任务（有图）。</p>
-<p>作者在 NLI 数据上微调 SBERT，在 7 个 STS 任务上，SBERT 取得了 11.7 个点的提升，相较于 InferSent 和 Universal
-Sentence Encoder。在 SentEval 上，SBERT 分别取得了 2.1 和 2.6 个点的提升。</p>
-<h2 id="方法">方法</h2>
-<p>SBERT 的核心步骤已经在上面介绍了，但还有一些细节需要考虑：</p>
-<ol type="1">
-<li>如何得到固定维度的向量：[CLS]/ 平均池化 / 最大池化</li>
-<li>训练目标：分类 / 回归 / 三元组</li>
-</ol>
-<p>其中，模型的结构（孪生、三胞胎）、训练目标与可用的训练数据息息相关。</p>
-<p><strong>分类目标</strong>：将两个句子向量及逐元素差<span class="math inline"> \(u,v,|u-v|\)</span> 馈入 MLP，并进行 SoftMax 进行分类，公式为：
-<span class="math display">\[
-o_t=softmax(W_t(u,v,|u-v|))
-\]</span> <strong> 回归目标</strong>：与分类类似，区别在于计算<span class="math inline"> \(u,v\)</span> 的余弦相似度，使用 MSE 损失。</p>
-<p><strong>三元组目标</strong>：给定一个原始句子<span class="math inline"> \(a\)</span>，一个正面句子<span class="math inline"> \(p\)</span>，一个负面例子<span class="math inline"> \(n\)</span>，减小<span class="math inline"> \(a,p\)</span> 之间的距离，增大<span class="math inline"> \(a,n\)</span> 之间的距离，即要<strong>最小化下式的损失</strong>：
-<span class="math display">\[
-\max(||s_a-s_p||-||s_a-s_n||+\epsilon,0)
-\]</span> 其中，<span class="math inline">\(s_x\)</span> 为句子<span class="math inline"> \(x\)</span> 的嵌入向量，<span class="math inline">\(||\cdot||\)</span> 为句子度量，<span class="math inline">\(\epsilon\)</span> 为边界，用以保证<span class="math inline"> \(s_p\)</span> 至少<span class="math inline"> \(\epsilon\)</span> 比<span class="math inline"> \(s_n\)</span> 更靠近<span class="math inline"> \(s_a\)</span>，即<span class="math inline"> \(||s_a-s_p||+\epsilon&lt;||s_a-s_n||\)</span>。当这个式子不成立时，损失为 0，参数不进行更新。实验中使用的距离度量为欧氏距离，<span class="math inline">\(\epsilon=1\)</span>。</p>
-<h3 id="训练细节">训练细节</h3>
-<p>作者使用 SNLI、Multi-Genre
-NLI 数据集训练 SBERT。其中，SNLI 数据集由 57 万个句子对 + 标签组成，MultiNLI 由 43 万个句子对组成，带有文本蕴含信息。</p>
-<h2 id="实验">实验</h2>
-<p>在语义文本相似度任务上进行实验验证。传统方法通常学习一个（复杂的）回归函数，将句子嵌入映射到相似性分数。
-然而，这些回归函数以句子对为输入，难以扩展且面临组合爆炸问题。SBERT 则总是使用余弦相似度来比较两个句子之间的相似度嵌入。
-负曼哈顿距离和负欧几里得距离的实验结果也大致相同。</p>
-<h3 id="无监督sts">无监督 STS</h3>
-<p>不使用任何 STS 特定的训练数据。评估数据集为 STS tasks 2012 - 2016， STS
-benchmark，SICK-Relatedness。每个数据集的句子对包含 0 到 5 的的语义关联标签。评估指标上（两个相似度分数），不使用皮尔逊相关系数（Pearson
-correlation
-coefficient），因为它主要衡量随机变量间的<strong>线性相关性</strong>。而是使用斯皮尔曼等级相关系数（Spearman's
-rank correlation
-coefficient），它可以衡量<strong>等级变量间的单调性</strong>，因而更适用于 STS 场景。毕竟两个分数间的相关性不一定是线性的。</p>
-<p>实验结果如下表所示。可以看到 naive 的 BERT embedding 差于 GloVe
-embedding，SBERT 和 SRoBERTa 几乎全面领先，除了 SICK-R。这可能与 Universal
-Sentence Encoder 训练的新闻、问答等语料有关。</p>
-<p><img src="unsupervised-result.png"></p>
-<h3 id="监督sts">监督 STS</h3>
-<p>使用 STS benchmark (STSb)
-数据集进行训练。该数据集包括来自标题、新闻和论坛三个类别的 8,628
-个句子对，分为训练集（5,749）、验证集（1,500）和测试集（1,379）。</p>
-<p>实验结果如下表所示。作者实验了两种训练策略，只在 STSb 上进行训练和在 NLI 数据集上预训练，再在 STSb 数据集上微调。后者能够带来 1-2 个点的提升。可以看到 SBERT 和 BERT 之间的差距不大。</p>
-<p><img src="supervised-result.png"></p>
-<h3 id="争论方面的相似性">争论方面的相似性</h3>
-<p>Argument Facet Similarity （AFS）语料库注释了来自社交媒体对话的 6,000
-个句子论点对，涉及三个有争议的主题：枪支管制、同性婚姻和死刑。数据的标签范围从
-0（“不同主题”）到 5（“完全等效”）。 AFS 语料库中的相似性概念与 SemEval
-的 STS 数据集中的相似性概念完全不同。 STS 数据通常是描述性的，而 AFS
-数据是对话中的争论性摘录。要被认为是相似的，争论不仅必须提出相似的主张，而且还必须提供相似的论证。此外，AFS
-中句子之间的词汇差距要大得多。因此，简单的无监督方法以及最先进的 STS
-系统在该数据集上表现不佳。</p>
-<p>作者使用 10 折交叉验证和跨主题评估（2 个主题用于训练，剩余一个用于评估）进行实验验证。10
-折交叉验证设置中的 SBERT 的性能几乎与 BERT 相当。但是，在跨主题评估中，
-SBERT 的 Spearman 相关性下降了大约 7 个点的
-。这可能是由于缺失主题的情况下，BERT 依然能够通过逐字符比较得到较好的结果，SBERT 只能从单一句子推断主题、主张等，这更具有挑战性。</p>
-<p><img src="argument-result.png"></p>
-<h3 id="维基百科章节">维基百科章节</h3>
-<p>利用维基百科的章节构建三元组数据：<strong>假设文章同一部分中的句子在主题上比不同部分中的句子更接近</strong>，锚点和正例来自文章同一个部分，而负例来自同一篇文章的不同部分。作者在 180
-万个训练三元组上训练 SBERT 一个 epoch，并在 222,957
-个测试三元组上对其进行评估。测试三元组来自一组不同的 Wikipedia
-文章。以准确率为评估指标。实验结果如下表所示。</p>
-<p><img src="wikipedia-result.png"></p>
-<p>可以看出，SBERT 明显优于 Dor 等人的 BiLSTM 方法。</p>
-<h3 id="senteval">SentEval</h3>
-<p>SentEval 是一个流行的工具包，用于评估句子嵌入的质量。
-句子嵌入用作<strong>逻辑回归分类器的特征</strong>。 逻辑回归分类器在 10
-折交叉验证设置中针对各种任务进行训练，并计算测试折的预测准确度。</p>
-<p>尽管 SBERT 的句子嵌入的目标不是用于基于特征的迁移学习，微调是更好的方法。但是 SentEval 依然能够在不同任务上评估句子嵌入的质量。作者在 7 个 SentEval 的句子嵌入任务中比较了 SBERT 的性能：</p>
-<ul>
-<li>MR：电影评论情感预测</li>
-<li> CR：客户产品评论的情绪预测</li>
-<li> SUBJ：来自电影评论和情节句子的主题预测</li>
-<li> MPQA：来自新闻专线的短语级别意见极性分类</li>
-<li> SST：斯坦福情绪树库二分类</li>
-<li> TREC ：来自 TREC 的细粒度问题类型分类</li>
-<li> MRPC：来自平行新闻来源的微软研究院释义语料库</li>
-</ul>
-<p>实验结果如下表所示。可以看到 SBERT 在 5/7 的任务上取得了最优性能，带来平均两个点的性能提升。尽管这种迁移学习并非是 SBERT 的目标，SBERT 依然取得了 SOTA 的性能。SBERT
-明显比 Universal Sentence Encoder 差的数据集是 TREC 数据集。 Universal
-Sentence Encoder 在问答数据上进行了预训练，这似乎有利于 TREC
-数据集的问题类型分类任务。</p>
-<p><img src="senteval-result.png"></p>
-<p>另外，这里的 BERT 的 [CLS] 优于 GloVe 嵌入平均，似乎与前文得到的结论相违背。这是因为任务设置不同。对于
-STS
-任务，论文使用余弦相似度来估计句子嵌入之间的相似度。余弦相似性平等地对待所有维度。相比之下，SentEval
-将逻辑回归分类器与句子嵌入相匹配。这使得某些维度可以对分类结果产生更高或更低的影响。</p>
-<p>观察上表还可以得出结论，BERT 的平均嵌入或者 [CLS] 符号嵌入搭配余弦相似度、欧氏距离、曼哈顿距离是不可行的。对于特征迁移学习，它们产生的结果也比
-InferSent 或 Universal Sentence Encoder
-稍差。然而，使用 SBERT 的孪生网络 + NLI 微调的方法能够得到 SOTA 的句嵌入。</p>
-<h2 id="消融实验">消融实验</h2>
-<p>作者对池化策略、训练目标、拼接结果（分类目标时使用）进行了消融实验。其中，NLI 对应分类任务，STSb 对应回归任务。结果如下表所示。</p>
-<p><img src="ablation.png"></p>
-<p>可以看到，分类任务下，池化策略影响不大，用于分类的特征拼接结果影响很大。InferSent 和 Universal
-Sentence Encoder 都是使用<span class="math inline"> \((u,v,|u −v|,u
-∗v)\)</span>，然而，在 SBERT 里，<span class="math inline">\(u
-∗v\)</span> 的加入还会损失性能。其中，最重要的特征是逐元素差<span class="math inline"> \(|u - v|\)</span>。</p>
-<p>在回归任务下，池化策略具有很大的影响：最大池化的表现比平均池化或
-CLS-token 策略要差得多。</p>
-<h2 id="计算效率">计算效率</h2>
-<p>下表比较了不同模型在不同设备上每秒可以处理的句子嵌入。越高越好。可以看到 SBERT 在 GPU 上是最快的，相较于 InferSent 的 LSTM，这也得益于 Transformer 的并行性。</p>
-<p><img src="computation-efficiency.png"></p>
-<h2 id="总结">总结</h2>
-<p>这篇论文还是非常扎实的。从非常现实的计算效率问题出发，使用简单的方法，在不同的任务上取得与 BERT 相似甚至超越 BERT 的性能。其影响力也不容小觑，时至今日已经有 2000 + 的引用。</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>语义相似度</category>
-      </categories>
-      <tags>
-        <tag>BERT</tag>
-        <tag>语义相似度</tag>
       </tags>
   </entry>
   <entry>
@@ -2090,97 +2321,124 @@ All You Need</a>》的代码，也就是 Transformer。pytorch 代码<a href="ht
       </tags>
   </entry>
   <entry>
-    <title>Transformer</title>
-    <url>/blog/2021/08/14/Transformer/</url>
+    <title>变分自编码器 VAE</title>
+    <url>/blog/2021/10/07/VAE/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天读的是大名鼎鼎的 BERT------- 的组件之一 Transformer，出自论文 Google 团队 2017 年的论文《Attention
-Is All You
-Need》。与传统的 GRU、LSTM 等相比，Transformer 只使用注意力机制来建模输入与输出间的依赖关系，并支持并行化。论文在机器翻译上进行了实验，Transfomer 达到了更好的效果，因此自提出以来，就得到了极为广泛的关注。</p>
-<span id="more"></span>
-<h2 id="题外话">题外话</h2>
-<p>之前由于换电脑的原因，断更了一段时间。BERT 与 Transformer 的论文之前也粗读过一两次，还是有些一知半解，正好趁这个周末再复习总结一下，记录在博客里。希望我的博客能对你有所帮助。</p>
-<h2 id="模型结构">模型结构</h2>
-<p>Transformer 使用的仍然是 encoder-decoder 架构，但与 RNN 等自回归模型不同，Transformer 使用的是堆叠的多头注意力机制，全连接层等，其模型结构如下所示：</p>
-<p><img src="architecture.png"></p>
-<p>左侧的为单个编码器的结构，第一层为多头注意力、残差层与层标准化，第二层是前馈神经网络。编码网络是由若干个编码器堆叠而成的，原论文中 N=6，嵌入向量维度为 512。</p>
-<p>右侧为单个解码器的结构，主要在编码器的基础上，加入了一个 Masked 的多头注意力机制，用以保证每个时间步的输出只已知已经输出的信息。同样的，解码网络也有 6 个解码器组成。</p>
-<h3 id="注意力机制">注意力机制</h3>
-<p>多头注意力机制可谓是 Transformer 的核心，详细过程可以参考<a href="https://blog.csdn.net/longxinchen_ml/article/details/86533005">图解 Transformer 完整版</a>。这里只做核心部分介绍，单头计算过程为：
+<p>今天来回顾一下变分自编码器（Variational
+Autoencoder，VAE），这是 2013 年提出的一种生成模型，时至今日，它的各类变体还活跃在各类会议上。之前我读过它的离散变体 VQ-VAE，这里再回顾一下原本的 VAE。
+<span id="more"></span></p>
+<h2 id="数学知识">数学知识</h2>
+<p>理解 VAE 需要一些信息论和概率论的知识，这里总结一下。</p>
+<h3 id="概率统计">概率统计</h3>
+<h4 id="数值计算-vs-采样计算">数值计算 vs 采样计算</h4>
+<p>对于一个随机变量 X，如果我们想知道 X 的期望<span class="math inline"> \(E(X)\)</span>。如果我们已知 X 的分布函数，很容易可以计算出准确的期望<span class="math inline"> \(E(X)=\sum
+p(x)x\)</span>（连续型变量替换为积分即可），这当然是最好的。然而很多情况下，我们无法得知准确的分布函数，那么我们可以采用统计量进行估计，对于 n 个随机样本<span class="math inline"> \(x_1,x_2,\dots,x_n\)</span>，<span class="math inline">\(\overline X=\frac{1}{n}\sum
+x_i\)</span> 就是期望<span class="math inline"> \(E(X)\)</span> 的无偏估计。</p>
+<h3 id="信息论">信息论</h3>
+<h4 id="信息熵">信息熵</h4>
+<p>在信息论中，信息熵衡量了信息的不确定性，公式为<span class="math inline"> \(H(X)=-\sum_{x\in
+X}p(x)logp(x)\)</span>。以单个事件 x 为例，概率越小的事件的信息熵越大。当一个事件必定会发生时（<span class="math inline">\(p(x)=1\)</span>），其信息熵为 0，没有任何不确定性。对随机变量 X 而说，其信息熵就是<span class="math inline"> \(-logp(x)\)</span> 的期望，熵越大代表随机变量越不确定，很自然可以想到，分布越均匀，变量的状态越不容易确定，其熵越大。</p>
+<p>在通信领域，信息熵可以看作对随机变量 X 进行编码所需的最短期望位数，这也被称为编码定理。在通信编码问题中，将随机变量 X 的每个值编码为一个二进制序列，使得序列长度期望最短。同时为了避免混乱，一个序列不能是其他序列的延申。这时编码位数的最短期望位数就是信息熵，有兴趣的同学可以去看看证明。</p>
+<h4 id="交叉熵">交叉熵</h4>
+<p>对于随机变量<span class="math inline"> \(X\)</span> 的真实分布<span class="math inline"> \(p(x)\)</span>，有时是未知的，我们只有它的近似分布<span class="math inline"> \(q(x)\)</span>，如果按照<span class="math inline"> \(q(x)\)</span> 对变量 X 进行编码，得到的编码长度的期望称为交叉熵，记为<span class="math inline"> \(H(p,q)=-\sum_x
+p(x)logq(x)\)</span>。容易知道交叉熵是大于等于信息熵的，因为信息熵是最短编码长度。</p>
+<h4 id="相对熵kl散度">相对熵（KL 散度）</h4>
+<p>对于真实分布<span class="math inline"> \(p\)</span> 和近似分布<span class="math inline"> \(q\)</span>，相对熵为使用近似分布编码得到的编码长度与最短编码长度的差，即交叉熵与信息熵的差，定义为<span class="math inline"> \(D(p||q)=H(p,q)-H(p)\)</span>。KL 散度衡量了两个分布之间的差异，两个分布差异越大，KL 散度越大。不过 KL 散度并不是距离，因为它不是对称的。因此，KL 散度可以用于分类任务中计算真实概率分布与预测的概率分布之间的差异。事实上，<strong>由于这时信息熵为常数，往往将其略去使用交叉熵作为损失函数</strong>。</p>
+<h2 id="变分自编码器">变分自编码器</h2>
+<p>对于数据集<span class="math inline"> \(D={x_1,x_2,\dots,x_n}\)</span>（假设是很多张猫的图片，每个样本<span class="math inline"> \(x\)</span> 是像素矩阵）。所有可能的猫图构成数据总体<span class="math inline"> \(X\)</span>，即<span class="math inline"> \(x_i\in
+D\subseteq X\)</span>。<span class="math inline">\(X\)</span> 上存在一个概率分布<span class="math inline"> \(p(x)\)</span>，当我们随机采样一张猫的图片时，这张图片有<span class="math inline"> \(p(x)\)</span> 的概率被采样到。对于非猫图<span class="math inline"> \(y,\ p(y)=0\)</span>。我们希望的是能够找到<span class="math inline"> \(p(x)=p(x^{(1)},x^{(2)},\dots)\)</span> 的准确数学形式，其中<span class="math inline"> \(x^{(1)}\)</span> 代表 x 一维展开后的第 1 个像素，依次类推。如果这个目标能够实现，我们就能分析出<span class="math inline"> \(p(x)\)</span> 这个概率函数，对哪些输入<span class="math inline"> \(x\)</span> 能够取到非 0 概率值（即猫图），进而能够随机采样猫图和非猫图。</p>
+<p>如果上述描述还不好理解的话，可以想象一个二维坐标系，以原点为圆心的单位圆上的均匀分布。所有猫图都满足<span class="math inline"> \(x^2+y^2\le1\)</span>，在这个单位圆内外分别随机采样，即可得到猫图和非猫图。</p>
+<p>但是事实上，这样的目标是很难实现的。在数理统计里，这是个典型的非参数估计问题，在未知分布形式的情况下，没有办法对分布形式和分布参数进行估计。而且很容易想到，这也绝对是一个非常复杂的概率分布。因此直接对<span class="math inline"> \(p(x)\)</span> 建模是不现实的。我们可以曲线救国。假设存在一个隐变量<span class="math inline"> \(z\)</span> 控制着数据<span class="math inline"> \(x\)</span> 的生成。那么根据<span class="math inline"> \(p(x)=\int p(z)p(x|z)dz\)</span> 可以计算得到<span class="math inline"> \(p(x)\)</span>。然而这个边界似然是不可解的，每一项都不知道具体的数学形式，更不要说还要积分。</p>
+<p>那么求其次，我们可以用一个分布<span class="math inline"> \(q(x,z)\)</span> 近似联合概率分布<span class="math inline"> \(p(x,z)\)</span>，那么我们的优化目标就是<span class="math inline"> \(KL(p||q)\)</span> 最小。 <span class="math display">\[
+\begin{align}
+KL(p||q)&amp;=\int\int p(x,z)log\frac{p(x,z)}{q(x,z)}dzdx \\
+&amp;=\int p(x)\int p(z|x)log\frac{p(x,z)}{q(x,z)}dzdx \\
+&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(x)p(z|x)}{q(x,z)}dz \\
+&amp;=E_{x\sim p(x)}\int p(z|x)(log\frac{p(z|x)}{q(x,z)}+logp(x))dz
+\end{align}
+\]</span> 而 <span class="math display">\[
+\begin{align}
+E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int
+q(z|x)dz\\
+&amp;=E_{x\sim p(x)}logp(x)
+\end{align}
+\]</span> 为一个常数，可以略去。令 <span class="math display">\[
+\begin{align}
+\mathcal{L}&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(x,z)}dz\\
+&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(z)q(x|z)}dz\\
+&amp;=E_{x\sim p(x)}[\int -p(z|x)logq(x|z)  dz+ \int
+p(z|x)log\frac{p(z|x)}{q(z)}]dz\\
+&amp;=E_{x\sim p(x)}[E_{z\sim p(z|x)}(-log(q(x|z)))+KL(p(z|x)||q(z))]
+\end{align}
+\]</span> 最小化 KL 与最小化<span class="math inline"> \(\mathcal{L}\)</span> 等价。进而得到了 VAE 的损失函数。只不过与原论文中的符号有些出入，将最后的 KL 项的 p 与 q 调换，即得到了论文中 VAE 的损失函数：
 <span class="math display">\[
-Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span>
-Q，K，V 分别为查询、键、值矩阵，由词嵌入向量矩阵映射得出。多头注意力机制使用点乘计算相似度，不同的是，这里除以了一个标量<span class="math inline"> \(\sqrt{d_k}\)</span>​​​。这个标量是 softmax 的温度系数，由于点积结果方差可能很大，可能会存在梯度过小无法正常更新的情况。除以一个标量能够使得概率分布更加均匀。这一部分可以参考学习下 softmax 的温度系数。</p>
-<p>作者发现，相较于仅使用一个注意力机制，使用多个注意力机制并将其拼接能够拥有更好的效果。在论文中，作者使用 8 个注意力机制，每个注意力机制的输出为 512/8=64 维嵌入向量。</p>
-<h3 id="注意力机制的使用">注意力机制的使用</h3>
-<p>多头注意力机制以三种方式在模型中使用：</p>
-<ul>
-<li>编码器与解码器间的注意力：查询 q 来自解码器，键 K 与值 V 来自编码器。这里的注意力机制用以在输出的每一步关注在输入序列的不同部分，与 seq2seq 的注意力机制相似、</li>
-<li>编码器内的自注意力：查询、键、值均来自编码器。输入序列的每个位置可以得到到整个输入序列的信息。</li>
-<li>解码器内的掩码自注意力：查询、键、值均来自解码器。为了保证解码器只能获得已输出的部分序列的信息，将当前位置之后位置的标量化点积设置为<span class="math inline"> \(-\infty\)</span>​，进而经过 softmax 后概率值为 0。</li>
-</ul>
-<h3 id="前馈神经网络">前馈神经网络</h3>
-<p>在编码器和解码器中的前馈神经网络，搭配 relu 激活函数来为模型构造非线性计算。计算过程如下所示：
+\mathcal{L}=E_{x\sim p(x)}[E_{z\sim
+p(z|x)}(-log(q(x|z)))+KL(q(z|x)||p(z))]
+\]</span> 符号的差别是由于论文直接引入的<span class="math inline"> \(q(z|x)\)</span>，而这里引入的是联合概率分布<span class="math inline"> \(q(x,z)\)</span>。</p>
+<p>注意上面的<span class="math inline"> \(\mathcal
+L\)</span> 是损失函数，而不是<strong>变分下界 ELBO</strong>，VAE 的 ELBO 是损失函数的相反数，引用 VAE 原文中的公式：
 <span class="math display">\[
-FFN(x)=\max(0,xW_1+b_1)W2+b_2
-\]</span>
-其中，输入和输出的维度均为 512，隐藏层维度为 1024。另外，前馈神经网络在每个层内不共享参数，换而言之，它们的参数是独立的。</p>
-<h3 id="位置编码">位置编码</h3>
-<p>由于 Transformer 中不存在 RNN 中的自回归结构，输入序列的不同位置是等价的。为了编码位置信息，作者引入了位置编码，使用 sin 与 cos 函数：
-<span class="math display">\[
-PE_{(pos,2i)}=\sin(pos/10000^{2i/d_{model}})
+\mathcal{L}(\theta,\phi;x^{(i)})=-D_{KL}(q_\phi(z|x^{(i)})||p(z))+\mathbb
+E_{q_\phi(z|x^{(i)})}[-log(p_\theta(x^{(i)}|z))]
 \]</span></p>
-<p><span class="math display">\[
-PE_{(pos,2i+1)}=\cos(pos/10000^{2i/d_{model}})
-\]</span></p>
-<p>其中，pos 为位置，i 为向量维度。作者称选取三角函数的原因是假设这样可以更好地使模型学到相对位置关系，对于任意固定的偏移 k，<span class="math inline">\(PE_{pos+k}\)</span> 可以表示为<span class="math inline"> \(PE_{pos}\)</span> 的线性函数。另外，作者还尝试了学习位置编码的方式，实验对比显示，二者结果差别不大。因此作者最终选择了上述编码方式，因为它可以处理更长的序列。</p>
-<h2 id="为什么使用自注意力机制">为什么使用自注意力机制</h2>
-<p>论文从计算时间复杂度、序列操作数、最长路径长度三方面对比了自注意力机制、RNN、CNN 以及受限的自注意力机制，结果如下：</p>
-<p><img src="comparison.png"></p>
-<p>这一部分计算过程论文没有给出，我参考了 <a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN 的对比（时间复杂度，序列操作数，最大路径长度）</a>，这里简单介绍一下。</p>
-<h3 id="计算时间复杂度">计算（时间）复杂度</h3>
-<p>计算复杂度主要取决于计算的规模，以矩阵乘法为例，形状为 NxM 的矩阵与形状为 MxP 的矩阵相乘，得到一个 NxP 的矩阵。结果矩阵中的每个元素为 M 维向量内积的结果，进行 M 次乘法，并求和。所以整个矩阵乘法的复杂度为<span class="math inline"> \(O(NMP)\)</span>。</p>
-<h4 id="自注意力机制">自注意力机制</h4>
-<p><span class="math display">\[
-Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
-\]</span></p>
-<p>其中，Q，K 分别为 nxd 与 dxn 的矩阵，<span class="math inline">\(QK^\intercal\)</span>​的复杂度为<span class="math inline"> \(O(n^2d)\)</span>​​，softmax 的复杂度为<span class="math inline"> \(O(n^2)\)</span>，加权求和的矩阵形状分别为 nxn 与 nxd，复杂度为<span class="math inline"> \(O(n^2d)\)</span>，因此总复杂度为<span class="math inline"> \(O(n^2d)\)</span>​。受限自注意力机制与之同理，区别在于它只使用查询最近的 k 个</p>
-<h4 id="rnn">RNN</h4>
-<p><span class="math display">\[
-h_t=f(Ux_t+Wh_{t-1})
-\]</span></p>
-<p>其中，U 与 x 的形状分别为 dxd 与 dx1（假设隐藏状态与输入维度均为 d），复杂度为<span class="math inline"> \(O(d^2)\)</span>​，W 与 h 的形状分别为 dxd 与 dx1，复杂度同样为<span class="math inline"> \(O(d^2)\)</span>。对于长度为 n 的序列，总复杂度为<span class="math inline"> \(O(nd^2)\)</span>。</p>
-<h4 id="cnn">CNN</h4>
-<p>将输入序列进行 padding 后，总共需要 n 次卷积，每次卷积计算量为 kxd，假设步长为 1，单个卷积核复杂度为<span class="math inline"> \(O(nkd)\)</span>​。为了保证维度相同，需要使用 d 个卷积核，总复杂度为<span class="math inline"> \(O(nkd^2)\)</span></p>
-<h3 id="序列操作数">序列操作数</h3>
-<p>序列操作数主要衡量了并行化的支持情况，只有 RNN 需要串行地完成 n 次序列操作，其他模型均支持并行化。</p>
-<h3 id="最长路径长度">最长路径长度</h3>
-<p>最长路径为序列中首尾 token 在模型中的路径，其长度越长，依赖越不容易被捕捉到。对于自注意力机制，序列中的任意两个元素均可以看作直接相连，路径长度为<span class="math inline"> \(O(1)\)</span>。而 RNN 中，第一个 token 的信息需要进行 n 次迭代才能到达最后一个 token，最大路径长度即为<span class="math inline"> \(O(n)\)</span>。CNN 中，通过若干个卷积层来获取不同位置的信息，每个卷积层（论文中使用的是空洞卷积）相当于让序列信息浓缩了 k 倍（卷积层的输出中的每个位置都有输入中 k 个位置的信息），最大路径长度为<span class="math inline"> \(O(log_kn)\)</span>​。受限的自注意力机制与连续卷积类似，每次卷积相当于可以获取连续 k 个位置的信息，最大路径长度为<span class="math inline"> \(O(n/k)\)</span>。</p>
-<p>这就基本解释了这个突兀的表格是怎么计算得来的了。那么可以总结自注意力机制的优点是：</p>
-<ul>
-<li>单层计算量更少。在实际应用中，序列长度 n 往往小于表征维度 d，因此，自注意力机制的单层计算量相较于 RNN 与 CNN 都要更小。</li>
-<li>支持并行化。这个就不说了，全世界都在针对 RNN。</li>
-<li>能够更好地捕捉长距离依赖。相较于 CNN 与 RNN，自注意力机制的最长路径最短。</li>
-<li>可解释性更强。作者将注意力机制的概率分布展示如下，证明多头注意力的多个头完成了与句子语义与结构相关不同的工作。</li>
-</ul>
-<p><img src="example.png"></p>
-<p>上图是作者给出的多头注意力的例子，使用了两个头。对于 its 这个单词，得到了非常尖锐的概率分布，its 主要与 law 与 application 相关联，一个头捕获到了 its 指代的主体 law，一个头捕获到了 its 的目标 application。个人感觉这个效果也太过于理想了。。。可能这就是 Transformer 吧。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文提出了完全依赖于注意力机制的序列转换模型 Transformer，相较于 RNN，它有着可并行化、解释性更强、单层参数更少等优点。在机器翻译上取得了 state-of-the-art，在英语成分分析上也取得了比 RNN 更优的结果。</p>
+<p><strong>ELBO 是要最大化的，而损失函数是要最小化的</strong>。上面的 ELBO 是单个样本的公式，没有对所有样本计算期望，所以形式上有所差异。</p>
+<h3 id="说明">说明</h3>
+<p>值得注意的是，VAE 的两个损失函数项并不是割裂的。换而言之，VAE 并不是独立地优化每项损失。这很容易理解，如果 VAE 独立优化第二项损失至最小，<span class="math inline">\(p(z)=q(z|x)\)</span>，那么<span class="math inline"> \(q(z|x)\)</span> 将不具备任何<span class="math inline"> \(x\)</span> 的信息，这显然会使得第一项重构损失很大。同理，如果第一项重构损失很小，就意味着<span class="math inline"> \(q(z|x)\)</span> 包含了过多<span class="math inline"> \(x\)</span> 的信息，与<span class="math inline"> \(p(z)\)</span> 的差异（即 KL 项）就会很大。因此，VAE 是在两项损失的相互作用下，取得一个最优解。</p>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a href="https://www.cnblogs.com/sandwichnlp/p/11612596.html#nlp界cnn模型的进化史">三大特征提取器（RNN/CNN/Transformer）
-- 西多士 NLP - 博客园 (cnblogs.com)</a></li>
-<li><a href="https://zhuanlan.zhihu.com/p/264749298">Transformer/CNN/RNN 的对比（时间复杂度，序列操作数，最大路径长度）</a></li>
+<li><a href="https://kexue.fm/archives/5253">变分自编码器（一）：原来是这么一回事
+- 科学空间</a></li>
+<li><a href="https://kexue.fm/archives/5343">变分自编码器（二）：从贝叶斯观点出发
+- 科学空间</a></li>
+<li><a href="https://kexue.fm/archives/5383">变分自编码器（三）：这样做为什么能成？
+- 科学空间</a></li>
 </ul>
 ]]></content>
       <categories>
         <category>自然语言处理</category>
-        <category>BERT</category>
+        <category>生成模型</category>
       </categories>
       <tags>
-        <tag>BERT</tag>
-        <tag>Transformer</tag>
-        <tag>多头注意力机制</tag>
+        <tag>VAE</tag>
+        <tag>生成模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>对抗自编码器 AAE</title>
+    <url>/blog/2021/10/05/aae/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>对抗自编码器（Adversarial
+Autoencoders，AAE）出自 2015 年的《Adversarial
+Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated
+posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE 的比较。
+<span id="more"></span></p>
+<h2 id="对抗自编码器">对抗自编码器</h2>
+<p>符号定义：</p>
+<ul>
+<li><span class="math inline">\(p(z)\)</span>：隐变量<span class="math inline"> \(z\)</span> 的先验分布</li>
+<li><span class="math inline"> \(q(z|x)\)</span>：编码器分布</li>
+<li><span class="math inline"> \(p(x|z)\)</span>：解码器分布</li>
+<li><span class="math inline"> \(p_d(x)\)</span>：数据<span class="math inline"> \(x\)</span> 分布</li>
+<li><span class="math inline"> \(p(x)\)</span>：模型的分布</li>
+</ul>
+<p>定义聚合分布<span class="math inline"> \(q(z)\)</span> 为<span class="math inline"> \(q(z)=\int_xq(z|x)p_d(x)dx\)</span>，AAE 添加了<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span> 进行匹配的正则化项，模型结构如下：</p>
+<p><img src="architecture.png"></p>
+<p>可以看到与 VAE 最大的区别是，VAE 是从后验分布<span class="math inline"> \(q(z|x)\)</span> 中采样、使用 KL 散度逼近后验分布与先验分布，AAE 是使用对抗网络来逼近<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span>。在此基础上，引入了一个对抗网络判断隐藏状态来自随机先验分布<span class="math inline"> \(p(z)\)</span> 的采样，还是来自<span class="math inline"> \(q(z)\)</span>。在编码器<span class="math inline"> \(q(z|x)\)</span> 的选择上，论文提供了三种候选：</p>
+<ul>
+<li>确定性函数，<span class="math inline">\(z\)</span> 仅与<span class="math inline"> \(x\)</span> 相关。</li>
+<li>高斯分布，与分布参数和随机性相关。</li>
+<li>通用近似后验，<span class="math inline">\(z\)</span> 与<span class="math inline"> \(x\)</span> 和随机噪声<span class="math inline"> \(\eta\)</span> 相关。通用近似是一种近似分布的方法，确定性函数<span class="math inline"> \(f(x,\eta)\)</span>，<span class="math inline">\(\eta\)</span> 是一个随机噪声，因而其可以看作分布的通用近似。</li>
+</ul>
+<p>论文中最终使用了确定性函数，个人猜测是更好收敛一些。</p>
+<h2 id="section"></h2>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>生成模型</category>
+      </categories>
+      <tags>
+        <tag>VAE</tag>
+        <tag>GAN</tag>
       </tags>
   </entry>
   <entry>
@@ -2326,127 +2584,6 @@ onClueWeb09-B（文档排序任务）测试集的最新结果的比较。RACE �
       </tags>
   </entry>
   <entry>
-    <title>变分自编码器 VAE</title>
-    <url>/blog/2021/10/07/VAE/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天来回顾一下变分自编码器（Variational
-Autoencoder，VAE），这是 2013 年提出的一种生成模型，时至今日，它的各类变体还活跃在各类会议上。之前我读过它的离散变体 VQ-VAE，这里再回顾一下原本的 VAE。
-<span id="more"></span></p>
-<h2 id="数学知识">数学知识</h2>
-<p>理解 VAE 需要一些信息论和概率论的知识，这里总结一下。</p>
-<h3 id="概率统计">概率统计</h3>
-<h4 id="数值计算-vs-采样计算">数值计算 vs 采样计算</h4>
-<p>对于一个随机变量 X，如果我们想知道 X 的期望<span class="math inline"> \(E(X)\)</span>。如果我们已知 X 的分布函数，很容易可以计算出准确的期望<span class="math inline"> \(E(X)=\sum
-p(x)x\)</span>（连续型变量替换为积分即可），这当然是最好的。然而很多情况下，我们无法得知准确的分布函数，那么我们可以采用统计量进行估计，对于 n 个随机样本<span class="math inline"> \(x_1,x_2,\dots,x_n\)</span>，<span class="math inline">\(\overline X=\frac{1}{n}\sum
-x_i\)</span> 就是期望<span class="math inline"> \(E(X)\)</span> 的无偏估计。</p>
-<h3 id="信息论">信息论</h3>
-<h4 id="信息熵">信息熵</h4>
-<p>在信息论中，信息熵衡量了信息的不确定性，公式为<span class="math inline"> \(H(X)=-\sum_{x\in
-X}p(x)logp(x)\)</span>。以单个事件 x 为例，概率越小的事件的信息熵越大。当一个事件必定会发生时（<span class="math inline">\(p(x)=1\)</span>），其信息熵为 0，没有任何不确定性。对随机变量 X 而说，其信息熵就是<span class="math inline"> \(-logp(x)\)</span> 的期望，熵越大代表随机变量越不确定，很自然可以想到，分布越均匀，变量的状态越不容易确定，其熵越大。</p>
-<p>在通信领域，信息熵可以看作对随机变量 X 进行编码所需的最短期望位数，这也被称为编码定理。在通信编码问题中，将随机变量 X 的每个值编码为一个二进制序列，使得序列长度期望最短。同时为了避免混乱，一个序列不能是其他序列的延申。这时编码位数的最短期望位数就是信息熵，有兴趣的同学可以去看看证明。</p>
-<h4 id="交叉熵">交叉熵</h4>
-<p>对于随机变量<span class="math inline"> \(X\)</span> 的真实分布<span class="math inline"> \(p(x)\)</span>，有时是未知的，我们只有它的近似分布<span class="math inline"> \(q(x)\)</span>，如果按照<span class="math inline"> \(q(x)\)</span> 对变量 X 进行编码，得到的编码长度的期望称为交叉熵，记为<span class="math inline"> \(H(p,q)=-\sum_x
-p(x)logq(x)\)</span>。容易知道交叉熵是大于等于信息熵的，因为信息熵是最短编码长度。</p>
-<h4 id="相对熵kl散度">相对熵（KL 散度）</h4>
-<p>对于真实分布<span class="math inline"> \(p\)</span> 和近似分布<span class="math inline"> \(q\)</span>，相对熵为使用近似分布编码得到的编码长度与最短编码长度的差，即交叉熵与信息熵的差，定义为<span class="math inline"> \(D(p||q)=H(p,q)-H(p)\)</span>。KL 散度衡量了两个分布之间的差异，两个分布差异越大，KL 散度越大。不过 KL 散度并不是距离，因为它不是对称的。因此，KL 散度可以用于分类任务中计算真实概率分布与预测的概率分布之间的差异。事实上，<strong>由于这时信息熵为常数，往往将其略去使用交叉熵作为损失函数</strong>。</p>
-<h2 id="变分自编码器">变分自编码器</h2>
-<p>对于数据集<span class="math inline"> \(D={x_1,x_2,\dots,x_n}\)</span>（假设是很多张猫的图片，每个样本<span class="math inline"> \(x\)</span> 是像素矩阵）。所有可能的猫图构成数据总体<span class="math inline"> \(X\)</span>，即<span class="math inline"> \(x_i\in
-D\subseteq X\)</span>。<span class="math inline">\(X\)</span> 上存在一个概率分布<span class="math inline"> \(p(x)\)</span>，当我们随机采样一张猫的图片时，这张图片有<span class="math inline"> \(p(x)\)</span> 的概率被采样到。对于非猫图<span class="math inline"> \(y,\ p(y)=0\)</span>。我们希望的是能够找到<span class="math inline"> \(p(x)=p(x^{(1)},x^{(2)},\dots)\)</span> 的准确数学形式，其中<span class="math inline"> \(x^{(1)}\)</span> 代表 x 一维展开后的第 1 个像素，依次类推。如果这个目标能够实现，我们就能分析出<span class="math inline"> \(p(x)\)</span> 这个概率函数，对哪些输入<span class="math inline"> \(x\)</span> 能够取到非 0 概率值（即猫图），进而能够随机采样猫图和非猫图。</p>
-<p>如果上述描述还不好理解的话，可以想象一个二维坐标系，以原点为圆心的单位圆上的均匀分布。所有猫图都满足<span class="math inline"> \(x^2+y^2\le1\)</span>，在这个单位圆内外分别随机采样，即可得到猫图和非猫图。</p>
-<p>但是事实上，这样的目标是很难实现的。在数理统计里，这是个典型的非参数估计问题，在未知分布形式的情况下，没有办法对分布形式和分布参数进行估计。而且很容易想到，这也绝对是一个非常复杂的概率分布。因此直接对<span class="math inline"> \(p(x)\)</span> 建模是不现实的。我们可以曲线救国。假设存在一个隐变量<span class="math inline"> \(z\)</span> 控制着数据<span class="math inline"> \(x\)</span> 的生成。那么根据<span class="math inline"> \(p(x)=\int p(z)p(x|z)dz\)</span> 可以计算得到<span class="math inline"> \(p(x)\)</span>。然而这个边界似然是不可解的，每一项都不知道具体的数学形式，更不要说还要积分。</p>
-<p>那么求其次，我们可以用一个分布<span class="math inline"> \(q(x,z)\)</span> 近似联合概率分布<span class="math inline"> \(p(x,z)\)</span>，那么我们的优化目标就是<span class="math inline"> \(KL(p||q)\)</span> 最小。 <span class="math display">\[
-\begin{align}
-KL(p||q)&amp;=\int\int p(x,z)log\frac{p(x,z)}{q(x,z)}dzdx \\
-&amp;=\int p(x)\int p(z|x)log\frac{p(x,z)}{q(x,z)}dzdx \\
-&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(x)p(z|x)}{q(x,z)}dz \\
-&amp;=E_{x\sim p(x)}\int p(z|x)(log\frac{p(z|x)}{q(x,z)}+logp(x))dz
-\end{align}
-\]</span> 而 <span class="math display">\[
-\begin{align}
-E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int
-q(z|x)dz\\
-&amp;=E_{x\sim p(x)}logp(x)
-\end{align}
-\]</span> 为一个常数，可以略去。令 <span class="math display">\[
-\begin{align}
-\mathcal{L}&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(x,z)}dz\\
-&amp;=E_{x\sim p(x)}\int p(z|x)log\frac{p(z|x)}{q(z)q(x|z)}dz\\
-&amp;=E_{x\sim p(x)}[\int -p(z|x)logq(x|z)  dz+ \int
-p(z|x)log\frac{p(z|x)}{q(z)}]dz\\
-&amp;=E_{x\sim p(x)}[E_{z\sim p(z|x)}(-log(q(x|z)))+KL(p(z|x)||q(z))]
-\end{align}
-\]</span> 最小化 KL 与最小化<span class="math inline"> \(\mathcal{L}\)</span> 等价。进而得到了 VAE 的损失函数。只不过与原论文中的符号有些出入，将最后的 KL 项的 p 与 q 调换，即得到了论文中 VAE 的损失函数：
-<span class="math display">\[
-\mathcal{L}=E_{x\sim p(x)}[E_{z\sim
-p(z|x)}(-log(q(x|z)))+KL(q(z|x)||p(z))]
-\]</span> 符号的差别是由于论文直接引入的<span class="math inline"> \(q(z|x)\)</span>，而这里引入的是联合概率分布<span class="math inline"> \(q(x,z)\)</span>。</p>
-<p>注意上面的<span class="math inline"> \(\mathcal
-L\)</span> 是损失函数，而不是<strong>变分下界 ELBO</strong>，VAE 的 ELBO 是损失函数的相反数，引用 VAE 原文中的公式：
-<span class="math display">\[
-\mathcal{L}(\theta,\phi;x^{(i)})=-D_{KL}(q_\phi(z|x^{(i)})||p(z))+\mathbb
-E_{q_\phi(z|x^{(i)})}[-log(p_\theta(x^{(i)}|z))]
-\]</span></p>
-<p><strong>ELBO 是要最大化的，而损失函数是要最小化的</strong>。上面的 ELBO 是单个样本的公式，没有对所有样本计算期望，所以形式上有所差异。</p>
-<h3 id="说明">说明</h3>
-<p>值得注意的是，VAE 的两个损失函数项并不是割裂的。换而言之，VAE 并不是独立地优化每项损失。这很容易理解，如果 VAE 独立优化第二项损失至最小，<span class="math inline">\(p(z)=q(z|x)\)</span>，那么<span class="math inline"> \(q(z|x)\)</span> 将不具备任何<span class="math inline"> \(x\)</span> 的信息，这显然会使得第一项重构损失很大。同理，如果第一项重构损失很小，就意味着<span class="math inline"> \(q(z|x)\)</span> 包含了过多<span class="math inline"> \(x\)</span> 的信息，与<span class="math inline"> \(p(z)\)</span> 的差异（即 KL 项）就会很大。因此，VAE 是在两项损失的相互作用下，取得一个最优解。</p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="https://kexue.fm/archives/5253">变分自编码器（一）：原来是这么一回事
-- 科学空间</a></li>
-<li><a href="https://kexue.fm/archives/5343">变分自编码器（二）：从贝叶斯观点出发
-- 科学空间</a></li>
-<li><a href="https://kexue.fm/archives/5383">变分自编码器（三）：这样做为什么能成？
-- 科学空间</a></li>
-</ul>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>生成模型</category>
-      </categories>
-      <tags>
-        <tag>VAE</tag>
-        <tag>生成模型</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>对抗自编码器 AAE</title>
-    <url>/blog/2021/10/05/aae/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>对抗自编码器（Adversarial
-Autoencoders，AAE）出自 2015 年的《Adversarial
-Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated
-posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE 的比较。
-<span id="more"></span></p>
-<h2 id="对抗自编码器">对抗自编码器</h2>
-<p>符号定义：</p>
-<ul>
-<li><span class="math inline">\(p(z)\)</span>：隐变量<span class="math inline"> \(z\)</span> 的先验分布</li>
-<li><span class="math inline"> \(q(z|x)\)</span>：编码器分布</li>
-<li><span class="math inline"> \(p(x|z)\)</span>：解码器分布</li>
-<li><span class="math inline"> \(p_d(x)\)</span>：数据<span class="math inline"> \(x\)</span> 分布</li>
-<li><span class="math inline"> \(p(x)\)</span>：模型的分布</li>
-</ul>
-<p>定义聚合分布<span class="math inline"> \(q(z)\)</span> 为<span class="math inline"> \(q(z)=\int_xq(z|x)p_d(x)dx\)</span>，AAE 添加了<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span> 进行匹配的正则化项，模型结构如下：</p>
-<p><img src="architecture.png"></p>
-<p>可以看到与 VAE 最大的区别是，VAE 是从后验分布<span class="math inline"> \(q(z|x)\)</span> 中采样、使用 KL 散度逼近后验分布与先验分布，AAE 是使用对抗网络来逼近<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span>。在此基础上，引入了一个对抗网络判断隐藏状态来自随机先验分布<span class="math inline"> \(p(z)\)</span> 的采样，还是来自<span class="math inline"> \(q(z)\)</span>。在编码器<span class="math inline"> \(q(z|x)\)</span> 的选择上，论文提供了三种候选：</p>
-<ul>
-<li>确定性函数，<span class="math inline">\(z\)</span> 仅与<span class="math inline"> \(x\)</span> 相关。</li>
-<li>高斯分布，与分布参数和随机性相关。</li>
-<li>通用近似后验，<span class="math inline">\(z\)</span> 与<span class="math inline"> \(x\)</span> 和随机噪声<span class="math inline"> \(\eta\)</span> 相关。通用近似是一种近似分布的方法，确定性函数<span class="math inline"> \(f(x,\eta)\)</span>，<span class="math inline">\(\eta\)</span> 是一个随机噪声，因而其可以看作分布的通用近似。</li>
-</ul>
-<p>论文中最终使用了确定性函数，个人猜测是更好收敛一些。</p>
-<h2 id="section"></h2>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>生成模型</category>
-      </categories>
-      <tags>
-        <tag>VAE</tag>
-        <tag>GAN</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>EA-VQ-VAE 代码学习（1）</title>
     <url>/blog/2021/07/17/ea-vq-vae-code/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -2557,121 +2694,6 @@ logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
       </categories>
       <tags>
         <tag>VQ-VAE</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>NLP 必备网站 Hugging Face</title>
-    <url>/blog/2021/09/27/huggingface/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>今天来分享一个网站吧，<a href="https://huggingface.co/">Hugging
-Face</a>，最大的 NLP 社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的 NLP 任务。其提供的 transformers 框架提供了简洁高效的 api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging
-Face 至今在 github 上已有超过 5 万个 star，可见其影响力。</p>
-<span id="more"></span>
-<h2 id="为什么需要hugging-face">为什么需要 Hugging Face</h2>
-<p><img src="intro.png"></p>
-<p>Hugging
-Face 不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
-<ul>
-<li>开箱即用：对于常见的 NLP 任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
-<li>多后端支持：Transformers 支持 Pytorch、Jax、Tensorflow 三种框架，无需再为框架微调苦恼。</li>
-<li>可定制性：高效封装的同时，Transformers 支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
-</ul>
-<p>鉴于现在 NLP 方向的研究、工程基本都是大规模预训练模型相关，Hugging
-Face 的重要性就一目了然了。如果你是学生党，Hugging
-Face 能让你在各类 NLP 比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging
-Face 也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
-<h2 id="有用的链接">有用的链接</h2>
-<ol type="1">
-<li><a href="https://github.com/huggingface/transformers">github 链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
-<li><a href="https://huggingface.co/">Hugging Face
-官网</a>，试试推理 api、看一看文档。</li>
-<li><a href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face
-Course</a>，Hugging
-Face 出品的官方课程，目前更新了前四章，基本上是 step-by-step 的教你从推理到微调任务如何构建和完成。</li>
-</ol>
-<h2 id="总结">总结</h2>
-<p>没错，这么短的一篇博客还有总结。今天刚刚看完 Hugging Face
-的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>预训练模型</category>
-      </categories>
-      <tags>
-        <tag>Hugging Face</tag>
-        <tag>工程</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>语言模型</title>
-    <url>/blog/2021/07/22/language-model/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
-<span id="more"></span>
-<h2 id="定义">定义</h2>
-<p>对于一串语言序列<span class="math inline"> \(w_1w_2\dots
-w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline"> \(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子 “学生们打开了书” 的概率应该比 “学生们打开了玛卡巴卡” 高得多，即更像是人说的话。</p>
-<p>在之前的 VQ-VAE 中，我们提到过自回归模型，按照自回归的思路，如果第 n 个单词只与前 n-1 个单词相关，那么句子的概率可以转化为如下形式：
-<span class="math display">\[
-P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})
-\]</span> 那么怎么求解右侧的式子呢？</p>
-<h2 id="n-gram">N-gram</h2>
-<p>首先要提到的是 N-gram 模型。为了解决上面这个问题，N-gram 模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline"> \(N-1\)</span> 个词有关。以 4-gram 为例，即每个词只与其之前的 3 个词有关，即：
-<span class="math display">\[
-P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})
-\]</span>
-换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计：
-<span class="math display">\[
-P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})}
-\]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[
-P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
-\]</span> 上述的方法虽然简单直接，但是有以下缺点：</p>
-<ul>
-<li>稀疏问题：一些片段可能没有在语料中出现，计数为 0，在概率连乘之下整句概率变为 0。</li>
-<li>存储问题：随着 n 的增大，存储量指数级上升，而 n 过小时模型性能又会很差。</li>
-</ul>
-<h2 id="基于窗口的神经网络">基于窗口的神经网络</h2>
-<p>在 N-gram 的基础上，使用神经网络来计算条件概率。同样以 4-gram 为例，计算用公式表达如下:
-<span class="math display">\[
-\begin{align}
-P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\
-&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])
-\end{align}
-\]</span>
-思路非常简单，即将前 N-1 个词输入到神经网络，由神经网络计算得到第 N 个词的概率分布。这样做解决了 N-gram 的稀疏问题与存储问题，但也存在一些问题：</p>
-<ul>
-<li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
-<li>需要变化窗口大小时，矩阵 W 的形状也需要变化，进而需要重新训练。</li>
-</ul>
-<h2 id="循环神经网络rnn">循环神经网络 RNN</h2>
-<p>RNN 的思路同样也很直接，使用同一个矩阵<span class="math inline"> \(W\)</span> 来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN 的公式如下:
-<span class="math display">\[
-h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
-\]</span></p>
-<p><span class="math display">\[
-\hat{y_t}=softmax(W^{(S)}h_t)
-\]</span></p>
-<p>其中，<span class="math inline">\(\sigma\)</span> 是激活函数，<span class="math inline">\(h_t\)</span> 是 t 时刻的隐藏状态，<span class="math inline">\(W\)</span> 是参数矩阵。</p>
-<p>RNN 有以下优点：</p>
-<ul>
-<li>能够处理任意长度的序列。</li>
-<li>没有进行马尔科夫假设，理论上每一时刻模型都知道之前时刻的全部信息。</li>
-</ul>
-<p>但也有以下缺点：</p>
-<ul>
-<li>会出现梯度消失和梯度爆炸问题。</li>
-<li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li>
-</ul>
-<h2 id="参考">参考</h2>
-<p><a href="https://zhuanlan.zhihu.com/p/63397627">CS224N 笔记 (六)：语言模型与 RNN
-- 知乎 (zhihu.com)</a></p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>语言模型</category>
-      </categories>
-      <tags>
-        <tag>语言模型</tag>
       </tags>
   </entry>
   <entry>
@@ -2798,6 +2820,121 @@ vs LSTM vs GRU -- 该选哪个？ - 知乎 (zhihu.com)</a></p>
         <tag>RNN</tag>
         <tag>GRU</tag>
         <tag>LSTM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>语言模型</title>
+    <url>/blog/2021/07/22/language-model/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
+<span id="more"></span>
+<h2 id="定义">定义</h2>
+<p>对于一串语言序列<span class="math inline"> \(w_1w_2\dots
+w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline"> \(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子 “学生们打开了书” 的概率应该比 “学生们打开了玛卡巴卡” 高得多，即更像是人说的话。</p>
+<p>在之前的 VQ-VAE 中，我们提到过自回归模型，按照自回归的思路，如果第 n 个单词只与前 n-1 个单词相关，那么句子的概率可以转化为如下形式：
+<span class="math display">\[
+P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})
+\]</span> 那么怎么求解右侧的式子呢？</p>
+<h2 id="n-gram">N-gram</h2>
+<p>首先要提到的是 N-gram 模型。为了解决上面这个问题，N-gram 模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline"> \(N-1\)</span> 个词有关。以 4-gram 为例，即每个词只与其之前的 3 个词有关，即：
+<span class="math display">\[
+P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})
+\]</span>
+换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计：
+<span class="math display">\[
+P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})}
+\]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[
+P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
+\]</span> 上述的方法虽然简单直接，但是有以下缺点：</p>
+<ul>
+<li>稀疏问题：一些片段可能没有在语料中出现，计数为 0，在概率连乘之下整句概率变为 0。</li>
+<li>存储问题：随着 n 的增大，存储量指数级上升，而 n 过小时模型性能又会很差。</li>
+</ul>
+<h2 id="基于窗口的神经网络">基于窗口的神经网络</h2>
+<p>在 N-gram 的基础上，使用神经网络来计算条件概率。同样以 4-gram 为例，计算用公式表达如下:
+<span class="math display">\[
+\begin{align}
+P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\
+&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])
+\end{align}
+\]</span>
+思路非常简单，即将前 N-1 个词输入到神经网络，由神经网络计算得到第 N 个词的概率分布。这样做解决了 N-gram 的稀疏问题与存储问题，但也存在一些问题：</p>
+<ul>
+<li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
+<li>需要变化窗口大小时，矩阵 W 的形状也需要变化，进而需要重新训练。</li>
+</ul>
+<h2 id="循环神经网络rnn">循环神经网络 RNN</h2>
+<p>RNN 的思路同样也很直接，使用同一个矩阵<span class="math inline"> \(W\)</span> 来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN 的公式如下:
+<span class="math display">\[
+h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
+\]</span></p>
+<p><span class="math display">\[
+\hat{y_t}=softmax(W^{(S)}h_t)
+\]</span></p>
+<p>其中，<span class="math inline">\(\sigma\)</span> 是激活函数，<span class="math inline">\(h_t\)</span> 是 t 时刻的隐藏状态，<span class="math inline">\(W\)</span> 是参数矩阵。</p>
+<p>RNN 有以下优点：</p>
+<ul>
+<li>能够处理任意长度的序列。</li>
+<li>没有进行马尔科夫假设，理论上每一时刻模型都知道之前时刻的全部信息。</li>
+</ul>
+<p>但也有以下缺点：</p>
+<ul>
+<li>会出现梯度消失和梯度爆炸问题。</li>
+<li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li>
+</ul>
+<h2 id="参考">参考</h2>
+<p><a href="https://zhuanlan.zhihu.com/p/63397627">CS224N 笔记 (六)：语言模型与 RNN
+- 知乎 (zhihu.com)</a></p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>语言模型</category>
+      </categories>
+      <tags>
+        <tag>语言模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NLP 必备网站 Hugging Face</title>
+    <url>/blog/2021/09/27/huggingface/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>今天来分享一个网站吧，<a href="https://huggingface.co/">Hugging
+Face</a>，最大的 NLP 社区，提供了数以千计的预训练模型，涵盖一百余种语言、覆盖几乎所有常见的 NLP 任务。其提供的 transformers 框架提供了简洁高效的 api，可以在无需处理模型细节的前提下，快速进行推理、微调。Hugging
+Face 至今在 github 上已有超过 5 万个 star，可见其影响力。</p>
+<span id="more"></span>
+<h2 id="为什么需要hugging-face">为什么需要 Hugging Face</h2>
+<p><img src="intro.png"></p>
+<p>Hugging
+Face 不仅仅是若干数据集、预训练模型的资源整合，在此基础上，它还拥有如下特性：</p>
+<ul>
+<li>开箱即用：对于常见的 NLP 任务，很容易找到对应的预训练模型并进行实验，无需过度关注模型的细节。</li>
+<li>多后端支持：Transformers 支持 Pytorch、Jax、Tensorflow 三种框架，无需再为框架微调苦恼。</li>
+<li>可定制性：高效封装的同时，Transformers 支持魔改定制模型，模型文件可以单独使用，方便快速实验。</li>
+</ul>
+<p>鉴于现在 NLP 方向的研究、工程基本都是大规模预训练模型相关，Hugging
+Face 的重要性就一目了然了。如果你是学生党，Hugging
+Face 能让你在各类 NLP 比赛中快速使用预训练模型进行实验。如果你已经工作，Hugging
+Face 也能帮你减少业务问题上的试错成本，快速把任务跑起来。</p>
+<h2 id="有用的链接">有用的链接</h2>
+<ol type="1">
+<li><a href="https://github.com/huggingface/transformers">github 链接</a>，可以对其使用方法、支持的模型有个快速的认识。</li>
+<li><a href="https://huggingface.co/">Hugging Face
+官网</a>，试试推理 api、看一看文档。</li>
+<li><a href="https://huggingface.co/course/chapter0?fw=pt">Hugging Face
+Course</a>，Hugging
+Face 出品的官方课程，目前更新了前四章，基本上是 step-by-step 的教你从推理到微调任务如何构建和完成。</li>
+</ol>
+<h2 id="总结">总结</h2>
+<p>没错，这么短的一篇博客还有总结。今天刚刚看完 Hugging Face
+的前四章课程，感觉学到了很多。早点知道也不会走一些弯路了，一起加油吧！</p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>Hugging Face</tag>
+        <tag>工程</tag>
       </tags>
   </entry>
   <entry>
