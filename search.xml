@@ -1531,9 +1531,9 @@ e_{ij}=a(s_{i-1},h_j)\\
         <category>综述</category>
       </categories>
       <tags>
-        <tag>BART</tag>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
+        <tag>BART</tag>
         <tag>自然语言处理</tag>
         <tag>综述</tag>
         <tag>GPT</tag>
@@ -1856,8 +1856,8 @@ E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int q(z|x)dz\\
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
         <tag>RoBERTa</tag>
       </tags>
   </entry>
@@ -1951,8 +1951,8 @@ E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int q(z|x)dz\\
         <category>BART</category>
       </categories>
       <tags>
-        <tag>BART</tag>
         <tag>预训练模型</tag>
+        <tag>BART</tag>
       </tags>
   </entry>
   <entry>
@@ -2132,8 +2132,8 @@ P_{l2r}(x_1,x_2,\dots,x_n)=\prod_{t=1}^nP(x_t|x_{&lt;t})
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
       </tags>
   </entry>
   <entry>
