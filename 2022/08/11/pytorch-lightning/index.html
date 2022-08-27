@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 今天来介绍一个很好用的深度学习框架，PyTorch Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 &#x2F; 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch Lightning 对这部分逻辑进行了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyTorch Lightning: 让 PyTorch 更为易用">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 今天来介绍一个很好用的深度学习框架，PyTorch Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 &#x2F; 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch Lightning 对这部分逻辑进行了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/pl_quick_start_full_compressed.gif">
+<meta property="article:published_time" content="2022-08-11T02:44:19.000Z">
+<meta property="article:modified_time" content="2022-08-27T04:54:42.996Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="代码">
+<meta property="article:tag" content="框架">
+<meta property="article:tag" content="PyTorch">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/pl_quick_start_full_compressed.gif">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/","path":"2022/08/11/pytorch-lightning/","title":"PyTorch Lightning: 让 PyTorch 更为易用"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PyTorch Lightning: 让 PyTorch 更为易用 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90"><span class="nav-number">3.</span> <span class="nav-text">一个例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E9%98%B6"><span class="nav-number">4.</span> <span class="nav-text">进阶</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PyTorch Lightning: 让 PyTorch 更为易用
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-08-11 10:44:19" itemprop="dateCreated datePublished" datetime="2022-08-11T10:44:19+08:00">2022-08-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-08-27 12:54:42" itemprop="dateModified" datetime="2022-08-27T12:54:42+08:00">2022-08-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E4%BB%A3%E7%A0%81/" itemprop="url" rel="index"><span itemprop="name">代码</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>今天来介绍一个很好用的深度学习框架，PyTorch
+Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 / 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch
+Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单设置即可调用，无需重复造轮子。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<p>近些年来，各种深度学习框架层出不穷，TensorFlow、PyTorch 已经成为深度学习研究人员使用最多的两个框架。其中，PyTorch 的热度连年飙升，大有超越 TensorFlow 之势。
+基础的张量运算、计算图等功能已经被这些框架支持的很好了，后面的框架开始着力于解决其他问题，例如：</p>
+<ul>
+<li>transformers:
+致力于简单高效地使用预训练模型，支持 PyTorch 和 TensorFlow 作为后端</li>
+<li> Fairseq：提供通用建模序列任务的工具包，包含丰富高效的命令行接口，基于 PyTorch</li>
+<li>Pytorch
+Lightning：解决深度学习代码中，学术代码、工程代码耦合性高，工程代码需要重复造轮子等问题</li>
+</ul>
+<p>我之前已经介绍过 transformers 了，相信做 NLP 的同学都对这个框架很熟悉了。Fairseq 我也接触过一段时间，但是由于其文档不是很详细，大部分问题都要读源码才能找到答案，
+入门起来比较痛苦。Pytorch
+Lightning 就是本文的重点了，下面做详细介绍。</p>
+<h2 id="一个例子">一个例子</h2>
+<p>引用一个官网的 gif，介绍 Pytorch
+Lightning 的动机是什么。一段典型的、基于 PyTorch 的深度学习代码可能是下面左侧的这样的，
+包含：模型、优化器、数据定义，训练、验证循环逻辑。</p>
+<p><img src="pl_quick_start_full_compressed.gif"></p>
+<p>可以将其转化为右侧的 Lightning Module，按照以下步骤：</p>
+<ul>
+<li>将模型定义代码写在<code>__init__</code>中</li>
+<li>定义前向传播逻辑</li>
+<li>将优化器代码写在 <code>configure_optimizers</code> 钩子中</li>
+<li>训练代码写在 <code>training_step</code> 钩子中，可以使用 <code>self.log</code> 随时记录变量的值，会保存在 tensorboard 中</li>
+<li>验证代码写在 <code>validation_step</code> 钩子中</li>
+<li>移除硬件调用<code>.cuda()</code> 等，PyTorch
+Lightning 会自动将模型、张量的设备放置在合适的设备；移除<code>.train()</code> 等代码，这也会自动切换</li>
+<li>根据需要，重写其他钩子函数，例如 <code>validation_epoch_end</code>，对 <code>validation_step</code> 的结果进行汇总；<code>train_dataloader</code>，定义训练数据的加载逻辑</li>
+<li>实例化 Lightning Module 和 Trainer 对象，传入数据集</li>
+<li>定义训练参数和回调函数，例如训练设备、数量、保存策略，Early
+Stop、半精度等</li>
+</ul>
+<p>其中，最为直接的好处是，你无需关注模型和张量的设备，可以省去不计其数的<code>.cuda()</code>，再也不需要担心 device 报错了（当然，自己新建的张量还是需要调整下设备的）。
+此外就是功能强大的 Trainer 和 tensorboard 的集成，可以非常优雅地调用。</p>
+<h2 id="进阶">进阶</h2>
+<p>如果想要解锁 PyTorch Lightning 的更多玩法，可以参考<a href="%5BBasic%20skills%20—%20PyTorch%20Lightning%201.8.0dev%20documentation%20(pytorch-lightning.readthedocs.io)%5D(https://pytorch-lightning.readthedocs.io/en/latest/levels/core_skills.html)">官方文档</a>，详细地介绍了各种技巧，辅以代码示例，很容易理解上手。对于核心的 API，Lightning
+Module 的各种钩子，Trainer 的参数、用法，也做了详细的介绍。文档中还包含各种常见的工作流、上手教程，内容非常的齐全。</p>
+<p>例如，<code>configure_optimizers</code> 支持配置多个优化器、搭配学习率衰减策略。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># most cases. no learning rate scheduler</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configure_optimizers</span>(<span class="params">self</span>):</span></span><br><span class="line">    <span class="keyword">return</span> Adam(self.parameters(), lr=<span class="number">1e-3</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># multiple optimizer case (e.g.: GAN)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configure_optimizers</span>(<span class="params">self</span>):</span></span><br><span class="line">    gen_opt = Adam(self.model_gen.parameters(), lr=<span class="number">0.01</span>)</span><br><span class="line">    dis_opt = Adam(self.model_dis.parameters(), lr=<span class="number">0.02</span>)</span><br><span class="line">    <span class="keyword">return</span> gen_opt, dis_opt</span><br><span class="line"></span><br><span class="line"><span class="comment"># example with learning rate schedulers</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configure_optimizers</span>(<span class="params">self</span>):</span></span><br><span class="line">    gen_opt = Adam(self.model_gen.parameters(), lr=<span class="number">0.01</span>)</span><br><span class="line">    dis_opt = Adam(self.model_dis.parameters(), lr=<span class="number">0.02</span>)</span><br><span class="line">    dis_sch = CosineAnnealing(dis_opt, T_max=<span class="number">10</span>)</span><br><span class="line">    <span class="keyword">return</span> [gen_opt, dis_opt], [dis_sch]</span><br><span class="line"></span><br><span class="line"><span class="comment"># example with step-based learning rate schedulers</span></span><br><span class="line"><span class="comment"># each optimizer has its own scheduler</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configure_optimizers</span>(<span class="params">self</span>):</span></span><br><span class="line">    gen_opt = Adam(self.model_gen.parameters(), lr=<span class="number">0.01</span>)</span><br><span class="line">    dis_opt = Adam(self.model_dis.parameters(), lr=<span class="number">0.02</span>)</span><br><span class="line">    gen_sch = {</span><br><span class="line">        <span class="string">'scheduler'</span>: ExponentialLR(gen_opt, <span class="number">0.99</span>),</span><br><span class="line">        <span class="string">'interval'</span>: <span class="string">'step'</span>  <span class="comment"># called after each training step</span></span><br><span class="line">    }</span><br><span class="line">    dis_sch = CosineAnnealing(dis_opt, T_max=<span class="number">10</span>) <span class="comment"># called every epoch</span></span><br><span class="line">    <span class="keyword">return</span> [gen_opt, dis_opt], [gen_sch, dis_sch]</span><br><span class="line"></span><br><span class="line"><span class="comment"># example with optimizer frequencies</span></span><br><span class="line"><span class="comment"># see training procedure in `Improved Training of Wasserstein GANs`, Algorithm 1</span></span><br><span class="line"><span class="comment"># https://arxiv.org/abs/1704.00028</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configure_optimizers</span>(<span class="params">self</span>):</span></span><br><span class="line">    gen_opt = Adam(self.model_gen.parameters(), lr=<span class="number">0.01</span>)</span><br><span class="line">    dis_opt = Adam(self.model_dis.parameters(), lr=<span class="number">0.02</span>)</span><br><span class="line">    n_critic = <span class="number">5</span></span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">        {<span class="string">'optimizer'</span>: dis_opt, <span class="string">'frequency'</span>: n_critic},</span><br><span class="line">        {<span class="string">'optimizer'</span>: gen_opt, <span class="string">'frequency'</span>: <span class="number">1</span>}</span><br><span class="line">    )</span><br></pre></td></tr></tbody></table></figure>
+<p>可以在，<code>epoch_end</code> 系列的钩子中，完成 Epoch-level 的 metric 计算。以 <code>validation_epoch_end</code> 为例，其接收一个参数 <code>validation_step_outputs</code>，是一个 list，包含了 <code>validation_step</code> 的所有返回结果。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">validation_step</span>(<span class="params">self, batch, batch_idx</span>):</span></span><br><span class="line">    x, y = batch</span><br><span class="line">    y_hat = self.model(x)</span><br><span class="line">    loss = F.cross_entropy(y_hat, y)</span><br><span class="line">    pred = ...</span><br><span class="line">    <span class="keyword">return</span> pred</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">validation_epoch_end</span>(<span class="params">self, validation_step_outputs</span>):</span></span><br><span class="line">    all_preds = torch.stack(validation_step_outputs)</span><br><span class="line">    ...</span><br></pre></td></tr></tbody></table></figure>
+<p>Trainer 中，常见的回调函数有 <code>ModelCheckpoint</code>，完成模型的定期保存；<code>EarlyStopping</code>，定义模型的早停策略。Trainer 定义时，只需要传入 <code>precision=16</code>，即可实现 PyTorch
+naive 的混合半精度，如果要制定 apex 后端，也只需要加上一行 <code>amp_backend='apex'</code> 即可。使用 <code>accelerator</code> 可以方便切换各种加速设备，CPU、GPU、TPU、IPU 等等。指定 <code>strategy="ddp"</code> 即可使用数据并行策略。</p>
+<p>过多的就不再赘述了，官方文档介绍的还挺详细的，按需引入即可。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html">Lightning
+in 15 minutes — PyTorch Lightning 1.8.0dev documentation
+(pytorch-lightning.readthedocs.io)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/" title="PyTorch Lightning: 让 PyTorch 更为易用">https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E4%BB%A3%E7%A0%81/" rel="tag"><i class="fa fa-tag"></i> 代码</a>
+              <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag"><i class="fa fa-tag"></i> 框架</a>
+              <a href="/blog/tags/PyTorch/" rel="tag"><i class="fa fa-tag"></i> PyTorch</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/07/03/MoE-Summary/" rel="prev" title="MoE 相关工作、研究进展总结">
+                  <i class="fa fa-chevron-left"></i> MoE 相关工作、研究进展总结
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/08/27/XMTC/" rel="next" title="XMTC: 极端多标签文本分类相关工作">
+                  XMTC: 极端多标签文本分类相关工作 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">128k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:52</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
