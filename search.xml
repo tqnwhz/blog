@@ -1,6 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>MIT 6.830 数据库实验 Lab 1 实验报告</title>
+    <url>/blog/2022/11/16/MIT-6-830-1/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>最近开始学数据库了，找到了 MIT
+6.830 的 Lab，感觉质量还挺高的。打算从实现上了解下数据库的细节。MIT
+6.830 的实验要求使用 JAVA 语言实现一个简易的关系数据库，支持常用的增删改查操作、事务、B + 树索引、恢复等功能。这次我分享下 Lab
+1 的一些总结。我把课程资料也附在了后面，有兴趣一起学习的一起来学习讨论～
+<span id="more"></span></p>
+<h2 id="整体架构">整体架构</h2>
+<p>代码主要分为以下几个目录：</p>
+<ul>
+<li>common:
+定义公用的类：Database、Catalog，其中 Database 提供了静态方法访问 Bufferpool、Catalog 的单例</li>
+<li> execution:
+定义了数据库操作符的 <code>OpItertor</code> 接口，支持 scan、filter、aggregate、join 等操作</li>
+<li> index: B + 树索引</li>
+<li> optimizer: 查询优化</li>
+<li> storage:
+数据库的存储，定义了 Tuple、Record、Field 等基础概念类，以及 Heap
+File 存储</li>
+<li> transaction: 事务</li>
+</ul>
+<p>后面的 6 个 lab 会逐渐地实现这些功能，在第一个 lab，只需要实现一些存储逻辑。</p>
+<h2 id="exercises">Exercises</h2>
+<h3 id="field-tuple">Field &amp; Tuple</h3>
+<p>这部分要求实现基础的 Field、Tuple 类的功能，具体包含 <code>TupleDesc</code> 和 <code>Tuple</code> 两个类。</p>
+<p>先介绍一下 <code>Field</code>，SimpleDB 支持两种数据类型：整数与定长字符串，两种类型定义在枚举类 <code>Type</code> 中，对应的 <code>IntField</code> 和 <code>StringField</code> 实现了 <code>Field</code> 接口，可以同种 Field 相互比较。仅有定长类型简化了数据库模型。</p>
+<p><code>TupleDesc</code> 是每个数据库表的元组描述，包含若干个字段，简单来说，就是一个 (Type,
+Name) 的数组，记录了每个字段的类型和可为字段的域名。这个类中主要要实现构造函数和一些 <code>get</code> 方法，比较简单。值得注意的是这里要实现一个静态的 <code>Merge</code> 方法，用于将两个 <code>TupleDesc</code> 对象合并，在后面的 <code>join</code> 操作时会用到。</p>
+<p><code>Tuple</code> 是一条元组，由一个 <code>TupleDesc</code> 构造而成，包含了一个 <code>Field</code> 的数组存储各个字段的值。其中，每个 <code>Tuple</code> 关联一个 <code>RecordId</code>，为该元组在表的索引 id，由页号 + 页内偏移完成，这里只需要实现 get、set 方法，recordId 后面会用到。</p>
+<h3 id="catalog">Catalog</h3>
+<p><code>Catalog</code> 用于追踪数据库中的所有表，提供了方法用于新建和删除表。正常来说，<code>Catalog</code> 应该从磁盘加载，但是在这个 lab 不需要考虑序列化和加载的逻辑，只需要实现启动后的数据库表的管理逻辑。每个数据库表包含以下几个信息：</p>
+<ul>
+<li>表名：一个字符串</li>
+<li>文件：一个实现了 <code>DbFile</code> 的文件对象</li>
+<li>表的 id：由文件对象唯一对应，一般是绝对路径的 <code>hashcode</code></li>
+<li>主键：一个字符串，SimpleDB 只考虑单一主键</li>
+<li>元组描述，一个 <code>TupleDesc</code> 对象</li>
+</ul>
+<p><code>Catalog</code> 类还提供了一个已经实现的 <code>loadSchema</code> 方法，用于从文件中读取数据库的模式并新建表。</p>
+<h3 id="bufferpool">BufferPool</h3>
+<p><code>BufferPool</code> 类定义了一个统一的、具有缓存的页面读取方法。一般来说，操作一个页面需要先将其从磁盘加载到内存中，然后才能操作。<code>BufferPool</code> 定义了一个缓存区，当页面已经被加载到内存后，就无需再次加载了。这里后续需要实现一个类似 LRU 的页面调度算法，在本次 lab 中尚不需要。</p>
+<p>本 lab 中，BufferPool 需要实现一个 get 页面的方法，当缓存区满时，只需要抛出 <code>DbException</code> 异常即可。这里需要根据 <code>PageId</code> 获取 table
+id，进而通过 Catalog 获取表进而读取。</p>
+<h3 id="heappage">HeapPage</h3>
+<p>这个 Exercise 要实现 HeapFile 的读取方法，包含 <code>HeapPage, HeapPageId,
+RecordId</code> 三个类。其中，<code>RecordId</code> 类的功能已经在上面介绍，是每个元组在表中的唯一的记录 id，包含 <code>PageId</code> 和在页内的编号。<code>HeapPageId</code> 实现了 <code>PageId</code> 接口，包含一个表 id 以及页面号，与 <code>RecordId</code> 类似。这两个类都比较简单，只需要实现一些 get、equals,
+hashcode 方法即可。</p>
+<p><code>HeapPage</code> 是 <code>HeapFile</code> 的页面类，实现了 <code>Page</code> 接口，需要支持获取页面数据、脏位标记等功能。这里先简单介绍下 <code>HeapFile</code>，这是一种无序的存储格式，记录以乱序的方式存储在页面中。每个页面由若干个插槽（slot）组成，每个 slot 可用于存储一条记录，页面首部包含一个 bitmap 记录每个 slot 是否包含记录。在插入记录的时候，找到一个空的插槽插入即可。</p>
+<p>对于定长记录的表，这里就已经很圆满了。而对于非定长的表，页面内的 slot 数量是可变的，slot 的大小也是可变的。这时，需要在页面尾部记录插槽的位置、大小、数量，还要保存已经有的记录的位置和大小。放在尾部，是因为这样可以方便地增长 slot 数量，当尾部和正向的记录重合时，就意味着页面满了。这种页面还需要周期性地重排一下，避免过多的碎片。当然，这些是题外话，SimpleDB 中不需要考虑这种复杂情况。</p>
+<p>本次 lab 中，<code>HeapPage</code> 类需要实现查询槽位状态、计算空槽数量等功能，还要实现一个元组的迭代器。在按上面捋顺了 HeapFile 的原理之后，就很简单了。</p>
+<h3 id="heapfile">HeapFile</h3>
+<p>这个类主要实现两个功能：</p>
+<ul>
+<li>读取指定页面。值得注意的是，数据库文件可能很大，因此不能直接把整个文件加载到内存中，需要使用支持随机读写的 <code>RandomAccessFile</code>，移动指针到指定页面的位置，再进行读取。</li>
+<li>返回一个可以迭代访问数据库所有元组的 <code>DbFileIterator</code>。值得注意的是，这个 <code>DbFileIterator</code> 需要支持重用，因此其不是一个传统的 <code>Iterator</code>，需要额外的代码来实现一个 <code>DbFileIterator</code>。我建议新建一个类继承自 <code>AbstractDbFileIterator</code>，其对接口的逻辑进行了一定简化。更好的方式是实现一个通用的适配器，把传统的 <code>Iterator</code> 转换成需要的格式。</li>
+</ul>
+<h3 id="seqscan">SeqScan</h3>
+<p>最后一个 Exercise，实现表的遍历操作。这里包装一下上面的 <code>HeapFile</code> 的 <code>Iterator</code> 逻辑，实现 <code>OpIterator</code> 接口即可。这个新的 <code>OpIterator</code> 也需要支持重用，后面也会比较麻烦。这里还不需要担心，写完，通过单元测试就收工啦！</p>
+<h2 id="总结">总结</h2>
+<p>这个 lab 主要是先熟悉了数据库的整体架构以及相互间的关联。之后，在底层实现 <code>HeapFile</code> 这一经典的文件存储方法，对于页面的读取和元组的存储有了更深的理解。最后，实现了一个数据库的遍历操作，简单了解数据库操作符的规范和接口，剩下的操作符需要在后面实现。</p>
+<h2 id="相关链接">相关链接</h2>
+<p>我学习的是 2021 年春季的版本，相关链接如下：</p>
+<ul>
+<li>课程官网: http://db.lcs.mit.edu/6.5830/2021/assign.php,
+里面有讲义、PPT，没有视频</li>
+<li>代码：https://github.com/MIT-DB-Class/simple-db-hw-2021</li>
+</ul>
+<h2 id="section"></h2>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>代码</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>DeBERTa: 注意力解纠缠和解码加强版的 BERT</title>
     <url>/blog/2022/09/04/DEBERTA/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -1353,8 +1434,8 @@ scratch）是更好的选择。论文中还做了非常详细的消融实验，�
         <category>预训练模型</category>
       </categories>
       <tags>
-        <tag>迁移学习</tag>
         <tag>BERT</tag>
+        <tag>迁移学习</tag>
         <tag>生物医学</tag>
       </tags>
   </entry>
@@ -2450,9 +2531,9 @@ PTM。这种领域专业知识通常被认为对于解决许多特定领域的�
         <category>综述</category>
       </categories>
       <tags>
-        <tag>BERT</tag>
-        <tag>预训练模型</tag>
         <tag>BART</tag>
+        <tag>预训练模型</tag>
+        <tag>BERT</tag>
         <tag>自然语言处理</tag>
         <tag>综述</tag>
         <tag>GPT</tag>
@@ -2822,8 +2903,8 @@ size + 字节编码 + 更大数据 + 更长训练时间</p>
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>BERT</tag>
         <tag>预训练模型</tag>
+        <tag>BERT</tag>
         <tag>RoBERTa</tag>
       </tags>
   </entry>
@@ -2923,8 +3004,8 @@ Evaluation，通用语言理解评估）：由九个任务组成，每个任务�
         <category>BART</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BART</tag>
+        <tag>预训练模型</tag>
       </tags>
   </entry>
   <entry>
@@ -3129,8 +3210,8 @@ MNLI 等涉及句子对的任务上的性能损失严重，证明下句预测对
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>BERT</tag>
         <tag>预训练模型</tag>
+        <tag>BERT</tag>
       </tags>
   </entry>
   <entry>
