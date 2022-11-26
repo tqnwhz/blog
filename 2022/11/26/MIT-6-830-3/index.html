@@ -21,15 +21,15 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 最近开始学数据库了，找到了 MIT 6.830 的 Lab，感觉质量还挺高的。打算从实现上了解下数据库的细节。MIT 6.830 的实验要求使用 JAVA 语言实现一个简易的关系数据库，支持常用的增删改查操作、事务、B + 树索引、恢复等功能。这次我分享下 Lab 1 的一些总结。我把课程资料也附在了后面，有兴趣一起学习的一起来学习讨论～">
+<meta name="description" content="摘要 Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="MIT 6.830 数据库实验 Lab 1 实验报告">
-<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/index.html">
+<meta property="og:title" content="MIT 6.830 数据库实验 Lab 3 实验报告">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 最近开始学数据库了，找到了 MIT 6.830 的 Lab，感觉质量还挺高的。打算从实现上了解下数据库的细节。MIT 6.830 的实验要求使用 JAVA 语言实现一个简易的关系数据库，支持常用的增删改查操作、事务、B + 树索引、恢复等功能。这次我分享下 Lab 1 的一些总结。我把课程资料也附在了后面，有兴趣一起学习的一起来学习讨论～">
+<meta property="og:description" content="摘要 Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-11-16T05:24:36.000Z">
-<meta property="article:modified_time" content="2022-11-16T06:38:59.405Z">
+<meta property="article:published_time" content="2022-11-26T09:19:45.000Z">
+<meta property="article:modified_time" content="2022-11-26T10:28:03.279Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MIT 6.830">
@@ -37,14 +37,14 @@
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/">
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/","path":"2022/11/16/MIT-6-830-1/","title":"MIT 6.830 数据库实验 Lab 1 实验报告"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/","path":"2022/11/26/MIT-6-830-3/","title":"MIT 6.830 数据库实验 Lab 3 实验报告"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>MIT 6.830 数据库实验 Lab 1 实验报告 | 一隅</title>
+<title>MIT 6.830 数据库实验 Lab 3 实验报告 | 一隅</title>
   
 
 
@@ -151,7 +151,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">整体架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercises"><span class="nav-number">3.</span> <span class="nav-text">Exercises</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#field-tuple"><span class="nav-number">3.1.</span> <span class="nav-text">Field &amp; Tuple</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#catalog"><span class="nav-number">3.2.</span> <span class="nav-text">Catalog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bufferpool"><span class="nav-number">3.3.</span> <span class="nav-text">BufferPool</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#heappage"><span class="nav-number">3.4.</span> <span class="nav-text">HeapPage</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#heapfile"><span class="nav-number">3.5.</span> <span class="nav-text">HeapFile</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#seqscan"><span class="nav-number">3.6.</span> <span class="nav-text">SeqScan</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="nav-number">5.</span> <span class="nav-text">相关链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section"><span class="nav-number">6.</span> <span class="nav-text"></span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#inthistogram"><span class="nav-number">3.1.</span> <span class="nav-text">IntHistogram</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tablestats"><span class="nav-number">3.2.</span> <span class="nav-text">TableStats</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join-cardinality"><span class="nav-number">3.3.</span> <span class="nav-text">Join Cardinality</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join-ordering"><span class="nav-number">3.4.</span> <span class="nav-text">Join Ordering</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -227,7 +227,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.jpg">
@@ -240,7 +240,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          MIT 6.830 数据库实验 Lab 1 实验报告
+          MIT 6.830 数据库实验 Lab 3 实验报告
         </h1>
 
         <div class="post-meta-container">
@@ -252,7 +252,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-11-16 13:24:36 / 修改时间：14:38:59" itemprop="dateCreated datePublished" datetime="2022-11-16T13:24:36+08:00">2022-11-16</time>
+      <time title="创建时间：2022-11-26 17:19:45 / 修改时间：18:28:03" itemprop="dateCreated datePublished" datetime="2022-11-26T17:19:45+08:00">2022-11-26</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -282,14 +282,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>2.8k</span>
+      <span>3.2k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>5 分钟</span>
+      <span>6 分钟</span>
     </span>
 </div>
 
@@ -301,72 +301,64 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="摘要">摘要</h2>
-<p>最近开始学数据库了，找到了 MIT
-6.830 的 Lab，感觉质量还挺高的。打算从实现上了解下数据库的细节。MIT
-6.830 的实验要求使用 JAVA 语言实现一个简易的关系数据库，支持常用的增删改查操作、事务、B + 树索引、恢复等功能。这次我分享下 Lab
-1 的一些总结。我把课程资料也附在了后面，有兴趣一起学习的一起来学习讨论～
+<p>Lab
+3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。
 <span id="more"></span></p>
-<h2 id="整体架构">整体架构</h2>
-<p>代码主要分为以下几个目录：</p>
+<h2 id="理论知识">理论知识</h2>
+<p>查询优化模块的作用是为指定的查询找到高效的执行方案。由于 SQL 是声明式语言，查询只声明了想要的结果，并没有规定执行的具体方案。这些结果等价的方案存在于一个计划空间中，包含物理上等价或者关系代数等价的方案。</p>
 <ul>
-<li>common:
-定义公用的类：Database、Catalog，其中 Database 提供了静态方法访问 Bufferpool、Catalog 的单例</li>
-<li> execution:
-定义了数据库操作符的 <code>OpItertor</code> 接口，支持 scan、filter、aggregate、join 等操作</li>
-<li> index: B + 树索引</li>
-<li> optimizer: 查询优化</li>
-<li> storage:
-数据库的存储，定义了 Tuple、Record、Field 等基础概念类，以及 Heap
-File 存储</li>
-<li> transaction: 事务</li>
+<li>物理等价是指操作的不同物理实现，比如 Join 是使用嵌套循环、Sort-Merge 还是其他，Scan 是使用 Heap
+Scan 还是 Index Scan，等等。</li>
+<li>关系代数等价是指，关系代数上等价的关系。例如一些操作的顺序是可交换的（例如 projection），多种同种操作是可串联的（例如 filter），等等。</li>
 </ul>
-<p>后面的 6 个 lab 会逐渐地实现这些功能，在第一个 lab，只需要实现一些存储逻辑。</p>
-<h2 id="exercises">Exercises</h2>
-<h3 id="field-tuple">Field &amp; Tuple</h3>
-<p>这部分要求实现基础的 Field、Tuple 类的功能，具体包含 <code>TupleDesc</code> 和 <code>Tuple</code> 两个类。</p>
-<p>先介绍一下 <code>Field</code>，SimpleDB 支持两种数据类型：整数与定长字符串，两种类型定义在枚举类 <code>Type</code> 中，对应的 <code>IntField</code> 和 <code>StringField</code> 实现了 <code>Field</code> 接口，可以同种 Field 相互比较。仅有定长类型简化了数据库模型。</p>
-<p><code>TupleDesc</code> 是每个数据库表的元组描述，包含若干个字段，简单来说，就是一个 (Type,
-Name) 的数组，记录了每个字段的类型和可为字段的域名。这个类中主要要实现构造函数和一些 <code>get</code> 方法，比较简单。值得注意的是这里要实现一个静态的 <code>Merge</code> 方法，用于将两个 <code>TupleDesc</code> 对象合并，在后面的 <code>join</code> 操作时会用到。</p>
-<p><code>Tuple</code> 是一条元组，由一个 <code>TupleDesc</code> 构造而成，包含了一个 <code>Field</code> 的数组存储各个字段的值。其中，每个 <code>Tuple</code> 关联一个 <code>RecordId</code>，为该元组在表的索引 id，由页号 + 页内偏移完成，这里只需要实现 get、set 方法，recordId 后面会用到。</p>
-<h3 id="catalog">Catalog</h3>
-<p><code>Catalog</code> 用于追踪数据库中的所有表，提供了方法用于新建和删除表。正常来说，<code>Catalog</code> 应该从磁盘加载，但是在这个 lab 不需要考虑序列化和加载的逻辑，只需要实现启动后的数据库表的管理逻辑。每个数据库表包含以下几个信息：</p>
+<p>查询优化的终极目的，是在这个庞大的空间中找到实际上 “最优的” 方案，它使用以下子模块来完成：</p>
 <ul>
-<li>表名：一个字符串</li>
-<li>文件：一个实现了 <code>DbFile</code> 的文件对象</li>
-<li>表的 id：由文件对象唯一对应，一般是绝对路径的 <code>hashcode</code></li>
-<li>主键：一个字符串，SimpleDB 只考虑单一主键</li>
-<li>元组描述，一个 <code>TupleDesc</code> 对象</li>
+<li>计划生成器：生成新的、结果等价的计划</li>
+<li>成本估计器：估计一个计划的成本，包含 IO 和 CPU，其中 IO 占主要部分</li>
+<li>搜索策略：如何在计划空间中行走，常使用动态规划策略</li>
 </ul>
-<p><code>Catalog</code> 类还提供了一个已经实现的 <code>loadSchema</code> 方法，用于从文件中读取数据库的模式并新建表。</p>
-<h3 id="bufferpool">BufferPool</h3>
-<p><code>BufferPool</code> 类定义了一个统一的、具有缓存的页面读取方法。一般来说，操作一个页面需要先将其从磁盘加载到内存中，然后才能操作。<code>BufferPool</code> 定义了一个缓存区，当页面已经被加载到内存后，就无需再次加载了。这里后续需要实现一个类似 LRU 的页面调度算法，在本次 lab 中尚不需要。</p>
-<p>本 lab 中，BufferPool 需要实现一个 get 页面的方法，当缓存区满时，只需要抛出 <code>DbException</code> 异常即可。这里需要根据 <code>PageId</code> 获取 table
-id，进而通过 Catalog 获取表进而读取。</p>
-<h3 id="heappage">HeapPage</h3>
-<p>这个 Exercise 要实现 HeapFile 的读取方法，包含 <code>HeapPage, HeapPageId,
-RecordId</code> 三个类。其中，<code>RecordId</code> 类的功能已经在上面介绍，是每个元组在表中的唯一的记录 id，包含 <code>PageId</code> 和在页内的编号。<code>HeapPageId</code> 实现了 <code>PageId</code> 接口，包含一个表 id 以及页面号，与 <code>RecordId</code> 类似。这两个类都比较简单，只需要实现一些 get、equals,
-hashcode 方法即可。</p>
-<p><code>HeapPage</code> 是 <code>HeapFile</code> 的页面类，实现了 <code>Page</code> 接口，需要支持获取页面数据、脏位标记等功能。这里先简单介绍下 <code>HeapFile</code>，这是一种无序的存储格式，记录以乱序的方式存储在页面中。每个页面由若干个插槽（slot）组成，每个 slot 可用于存储一条记录，页面首部包含一个 bitmap 记录每个 slot 是否包含记录。在插入记录的时候，找到一个空的插槽插入即可。</p>
-<p>对于定长记录的表，这里就已经很圆满了。而对于非定长的表，页面内的 slot 数量是可变的，slot 的大小也是可变的。这时，需要在页面尾部记录插槽的位置、大小、数量，还要保存已经有的记录的位置和大小。放在尾部，是因为这样可以方便地增长 slot 数量，当尾部和正向的记录重合时，就意味着页面满了。这种页面还需要周期性地重排一下，避免过多的碎片。当然，这些是题外话，SimpleDB 中不需要考虑这种复杂情况。</p>
-<p>本次 lab 中，<code>HeapPage</code> 类需要实现查询槽位状态、计算空槽数量等功能，还要实现一个元组的迭代器。在按上面捋顺了 HeapFile 的原理之后，就很简单了。</p>
-<h3 id="heapfile">HeapFile</h3>
-<p>这个类主要实现两个功能：</p>
+<p>为了对搜索空间进行剪枝，查询优化的开山之作，System
+R 提出只考虑左深树，即执行树只有左侧是深的。这种树可以较好地流水线化。值得注意的是，由于各种原因，查询优化实际上经常找不到最优的实际执行方案，例如，成本估计器的误差，成本估计器基于选择度去计算操作前后的表规模，进而估算 IO 和 CPU
+cost，每一步都会有误差。因此，实际上，查询优化器是去除一些看起来特别差的执行计划，与理想最优还有差距。</p>
+<p>查询优化经常遵循一些启发式的策略，例如：</p>
 <ul>
-<li>读取指定页面。值得注意的是，数据库文件可能很大，因此不能直接把整个文件加载到内存中，需要使用支持随机读写的 <code>RandomAccessFile</code>，移动指针到指定页面的位置，再进行读取。</li>
-<li>返回一个可以迭代访问数据库所有元组的 <code>DbFileIterator</code>。值得注意的是，这个 <code>DbFileIterator</code> 需要支持重用，因此其不是一个传统的 <code>Iterator</code>，需要额外的代码来实现一个 <code>DbFileIterator</code>。我建议新建一个类继承自 <code>AbstractDbFileIterator</code>，其对接口的逻辑进行了一定简化。更好的方式是实现一个通用的适配器，把传统的 <code>Iterator</code> 转换成需要的格式。</li>
+<li>尽早完成列和行的筛选，减小数据规模</li>
+<li>避免表间的笛卡尔积</li>
+<li>... 等等</li>
 </ul>
-<h3 id="seqscan">SeqScan</h3>
-<p>最后一个 Exercise，实现表的遍历操作。这里包装一下上面的 <code>HeapFile</code> 的 <code>Iterator</code> 逻辑，实现 <code>OpIterator</code> 接口即可。这个新的 <code>OpIterator</code> 也需要支持重用，后面也会比较麻烦。这里还不需要担心，写完，通过单元测试就收工啦！</p>
+<h2 id="exercise">Exercise</h2>
+<h3 id="inthistogram">IntHistogram</h3>
+<p>Histogram，即直方图，用于记录字段的统计信息，即字段值的分布，进而用于估计不同操作的选择度。这在成本估计器中会用到。这类直方图在构建时常用若干个等宽的桶，对应值区间，然后在这些桶间构建分布。IntHistogram 是对整形字段进行统计的类，它的构造函数如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IntHistogram</span><span class="params">(<span class="keyword">int</span> buckets, <span class="keyword">int</span> min, <span class="keyword">int</span> max)</span> </span>{</span><br><span class="line">    <span class="comment">// some code goes here</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>即根据桶的数量、最小值、最大值初始化一个直方图，然后通过 <code>addValue</code> 方法逐个将值加入，最后通过 <code>estimateSelectivity</code> 等方法，估计操作符的选择度。实现逻辑就是将值域等距地划分为指定数量的桶，在添加值时对应桶计数 + 1,。在估计选择度时，要按照两步走的方法，例如 &lt;=，先估计 &lt; 的比率，在桶内再根据均匀分布，估计 = 的比率，求和即可。</p>
+<p>值得注意的是，StringHistogram 是通过将字符串映射到整形，再通过 IntHistogram 实现的。但是这两个类并没有实现同样的接口，这给后面带来了麻烦。</p>
+<h3 id="tablestats">TableStats</h3>
+<p>TableStats 记录了整张表的统计信息，包含每个字段的直方图，以及表的基数。正常应该是保存一个 <code>List&lt;Histogram&gt;</code>，用于保存每个字段的直方图。但并没有 <code>Histogram</code> 这样的接口，而重构代码还需要去修改测试代码，也并不是一种好的做法。我这里使用了一个 <code>List&lt;Object&gt;</code> 加强制类型转换完成，也不是一种值得提倡的做法。不过可以先达到效果。</p>
+<p>在确定了如何保存直方图，还有一个问题是如何获得字段的最大最小值。因为直方图的构建需要指定最大最小值，之后才能一个个地添加值。这个过程不是一次遍历能够完成的。因此，需要先遍历一次，记录每个字段的最大最小值，构建直方图，再遍历一次逐个添加值。</p>
+<h3 id="join-cardinality">Join Cardinality</h3>
+<p>这个 exercise 要求去根据公式估计 join 操作结果的基数和操作成本。操作成本非常简单，根据在 Lab
+2 中实现的 Join 策略计算即可。我 Lab
+2 是使用的粗暴的嵌套循环的方法，将 IO 成本与 CPU 计算成本相加即可。join 操作的基数则相对难以估计。如果是 equijoin 且某侧字段为主键，那么基数一定不会超过另一张表的基数。这很容易理解，因为左侧主键是不重复的，右侧表中与主键相同的记录可以保留，其他则不会。如果不存在这样的条件，就需要一些策略去估计了：</p>
+<ul>
+<li>简单启发估计：如果是 equijoin，可以使用较大表的基数作为估计。如果是 range-join，可以按照一定的比例 * 笛卡尔积的基数，作为估计。</li>
+<li>基于直方图：要获得准确一点的结果，需要根据两侧的直方图进行估计。例如 equijoin，对于每一个值，去估计在另一个直方图中的数量，然后两个数量相乘最后求和即可。range-join 则要在前一步的基础上，考虑两侧的比率。</li>
+</ul>
+<h3 id="join-ordering">Join Ordering</h3>
+<p>最后一个 Exercise 要求实现找出多个 join 的最优执行方案。Join 操作的被封装在了 <code>LogicalJoinNode</code> 这个类中，包含 Join 的信息，例如两侧表、别名、Join 条件等。目标就是接收一个 <code>List&lt;LogicalJoinNode&gt;</code> 作为输入，找到最优的左深树联合顺序 <code>List&lt;LogicalJoinNode&gt;</code>。伪代码如下所示：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">1. j = set of join nodes</span><br><span class="line">2. for (i in 1...|j|):</span><br><span class="line">3.     for s in {all length i subsets of j}</span><br><span class="line">4.       bestPlan = {}</span><br><span class="line">5.       for s' in {all length d-1 subsets of s}</span><br><span class="line">6.            subplan = optjoin(s')</span><br><span class="line">7.            plan = best way to join (s-s') to subplan</span><br><span class="line">8.            if (cost(plan) &lt; cost(bestPlan))</span><br><span class="line">9.               bestPlan = plan</span><br><span class="line">10.      optjoin(s) = bestPlan</span><br><span class="line">11. return optjoin(j)</span><br></pre></td></tr></tbody></table></figure>
+<p>遵循动态规划的思想，按照规模从小到大的顺序建动态规划表。对于给定的规模 i，需要枚举所有该规模的子集，根据小规模的最优结果计算该子集的最优结果。这个伪代码看起来很简单，但是有以下几个难点：</p>
+<ul>
+<li>如何枚举指定规模的所有子集</li>
+<li>如何计算指定 join 顺序的成本，如果子集的最优 join 顺序不支持新元素插入在最后面怎么办</li>
+</ul>
+<p>实验中给定了一些辅助方法，帮助我们解决了这些问题，虽然并不优雅：</p>
+<ul>
+<li><code>enumerateSubsets</code> 方法从规模为 1 开始，构建规模为 iS 支持，则直接跳过</li>
+</ul>
+<p>其中，<code>enumerateSubsets</code> 是一种非常低效的枚举策略，一次性地创建规模为 i 的 Set，会有较大的内存开销。正常的策略是遵循迭代器的模式，每次返回一个新的子集。join 顺序不支持直接跳过也是一种妥协，在动态规划的设定下。</p>
+<p>这个 Exercise 就是在上面辅助函数的帮助下，实现上述伪代码。这里我写了一个迭代器类，替代一次返回所有结果的枚举函数。这个枚举函数实际上是在计算组合方案，相对容易改造成迭代器，维护多个指针，然后每次获取新元素时更新指针位置即可。如果是要计算排列方案的话，就要用那个基于左右箭头的算法了。</p>
 <h2 id="总结">总结</h2>
-<p>这个 lab 主要是先熟悉了数据库的整体架构以及相互间的关联。之后，在底层实现 <code>HeapFile</code> 这一经典的文件存储方法，对于页面的读取和元组的存储有了更深的理解。最后，实现了一个数据库的遍历操作，简单了解数据库操作符的规范和接口，剩下的操作符需要在后面实现。</p>
-<h2 id="相关链接">相关链接</h2>
-<p>我学习的是 2021 年春季的版本，相关链接如下：</p>
-<ul>
-<li>课程官网: http://db.lcs.mit.edu/6.5830/2021/assign.php,
-里面有讲义、PPT，没有视频</li>
-<li>代码：https://github.com/MIT-DB-Class/simple-db-hw-2021</li>
-</ul>
-<h2 id="section"></h2>
+<p>查询优化这个 Lab 本身难度不大，属于麻雀虽小五脏俱全。对于成本估计、方案生成、动态规划每部分都涉及到了，但都不深。查询优化的理论知识要更为复杂，只是获得一个搜索空间就要考虑各种关系代数的等价性、Join 交换时的条件问题等等。对于非左深树，这个空间会更大，剪枝和搜索也会更难。动态规划搜索理论上还要考虑每种方案的物理执行类型，是否有可用的排序结果等等。真正完成这些实践就属于重复造轮子了，过于复杂且没有必要。</p>
 
     </div>
 
@@ -384,7 +376,7 @@ hashcode 方法即可。</p>
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/" title="MIT 6.830 数据库实验 Lab 1 实验报告">https://tqnwhz.github.io/blog/2022/11/16/MIT-6-830-1/</a>
+      <a href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/" title="MIT 6.830 数据库实验 Lab 3 实验报告">https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -402,14 +394,11 @@ hashcode 方法即可。</p>
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/blog/2022/09/04/DEBERTA/" rel="prev" title="DeBERTa: 注意力解纠缠和解码加强版的 BERT">
-                  <i class="fa fa-chevron-left"></i> DeBERTa: 注意力解纠缠和解码加强版的 BERT
+                <a href="/blog/2022/11/20/MIT-6-830-2/" rel="prev" title="MIT 6.830 数据库实验 Lab 2 实验报告">
+                  <i class="fa fa-chevron-left"></i> MIT 6.830 数据库实验 Lab 2 实验报告
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/blog/2022/11/20/MIT-6-830-2/" rel="next" title="MIT 6.830 数据库实验 Lab 2 实验报告">
-                  MIT 6.830 数据库实验 Lab 2 实验报告 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>
