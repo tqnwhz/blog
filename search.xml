@@ -1,6 +1,544 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>MIT 6.830 数据库实验 Lab 4 实验报告</title>
+    <url>/blog/2022/11/29/MIT-6-830-4/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。</p>
+<span id="more"></span>
+<h2 id="理论知识">理论知识</h2>
+<p>事务是一个包含多个操作的序列，应当被原子化地执行，其具有以下 ACID 特性：</p>
+<ul>
+<li>原子性（Atomicity:）：事务中的操作要么都被执行，要么都不被执行。</li>
+<li>一致性（Consistency）：数据库是执行事务前是一致的，在执行事务后依然是一致的。</li>
+<li>隔离性（Isolation）：每个事务的执行与其他事务隔离。实际上 DBMS （数据库管理系统）会在多个事务间交叉执行，并不会按顺序一个个执行，但 DBMS 会保证每个事务看起来是隔离执行的，隐藏了并发的细节。</li>
+<li>持久性（Durability）：如果事务提交到数据库，结果会持久存在，即使刚提交 DBMS 就崩溃了也一样。</li>
+</ul>
+<p>事务管理器包含以下两个模块：</p>
+<ul>
+<li>锁管理器：使用共享锁、排它锁、意向锁等实现事务间访问的并发控制</li>
+<li>日志和恢复：当事务需要回滚时，逐步地撤销事务已完成的操作</li>
+</ul>
+<h3 id="严格两阶段锁">严格两阶段锁</h3>
+<p>为了保证事务的 ACID 特性，DBMS 使用严格两阶段锁（Strict Two Phase Locking）来完成事务的锁管理，该方法具有以下特点：</p>
+<ul>
+<li>每个资源有一个共享锁（S，Shared）和排它锁（Exclusive，X）。
+<ul>
+<li>至多一个事务可以持有该资源的排它锁，但是很多其他事务可以持有其的共享锁。</li>
+</ul></li>
+<li>事务在读之前必须获得排它锁，在写之前必须获得共享锁</li>
+<li><strong>事务在释放任何锁之后都无法获得新锁</strong>。这是保证可串行性的关键。</li>
+<li><strong>严格两阶段锁特性</strong>：事务在结束前统一释放锁，而非在过程中逐个释放锁。</li>
+</ul>
+<p>最后一点是为了避免级联回滚的问题。级联回滚意味着回滚一个事务会要求回滚另一个事务。考虑下面的场景 1. T1 先读、写了 R，但是还没有提交到 DBMS 2. T2 后读、写了 R</p>
+<p>这时，要回滚 T1，必须回滚 T2，因为 T2 读的是 T1 写后的数据，如果 T1 回滚了，就不存在 T2 读的数据了，即脏数据。</p>
+<h3 id="死锁">死锁</h3>
+<p>当事务间存在资源的循环等待，满足死锁条件时，就会发生死锁。在操作系统上，通常有以下三种方法处理死锁： - 预防。按照指定的顺序请求资源，例如静态指定顺序，打破循环等待条件。 - 避免。分配时预测是否可能出现死锁。 - 检测和处理。周期性检测是否有死锁，并处理</p>
+<p>也有一些数据库系统，直接不作处理。如果事务超时了就猜测发生了死锁，直接中止回滚。但这也会误伤真的需要很久才能计算出结果的事务，不提倡。</p>
+<p>DBMS 广泛使用的是基于等待图的死锁检测。一个后台进程周期性地构建事务间的依赖图，当依赖图存在环时，就出现了死锁的循环等待条件，即出现了死锁。这种情况下就需要中止某个环内的事务打破循环，可以根据某些指标确定优先级，例如事务的持续时间、持有锁的数量等。</p>
+<h3 id="意向锁">意向锁</h3>
+<p>锁的粒度需要同时考虑并发性能和管理成本。考虑极端情况： - 只使用一个锁，锁住整个数据库，很简单，但是不能并行 - 对每个元组上锁，可以很好的并发，但是锁太多，需要庞大的内存开销，锁管理的负载也会很大</p>
+<p>因此，需要折中：</p>
+<ul>
+<li>细粒度的锁有利于并发</li>
+<li>少数的锁方便管理</li>
+</ul>
+<p>多粒度加锁可以较好地折中，其思想是： - 不应该为所有的事务设置相同的锁粒度 - 允许数据可变规模 - 定义一个加锁的层级，高层包含低层 - 可以表示为一棵树</p>
+<p>当对底层的元组或者页面加共享锁 / 排他锁时，需要相应的为高层页面加意向共享锁和意向排他锁。意向锁的设计允许高层节点进行 S 和 X 加锁时，无需检查所有的底层节点。如果没有意向锁，需要遍历所有底层节点才能知道能否给这个节点加锁。</p>
+<h2 id="exercise">Exercise</h2>
+<h3 id="lockmanager">LockManager</h3>
+<p>该 Exercise 要求实现 <code>BufferPool</code> 中的读页面请求锁、释放锁等功能，指导书要求在页面层级管理锁，不能直接在表层级加锁。指导书建议使用一个 LockManager 类来管理所有的锁，我先介绍下我对这个类的设计。先从简单的资源抽象开始，一个资源应该由一个唯一键标识，例如 Page 有 PageId，Tuple 有 RecordId。因此，LockManager 实际是维护了一个资源 - 锁的 Map，资源是任意类型的 Object。而锁对象（<code>LockItem</code>），应该包含以下属性：持有锁的事务，当前锁的类型。当一个加锁请求（资源，锁类型，事务）到达锁管理器时：</p>
+<ol type="1">
+<li>先获取资源的 <code>LockItem</code></li>
+<li><code>LockItem</code> 内，同步地判断能否完成这次加锁
+<ul>
+<li>若可以（锁无事务持有，或类型兼容，或可以直接升级锁），则加锁返回</li>
+<li>否则，阻塞在 <code>LockItem</code> 对象上，等待其他事务释放锁后将其唤醒</li>
+</ul></li>
+</ol>
+<p>当释放锁请求到达锁管理器时：</p>
+<ol type="1">
+<li>先获取资源的 <code>LockItem</code></li>
+<li><code>LockItem</code> 内，同步地释放锁，并 <code>notifyAll</code> 其他阻塞线程</li>
+</ol>
+<p>在设计上，<code>LockManager</code> 应当遵循单例模式。我查阅了 JAVA 实现单例模式的几种方法，最优雅的就是使用枚举类。JAVA 保证了枚举类型的每个值都有唯一实例，进而可以简洁优雅、线程安全的实现单例模式。</p>
+<h3 id="lock-lifetime">Lock Lifetime</h3>
+<p>该 Exercise 要实现严格两阶段的锁生命周期：逐个地申请锁，只有在事务结束时才可以统一释放锁。锁的申请上，可以直接在 <code>BufferPool.getPage</code> 中进行申请，遵循一个即用即申的模式。</p>
+<p>锁的释放上，正常应该在调用 <code>BufferPool.transactionComplete</code> 方法时，统一地释放所有锁。但会有些特殊情况，例如在插入元组的时候，扫到了一个页面没有空槽，这种情况下其实可以释放共享锁了。这看起来跟严格两阶段锁是违背的，但是实际上并不影响，因为插入元组这个操作中，只会对有空槽的页面造成影响。把这些锁及时释放可以允许更多的并行。</p>
+<h3 id="no-steal">NO STEAL</h3>
+<p>由于种种原因，事务可能中止，这时需要逐个地回滚事务已经完成的操作。在本次 Lab 中，由于还没有日志模块记录已经完成的操作，要使用 NO STEAL 的模式。该模式的思想是，只有当事务提交到 DBMS 后，才将其脏页面写回磁盘。在页面逐出时不能逐出脏页面。这种思想非常的简单有效，只有事务提交后，脏页面写回磁盘，结果才真正生效。当事务中止时，直接将脏页面丢弃即可，无需额外回滚。但是这种方法也有问题，最大的问题是，BufferPool 中只有脏页面的时候，DBMS 就直接崩溃了。不过这种思想还是有好处的，事实上，页面逐出时，逐出脏页面会导致额外的写回开销，有一种策略就是优先逐出非脏页面，减少 IO。</p>
+<p>这个 Exercise 在页面逐出时，按照优先级（例如 LRU）找到第一个非脏页面逐出即可。若页面全脏则抛出异常。</p>
+<h3 id="transactions">Transactions</h3>
+<p>根据上面已经实现的逻辑，实现 <code>transactionComplete(tid, abort)</code> 方法。当事务中止结束时，丢弃脏页面；提交结束后，写回脏页面。无论哪种结束，事务都需要释放持有的所有锁。</p>
+<h3 id="deadlocks-and-aborts">Deadlocks and Aborts</h3>
+<p>最后来到了本 Lab 的重头戏，死锁的检测。正如前文所说，避免死锁的方法有简单的超时中止，还有基于检测的等待图。指导书要求不能使用简单的超时中止策略，建议在每次分配锁前构建等待图，判断是否会发生死锁。这时，申请加锁就变成了下面的流程：</p>
+<ol type="1">
+<li>判断此次加锁是否会引入新的等待关系
+<ul>
+<li>会，构建等待图，判断是否有死锁
+<ul>
+<li>有，抛出异常</li>
+<li>没有，跳出</li>
+</ul></li>
+<li>不会，跳出</li>
+</ul></li>
+<li>正常申请锁</li>
+</ol>
+<p>可以看到，最重要的是多了一个<code>等待图</code>对象，需要保证它线程安全。可以直接使用一个 <code>HashMap&lt;TransacationId, LockItem&gt;</code>，<code>HashMap</code> 本身就是线程安全的，而且每个事务每个时刻最多只会阻塞在一个资源对象上，因此这个 HashMap 就可以满足需求，也可以使用并发性能更好的 <code>ConcurrentHashMap</code>。</p>
+<h2 id="总结">总结</h2>
+<p>本次 Lab 主要实现了事务的并发控制和死锁检测。正如指导书里面提到的，对并发进行 debug 是非常困难的事情。我本人花了一天时间才找到最后一个 exercise 的代码里的 bug 在哪里。当时还看了很多开源的代码时间，发现全是朴素地超时中止策略，没有使用等待图的。自己实现一遍还是收获颇丰。</p>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>事务</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MIT 6.830 数据库实验 Lab 3 实验报告</title>
+    <url>/blog/2022/11/26/MIT-6-830-3/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。 <span id="more"></span></p>
+<h2 id="理论知识">理论知识</h2>
+<p>查询优化模块的作用是为指定的查询找到高效的执行方案。由于 SQL 是声明式语言，查询只声明了想要的结果，并没有规定执行的具体方案。这些结果等价的方案存在于一个计划空间中，包含物理上等价或者关系代数等价的方案。</p>
+<ul>
+<li>物理等价是指操作的不同物理实现，比如 Join 是使用嵌套循环、Sort-Merge 还是其他，Scan 是使用 Heap Scan 还是 Index Scan，等等。</li>
+<li>关系代数等价是指，关系代数上等价的关系。例如一些操作的顺序是可交换的（例如 projection），多种同种操作是可串联的（例如 filter），等等。</li>
+</ul>
+<p>查询优化的终极目的，是在这个庞大的空间中找到实际上 “最优的” 方案，它使用以下子模块来完成：</p>
+<ul>
+<li>计划生成器：生成新的、结果等价的计划</li>
+<li>成本估计器：估计一个计划的成本，包含 IO 和 CPU，其中 IO 占主要部分</li>
+<li>搜索策略：如何在计划空间中行走，常使用动态规划策略</li>
+</ul>
+<p>为了对搜索空间进行剪枝，查询优化的开山之作，System R 提出只考虑左深树，即执行树只有左侧是深的。这种树可以较好地流水线化。值得注意的是，由于各种原因，查询优化实际上经常找不到最优的实际执行方案，例如，成本估计器的误差，成本估计器基于选择度去计算操作前后的表规模，进而估算 IO 和 CPU cost，每一步都会有误差。因此，实际上，查询优化器是去除一些看起来特别差的执行计划，与理想最优还有差距。</p>
+<p>查询优化经常遵循一些启发式的策略，例如：</p>
+<ul>
+<li>尽早完成列和行的筛选，减小数据规模</li>
+<li>避免表间的笛卡尔积</li>
+<li>... 等等</li>
+</ul>
+<h2 id="exercise">Exercise</h2>
+<h3 id="inthistogram">IntHistogram</h3>
+<p>Histogram，即直方图，用于记录字段的统计信息，即字段值的分布，进而用于估计不同操作的选择度。这在成本估计器中会用到。这类直方图在构建时常用若干个等宽的桶，对应值区间，然后在这些桶间构建分布。IntHistogram 是对整形字段进行统计的类，它的构造函数如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IntHistogram</span><span class="params">(<span class="keyword">int</span> buckets, <span class="keyword">int</span> min, <span class="keyword">int</span> max)</span> </span>{</span><br><span class="line">    <span class="comment">// some code goes here</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>即根据桶的数量、最小值、最大值初始化一个直方图，然后通过 <code>addValue</code> 方法逐个将值加入，最后通过 <code>estimateSelectivity</code> 等方法，估计操作符的选择度。实现逻辑就是将值域等距地划分为指定数量的桶，在添加值时对应桶计数 + 1,。在估计选择度时，要按照两步走的方法，例如 &lt;=，先估计 &lt; 的比率，在桶内再根据均匀分布，估计 = 的比率，求和即可。</p>
+<p>值得注意的是，StringHistogram 是通过将字符串映射到整形，再通过 IntHistogram 实现的。但是这两个类并没有实现同样的接口，这给后面带来了麻烦。</p>
+<h3 id="tablestats">TableStats</h3>
+<p>TableStats 记录了整张表的统计信息，包含每个字段的直方图，以及表的基数。正常应该是保存一个 <code>List&lt;Histogram&gt;</code>，用于保存每个字段的直方图。但并没有 <code>Histogram</code> 这样的接口，而重构代码还需要去修改测试代码，也并不是一种好的做法。我这里使用了一个 <code>List&lt;Object&gt;</code> 加强制类型转换完成，也不是一种值得提倡的做法。不过可以先达到效果。</p>
+<p>在确定了如何保存直方图，还有一个问题是如何获得字段的最大最小值。因为直方图的构建需要指定最大最小值，之后才能一个个地添加值。这个过程不是一次遍历能够完成的。因此，需要先遍历一次，记录每个字段的最大最小值，构建直方图，再遍历一次逐个添加值。</p>
+<h3 id="join-cardinality">Join Cardinality</h3>
+<p>这个 exercise 要求去根据公式估计 join 操作结果的基数和操作成本。操作成本非常简单，根据在 Lab 2 中实现的 Join 策略计算即可。我 Lab 2 是使用的粗暴的嵌套循环的方法，将 IO 成本与 CPU 计算成本相加即可。join 操作的基数则相对难以估计。如果是 equijoin 且某侧字段为主键，那么基数一定不会超过另一张表的基数。这很容易理解，因为左侧主键是不重复的，右侧表中与主键相同的记录可以保留，其他则不会。如果不存在这样的条件，就需要一些策略去估计了：</p>
+<ul>
+<li>简单启发估计：如果是 equijoin，可以使用较大表的基数作为估计。如果是 range-join，可以按照一定的比例 * 笛卡尔积的基数，作为估计。</li>
+<li>基于直方图：要获得准确一点的结果，需要根据两侧的直方图进行估计。例如 equijoin，对于每一个值，去估计在另一个直方图中的数量，然后两个数量相乘最后求和即可。range-join 则要在前一步的基础上，考虑两侧的比率。</li>
+</ul>
+<h3 id="join-ordering">Join Ordering</h3>
+<p>最后一个 Exercise 要求实现找出多个 join 的最优执行方案。Join 操作的被封装在了 <code>LogicalJoinNode</code> 这个类中，包含 Join 的信息，例如两侧表、别名、Join 条件等。目标就是接收一个 <code>List&lt;LogicalJoinNode&gt;</code> 作为输入，找到最优的左深树联合顺序 <code>List&lt;LogicalJoinNode&gt;</code>。伪代码如下所示：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">1. j = set of join nodes</span><br><span class="line">2. for (i in 1...|j|):</span><br><span class="line">3.     for s in {all length i subsets of j}</span><br><span class="line">4.       bestPlan = {}</span><br><span class="line">5.       for s' in {all length d-1 subsets of s}</span><br><span class="line">6.            subplan = optjoin(s')</span><br><span class="line">7.            plan = best way to join (s-s') to subplan</span><br><span class="line">8.            if (cost(plan) &lt; cost(bestPlan))</span><br><span class="line">9.               bestPlan = plan</span><br><span class="line">10.      optjoin(s) = bestPlan</span><br><span class="line">11. return optjoin(j)</span><br></pre></td></tr></tbody></table></figure>
+<p>遵循动态规划的思想，按照规模从小到大的顺序建动态规划表。对于给定的规模 i，需要枚举所有该规模的子集，根据小规模的最优结果计算该子集的最优结果。这个伪代码看起来很简单，但是有以下几个难点：</p>
+<ul>
+<li>如何枚举指定规模的所有子集</li>
+<li>如何计算指定 join 顺序的成本，如果子集的最优 join 顺序不支持新元素插入在最后面怎么办</li>
+</ul>
+<p>实验中给定了一些辅助方法，帮助我们解决了这些问题，虽然并不优雅：</p>
+<ul>
+<li><code>enumerateSubsets</code> 方法从规模为 1 开始，构建规模为 iS 支持，则直接跳过</li>
+</ul>
+<p>其中，<code>enumerateSubsets</code> 是一种非常低效的枚举策略，一次性地创建规模为 i 的 Set，会有较大的内存开销。正常的策略是遵循迭代器的模式，每次返回一个新的子集。join 顺序不支持直接跳过也是一种妥协，在动态规划的设定下。</p>
+<p>这个 Exercise 就是在上面辅助函数的帮助下，实现上述伪代码。这里我写了一个迭代器类，替代一次返回所有结果的枚举函数。这个枚举函数实际上是在计算组合方案，相对容易改造成迭代器，维护多个指针，然后每次获取新元素时更新指针位置即可。如果是要计算排列方案的话，就要用那个基于左右箭头的算法了。</p>
+<h2 id="总结">总结</h2>
+<p>查询优化这个 Lab 本身难度不大，属于麻雀虽小五脏俱全。对于成本估计、方案生成、动态规划每部分都涉及到了，但都不深。查询优化的理论知识要更为复杂，只是获得一个搜索空间就要考虑各种关系代数的等价性、Join 交换时的条件问题等等。对于非左深树，这个空间会更大，剪枝和搜索也会更难。动态规划搜索理论上还要考虑每种方案的物理执行类型，是否有可用的排序结果等等。真正完成这些实践就属于重复造轮子了，过于复杂且没有必要。</p>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>代码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MIT 6.830 数据库实验 Lab 2 实验报告</title>
+    <url>/blog/2022/11/20/MIT-6-830-2/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>书接上回，本次 lab 的实验目标是实现数据库的各种操作符，包含 filter、join、aggregate、insert、delete 等。此外，还需要实现第一节没有实现的页面调度算法，处理 <code>BufferPool</code> 满时的页面调度，此外还有脏页面写回等操作。 <span id="more"></span></p>
+<p>下面将按 Exercise 的顺序一个个进行介绍。</p>
+<h2 id="exercise">Exercise</h2>
+<h3 id="opiterator-operator">OpIterator &amp; Operator</h3>
+<p>在实现之前，先介绍下操作符的规范接口。基础接口是 <code>OpIterator</code>，它定义了以下方法，本质上是保存了一张临时的表，可以通过 <code>getTupleDesc()</code> 获取表的描述符，通过反复调用 <code>next()</code> 遍历表的每一行。<code>SeqScan</code> 操作符直接实现了 <code>OpIteraotr</code> 接口，根据表的 id 创建这样的迭代器，作为后续操作符的参数。 </p><figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">open</span><span class="params">()</span></span>; <span class="comment">// 开启迭代器</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">hasNext</span><span class="params">()</span></span>; <span class="comment">// 是否有下一个元素</span></span><br><span class="line"><span class="function">Tuple <span class="title">next</span><span class="params">()</span></span>; <span class="comment">// 获取下一个元组</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">rewind</span><span class="params">()</span></span>; <span class="comment">// 迭代器指针重置</span></span><br><span class="line"><span class="function">TupleDesc <span class="title">getTupleDesc</span><span class="params">()</span></span>; <span class="comment">// 获取表的描述符</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">close</span><span class="params">()</span></span>; <span class="comment">// 关闭迭代器</span></span><br></pre></td></tr></tbody></table></figure> 操作符规范是一个抽象类 <code>Operator</code>，实现了 <code>OpIterator</code> 的 <code>open</code>、<code>close</code>、<code>hasnext</code>、<code>next</code> 方法，避免逻辑冗余。抽象类中包含以下为实现的方法： <figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">abstract</span> Tuple <span class="title">fetchNext</span><span class="params">()</span> <span class="comment">// 获取下一个元组，不存在则返回null</span></span></span><br><span class="line"><span class="function">TupleDesc <span class="title">getTupleDesc</span><span class="params">()</span></span>; <span class="comment">// 获取表的描述符</span></span><br><span class="line">OpIterator[] getChildren(); <span class="comment">// 获取操作符的参数</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setChildren</span><span class="params">(OpIterator[] children)</span></span>; <span class="comment">// 设置操作符的参数</span></span><br></pre></td></tr></tbody></table></figure> 可以看出，一个操作符持有一个或多个的临时表 <code>OpIterator</code> 参数，本身的 <code>fetchNext</code> 则是用于迭代该操作符的结果。换而言之，<code>Operator</code> 是持有 <code>OpIteraotr[]</code> 的 <code>OpIterator</code>，进而实现了操作符的嵌套，操作符一般只接收一个表参数，除了 <code>join</code>。<p></p>
+<h3 id="filter-join">Filter &amp; Join</h3>
+<p>首先要实现的是 filter 和 join 操作，均继承实现了 <code>Operator</code> 的抽象类，分别对应 SQL 语法中的 where 从句和 join 从句。filter 操作通过 <code>Predicate</code> 对象去判断每行是否存在于最终的结果中，内部持有一个 <code>OpIteraotr</code> 参数代表要遍历的表。要做的事情也很简单，<code>fetchNext</code> 的时候一直迭代表直到找到一条满足条件的记录，返回即可。</p>
+<p>Join 操作与之类似，需要先实现 <code>JoinPredicate</code> 用于匹配一对记录是否存在于最终的结果中，<code>fetchNext</code> 操作则相对复杂。<code>join</code> 遍历的实际是两张表的笛卡尔积，需要内部去维护更新这个笛卡尔积的索引，找到符合条件的一对记录后，还要将它们拼接返回。</p>
+<h3 id="aggregate">Aggregate</h3>
+<p>在 SimpleDB 中，仅考虑对单个字段分组、聚合。根据聚合字段在类型，可以分为整形聚合和字符串型聚合两类。整形聚合支持 max、min、avg 等数值操作，而字符串型聚合只支持 count 操作。两种聚合分别定义在 <code>IntegerAggregator</code> 和 <code>StringAggregator</code> 操作符中，实现了抽象的 <code>Aggregator</code> 接口（而不是 <code>OpIteraotr</code>），包含以下方法：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mergeTupleIntoGroup</span><span class="params">(Tuple tup)</span></span>; <span class="comment">// 将新的元组加入到分组结果中</span></span><br><span class="line"><span class="function">OpIterator <span class="title">iterator</span><span class="params">()</span></span>; <span class="comment">// 返回聚合结果的迭代器</span></span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到，聚合类是通过 <code>mergeTupleIntoGroup</code> 方法逐条记录地去进行分组，再通过 <code>iterator()</code> 返回结果迭代器，而不是像其他的操作符那样，初始化时就具有表作为输入。我的理解是，由于聚合操作的特点，本身就是要先读取完整个表才能得到分组和聚合结果。如果聚合操作实现操作符接口，也只能是内部再维护一个 <code>OpIterator</code> 结果，所以不如直接解耦这部分逻辑。</p>
+<p>两个聚合类的内部实现其实很简单，依赖一个 &lt;GroupValue, AggregateValue&gt; 的 HashMap，对于新的元组，如果不存在分组值，就新建这个分组。这个 HashMap 可以转换成一个 <code>Iterator&lt;Tuple&gt;</code>，核心问题是怎么把这个转成 <code>OpIterator</code>。因为 Java 自带的 <code>Iterator</code> 和 <code>Stream</code> 均不支持重用，我个人构建了一个 <code>Supplier&lt;Stream&lt;Tuple&gt;&gt;</code>，在每次 rewind 的时候获取一个新的 <code>Iterator&lt;Tuple&gt;</code>，这个 <code>Supplier</code> 再通过一个适配器转换成 <code>OpIterator</code>。</p>
+<h3 id="heapfile">HeapFile</h3>
+<p>这里需要支持 <code>HeapFile</code> 的修改表操作，即增删元组，需要从 <code>HeapPage, HeapFile, BufferPool</code> 三层由底向上地支持增删功能。之前说过，<code>HeapFile</code> 由很多个 <code>HeapPage</code> 组成，通过 <code>BufferPool</code> 统一读取页面进行缓存。在增删元组的时候，<code>HeapFile</code> 需要找到最后一个有空 slot 的页面，插入元组并更新其 RecordId，还需要将页面标记为 “脏” 的，因为页面发生了改变，丢弃前必须写回磁盘。删除元组时，<code>HeapFile</code> 根据其 RecordId 直接定位页面，将对应 slot 标记为空，将页面标记为脏即可。而 <code>HeapPage</code> 则负责在当前页面完成增删。<code>BufferPool</code> 的插入和删除元组操作，则要先通过 <code>Catalog</code> 定位到 <code>HeapFile</code>，在获得修改后脏页面后需要更新缓存中的页面，如果之前没有标记脏位，这里也需要标记。</p>
+<p>上面是简单的逻辑介绍，在实现的时候还有些细节可以处理。在插入页面时，找到有空 slot 的页面后，需要具体找到 slot 的位置。由于 bitmap 是以 <code>byte[]</code> 存储的，可以先找到不为 - 1 的 byte，再在 byte 内找到标识位不为 1 的索引。-1 代表着一个全为 1 的有符号数，对于任意长度的有符号数均是如此。因为在负数的补码实现下，最高位的权重是负的，其余位的权重是正的，<span class="math inline">\(-2^n+\sum_{i=0}^{n-1}2^i=-1\)</span>。在插入页面时，若不存在有空 slot 的页面，需要新建页面，完成插入后最好将页面写回文件，不然 <code>numPages()</code> 方法的返回结果会错误。</p>
+<h3 id="insert-delete">Insert &amp; delete</h3>
+<p>在实现了 <code>HeapFile</code> 的插入删除操作后，这两个操作符也不难了。值得注意的是，这两个操作只需要返回一个整数元组，代表受影响的元组数量。因此 <code>fetchNext</code> 方法只应该返回一个 tuple，之后就返回 null。</p>
+<h3 id="page-eviction">Page eviction</h3>
+<p>最后，需要完成 <code>BufferPool</code> 的页面调度算法，也就是页面逐出的逻辑。操作系统上的页面调度算法有很多，先进先出，时钟算法，LRU（最近未使用）等。最常用的算法就是 LRU，因为它的性能是最好的。LRU 主要包含两个操作，获取页面和逐出页面。在获取页面时，先判断页面是否在缓存区中，命中则直接返回，未命中则加载至缓存区中。逐出页面时，删除最近最少使用的页面。为了达到<span class="math inline"> \(O(1)\)</span> 的获取页面和逐出页面的复杂度，需要使用一个 HashMap 和一个链表，HashMap 存储链表中的指针，用于查询是否在缓存区中。链表按最近使用的顺序存储页面，在页面使用后或者需要删除时完成高效地移动和删除。具体可以参考 <a href="https://leetcode.cn/problems/lru-cache/">146. LRU 缓存 - 力扣（LeetCode）</a>。</p>
+<p>除了页面逐出操作外，还需要实现 <code>flushPage</code> 方法将脏页面写回磁盘，但不逐出，以及 <code>discardPage</code> 将页面丢弃，不将页面写回磁盘。通过调用 <code>HeapFile.writePage</code> 以及直接操作 <code>BufferPool</code> 即可实现这两种操作。</p>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>代码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MIT 6.830 数据库实验 Lab 1 实验报告</title>
+    <url>/blog/2022/11/16/MIT-6-830-1/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>最近开始学数据库了，找到了 MIT 6.830 的 Lab，感觉质量还挺高的。打算从实现上了解下数据库的细节。MIT 6.830 的实验要求使用 JAVA 语言实现一个简易的关系数据库，支持常用的增删改查操作、事务、B + 树索引、恢复等功能。这次我分享下 Lab 1 的一些总结。我把课程资料也附在了后面，有兴趣一起学习的一起来学习讨论～<span id="more"></span></p>
+<h2 id="整体架构">整体架构</h2>
+<p>代码主要分为以下几个目录：</p>
+<ul>
+<li>common: 定义公用的类：Database、Catalog，其中 Database 提供了静态方法访问 Bufferpool、Catalog 的单例</li>
+<li> execution: 定义了数据库操作符的 <code>OpItertor</code> 接口，支持 scan、filter、aggregate、join 等操作</li>
+<li> index: B + 树索引</li>
+<li> optimizer: 查询优化</li>
+<li> storage: 数据库的存储，定义了 Tuple、Record、Field 等基础概念类，以及 Heap File 存储</li>
+<li> transaction: 事务</li>
+</ul>
+<p>后面的 6 个 lab 会逐渐地实现这些功能，在第一个 lab，只需要实现一些存储逻辑。</p>
+<h2 id="exercises">Exercises</h2>
+<h3 id="field-tuple">Field &amp; Tuple</h3>
+<p>这部分要求实现基础的 Field、Tuple 类的功能，具体包含 <code>TupleDesc</code> 和 <code>Tuple</code> 两个类。</p>
+<p>先介绍一下 <code>Field</code>，SimpleDB 支持两种数据类型：整数与定长字符串，两种类型定义在枚举类 <code>Type</code> 中，对应的 <code>IntField</code> 和 <code>StringField</code> 实现了 <code>Field</code> 接口，可以同种 Field 相互比较。仅有定长类型简化了数据库模型。</p>
+<p><code>TupleDesc</code> 是每个数据库表的元组描述，包含若干个字段，简单来说，就是一个 (Type, Name) 的数组，记录了每个字段的类型和可为字段的域名。这个类中主要要实现构造函数和一些 <code>get</code> 方法，比较简单。值得注意的是这里要实现一个静态的 <code>Merge</code> 方法，用于将两个 <code>TupleDesc</code> 对象合并，在后面的 <code>join</code> 操作时会用到。</p>
+<p><code>Tuple</code> 是一条元组，由一个 <code>TupleDesc</code> 构造而成，包含了一个 <code>Field</code> 的数组存储各个字段的值。其中，每个 <code>Tuple</code> 关联一个 <code>RecordId</code>，为该元组在表的索引 id，由页号 + 页内偏移完成，这里只需要实现 get、set 方法，recordId 后面会用到。</p>
+<h3 id="catalog">Catalog</h3>
+<p><code>Catalog</code> 用于追踪数据库中的所有表，提供了方法用于新建和删除表。正常来说，<code>Catalog</code> 应该从磁盘加载，但是在这个 lab 不需要考虑序列化和加载的逻辑，只需要实现启动后的数据库表的管理逻辑。每个数据库表包含以下几个信息：</p>
+<ul>
+<li>表名：一个字符串</li>
+<li>文件：一个实现了 <code>DbFile</code> 的文件对象</li>
+<li>表的 id：由文件对象唯一对应，一般是绝对路径的 <code>hashcode</code></li>
+<li>主键：一个字符串，SimpleDB 只考虑单一主键</li>
+<li>元组描述，一个 <code>TupleDesc</code> 对象</li>
+</ul>
+<p><code>Catalog</code> 类还提供了一个已经实现的 <code>loadSchema</code> 方法，用于从文件中读取数据库的模式并新建表。</p>
+<h3 id="bufferpool">BufferPool</h3>
+<p><code>BufferPool</code> 类定义了一个统一的、具有缓存的页面读取方法。一般来说，操作一个页面需要先将其从磁盘加载到内存中，然后才能操作。<code>BufferPool</code> 定义了一个缓存区，当页面已经被加载到内存后，就无需再次加载了。这里后续需要实现一个类似 LRU 的页面调度算法，在本次 lab 中尚不需要。</p>
+<p>本 lab 中，BufferPool 需要实现一个 get 页面的方法，当缓存区满时，只需要抛出 <code>DbException</code> 异常即可。这里需要根据 <code>PageId</code> 获取 table id，进而通过 Catalog 获取表进而读取。</p>
+<h3 id="heappage">HeapPage</h3>
+<p>这个 Exercise 要实现 HeapFile 的读取方法，包含 <code>HeapPage, HeapPageId, RecordId</code> 三个类。其中，<code>RecordId</code> 类的功能已经在上面介绍，是每个元组在表中的唯一的记录 id，包含 <code>PageId</code> 和在页内的编号。<code>HeapPageId</code> 实现了 <code>PageId</code> 接口，包含一个表 id 以及页面号，与 <code>RecordId</code> 类似。这两个类都比较简单，只需要实现一些 get、equals, hashcode 方法即可。</p>
+<p><code>HeapPage</code> 是 <code>HeapFile</code> 的页面类，实现了 <code>Page</code> 接口，需要支持获取页面数据、脏位标记等功能。这里先简单介绍下 <code>HeapFile</code>，这是一种无序的存储格式，记录以乱序的方式存储在页面中。每个页面由若干个插槽（slot）组成，每个 slot 可用于存储一条记录，页面首部包含一个 bitmap 记录每个 slot 是否包含记录。在插入记录的时候，找到一个空的插槽插入即可。</p>
+<p>对于定长记录的表，这里就已经很圆满了。而对于非定长的表，页面内的 slot 数量是可变的，slot 的大小也是可变的。这时，需要在页面尾部记录插槽的位置、大小、数量，还要保存已经有的记录的位置和大小。放在尾部，是因为这样可以方便地增长 slot 数量，当尾部和正向的记录重合时，就意味着页面满了。这种页面还需要周期性地重排一下，避免过多的碎片。当然，这些是题外话，SimpleDB 中不需要考虑这种复杂情况。</p>
+<p>本次 lab 中，<code>HeapPage</code> 类需要实现查询槽位状态、计算空槽数量等功能，还要实现一个元组的迭代器。在按上面捋顺了 HeapFile 的原理之后，就很简单了。</p>
+<h3 id="heapfile">HeapFile</h3>
+<p>这个类主要实现两个功能：</p>
+<ul>
+<li>读取指定页面。值得注意的是，数据库文件可能很大，因此不能直接把整个文件加载到内存中，需要使用支持随机读写的 <code>RandomAccessFile</code>，移动指针到指定页面的位置，再进行读取。</li>
+<li>返回一个可以迭代访问数据库所有元组的 <code>DbFileIterator</code>。值得注意的是，这个 <code>DbFileIterator</code> 需要支持重用，因此其不是一个传统的 <code>Iterator</code>，需要额外的代码来实现一个 <code>DbFileIterator</code>。我建议新建一个类继承自 <code>AbstractDbFileIterator</code>，其对接口的逻辑进行了一定简化。更好的方式是实现一个通用的适配器，把传统的 <code>Iterator</code> 转换成需要的格式。</li>
+</ul>
+<h3 id="seqscan">SeqScan</h3>
+<p>最后一个 Exercise，实现表的遍历操作。这里包装一下上面的 <code>HeapFile</code> 的 <code>Iterator</code> 逻辑，实现 <code>OpIterator</code> 接口即可。这个新的 <code>OpIterator</code> 也需要支持重用，后面也会比较麻烦。这里还不需要担心，写完，通过单元测试就收工啦！</p>
+<h2 id="总结">总结</h2>
+<p>这个 lab 主要是先熟悉了数据库的整体架构以及相互间的关联。之后，在底层实现 <code>HeapFile</code> 这一经典的文件存储方法，对于页面的读取和元组的存储有了更深的理解。最后，实现了一个数据库的遍历操作，简单了解数据库操作符的规范和接口，剩下的操作符需要在后面实现。</p>
+<h2 id="相关链接">相关链接</h2>
+<p>我学习的是 2021 年春季的版本，相关链接如下：</p>
+<ul>
+<li>课程官网: http://db.lcs.mit.edu/6.5830/2021/assign.php, 里面有讲义、PPT，没有视频</li>
+<li>代码：https://github.com/MIT-DB-Class/simple-db-hw-2021</li>
+</ul>
+<h2 id="section"></h2>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>代码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>DeBERTa: 注意力解纠缠和解码加强版的 BERT</title>
+    <url>/blog/2022/09/04/DEBERTA/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型， 论文收录于 ICLR 2021 中。DeBERTa (<strong>De</strong>coding-enhanced <strong>BERT</strong> with disentangled <strong>a</strong>ttention)， 顾名思义，相较于普通的 BERT，DeBERTa 加强了其解码能力，解耦了注意力。DeBERTa 第一次在 SuperGLEU 基准上超越了人类， 在 MNLI、SQuAD、RACE 数据集上相较于 RoBERTa 也有较大的提升（0.9%-3.6%）。</p>
+<span id="more"></span>
+<p>DeBERTa 的模型和代码开源在 <a href="https://github.com/microsoft/DeBERTa1">github</a>。 现在 SuperGLEU 上的第一已经是 ST-MoE-32B 了，不过排在 DeBERTa 之前的模型参数量似乎都是 DeBERTa 的数倍， 这说明 DeBERTa 还是很有读一下的必要的。</p>
+<h2 id="介绍">介绍</h2>
+<p>DeBERTa 对于 BERT 共两个改进点，注意力解耦与增强掩码解码。具体体现在：</p>
+<p><strong>注意力解纠缠。</strong>BERT 中，不同类型的 embedding 求和作为最终的表征（例如 token embedding、position embedding）。 DeBERTa 对每个单词使用两个向量进行表示，分别对内容、位置进行编码。单词间的注意力权重由解纠缠矩阵分别根据其内容和相对位置计算。</p>
+<p><strong>增强的掩码解码器。</strong>DeBETa 也是使用掩码语言模型进行预训练，与 BERT 类似。在这个任务设定下，被掩码词的绝对位置有时是很重要的。 例如 “a new <strong>store</strong> opened beside the new <strong>mall</strong>."这句话，如果对"store"和"wall" 进行掩码，两者的上下文、语义都接近，但是句法作用是不同的（例如谁是主语）。 这些细微差距很大程度上与绝对位置相关，因此 DeBERTa 在 softmax 层前合并了绝对位置嵌入。 在该层中，模型基于聚合上下文和绝对位置预测被掩码的单词。</p>
+<p>另外，论文还提出了一种新的虚拟对抗训练方法，用于微调 plm 到下游的 NLP 任务。该方法有效地提高了模型的泛化能力。</p>
+<h2 id="架构">架构</h2>
+<h3 id="解耦注意力">解耦注意力</h3>
+<p>对于位置<span class="math inline"> \(i\)</span> 的 token，论文使用两个向量<span class="math inline"> \(\{H_i\},\{P_{i|j}\}\)</span> 分别代表它的内容嵌入和与位置<span class="math inline"> \(j\)</span>token 的相对距离。位置<span class="math inline"> \(i\)</span> 与位置<span class="math inline"> \(j\)</span> 的 token 间的注意力分数可以分解为下面四个部分： <span class="math display">\[
+\begin{aligned}
+A_{i,j}&amp;=\{H_i,P_{i|j}\}\times\{H_j,P_{j|i}\}^T\\
+&amp;=H_iH_i^T+H_iP_{j|i}^T+P_{i|j}H_j^T+P_{i|j}P_{j|i}^T
+\end{aligned}
+\]</span> 也就是说，一对 token 间的注意力权重可以用内容到内容、内容到位置、位置到内容、位置到位置四个注意力的解纠缠矩阵进行计算。</p>
+<p>传统的相对位置嵌入方法只使用一个单独的嵌入矩阵，计算相对位置偏差，再用于计算注意力分数。这相当于只使用了上述公式中的 “位置到位置” 注意力。论文认为位置到内容也很重要，建模了位置和内容间的交叉关系。此外，由于 DeBERTa 本身使用的就是相对位置嵌入，所以直接将上述公式中的位置到位置注意力部分删除了。</p>
+<p>接下来就是使用两套 Query、Key 矩阵，分别将内容、位置嵌入映射到 query、key，然后求解注意力分数了。</p>
+<h3 id="掩码解码增强">掩码解码增强</h3>
+<p>为了将绝对位置信息融入到 MLM 预测中，DeBERTa 在在解码掩码字时只使用绝对位置作为补充信息，在 Transformer 层中使用相对位置信息。因此，论文称 DeBERTa 的解码组件为增强掩码解码器（Enhanced Mask Decoder，EMD），其结构如下所示，由 n 个共享权重的块堆叠而成。<span class="math inline">\(H\)</span> 代表前一层 Transformer 输出的隐藏状态，<span class="math inline">\(I\)</span> 代表解码所须的信息，例如绝对位置嵌入或前一层 EMD 的输出。第一层 EMD 的<span class="math inline"> \(I\)</span> 是绝对位置嵌入信息，后续层的<span class="math inline"> \(I\)</span> 是前一层 EMD 的输出。</p>
+<p><img src="decoder-layer.png"></p>
+<p>在实证研究中，论文比较了这两种使用绝对位置的方法，发现 EMD 的效果要好得多。论文推测，BERT 使用的较早的合并绝对位置可能会妨碍模型学习足够的相对位置信息。而且 EMD 的共享参数也没有过多增加模型参数量。</p>
+<h2 id="微调">微调</h2>
+<p>DeBERTa 使用了一种虚拟对抗训练算法，Scale-invariant-Fine-Tuning (SiFT)，是 Miyato 等人 (2018) 中描述的算法的变体。</p>
+<p>虚拟对抗训练是一种提高模型泛化能力的正则化方法。通过改进模型对对抗样本的鲁棒性实现。对抗样本是通过对输入进行小的扰动来创建的。在 NLP 中，是在单词嵌入进行扰动，而非原始单词序列。然而，嵌入向量的取值范围在不同的词和模型中是不同的。对于具有数十亿个参数的大型模型，方差会变得更大，导致对抗训练的一些不稳定性。</p>
+<p>论文受层标准化启发，提出了 SiFT 算法，通过对归一化的词嵌入应用扰动来提高训练的稳定性。具体来说，将 DeBERTa 微调到下游的 NLP 任务时，SiFT 首先将词嵌入向量归一化为随机向量，然后对归一化后的嵌入向量进行扰动。实验发现，规范化大大提高了微调模型的性能。这种改进在较大的 DeBERTa 模型中更为突出。</p>
+<h2 id="实验">实验</h2>
+<p>论文在数个 NLU 基准上测试了 DeBERTa。</p>
+<h3 id="大模型">大模型</h3>
+<p>与 BERT 相同的设定预训练 DeBERTa，区别在于使用的是 BPE 子词模型。预训练使用了 96 个 V100，20 天。下面是 GLEU 榜单的结果。</p>
+<p><img src="GLEU.png"></p>
+<p>下面是 MNLI、SQuAD 等基准上的结果。</p>
+<p><img src="SQuADs.png"></p>
+<p>可以看出 DeBERTa 已经超过了自回归的 XLNET，可见其性能。</p>
+<h3 id="小模型">小模型</h3>
+<p>base 模型的设置与 BERT-base 一致，12 层的架构。结果如下，可以看出相较于 XLNET 和 RoBERTa 是有明显改进的。</p>
+<p><img src="base.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<p>为了验证结果，论文首先重新训练了一个 RoBERTa-base，作为基准。</p>
+<p>消融实验主要测试了三种变体：</p>
+<ul>
+<li>-EMD：没有增强掩码解码器，也就是跟 BERT 一样直接 softmax</li>
+<li>-C2P：没有内容 - 位置间的注意力</li>
+<li> -P2C：没有位置 - 内容间的注意力。由于 XLNET 也使用了相对位置偏差，这种设置接近接近于 XLNET+EMD</li>
+</ul>
+<p><img src="ablation.png"></p>
+<p>从表格可以看出，删除 DeBERTa 中的任何一个组件都会导致性能的大幅下降，尤其是在 SQuAD 数据集上。</p>
+<h3 id="亿">15 亿</h3>
+<p>为了测试 DeBERTa 的上限，论文还构建了一个 48 层，共计 15 亿参数的 DeBERTa，首次以单个模型在 SuperGLUE 上超过了人类，集成性能也取得了第一名，具体分数如下。</p>
+<p><img src="1.5B.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文其实回答了一个蛮重要的问题，相信 NLP 新人刚了解 BERT 的时候，或多或少都会对 embedding 直接相加有一些疑问。解纠缠和绝对位置的融合，同时兼顾了绝对位置的句法信息，和相对位置的邻接关系。解纠缠也使得各个 embedding 更为灵活结合。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://aestheticisma.github.io/2021/11/24/deberta/">DeBERTa 论文解读 - Fan's Blog (aestheticisma.github.io)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>预训练模型</tag>
+        <tag>DEBERTA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>XMTC: 极端多标签文本分类相关工作</title>
+    <url>/blog/2022/08/27/XMTC/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。 之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。</p>
+<span id="more"></span>
+<h2 id="简介">简介</h2>
+<p>极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）。给定一段文本，和极多（百、千、万乃至更多）的标签，判断文本所属的标签子集。例如，维基百科有百万级别的标签，每个百科文本都对应若干个标签。亚马逊的商品，有着复杂的垂直标签结构，标签数量也是百万级的。</p>
+<h3 id="挑战">挑战</h3>
+<p>XMTC 主要面临以下挑战：</p>
+<ul>
+<li>稀疏性：大量标签都只有少数样本与之关联，典型的长尾分布</li>
+<li>计算成本高：标签数量过多，为每个标签独立训练分类器成本过高</li>
+<li>可扩展性：对新增标签的可扩展性</li>
+</ul>
+<figure>
+<img src="Untitled.png" alt="两个XMTC数据集上，只有一半或更少的标签关联至少5个实例"><figcaption aria-hidden="true">两个 XMTC 数据集上，只有一半或更少的标签关联至少 5 个实例</figcaption>
+</figure>
+<p>两个 XMTC 数据集上，只有一半或更少的标签关联至少 5 个实例</p>
+<h3 id="解决方法">解决方法</h3>
+<p>XMTC 的方法可以分为以下四类：</p>
+<p>一对多分类：为每个标签构建 OVR（one vs rest）分类器，可以实现较高精度。但当标签数量过多时，训练、预测开销过大。</p>
+<p><strong>目标嵌入的方法</strong>：标签矩阵<span class="math inline"> \(N\times L\)</span> 中，N，L 分别为样本、标签数量。这个矩阵庞大稀疏，难以直接学习到一个可靠的映射。如果可以使用线性映射或者其他方法，完成降维<span class="math inline"> \(L \rightarrow \hat L\)</span> ，就可以学习到特征 - 降维后的标签间的可靠映射。然后再通过升维<span class="math inline"> \(\hat L \rightarrow L\)</span> ，得到真实标签。此类方法的差异主要在降维、升维技术上，例如压缩感知、奇异值分解等。</p>
+<p><strong>集成树的方法</strong>：类似决策树，区别在于使用特征的加权和而非单一特征的信息增益进行划分，健壮性更好。</p>
+<p><strong>深度学习方法</strong>：使用深度学习特征，而非传统的词袋、tf-idf 特征。</p>
+<h3 id="数据集">数据集</h3>
+<p>其中的 L 是标签数量，可以看到大型数据集上，有几十万标签，规模是很大的。</p>
+<p><img src="Untitled-1.png"></p>
+<h3 id="评估指标">评估指标</h3>
+<p>对于文档，根据分数输出一个有序的标签列表。然后使用排序指标评估：</p>
+<ul>
+<li>Precision@TopK: TopK 的查准率，越高越好</li>
+<li> NDCG@TopK: 归一化折损累计增益，越高越好</li>
+</ul>
+<h2 id="xml-cnn">XML-CNN</h2>
+<p>2017，Deep Learning for Extreme Multi-label Text Classification</p>
+<p>首次使用深度学习方法解决 XMTC 问题，使用 CNN + 交叉熵 loss。为了避免池化层后直接接分类线性层的参数过多，中间引入了一个较小的线性层，大小为<span class="math inline"> \(h\)</span>。</p>
+<figure>
+<img src="Untitled-2.png" alt="模型结构图，红色的方框为较小的线性层"><figcaption aria-hidden="true">模型结构图，红色的方框为较小的线性层</figcaption>
+</figure>
+<p>模型结构图，红色的方框为较小的线性层</p>
+<p>结果：在六个数据集上基本达到了 SOTA，消融实验证明 BCE 损失、动态池化、小线性层都是有效的。</p>
+<h2 id="attention-xml">Attention-XML</h2>
+<p>2019 AttentionXML: Label Tree-based Attention-Aware Deep Model for High-Performance Extreme Multi-Label Text Classification</p>
+<p>做法：</p>
+<p>构建宽而矮的概率标签树（plt），减少错误积累</p>
+<ul>
+<li>首先构造初始标签树，对标签的词袋特征，自顶向下 2-means 做层次聚类，直到类别数 &lt; M</li>
+<li> 对树进行压缩，得到宽而矮的概率标签树</li>
+</ul>
+<p>为每一层训练一个 Bi-LSTM 多分类器</p>
+<ul>
+<li>对每个样本，每层只使用上层该样本的 Top-C 候选的孩子节点训练，类似负采样</li>
+<li>每个标签对输入序列计算 attention 得到<span class="math inline"> \(\hat m_i\)</span>，通过共享的全连接、输出层映射到分数</li>
+<li>预测的时候，使用链式法则，得到每个标签的概率分数</li>
+<li>使用 BCE loss 训练，使用三棵 plt 集成取得最好性能</li>
+</ul>
+<p><img src="Untitled-3.png"></p>
+<p>结果：未集成的 AttentionXML 已经超过了 XML-CNN 达到了 SOTA，集成后性能提升半个点或更多</p>
+<h2 id="x-bert">X-BERT</h2>
+<p>2019 X-BERT: eXtreme Multi-label Text Classification using Bidirectional Encoder Representations from Transformers</p>
+<p>首次将 BERT 扩展到 XMTC 任务，解决以下挑战：</p>
+<ul>
+<li>直接分类忽视了标签间的依赖关系、相关性</li>
+<li> SoftMax 瓶颈</li>
+</ul>
+<p>论文提出了一个三阶段模型：</p>
+<ol type="1">
+<li>ELMo 编码标签描述 + tf-idf 特征，KMeans 聚类标签得到 K 个簇</li>
+<li> BERT 完成 K 个簇上的多分类</li>
+<li>使用一对多分类器完成簇内标签的判断</li>
+</ol>
+<p>在四个数据集上达到了 SOTA，未与 AttentionXML 比较</p>
+<h2 id="x-transformers">X-Transformers</h2>
+<p>2020，Taming Pretrained Transformers for Extreme Multi-label Text Classification</p>
+<ul>
+<li>XLNET 编码标签描述 + 正样本聚合特征（Positive Instance Feature Aggregation, PIFA），进行分层聚类</li>
+</ul>
+<p><img src="Untitled-4.png"></p>
+<ul>
+<li> BERT/RoBERTa/XLNET Large + 平方 Hinge-loss 微调聚类标签的多分类（三模型集成效果最好）</li>
+<li>使用 tf-idf + 嵌入特征，构建线性 OVA 分类器，使用混合采样策略构建负样本
+<ol type="1">
+<li>使用聚类簇内其他标签对应的样本作为负样本</li>
+<li>使用其他 Topb 聚类簇内标签样本作为负样本</li>
+</ol></li>
+</ul>
+<p>跟 X-BERT 一批人做的，效果超过了 X-BERT，AttentionXML</p>
+<h2 id="lightxml">LightXML</h2>
+<p>2021 LightXML: Transformer with Dynamic Negative Sampling for High-Performance Extreme Multi-label Text Classification</p>
+<p>动机，解决 X-Transformers，Attention-XML 的以下问题：</p>
+<ul>
+<li>使用多个模型集成，计算资源和成本过高</li>
+<li>负样本采样，降低了模型效率和准确性</li>
+</ul>
+<p>做法：</p>
+<ul>
+<li>标签聚类：使用标签的稀疏特征，构造概率标签树，与 Attention-XML 类似，但<strong>只有两层</strong>，也就是只有一层聚类结果</li>
+<li>文本表示，使用 BERT/RoBERTa/XLNET base，取最后 5 层的 [CLS] 表征拼接</li>
+<li>标签召回：根据文本表征完成聚类簇多分类上分数计算，采样所有正样本，由易到难地采样部分负样本</li>
+<li>计算分数：根据正负样本标签嵌入、文本表征，计算分数，BCE loss</li>
+</ul>
+<p>训练资源：</p>
+<ul>
+<li>1 块 16G V100</li>
+</ul>
+<p><img src="Untitled-5.png"></p>
+<p>数据集统计信息</p>
+<p><img src="Untitled-1.png"></p>
+<p>使用 3 个模型或者 3 个聚类结果进行集成</p>
+<p>结果：在五个数据集上超过了 X-Transformers，达到了 SOTA。消融实验证明 5 个 cls 拼接有助于收敛，动态负采样能够提升性能</p>
+<h2 id="gudn">GUDN</h2>
+<p>2022，GUDN: A novel guide network for extreme multi-label text classification</p>
+<p>动机：LightXML 未使用标签语义信息</p>
+<p>做法：</p>
+<ul>
+<li>特征提取：BERT 编码特征文本，取最后 10 层的 CLS 拼接作为标签提取的特征</li>
+<li>引导网络：事实上就是辅助 loss。使用以下两种：文档表征和标签表征间的 MSE loss；标签表征用于分类的 BCE loss</li>
+<li> 分类排名：对中等数据集直接使用线性层分类；对大标签数据集使用 BOW 聚类 + 动态负采样，类似 LightXML</li>
+</ul>
+<p><img src="Untitled-6.png"></p>
+<p>实验资源：</p>
+<ul>
+<li>4 块 24G 3090</li>
+</ul>
+<p>结果：</p>
+<p>在四个数据集上基本达到了 SOTA，超过 LightXML。消融实验证明，论文提出的两个辅助 loss 是有效的。</p>
+<h2 id="glo-calxml">GLO-CALXML</h2>
+<p>2022，Exploiting Local and Global Features in Transformer-based Extreme Multi-label Text Classification</p>
+<p>这篇论文是目前的 SOTA，把 Eurlex-4k 数据集上的 precision 提高了 3 个点多，可惜我没有复现出来。</p>
+<p>动机：传统方法只使用 CLS 作为文档表征，只有全局表征，可能缺失信息。</p>
+<p>做法：</p>
+<ul>
+<li>每个标签有 global embedding 和 local embedding</li>
+<li>global embedding 和 cls 计算全局概率，local embedding 作为 query 与第一层所有 token embedding 做 attention，取加权和计算局部特征的概率</li>
+<li> loss：两个概率的 BCE loss 之和</li>
+<li>预测：使用两个概率平均值</li>
+</ul>
+<p>我猜测这篇论文是从 Eurlex-4k 数据集得到的启发，该数据集由关键词组构成，并不是通顺的句子。所以编码器更高层的表征意义不大，并不存在复杂的上下文。浅层表征反而可以保留更多信息。基于此，设计一个 attention 去直接接触浅层表征是很自然的想法。而且这种 global 和 local 结合的工作印象里也挺多的，多文本分类 MLC 上好像就有。</p>
+<p>实验：</p>
+<ul>
+<li>没有使用标签树，只在标签较少的三个数据集上进行了实验</li>
+<li>使用 3 个预训练模型集成</li>
+<li>在两个数据集上超过了 LightXML（只使用单模型的情况也是超过的）， 与 GUDN 互有胜负</li>
+<li>消融实验证明，局部特征和全局特征的融合是有效的</li>
+</ul>
+<p>以下是三模型集成结果，可以看出在 Eurlex-4k 和 Wiki10-31K 上分别有 3 个点、2 个点的提升，有点降维打击了。</p>
+<p><img src="GLOCALXML-exper.png"></p>
+<h2 id="depl">DEPL</h2>
+<p>2022，Long-tailed Extreme Multi-label Text Classification with Generated Pseudo Label Descriptions</p>
+<p>动机：传统模型都使用 precision@topk 指标，该指标不能很好反应尾部标签的分类性能，论文提出使用 macro-averaged F1@k，使得不同标签有相同的权重。</p>
+<figure>
+<img src="Untitled-7.png" alt="横坐标，数量由少到多的标签id，纵坐标，Macro-F1@19"><figcaption aria-hidden="true">横坐标，数量由少到多的标签 id，纵坐标，Macro-F1@19</figcaption>
+</figure>
+<p>横坐标，数量由少到多的标签 id，纵坐标，Macro-F1@19</p>
+<p>做法：</p>
+<p>将 XMTC 定义为检索任务，根据文档检索标签。为了解决标签文本过短的问题，使用 SVM 构建分类器，并根据 token 重要性生成标签伪描述。具体来说：</p>
+<ul>
+<li>基于文档的 tf-id 特征 + 点积相似度函数 + hinge loss 训练稀疏分类器，训练维度为词表大小的 label embedding，将其中元素认为是 token 对 label 的重要性，选 topk 的 token 拼接到标签名后</li>
+<li>使用 BERT 编码，文档表征选择 cls，标签表征选择最后一层的池化结果，使用点积衡量相似性</li>
+<li>负采样，根据第一步分类器的 top 负样本和随机填充的负样本构建标签子集</li>
+<li>融合：文档表征后接线性层，得到概率分布 A；点积相似性结果得到另一个概率分布；两者平均作为最终结果</li>
+</ul>
+<p>框架如下：</p>
+<p><img src="Untitled-8.png"></p>
+<p>评价指标：除了 P@k，Macro F1@K，还有 PSP@K，PSP@K 是加权版的 P<span class="citation" data-cites="K">@K</span>，预测正确尾部标签的收益更高</p>
+<p>结果：在 Macro F1@k，PSP@K 上达到了 SOTA，P@K 要弱一些；消融实验证明，伪标签描述对于尾部标签预测是有效的</p>
+<h2 id="treaderxml">TReaderXML</h2>
+<p>2022 Exploiting Dynamic and Fine-grained Semantic Scope for Extreme Multi-label Text Classification</p>
+<p>一篇比较奇怪的论文</p>
+<p>动机：传统方法使用聚类获得标签簇，但是这些簇只有粗粒度的语义，难以建模具体语义</p>
+<p>做法：构建细粒度的教师知识优化样本语义</p>
+<p>基于层次结构假设，如果一个样本与标签 A 相关，与标签 A 的父标签也相关</p>
+<ul>
+<li><p>对于每个文档样本 x，遍历其他样本，找到与其余弦相似度 topk 的样本</p></li>
+<li><p>将该样本对应的标签、父标签（标签树）编码平均后，得到教师知识</p></li>
+<li><p>使用一个掩码多层自注意力（自左向右）、一个多头注意力层完成编码过程</p>
+<p><img src="Untitled-9.png"></p></li>
+</ul>
+<p>损失函数：基于最大熵的多标签一对多损失</p>
+<p><img src="Untitled-10.png"></p>
+<p>实验结果：在两个数据集上超过 LightXML 达到了 SOTA</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://analyticsindiamag.com/what-is-extreme-multilabel-text-classification/">什么是极端多标签文本分类？ (analyticsindiamag.com)</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/342922980">算法理论 01 SVD 奇异值分解 - 知乎 (zhihu.com)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>自然语言理解</category>
+        <category>文本分类</category>
+        <category>多标签分类</category>
+      </categories>
+      <tags>
+        <tag>XMTC</tag>
+        <tag>文本分类</tag>
+        <tag>多标签</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>PyTorch Lightning: 让 PyTorch 更为易用</title>
     <url>/blog/2022/08/11/pytorch-lightning/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -227,11 +765,13 @@
 <p>路由 z-loss 能提升稳定性，还能稍微改善模型质量。</p>
 <h3 id="微调">微调</h3>
 <ul>
-<li><p>论文认为，稀疏模型微调效果差的原因是其倾向于过拟合。实验也证明，稀疏模型更快微调收敛，证实稀疏模型在数据分布变化时可以高效地适应优化。大任务上微调可以取得比密集模型更性能，但是在较小的任务上差于密集模型</p>
-<p><img src="overfit.png"></p></li>
-<li><p>调节 expert 的 dropout 可提升泛化性能</p></li>
-<li><p> MoE 只微调非专家参数和微调所有参数性能类似。只微调非专家参数可以加速训练、减小显存。</p></li>
-<li><p>密集模型和 MoE 的最优微调超参有较大差别，直接影响最后性能，不能直接照搬。</p></li>
+<li>论文认为，稀疏模型微调效果差的原因是其倾向于过拟合。实验也证明，稀疏模型更快微调收敛，证实稀疏模型在数据分布变化时可以高效地适应优化。大任务上微调可以取得比密集模型更性能，但是在较小的任务上差于密集模型</li>
+</ul>
+<p><img src="overfit.png"></p>
+<ul>
+<li>调节 expert 的 dropout 可提升泛化性能</li>
+<li> MoE 只微调非专家参数和微调所有参数性能类似。只微调非专家参数可以加速训练、减小显存。</li>
+<li>密集模型和 MoE 的最优微调超参有较大差别，直接影响最后性能，不能直接照搬。</li>
 </ul>
 <h3 id="丢弃token健壮性">丢弃 token 健壮性</h3>
 <p>微调质量不会因为 10% 的 token 丢弃率受到显著性能影响。负载不平衡可能不会显着影响模型质量。</p>
@@ -873,7 +1413,7 @@ o_t=softmax(W_t(u,v,|u-v|))
 <p>论文的方法在 MRR 和 R@1 上分别取得了 SOTA，分别提升了 1.46% 和 3.65%。不过对比工作里的 BERT 我怀疑是未做 finetune 的，效果太差了。</p>
 <h2 id="方法">方法</h2>
 <h3 id="问题定义">问题定义</h3>
-<p>问题集合：<span class="math inline">\(q\in \mathcal Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\sub \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
+<p>问题集合：<span class="math inline">\(q\in \mathcal Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\subseteq \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
 <h3 id="交叉vae">交叉 VAE</h3>
 <p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为： <span class="math display">\[
 p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\\

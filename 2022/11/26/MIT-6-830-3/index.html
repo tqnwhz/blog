@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.830 数据库实验 Lab 3 实验报告">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-11-26T09:19:45.000Z">
+<meta property="article:modified_time" content="2022-11-29T02:21:01.868Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="MIT 6.830">
+<meta property="article:tag" content="代码">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/","path":"2022/11/26/MIT-6-830-3/","title":"MIT 6.830 数据库实验 Lab 3 实验报告"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MIT 6.830 数据库实验 Lab 3 实验报告 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#inthistogram"><span class="nav-number">3.1.</span> <span class="nav-text">IntHistogram</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tablestats"><span class="nav-number">3.2.</span> <span class="nav-text">TableStats</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join-cardinality"><span class="nav-number">3.3.</span> <span class="nav-text">Join Cardinality</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join-ordering"><span class="nav-number">3.4.</span> <span class="nav-text">Join Ordering</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">52</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.830 数据库实验 Lab 3 实验报告
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-11-26 17:19:45" itemprop="dateCreated datePublished" datetime="2022-11-26T17:19:45+08:00">2022-11-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-11-29 10:21:01" itemprop="dateModified" datetime="2022-11-29T10:21:01+08:00">2022-11-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>Lab 3 要实现的是查询优化模块。在数据库中，查询优化主要在查询被解析为抽象语法树后被调用，用于为指定的查询找到 “最优的” 执行计划。在 SimpleDb 中，这部分定义在 Optimizer 模块中，主要对联合操作进行优化。 <span id="more"></span></p>
+<h2 id="理论知识">理论知识</h2>
+<p>查询优化模块的作用是为指定的查询找到高效的执行方案。由于 SQL 是声明式语言，查询只声明了想要的结果，并没有规定执行的具体方案。这些结果等价的方案存在于一个计划空间中，包含物理上等价或者关系代数等价的方案。</p>
+<ul>
+<li>物理等价是指操作的不同物理实现，比如 Join 是使用嵌套循环、Sort-Merge 还是其他，Scan 是使用 Heap Scan 还是 Index Scan，等等。</li>
+<li>关系代数等价是指，关系代数上等价的关系。例如一些操作的顺序是可交换的（例如 projection），多种同种操作是可串联的（例如 filter），等等。</li>
+</ul>
+<p>查询优化的终极目的，是在这个庞大的空间中找到实际上 “最优的” 方案，它使用以下子模块来完成：</p>
+<ul>
+<li>计划生成器：生成新的、结果等价的计划</li>
+<li>成本估计器：估计一个计划的成本，包含 IO 和 CPU，其中 IO 占主要部分</li>
+<li>搜索策略：如何在计划空间中行走，常使用动态规划策略</li>
+</ul>
+<p>为了对搜索空间进行剪枝，查询优化的开山之作，System R 提出只考虑左深树，即执行树只有左侧是深的。这种树可以较好地流水线化。值得注意的是，由于各种原因，查询优化实际上经常找不到最优的实际执行方案，例如，成本估计器的误差，成本估计器基于选择度去计算操作前后的表规模，进而估算 IO 和 CPU cost，每一步都会有误差。因此，实际上，查询优化器是去除一些看起来特别差的执行计划，与理想最优还有差距。</p>
+<p>查询优化经常遵循一些启发式的策略，例如：</p>
+<ul>
+<li>尽早完成列和行的筛选，减小数据规模</li>
+<li>避免表间的笛卡尔积</li>
+<li>... 等等</li>
+</ul>
+<h2 id="exercise">Exercise</h2>
+<h3 id="inthistogram">IntHistogram</h3>
+<p>Histogram，即直方图，用于记录字段的统计信息，即字段值的分布，进而用于估计不同操作的选择度。这在成本估计器中会用到。这类直方图在构建时常用若干个等宽的桶，对应值区间，然后在这些桶间构建分布。IntHistogram 是对整形字段进行统计的类，它的构造函数如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IntHistogram</span><span class="params">(<span class="keyword">int</span> buckets, <span class="keyword">int</span> min, <span class="keyword">int</span> max)</span> </span>{</span><br><span class="line">    <span class="comment">// some code goes here</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>即根据桶的数量、最小值、最大值初始化一个直方图，然后通过 <code>addValue</code> 方法逐个将值加入，最后通过 <code>estimateSelectivity</code> 等方法，估计操作符的选择度。实现逻辑就是将值域等距地划分为指定数量的桶，在添加值时对应桶计数 + 1,。在估计选择度时，要按照两步走的方法，例如 &lt;=，先估计 &lt; 的比率，在桶内再根据均匀分布，估计 = 的比率，求和即可。</p>
+<p>值得注意的是，StringHistogram 是通过将字符串映射到整形，再通过 IntHistogram 实现的。但是这两个类并没有实现同样的接口，这给后面带来了麻烦。</p>
+<h3 id="tablestats">TableStats</h3>
+<p>TableStats 记录了整张表的统计信息，包含每个字段的直方图，以及表的基数。正常应该是保存一个 <code>List&lt;Histogram&gt;</code>，用于保存每个字段的直方图。但并没有 <code>Histogram</code> 这样的接口，而重构代码还需要去修改测试代码，也并不是一种好的做法。我这里使用了一个 <code>List&lt;Object&gt;</code> 加强制类型转换完成，也不是一种值得提倡的做法。不过可以先达到效果。</p>
+<p>在确定了如何保存直方图，还有一个问题是如何获得字段的最大最小值。因为直方图的构建需要指定最大最小值，之后才能一个个地添加值。这个过程不是一次遍历能够完成的。因此，需要先遍历一次，记录每个字段的最大最小值，构建直方图，再遍历一次逐个添加值。</p>
+<h3 id="join-cardinality">Join Cardinality</h3>
+<p>这个 exercise 要求去根据公式估计 join 操作结果的基数和操作成本。操作成本非常简单，根据在 Lab 2 中实现的 Join 策略计算即可。我 Lab 2 是使用的粗暴的嵌套循环的方法，将 IO 成本与 CPU 计算成本相加即可。join 操作的基数则相对难以估计。如果是 equijoin 且某侧字段为主键，那么基数一定不会超过另一张表的基数。这很容易理解，因为左侧主键是不重复的，右侧表中与主键相同的记录可以保留，其他则不会。如果不存在这样的条件，就需要一些策略去估计了：</p>
+<ul>
+<li>简单启发估计：如果是 equijoin，可以使用较大表的基数作为估计。如果是 range-join，可以按照一定的比例 * 笛卡尔积的基数，作为估计。</li>
+<li>基于直方图：要获得准确一点的结果，需要根据两侧的直方图进行估计。例如 equijoin，对于每一个值，去估计在另一个直方图中的数量，然后两个数量相乘最后求和即可。range-join 则要在前一步的基础上，考虑两侧的比率。</li>
+</ul>
+<h3 id="join-ordering">Join Ordering</h3>
+<p>最后一个 Exercise 要求实现找出多个 join 的最优执行方案。Join 操作的被封装在了 <code>LogicalJoinNode</code> 这个类中，包含 Join 的信息，例如两侧表、别名、Join 条件等。目标就是接收一个 <code>List&lt;LogicalJoinNode&gt;</code> 作为输入，找到最优的左深树联合顺序 <code>List&lt;LogicalJoinNode&gt;</code>。伪代码如下所示：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">1. j = set of join nodes</span><br><span class="line">2. for (i in 1...|j|):</span><br><span class="line">3.     for s in {all length i subsets of j}</span><br><span class="line">4.       bestPlan = {}</span><br><span class="line">5.       for s' in {all length d-1 subsets of s}</span><br><span class="line">6.            subplan = optjoin(s')</span><br><span class="line">7.            plan = best way to join (s-s') to subplan</span><br><span class="line">8.            if (cost(plan) &lt; cost(bestPlan))</span><br><span class="line">9.               bestPlan = plan</span><br><span class="line">10.      optjoin(s) = bestPlan</span><br><span class="line">11. return optjoin(j)</span><br></pre></td></tr></tbody></table></figure>
+<p>遵循动态规划的思想，按照规模从小到大的顺序建动态规划表。对于给定的规模 i，需要枚举所有该规模的子集，根据小规模的最优结果计算该子集的最优结果。这个伪代码看起来很简单，但是有以下几个难点：</p>
+<ul>
+<li>如何枚举指定规模的所有子集</li>
+<li>如何计算指定 join 顺序的成本，如果子集的最优 join 顺序不支持新元素插入在最后面怎么办</li>
+</ul>
+<p>实验中给定了一些辅助方法，帮助我们解决了这些问题，虽然并不优雅：</p>
+<ul>
+<li><code>enumerateSubsets</code> 方法从规模为 1 开始，构建规模为 iS 支持，则直接跳过</li>
+</ul>
+<p>其中，<code>enumerateSubsets</code> 是一种非常低效的枚举策略，一次性地创建规模为 i 的 Set，会有较大的内存开销。正常的策略是遵循迭代器的模式，每次返回一个新的子集。join 顺序不支持直接跳过也是一种妥协，在动态规划的设定下。</p>
+<p>这个 Exercise 就是在上面辅助函数的帮助下，实现上述伪代码。这里我写了一个迭代器类，替代一次返回所有结果的枚举函数。这个枚举函数实际上是在计算组合方案，相对容易改造成迭代器，维护多个指针，然后每次获取新元素时更新指针位置即可。如果是要计算排列方案的话，就要用那个基于左右箭头的算法了。</p>
+<h2 id="总结">总结</h2>
+<p>查询优化这个 Lab 本身难度不大，属于麻雀虽小五脏俱全。对于成本估计、方案生成、动态规划每部分都涉及到了，但都不深。查询优化的理论知识要更为复杂，只是获得一个搜索空间就要考虑各种关系代数的等价性、Join 交换时的条件问题等等。对于非左深树，这个空间会更大，剪枝和搜索也会更难。动态规划搜索理论上还要考虑每种方案的物理执行类型，是否有可用的排序结果等等。真正完成这些实践就属于重复造轮子了，过于复杂且没有必要。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/" title="MIT 6.830 数据库实验 Lab 3 实验报告">https://tqnwhz.github.io/blog/2022/11/26/MIT-6-830-3/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+              <a href="/blog/tags/MIT-6-830/" rel="tag"><i class="fa fa-tag"></i> MIT 6.830</a>
+              <a href="/blog/tags/%E4%BB%A3%E7%A0%81/" rel="tag"><i class="fa fa-tag"></i> 代码</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/11/20/MIT-6-830-2/" rel="prev" title="MIT 6.830 数据库实验 Lab 2 实验报告">
+                  <i class="fa fa-chevron-left"></i> MIT 6.830 数据库实验 Lab 2 实验报告
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2022/11/29/MIT-6-830-4/" rel="next" title="MIT 6.830 数据库实验 Lab 4 实验报告">
+                  MIT 6.830 数据库实验 Lab 4 实验报告 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">143k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">4:19</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
