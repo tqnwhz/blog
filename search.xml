@@ -471,7 +471,9 @@ Orleans"... 而分开编码得到的向量表征是固定的。要解决这个�
 <h3 id="问题定义">问题定义</h3>
 <p>问题集合：<span class="math inline">\(q\in \mathcal
 Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal
-A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\sub \mathcal A\)</span>，对每个候选答案<span class="math inline"> \(a\in C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
+A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\subseteq \mathcal
+A\)</span>，对每个候选答案<span class="math inline"> \(a\in
+C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
 <h3 id="交叉vae">交叉 VAE</h3>
 <p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为：
 <span class="math display">\[
@@ -1577,6 +1579,264 @@ cost，每一步都会有误差。因此，实际上，查询优化器是去除�
       </tags>
   </entry>
   <entry>
+    <title>MIT 6.830 数据库实验 Lab 4 实验报告</title>
+    <url>/blog/2022/11/29/MIT-6-830-4/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。</p>
+<span id="more"></span>
+<h2 id="理论知识">理论知识</h2>
+<p>事务是一个包含多个操作的序列，应当被原子化地执行，其具有以下 ACID 特性：</p>
+<ul>
+<li>原子性（Atomicity:）：事务中的操作要么都被执行，要么都不被执行。</li>
+<li>一致性（Consistency）：数据库是执行事务前是一致的，在执行事务后依然是一致的。</li>
+<li>隔离性（Isolation）：每个事务的执行与其他事务隔离。实际上 DBMS
+（数据库管理系统）会在多个事务间交叉执行，并不会按顺序一个个执行，但
+DBMS 会保证每个事务看起来是隔离执行的，隐藏了并发的细节。</li>
+<li>持久性（Durability）：如果事务提交到数据库，结果会持久存在，即使刚提交
+DBMS 就崩溃了也一样。</li>
+</ul>
+<p>事务管理器包含以下两个模块：</p>
+<ul>
+<li>锁管理器：使用共享锁、排它锁、意向锁等实现事务间访问的并发控制</li>
+<li>日志和恢复：当事务需要回滚时，逐步地撤销事务已完成的操作</li>
+</ul>
+<h3 id="严格两阶段锁">严格两阶段锁</h3>
+<p>为了保证事务的 ACID 特性，DBMS 使用严格两阶段锁（Strict Two Phase
+Locking）来完成事务的锁管理，该方法具有以下特点：</p>
+<ul>
+<li>每个资源有一个共享锁（S，Shared）和排它锁（Exclusive，X）。
+<ul>
+<li>至多一个事务可以持有该资源的排它锁，但是很多其他事务可以持有其的共享锁。</li>
+</ul></li>
+<li>事务在读之前必须获得排它锁，在写之前必须获得共享锁</li>
+<li><strong>事务在释放任何锁之后都无法获得新锁</strong>。这是保证可串行性的关键。</li>
+<li><strong>严格两阶段锁特性</strong>：事务在结束前统一释放锁，而非在过程中逐个释放锁。</li>
+</ul>
+<p>最后一点是为了避免级联回滚的问题。级联回滚意味着回滚一个事务会要求回滚另一个事务。考虑下面的场景
+1. T1 先读、写了 R，但是还没有提交到 DBMS 2. T2 后读、写了 R</p>
+<p>这时，要回滚 T1，必须回滚 T2，因为 T2 读的是 T1 写后的数据，如果 T1
+回滚了，就不存在 T2 读的数据了，即脏数据。</p>
+<h3 id="死锁">死锁</h3>
+<p>当事务间存在资源的循环等待，满足死锁条件时，就会发生死锁。在操作系统上，通常有以下三种方法处理死锁：
+- 预防。按照指定的顺序请求资源，例如静态指定顺序，打破循环等待条件。 -
+避免。分配时预测是否可能出现死锁。 -
+检测和处理。周期性检测是否有死锁，并处理</p>
+<p>也有一些数据库系统，直接不作处理。如果事务超时了就猜测发生了死锁，直接中止回滚。但这也会误伤真的需要很久才能计算出结果的事务，不提倡。</p>
+<p>DBMS 广泛使用的是基于等待图的死锁检测。一个后台进程周期性地构建事务间的依赖图，当依赖图存在环时，就出现了死锁的循环等待条件，即出现了死锁。这种情况下就需要中止某个环内的事务打破循环，可以根据某些指标确定优先级，例如事务的持续时间、持有锁的数量等。</p>
+<h3 id="意向锁">意向锁</h3>
+<p>锁的粒度需要同时考虑并发性能和管理成本。考虑极端情况： -
+只使用一个锁，锁住整个数据库，很简单，但是不能并行 -
+对每个元组上锁，可以很好的并发，但是锁太多，需要庞大的内存开销，锁管理的负载也会很大</p>
+<p>因此，需要折中：</p>
+<ul>
+<li>细粒度的锁有利于并发</li>
+<li>少数的锁方便管理</li>
+</ul>
+<p>多粒度加锁可以较好地折中，其思想是： -
+不应该为所有的事务设置相同的锁粒度 - 允许数据可变规模 -
+定义一个加锁的层级，高层包含低层 - 可以表示为一棵树</p>
+<p>当对底层的元组或者页面加共享锁 / 排他锁时，需要相应的为高层页面加意向共享锁和意向排他锁。意向锁的设计允许高层节点进行
+S 和 X
+加锁时，无需检查所有的底层节点。如果没有意向锁，需要遍历所有底层节点才能知道能否给这个节点加锁。</p>
+<h2 id="exercise">Exercise</h2>
+<h3 id="lockmanager">LockManager</h3>
+<p>该 Exercise 要求实现 <code>BufferPool</code> 中的读页面请求锁、释放锁等功能，指导书要求在页面层级管理锁，不能直接在表层级加锁。指导书建议使用一个 LockManager 类来管理所有的锁，我先介绍下我对这个类的设计。先从简单的资源抽象开始，一个资源应该由一个唯一键标识，例如 Page 有 PageId，Tuple 有 RecordId。因此，LockManager 实际是维护了一个资源 - 锁的 Map，资源是任意类型的 Object。而锁对象（<code>LockItem</code>），应该包含以下属性：持有锁的事务，当前锁的类型。当一个加锁请求（资源，锁类型，事务）到达锁管理器时：</p>
+<ol type="1">
+<li>先获取资源的 <code>LockItem</code></li>
+<li><code>LockItem</code> 内，同步地判断能否完成这次加锁
+<ul>
+<li>若可以（锁无事务持有，或类型兼容，或可以直接升级锁），则加锁返回</li>
+<li>否则，阻塞在 <code>LockItem</code> 对象上，等待其他事务释放锁后将其唤醒</li>
+</ul></li>
+</ol>
+<p>当释放锁请求到达锁管理器时：</p>
+<ol type="1">
+<li>先获取资源的 <code>LockItem</code></li>
+<li><code>LockItem</code> 内，同步地释放锁，并 <code>notifyAll</code> 其他阻塞线程</li>
+</ol>
+<p>在设计上，<code>LockManager</code> 应当遵循单例模式。我查阅了 JAVA 实现单例模式的几种方法，最优雅的就是使用枚举类。JAVA 保证了枚举类型的每个值都有唯一实例，进而可以简洁优雅、线程安全的实现单例模式。</p>
+<h3 id="lock-lifetime">Lock Lifetime</h3>
+<p>该 Exercise 要实现严格两阶段的锁生命周期：逐个地申请锁，只有在事务结束时才可以统一释放锁。锁的申请上，可以直接在 <code>BufferPool.getPage</code> 中进行申请，遵循一个即用即申的模式。</p>
+<p>锁的释放上，正常应该在调用 <code>BufferPool.transactionComplete</code> 方法时，统一地释放所有锁。但会有些特殊情况，例如在插入元组的时候，扫到了一个页面没有空槽，这种情况下其实可以释放共享锁了。这看起来跟严格两阶段锁是违背的，但是实际上并不影响，因为插入元组这个操作中，只会对有空槽的页面造成影响。把这些锁及时释放可以允许更多的并行。</p>
+<h3 id="no-steal">NO STEAL</h3>
+<p>由于种种原因，事务可能中止，这时需要逐个地回滚事务已经完成的操作。在本次 Lab 中，由于还没有日志模块记录已经完成的操作，要使用 NO
+STEAL 的模式。该模式的思想是，只有当事务提交到 DBMS 后，才将其脏页面写回磁盘。在页面逐出时不能逐出脏页面。这种思想非常的简单有效，只有事务提交后，脏页面写回磁盘，结果才真正生效。当事务中止时，直接将脏页面丢弃即可，无需额外回滚。但是这种方法也有问题，最大的问题是，BufferPool 中只有脏页面的时候，DBMS 就直接崩溃了。不过这种思想还是有好处的，事实上，页面逐出时，逐出脏页面会导致额外的写回开销，有一种策略就是优先逐出非脏页面，减少 IO。</p>
+<p>这个 Exercise 在页面逐出时，按照优先级（例如 LRU）找到第一个非脏页面逐出即可。若页面全脏则抛出异常。</p>
+<h3 id="transactions">Transactions</h3>
+<p>根据上面已经实现的逻辑，实现 <code>transactionComplete(tid,
+abort)</code> 方法。当事务中止结束时，丢弃脏页面；提交结束后，写回脏页面。无论哪种结束，事务都需要释放持有的所有锁。</p>
+<h3 id="deadlocks-and-aborts">Deadlocks and Aborts</h3>
+<p>最后来到了本 Lab 的重头戏，死锁的检测。正如前文所说，避免死锁的方法有简单的超时中止，还有基于检测的等待图。指导书要求不能使用简单的超时中止策略，建议在每次分配锁前构建等待图，判断是否会发生死锁。这时，申请加锁就变成了下面的流程：</p>
+<ol type="1">
+<li>判断此次加锁是否会引入新的等待关系
+<ul>
+<li>会，构建等待图，判断是否有死锁
+<ul>
+<li>有，抛出异常</li>
+<li>没有，跳出</li>
+</ul></li>
+<li>不会，跳出</li>
+</ul></li>
+<li>正常申请锁</li>
+</ol>
+<p>可以看到，最重要的是多了一个<code>等待图</code>对象，需要保证它线程安全。可以直接使用一个 <code>HashMap&lt;TransacationId,
+LockItem&gt;</code>，<code>HashMap</code> 本身就是线程安全的，而且每个事务每个时刻最多只会阻塞在一个资源对象上，因此这个 HashMap 就可以满足需求，也可以使用并发性能更好的 <code>ConcurrentHashMap</code>。</p>
+<h2 id="总结">总结</h2>
+<p>本次 Lab 主要实现了事务的并发控制和死锁检测。正如指导书里面提到的，对并发进行 debug 是非常困难的事情。我本人花了一天时间才找到最后一个 exercise 的代码里的 bug 在哪里。当时还看了很多开源的代码时间，发现全是朴素地超时中止策略，没有使用等待图的。自己实现一遍还是收获颇丰。</p>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>事务</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MIT 6.830 数据库实验 Lab 5 实验报告</title>
+    <url>/blog/2022/12/01/MIT-6-830-5/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>Lab
+5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+
+树是最为广泛使用的数据库索引。 <span id="more"></span></p>
+<h2 id="理论知识">理论知识</h2>
+<p>索引用于加快高频字段的查找效率，例如用户 ID 这种字段，基本哪里都要用，每次都做全表扫描是不现实的。索引和记录间形成了一个一对一（多）的关系，取决于索引的键。下面先从简单的搜索树开始，对索引进行介绍。</p>
+<h3 id="高扇出搜索树">高扇出搜索树</h3>
+<p>先考虑简单的情况，在磁盘上按某个字段对表进行了排序。这种情况下不需要记录前后指针，因为物理上这些页面都是按序排列的。然后需要构建索引。为什么不用二分查找呢，因为二分查找也会导致<span class="math inline"> \(log_2N\)</span> 的页面 IO，是比较低效的。
+可以构建一个 <code>&lt;key, Record&gt;</code> 的索引，由于 record
+可能很大，而 key 很小，这种存储也很低效。因此可以使用指向 Page
+的指针，<code>&lt;key,
+PageId&gt;</code>，构建这样的一个搜索文件，在页面内完成二分查找。
+这种算法是复杂度与之前的二分查找类似，只是<strong>常数更小，因为每个页面能存储更多的索引</strong>。这个过程可以递归完成，直到最顶层的索引只需要记录在一个页面中，变成了一个多叉的搜索树。
+在该树下进行二分查找时，会在每个节点完成二分查找，然后定位下一层的节点，直到找到页面内。复杂度为<span class="math inline"> \(log_F(\#Pages)\)</span>，F 为节点的扇出（相较于 2
+有了很大改进）。 分析该算法可知，该算法具有以下特点：</p>
+<ol type="1">
+<li>支持连续扫描。因为数据还是连续存储的</li>
+<li>高扇出。因为索引记录比记录小很多，一个页面可以存储很多条索引。</li>
+<li>不支持插入。当需要插入时，可能会导致页面溢出，这种情况需要后接页面形成链表。当插入过多时，就退化成了线性扫描。</li>
+</ol>
+<p>上述这种算法称为 ISAM（Indexed Sequential Access
+Method），上世纪由 IBM 提出。</p>
+<h3 id="b树">B + 树</h3>
+<p>B + 树与上面的搜索树相似，也是一种多叉搜索树，但它支持动态插入，而且总是平衡的。B + 树的阶记为
+d，每个内部节点（根节点除外）的子节点数量需要处在 [d,2d] 之间，每个节点的最大扇出是
+2d+1，即 2d 个子节点划分得到 2d+1
+个区间。B + 树的叶子节点上保存了左右兄弟的指针，可用于线性扫描。</p>
+<p><img src="btree.png"></p>
+<p>B + 树与 ISAM
+的区别在于，<strong>在底层的叶子页面上，不需要严格按顺序排列</strong>，如上图所示。Page
+3 和 Page 5 是邻居的关系，在磁盘上中间还隔着 Page
+4。但是叶子节点间的前后指针使得可以遍历叶子页面。这也允许了动态地插入和删除。</p>
+<p>典型设置，B + 树的阶为 1600，fill-factor 为
+67%（叶子页面的记录占比）</p>
+<ul>
+<li>平均扇出为 2144</li>
+<li> 假设是 128KB 的页面，每条记录 40B</li>
+<li> 高度为 1 的树，<span class="math inline">\(2144^2=4,596,736\)</span>
+records</li>
+<li> 高度为 2 的树，<span class="math inline">\(2144^3=9,855,401,984\)</span> records 高</li>
+</ul>
+<p>高度为 2 的 B + 树就可以容纳近 10
+亿的数据，B + 树会非常的矮，进而提高查找效率。B + 树的高度很少超过 3 和 4。</p>
+<p><strong>查找</strong>：B + 树的查找与 ISAM
+类似，从根节点起，在内部节点内做二分查找定位子节点，直到定位至叶子页面，再在页面内做二分查找。</p>
+<p><strong>插入</strong>：</p>
+<ul>
+<li>当要插入的页面还有空间时，可以直接在页面内插入并排序。</li>
+<li>当没有空间时，需要新建页面，并将一半的数据转移到新页面，将新页面插入到父节点中
+<ul>
+<li>如果父节点也满了，递归向上</li>
+</ul></li>
+</ul>
+<p><strong>删除</strong>：删去元组后，可能会导致页面不满足阶约束，可以选择：</p>
+<ul>
+<li>直接忽略：数据库场景中，一般插入比删除多，因此删除多出来的空间可以保留，等待后续插入即可</li>
+<li>维护约束：
+<ul>
+<li>当页面不满足约束时，从兄弟页面匀一些多余的元组过来</li>
+<li>如果兄弟页面也没有多余的，就需要合并两个页面，递归向上删除节点</li>
+</ul></li>
+</ul>
+<h2 id="exercise">Exercise</h2>
+<h3 id="preliminary">Preliminary</h3>
+<p>首先，先介绍下 SimpleDB 的 B + 树是怎么设计的。B + 树的页面被分为四种：</p>
+<ul>
+<li>BTreeHeaderPage：保存 B + 树索引文件的首部信息</li>
+<li> BTreeRootPtrPage：用于保存 B + 树根节点的指向，类似一个假根节点，避免插入过程中根节点变化</li>
+<li> BTreeInternalPage：非叶子节点，保存 m 个分界点以及 m+1 个子节点</li>
+<li> BTreeLeafPage：叶子结点，保存元组数据，以及左右兄弟指针</li>
+</ul>
+<p>重点需要打交道的是最后两种，它们继承了抽象类 <code>BtreePage</code>，每个页面内包含一个父指针，用于处理递归向上的逻辑。<code>BTreeInternalPage</code> 暴露了一个 <code>Iterator&lt;BTreeEntry&gt;</code>，其中 <code>BTreeEntry</code> 包含以下属性：</p>
+<ul>
+<li>key：一个值，代表分界点</li>
+<li> leftChildId：左孩子的页面 ID</li>
+<li>rightChildId：右孩子的页面 ID</li>
+</ul>
+<p>一个 <code>BTreeInternalPage</code> 保存 m 个分界点，即 m+1 个子节点。</p>
+<h3 id="search">Search</h3>
+<p>首先，要实现的是查找方法，<code>findLeafPage()</code>，该方法接收一个页面和 <code>Field</code>，返回这个值对应的叶子页面。上面提到，正常在节点内应该是使用二分查找找到对应的孩子节点。由于 <code>BTreeInternalPage</code> 只对外暴露了 <code>Iterator&lt;BTreeEntry&gt;
+iterator()</code> 方法，这里只能使用遍历的方法，找到孩子节点对应的值区间。再递归查找直到找到叶子页面。</p>
+<h3 id="insert-split">Insert （Split）</h3>
+<p>然后来到了重头戏，B + 树的插入。Lab 里将拆分节点分为了两个方法，需要分别实现：</p>
+<ul>
+<li><code>splitLeafPage()</code>：拆分叶子结点，可能需要递归调用父节点的拆分</li>
+<li><code>splitInernalPage()</code>：拆分非叶子节点，可能需要递归调用父节点的拆分</li>
+</ul>
+<p>拆分节点的逻辑可以分为下面几步：</p>
+<ol type="1">
+<li>新建空白页面，转移一半的数据到新页面，一般是把值较大的一半转移过去</li>
+<li>判断父节点是否有空槽，没有的话递归拆父节点</li>
+<li>将新页面关联到父页面
+<ul>
+<li>维护两个页面和父页面间的指向</li>
+<li>在父页面新建 entry，key 为大页面的最小值，
+左右孩子分别为原页面和新页面</li>
+</ul></li>
+<li>对于叶子结点，维护左右兄弟指针</li>
+</ol>
+<p>这里需要注意的是，要把修改后的页面更新在 <code>dirtypages</code> 中，否则会出现读取不一致的现象。Lab 提供了递归的拆分辅助方法，名为 <code>getParentWithEmptySlots</code>，其会判断父页面中是否有空槽，没有的话调用 <code>splitInternalPage</code> 将其拆分，返回一个带有空槽的父页面。</p>
+<h3 id="delete-steal">Delete (Steal)</h3>
+<p>这个 exercise 要求实现带 “偷取” 逻辑。当一个页面不满足半满约束时，需要从它的兄弟页面中匀一些多余的数据过来。根据页面、兄弟的类型，这部分逻辑被分散在三个方法中：</p>
+<ul>
+<li><code>stealFromLeafPage</code>：叶子结点间的偷取，<code>isRightSibling</code> 参数标识是否是右侧兄弟</li>
+<li><code>stealFromLeftInternalPage</code>：从左侧内部节点偷取</li>
+<li><code>stealFromRightInternalPage</code>：从右侧内部节点偷取</li>
+</ul>
+<p>偷取的逻辑可以分为下面几步：</p>
+<ol type="1">
+<li>均匀地把数据匀过去，对于每条数据
+<ol type="1">
+<li>如果是叶子页面的元组记录，转移即可</li>
+<li>如果是内部节点的 key 和 child 记录，需要新建 Entry 插入</li>
+</ol></li>
+<li>更新父节点中 Entry 的 key 值，需要根据左右关系，选择大页面中的最小值作为新的 key 值</li>
+<li>更新父节点指向关系</li>
+</ol>
+<h3 id="deletemerge">Delete（Merge）</h3>
+<p>当偷取已经不能满足需要的时候，需要合并两个均达不到半满的节点。同样的，根据节点类型，可以分为：</p>
+<ul>
+<li><code>mergeLeafPages</code>：合并两个叶子结点</li>
+<li><code>mergeInternalPages</code>：合并内部节点</li>
+</ul>
+<p>合并可以看成偷取的一种极端情况，将两个节点所有的数据都匀到一个节点中，然后删除掉空页面以及父节点中的对应 entry。这个过程中也可能会导致递归向上删除。Lab 提供了 <code>deleteParentEntry</code> 的工具方法来处理删除父节点的 entry 后不满足半满约束的情况，会调用 <code>handleMinOccupancyPage</code> 根据情况调用偷取和合并方法。</p>
+<p>当四个 exercise 做完，理论上已经可以通过这四个 exercise 的所有 Test。由于 SimpleDB 本身是使用的页面级别的锁，不存在意向锁的 phantom 问题，如果锁实现正确的话，应该也可以通过 BTreeNextKeyLockingTest 和 BTreeDeadlockTest。如果到目前为止一切都正确，应该可以通过一个很难的 <code>BTreeTest</code>。</p>
+<h2 id="总结">总结</h2>
+<p>本次 Lab 主要完成了 B + 树的增删查逻辑。Lab 提供了 B + 树索引的整体框架，只需要实现核心的增删查逻辑即可。B + 树还是一个非常复杂的数据结构，自己从头实现的话估计得很久。不过经过这个 Lab，对 B + 树的操作有了更深的认识。</p>
+]]></content>
+      <categories>
+        <category>后端</category>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>MIT 6.830</tag>
+        <tag>B+树</tag>
+        <tag>索引</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>MoE 相关工作、研究进展总结</title>
     <url>/blog/2022/07/03/MoE-Summary/</url>
     <content><![CDATA[<h1 id="moe">MoE</h1>
@@ -1585,10 +1845,7 @@ cost，每一步都会有误差。因此，实际上，查询优化器是去除�
 <p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
 <span id="more"></span>
 <p>一个例子如下所示。存在 n 个不同的专家，每个专家都是个独立的 FFN，不共享参数。门控网络对每个 token 计算专家网络上的概率分布，取 top2 专家输出的加权和作为 MoE 层的输出。</p>
-<figure>
-<img src="architecture.png" alt="architecture.png">
-<figcaption aria-hidden="true">architecture.png</figcaption>
-</figure>
+<p><img src="architecture.png"></p>
 <p>实现和训练过程中需要注意以下事项：</p>
 <h3 id="稀疏噪声top-k门控">稀疏噪声 Top-k 门控</h3>
 <p>计算 logits 时加入随机噪声，使得每个专家都有激活的机会。</p>
@@ -1598,10 +1855,7 @@ cost，每一步都会有误差。因此，实际上，查询优化器是去除�
 <p>原始论文中使用了专家的重要性（batch 内每个 token 在同一专家的分数之和），构造辅助损失，保证每个专家收到的 batch
 token 的重要性相近，又设计了额外的负载损失保证每个专家收到的 token 数量近似。仔细区分的话，重要性损失保证了每个专家都有近似的训练进度，负载损失保证了专家间的负载近似平衡。</p>
 <p>下面是重要性损失的公式。负载损失类似。采用这样复杂的损失形式是因为每个专家激活次数是离散量、不可微。</p>
-<figure>
-<img src="Untitled.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled.png"></p>
 <h3 id="混合并行">混合并行</h3>
 <p>一般而言，大模型需要分布式数据并行训练。</p>
 <p>专家、参数过多时，模型难以容纳在单张卡上。需要做模型并行，将一个或多个专家放在一张卡上，不同的卡保存不同的专家。在门控网络计算完毕，得到每个 token 对应的专家后，通过多卡通信，将每个 token 转移到专家对应的设备上进行计算。</p>
@@ -1638,10 +1892,7 @@ token 的重要性相近，又设计了额外的负载损失保证每个专家�
 </ul>
 <p>N 为专家数，T 为 token 数，<span class="math inline">\(\mathcal
 B\)</span> 为 batch 内的所有 token，<span class="math inline">\(f_i\)</span> 为每个专家分到的 token 比例，<span class="math inline">\(P_i\)</span> 为归一化的专家重要性。理想情况下，二者均应该为<span class="math inline"> \(1/N\)</span>。虽然<span class="math inline"> \(f_i\)</span> 不可微，但是<span class="math inline"> \(P_i\)</span> 是可微的。论文称该损失在均匀分布下是最小的。</p>
-<figure>
-<img src="Untitled%201.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled%201.png"></p>
 <h3 id="蒸馏">蒸馏</h3>
 <ul>
 <li>动机：将大型稀疏模型蒸馏为小型密集模型</li>
@@ -1665,10 +1916,7 @@ B\)</span> 为 batch 内的所有 token，<span class="math inline">\(f_i\)</spa
 <li>通过随机 Hash、聚类 Hash、分散 Hash 多种方法，将建立 token - 专家间的固定 Hash 关系</li>
 <li>使用多头 Hash：将专家和 embedding 分段，做 Hash、计算后再拼接到一起</li>
 </ul>
-<figure>
-<img src="Untitled%202.png" alt="Untitled">
-<figcaption aria-hidden="true"> Untitled</figcaption>
-</figure>
+<p><img src="Untitled%202.png"></p>
 <h2 id="base-layers"><strong>BASE Layers</strong></h2>
 <h3 id="负载均衡-3">负载均衡</h3>
 <ul>
@@ -1678,10 +1926,7 @@ B\)</span> 为 batch 内的所有 token，<span class="math inline">\(f_i\)</spa
 n 分配给专家 m 得到的收益。满足每个专家分配 token 个数相等时，最高收益的分配方案。</li>
 <li>需要两次 all2all 操作，第一次将 token 映射到随机的 worker，worker 求解组内线性分配问题，第二次 worker 将 token 发送给对应的 expert。</li>
 </ul>
-<figure>
-<img src="Untitled%203.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled%203.png"></p>
 <h2 id="dense-to-sparse-gate"><strong>DENSE-TO-SPARSE GATE</strong></h2>
 <h3 id="提高训练效率">提高训练效率</h3>
 <ul>
@@ -1695,13 +1940,10 @@ n 分配给专家 m 得到的收益。满足每个专家分配 token 个数相�
 <li>有无负载均衡损失的效果类似，最终专家间负载基本均衡</li>
 </ul></li>
 </ul>
-<figure>
-<img src="Untitled%204.png" alt="Untitled">
-<figcaption aria-hidden="true"> Untitled</figcaption>
-</figure>
+<p><img src="Untitled%204.png"></p>
 <figure>
 <img src="Untitled%205.png" alt="有无辅助损失的对比">
-<figcaption aria-hidden="true"> 有无辅助损失的对比</figcaption>
+<figcaption aria-hidden="true">有无辅助损失的对比</figcaption>
 </figure>
 <p>有无辅助损失的对比</p>
 <h2 id="tricks-for-training-sparse-translation-models"><strong>Tricks
@@ -1754,10 +1996,7 @@ E\)</span> 倍。E 为专家数量。因此论文主张将学习率增大<span c
 <p>实验证明，网络深层使用专家效果优于浅层，因此，论文提出由浅至深逐渐增加专家的数量。也就是金字塔型。</p>
 <h3 id="近似top2">近似 Top2</h3>
 <p>Top2 门控虽然能带来收益，但是引入了很多训练、通信开销。论文认为，top2 门控优于 top1 门控的原因是，分数第二大的专家<strong>有时</strong>可以纠正第一个专家的错误。因此，论文提出了可以固定一个专家，从剩下的专家里选择最优的。换而言之，在专家之外添加了一个所有 token 都需要经过的 MLP，近似得到 top2 门控的性能。</p>
-<figure>
-<img src="Untitled%208.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled%208.png"></p>
 <h3 id="蒸馏稀疏模型">蒸馏稀疏模型</h3>
 <ul>
 <li>将知识蒸馏到专家更少的稀疏模型里，而非传统的密集模型，保留稀疏模型训练和推理的优势</li>
@@ -1783,21 +2022,17 @@ E\)</span> 倍。E 为专家数量。因此论文主张将学习率增大<span c
 数量，N 是专家的数量，</p>
 <p>x 是路由器接收的 logits。该 loss 惩罚了门控网络中的大的 logits，类似
 l2 正则项。</p>
-<figure>
-<img src="Untitled%2010.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled%2010.png"></p>
 <p>路由 z-loss 能提升稳定性，还能稍微改善模型质量。</p>
 <h3 id="微调">微调</h3>
 <ul>
-<li><p>论文认为，稀疏模型微调效果差的原因是其倾向于过拟合。实验也证明，稀疏模型更快微调收敛，证实稀疏模型在数据分布变化时可以高效地适应优化。大任务上微调可以取得比密集模型更性能，但是在较小的任务上差于密集模型</p>
-<figure>
-<img src="overfit.png" alt="overfit.png">
-<figcaption aria-hidden="true">overfit.png</figcaption>
-</figure></li>
-<li><p> 调节 expert 的 dropout 可提升泛化性能</p></li>
-<li><p> MoE 只微调非专家参数和微调所有参数性能类似。只微调非专家参数可以加速训练、减小显存。</p></li>
-<li><p>密集模型和 MoE 的最优微调超参有较大差别，直接影响最后性能，不能直接照搬。</p></li>
+<li>论文认为，稀疏模型微调效果差的原因是其倾向于过拟合。实验也证明，稀疏模型更快微调收敛，证实稀疏模型在数据分布变化时可以高效地适应优化。大任务上微调可以取得比密集模型更性能，但是在较小的任务上差于密集模型</li>
+</ul>
+<p><img src="overfit.png"></p>
+<ul>
+<li>调节 expert 的 dropout 可提升泛化性能</li>
+<li> MoE 只微调非专家参数和微调所有参数性能类似。只微调非专家参数可以加速训练、减小显存。</li>
+<li>密集模型和 MoE 的最优微调超参有较大差别，直接影响最后性能，不能直接照搬。</li>
 </ul>
 <h3 id="丢弃token健壮性">丢弃 token 健壮性</h3>
 <p>微调质量不会因为 10% 的 token
@@ -3068,6 +3303,148 @@ E_{q_\phi(z|x^{(i)})}[-log(p_\theta(x^{(i)}|z))]
       </tags>
   </entry>
   <entry>
+    <title>XLNET：基于置换语言任务的自回归模型</title>
+    <url>/blog/2022/04/17/XLNET/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet:
+Generalized Autoregressive Pretraining for Language
+Understanding》，收录于 2019
+NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 <strong>[MASK]
+token 间的依赖关系</strong>以及 [MASK] 导致的<strong>预训练 - 微调差异</strong>。
+XLNet 在 20 项任务上的表现优于
+BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排序。</p>
+<span id="more"></span>
+<h2 id="介绍">介绍</h2>
+<h3 id="自编码vs自回归">自编码 vs 自回归</h3>
+<p>预训练模型常在大规模语料上，通过构建无监督的预训练目标进行训练。其中，自回归
+(AR) 语言建模和自编码 (AE) 是两个最成功的预训练目标。</p>
+<p>自编码方法旨在通过从被破坏的输入重建数据，典型的例子为 BERT 的掩码语言模型（MLM），将若干 token 掩码为 [MASK]，通过上下文的其他 token 预测被掩码的 token。类似完形填空任务，将 “我吃饭了” 掩码为 "我吃 [MASK] 了"，预测 [MASK] 为 "饭"。但 BERT 的缺点在于，它对于多个 [MASK] 标记分开预测，换而言之，<strong>假设它们是互相独立的，没有考虑它们间的依赖关系</strong>。而且，在预训练过程中，[MASK] 的 token
+embedding 为空，对其后续的上下文表征没有任何帮助。而在下游微调任务中，当前 token 的 token
+embedding 对其上下文表征是最重要的。这就导致了上下游间的差异。</p>
+<p>自回归的方法旨在使用自回归模型拟合语料的概率分布，典型的例子为 GPT 的语言模型。将句子概率<span class="math inline"> \(p(x)\)</span> 分解为条件概率的乘积，即<span class="math inline"> \(p(x)=\prod_t
+p(x_t|x_{&lt;t})\)</span>。这种方法非常符合人的认知，但是缺点是无法利用双向的上下文信息。而双向的上下文信息对于下游的理解任务是至关重要的。</p>
+<p>XLNET 希望将 AR 和 AE 的优点结合起来，避免它们的局限性。XLNET 提出了一种名为置换语言模型的预训练目标，即<strong>打乱句子的 token 顺序并使用自回归的方法预测</strong>。这种方法不依赖于掩码、结合了双向上下文信息、自回归训练。XLNet
+在许多下游任务上比 BERT 表现出色，包括 GLUE 语言理解任务、阅读理解任务（如
+SQuAD 和
+RACE），Yelp 和 IMDB 等文本分类任务，以及 ClueWeb09-B 文档排名任务。</p>
+<h2 id="方法">方法</h2>
+<h3 id="置换语言模型">置换语言模型</h3>
+<p>对于长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \(x\)</span>，存在<span class="math inline"> \(T!\)</span> 种排列可用于自回归生成。用<span class="math inline"> \(\mathcal Z_T\)</span> 代表所有长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \([1,2,\cdots,T]\)</span> 的排列集合，<span class="math inline">\(z_t\)</span> 和<span class="math inline"> \(z_{&lt;t}\)</span> 分别代表排列<span class="math inline"> \(z\in\mathcal Z_T\)</span> 的第<span class="math inline"> \(t\)</span> 个和前<span class="math inline"> \(t-1\)</span> 个元素。置换语言模型的目标可形式化定义为：
+<span class="math display">\[
+\max_\theta \mathbb E_{z\sim\mathcal
+Z_T}[\sum_{t=1}^Tlogp(x_{z_t}|x_{z_{&lt;t}})]
+\]</span> 事实上，只需要每次随机采样一个排列序列<span class="math inline"> \(z\)</span>，优化对数似然即可。而且我们也不需要显式地改变句子顺序，只需要对 Attention 进行掩码即可。后面会介绍到。</p>
+<h3 id="双流自注意力机制">双流自注意力机制</h3>
+<p>虽然已经得到了形式化的训练目标，但是直接使用 Transformer-XL 优化上述目标可能是没什么用的。具体而言，如果使用标准的 softmax 计算下一个 token 的概率分布，即<span class="math inline"> \(p(X_{z_t}|x_{z_{&lt;t}})\)</span>，公式为 <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Th_\theta(x_{z_{&lt;t}}))}{\sum_{x'}\exp(e(x')^Th_\theta(x_{z_{&lt;t}})}
+\]</span> 其中，<strong><span class="math inline">\(h_\theta(x_{z_{&lt;t}})\)</span> 是<span class="math inline"> \(x_{z_{t}}\)</span> 的隐藏状态表征，<span class="math inline">\(e(x)\)</span> 是<span class="math inline"> \(x\)</span> 的嵌入向量。可以看到<span class="math inline"> \(h_\theta(x_{z_{&lt;t}})\)</span> 是与要预测的 token 的位置<span class="math inline"> \(z_t\)</span> 无关的。也就是</strong>无论下一个预测的 token 是哪个位置的，得到的概率分布都是相同的<strong>。这显然与我们的期望是相悖的。为了解决这个问题，需要</strong>重参数化<strong>这个概率分布，加入<span class="math inline"> \(z_t\)</span> 的信息： <span class="math display">\[
+p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Tg_\theta(x_{z_{&lt;t}},z_t))}{\sum_{x'}\exp(e(x')^Tg_\theta(x_{z_{&lt;t}},z_t)}
+\]</span> 其中，</strong><span class="math inline">\(g_\theta\)</span> 是一种新的、依赖于下一个 token 位置的表征 **。</p>
+<p>那么新的问题就来了，怎么建模这个<span class="math inline"> \(g_\theta\)</span> 呢？从形式上可以看出，<span class="math inline">\(g_\theta\)</span> 希望在根据位置<span class="math inline"> \(z_t\)</span> 从已有的上下文<span class="math inline"> \(x_{z_{&lt;t}}\)</span> 中通过注意力机制收集信息。这样就有了两种略显矛盾的需求：</p>
+<ul>
+<li>预测<span class="math inline"> \(x_{z_t}\)</span> 时，<span class="math inline">\(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 只能依赖位置<span class="math inline"> \(z_t\)</span> 而非内容<span class="math inline"> \(x_{z_t}\)</span></li>
+<li> 预测<span class="math inline"> \(j&gt;t\)</span> 的其他标记<span class="math inline"> \(x_{z_j}\)</span> 时，也需要<span class="math inline"> \(x_{z_t}\)</span> 的隐藏表征，此时<span class="math inline"> \(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 应该编码<span class="math inline"> \(x_{z_t}\)</span> 的内容以充分利用上下文信息</li>
+</ul>
+<p>那么，就需要两种上下文表征：</p>
+<ul>
+<li><strong>内容表征</strong><span class="math inline"> \(h_\theta(x_{z_{\le t}})\)</span>，简写为<span class="math inline"> \(h_{z_{\le
+t}}\)</span>，类似标准 Transformer 中的隐藏状态，同时编码上下文和位置</li>
+<li><strong>查询表征</strong><span class="math inline"> \(g_\theta(x_{z_t})\)</span>，简写为<span class="math inline"> \(g_{z_t}\)</span>，只根据<span class="math inline"> \(h_{z_{&lt;t}}\)</span> 和位置<span class="math inline"> \(z_t\)</span> 计算得到</li>
+</ul>
+<p>为便于计算，查询流的第一层初始化为可训练的向量，即<span class="math inline"> \(g_i^{(0)}=w\)</span>，内容流初始化为嵌入向量，即<span class="math inline"> \(h_i^{(0)}=e(x_i)\)</span>。对于其它层<span class="math inline"> \(m=1,\cdots,M\)</span>，使用共享参数更新两种流的向量表征，示意图如下所示：</p>
+<p><img src="two-stream.png"></p>
+<ul>
+<li>图 (a) 为内容流注意力，类比标准 Transformer 中的自注意力，query、key、value 均为有内容的向量表征。</li>
+<li>图 (b) 为查询流注意力，不能获取当前位置的内容<span class="math inline"> \(x_{z_t}\)</span>，以其位置<span class="math inline"> \(z_t\)</span> 为 query，key、value 也均为有内容的向量表征。</li>
+<li>图 (c) 为置换语言模型的训练过程。采样一个排列<span class="math inline"> \(3,2,4,1\)</span>，内容流中，1 可以看到 3,2,4，且根据 1 的内容计算双向自注意力，其 Attention 不需要遮挡；2 只能看到 3 和它本身，因此位置 1,4 需要被遮挡。以此类推。查询流与内容流类似，不过需要额外去掉当前位置的内容，即矩阵中的主对角线全部被遮挡。</li>
+</ul>
+<p>更新公式可以示意为（<strong>注意 KV 里下标<span class="math inline"> \(&lt;,\le\)</span> 的差异</strong>）： <span class="math display">\[
+g_{z_t}^{(m)}\leftarrow
+Attention(Q=g_{z_t}^{(m-1)},KV=h_{z_{&lt;t}}^{(m-1)};\theta)\\
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=h_{z_{\le
+t}}^{(m-1)};\theta)
+\]</span> 使用最后一层的<span class="math inline"> \(g_{z_t}^{(M)}\)</span> 来计算上述的条件概率<span class="math inline"> \(p(X_{z_t}=x|x_{z_{&lt;t}})\)</span>。在微调的时候，可以直接将查询流丢弃。</p>
+<h3 id="部分预测">部分预测</h3>
+<p>虽然上述理论很美好，但是早期实验证实其收敛很慢。很容易理解，排列中前一部分的 token 的上下文位置随机，预测下一随机位置的 token 是困难的。为了优化方便，论文只预测排列中最后一部分的 token，它们的上下文最为丰富。形式化而言，将排列<span class="math inline"> \(z\)</span> 划分为上下文<span class="math inline"> \(z_{\le c}\)</span> 和目标<span class="math inline"> \(z_{&gt; c}\)</span>，c 为切分点。使用超参数<span class="math inline"> \(|z|/(|z|-c)\approx
+K\)</span> 控制这个比例。这里类似 BERT 里控制 [MASK] 比例，理论上当然是越大越好，但是太大了不易收敛。上下文部分<span class="math inline"> \(z_{\le
+c}\)</span> 的查询流也不需要计算了，可以节省时间和内存。</p>
+<h3 id="集成transformer-xl">集成 Transformer-XL</h3>
+<p>在 Transformer-XL 的基础上，添加：</p>
+<ul>
+<li><strong>相对位置编码</strong></li>
+<li><strong>段循环机制</strong></li>
+</ul>
+<p>主要介绍下段循环机制。对于过长的输入，往往需要以固定长度 T（如 512）将其分段（segment）。假设两段输入分别为<span class="math inline"> \(\tilde x=s_{1:T},x=s_{T+1:2T}\)</span>，<span class="math inline">\(\tilde z,z\)</span> 分别为其排列顺序，<span class="math inline">\(\tilde
+h^{(m)}\)</span> 为 m 层的向量表征。对于段<span class="math inline"> \(x\)</span>，计算注意力时可以添加<span class="math inline"> \(\tilde
+h^{(m-1)}\)</span> 的注意力，类似记忆网络（Memory Network），如下式所示：
+<span class="math display">\[
+h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde
+h^{(m-1)},h_{z_{\le t}}^{(m-1)}];\theta)
+\]</span> 这样可以缓存和重用前一段的模型结果。</p>
+<h3 id="多段建模">多段建模</h3>
+<p>许多下游任务以多个段为输入，例如问答、对话等。XLNET 参考 BERT，构建 [CLS,
+A, SEP, B,
+SEP] 的输入，用以进行置换语言模型训练。不过事实上，XLNET 并没有使用下句预测的预训练任务，因为它在消融实验里并没有带来帮助。</p>
+<p>继承自相对位置编码的思想，XLNET 引入了<strong>相对段编码</strong>。与为每个段显式加入绝对段编码的 BERT 不同，XLNET 使用两个相对段编码<span class="math inline"> \(s_+,s_-\)</span> 衡量两个位置<span class="math inline"> \(i,j\)</span> 是否来自同一个段，<span class="math inline">\(s_+,s_-\)</span> 是每个注意力头可学习的参数。换而言之，XLNET 只考虑两个位置是否来自一个段，不关心它们来自哪两个段。当位置<span class="math inline"> \(i\)</span> 向<span class="math inline"> \(j\)</span> 计算注意力时，段编码<span class="math inline"> \(s_{ij}\)</span> 用以计算权重<span class="math inline"> \(a_{ij}=(q_i+b)^Ts_{ij}\)</span>，<span class="math inline">\(q_i\)</span> 是标准的查询向量，<span class="math inline">\(b\)</span> 为特定于注意力头的可学习的偏差向量，得到的<span class="math inline"> \(a_{ij}\)</span> 被添加到注意力 ij 间的权重上。直观而言，如果 ij 来自同一个段，这个权重应该更大，反之则更小。相较于绝对段编码，相对段编码更易扩展，而且可以提高泛化能力。</p>
+<h2 id="实验">实验</h2>
+<h3 id="设置">设置</h3>
+<ul>
+<li>预训练数据：包含 BookCorpus、Wikipedia、Giga5、ClueWeb
+2012-B 等，共 126GB。BERT 只使用了前两项共 13GB。</li>
+<li>参数规模：XLNET-Large 和 BERT-Large 架构一致</li>
+<li>训练成本：512 块 TPU，500k 步，5.5 天，完了还是欠拟合</li>
+<li> K=6，即只预测一个句子排列的末尾<span class="math inline"> \(1/6\approx 17%\)</span>，与 BERT
+15% 的掩码率相近</li>
+<li>微调：<strong>基于跨度的预测</strong>（span-based
+prediction）。随机采用一个长度<span class="math inline"> \(L\in
+[1,2,3,4,5]\)</span>，随机采样一段长为 L 的连续的跨度作为预测目标。</li>
+</ul>
+<h3 id="与bert的公平比较">与 BERT 的公平比较</h3>
+<p>XLNET 与 BERT 在相同数据集上训练、架构一致。BERT 选取原生 BERT、全词掩码、无下句预测三种版本中的最优结果。下表为 GLUE、SQuAD 数据集的结果。可以看到在不同下游任务上，XLNET 均超越 BERT，一般一两个点。</p>
+<p><img src="fair-comparison.png"></p>
+<h3 id="其他结果">其他结果</h3>
+<p>下面的 XLNET 就是全量数据上的结果了。</p>
+<p>下表为在 RACE（阅读理解任务）和
+onClueWeb09-B（文档排序任务）测试集的最新结果的比较。RACE 数据集以长度著称，考验了模型的长片段信息捕捉能力。ClueWeb09-B
+文档排序数据集，主要用于测试模型生成的词向量效果。可以看到 XLNET 都是最优的。</p>
+<p><img src="scaling.png"></p>
+<p>下表为在 SQuAD 数据集上的结果，大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="SQuAD.png"></p>
+<p>下表为在多个文本分类数据集上的实验结果，主要与 BERT 比较。</p>
+<p><img src="text-classification.png"></p>
+<p>下表为在 GLEU 数据集上，与 RoBERTa 等模型的比较结果。还是大幅领先 BERT，略优于 RoBERTa。</p>
+<p><img src="GLEU.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<p>消融实验旨在具体探究：</p>
+<ul>
+<li>置换语言模型的有效性，对比 MLM</li>
+<li>Transformer-XL 架构的重要性</li>
+<li>一些其他细节：基于跨度预测、双向输入、下句预测</li>
+</ul>
+<p>为了公平比较，所有模型都基于 12 层架构，具有与 BERT-Base
+相同的模型超参数，并且仅在 Wikipedia 和 BooksCorpus
+上进行训练。基线为原始的 BERT-Base 以及使用降噪自编码器（DAE）训练的 Transformer-XL。DAE 和 BERT 差别在于，BERT 只预测 [MASK] token，DAE 预测所有 token。结果如下表所示。</p>
+<p><img src="ablation.png"></p>
+<p>1-4 行可以看出，Tranformer-XL 和置换语言模型确实提供了性能提升。如果删去内存缓存机制（第 5 行），性能明显下降，尤其是涉及长上下文的任务。6-7 行显示，基于跨度的预测和双向输入在 XLNet 中都起着重要作用。最后，不出所料的是，下句预测在 XLNET 里也不一定会带来改进。因此 XLNET 也将其排除在预训练目标之外。</p>
+<h2 id="总结">总结</h2>
+<p>本文提出了一种名为置换语言模型的预训练任务及配套的预训练模型 XLNET，旨在结合自回归和自编码两种预训练目标的优点。消融实验证明，所提出的置换语言模型的预训练目标是有效的，在各项自然语言理解任务上比 BERT 取得了显著改进。不过相较于 RoBERTa 的提升不大。考虑到 RoBERTa 的<strong>可并行性</strong>，可能 NLU 任务还是偏好 RoBERTa 吧。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/71916499">飞跃芝麻街：XLNet
+详解 - 知乎 (zhihu.com)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>预训练模型</tag>
+        <tag>自然语言处理</tag>
+        <tag>XLNET</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>XMTC: 极端多标签文本分类相关工作</title>
     <url>/blog/2022/08/27/XMTC/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -3102,10 +3479,7 @@ L\)</span> 中，N，L 分别为样本、标签数量。这个矩阵庞大稀疏
 <p><strong>深度学习方法</strong>：使用深度学习特征，而非传统的词袋、tf-idf 特征。</p>
 <h3 id="数据集">数据集</h3>
 <p>其中的 L 是标签数量，可以看到大型数据集上，有几十万标签，规模是很大的。</p>
-<figure>
-<img src="Untitled-1.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-1.png"></p>
 <h3 id="评估指标">评估指标</h3>
 <p>对于文档，根据分数输出一个有序的标签列表。然后使用排序指标评估：</p>
 <ul>
@@ -3138,10 +3512,7 @@ m_i\)</span>，通过共享的全连接、输出层映射到分数</li>
 <li>预测的时候，使用链式法则，得到每个标签的概率分数</li>
 <li>使用 BCE loss 训练，使用三棵 plt 集成取得最好性能</li>
 </ul>
-<figure>
-<img src="Untitled-3.png" alt="Untitled">
-<figcaption aria-hidden="true"> Untitled</figcaption>
-</figure>
+<p><img src="Untitled-3.png"></p>
 <p>结果：未集成的 AttentionXML 已经超过了 XML-CNN 达到了 SOTA，集成后性能提升半个点或更多</p>
 <h2 id="x-bert">X-BERT</h2>
 <p>2019 X-BERT: eXtreme Multi-label Text Classification using
@@ -3165,12 +3536,9 @@ Classification</p>
 <li>XLNET 编码标签描述 + 正样本聚合特征（Positive Instance Feature
 Aggregation, PIFA），进行分层聚类</li>
 </ul>
-<figure>
-<img src="Untitled-4.png" alt="Untitled">
-<figcaption aria-hidden="true"> Untitled</figcaption>
-</figure>
+<p><img src="Untitled-4.png"></p>
 <ul>
-<li>BERT/RoBERTa/XLNET Large + 平方 Hinge-loss
+<li> BERT/RoBERTa/XLNET Large + 平方 Hinge-loss
 微调聚类标签的多分类（三模型集成效果最好）</li>
 <li>使用 tf-idf + 嵌入特征，构建线性 OVA 分类器，使用混合采样策略构建负样本
 <ol type="1">
@@ -3198,15 +3566,9 @@ High-Performance Extreme Multi-label Text Classification</p>
 <ul>
 <li>1 块 16G V100</li>
 </ul>
-<figure>
-<img src="Untitled-5.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-5.png"></p>
 <p>数据集统计信息</p>
-<figure>
-<img src="Untitled-1.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-1.png"></p>
 <p>使用 3 个模型或者 3 个聚类结果进行集成</p>
 <p>结果：在五个数据集上超过了 X-Transformers，达到了 SOTA。消融实验证明 5 个 cls 拼接有助于收敛，动态负采样能够提升性能</p>
 <h2 id="gudn">GUDN</h2>
@@ -3220,10 +3582,7 @@ classification</p>
 loss；标签表征用于分类的 BCE loss</li>
 <li> 分类排名：对中等数据集直接使用线性层分类；对大标签数据集使用 BOW 聚类 + 动态负采样，类似 LightXML</li>
 </ul>
-<figure>
-<img src="Untitled-6.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-6.png"></p>
 <p>实验资源：</p>
 <ul>
 <li>4 块 24G 3090</li>
@@ -3276,10 +3635,7 @@ embedding，将其中元素认为是 token 对 label 的重要性，选 topk 的
 <li>融合：文档表征后接线性层，得到概率分布 A；点积相似性结果得到另一个概率分布；两者平均作为最终结果</li>
 </ul>
 <p>框架如下：</p>
-<figure>
-<img src="Untitled-8.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-8.png"></p>
 <p>评价指标：除了 P@k，Macro F1@K，还有 PSP@K，PSP@K 是加权版的 P<span class="citation" data-cites="K">@K</span>，预测正确尾部标签的收益更高</p>
 <p>结果：在 Macro
 F1@k，PSP@K 上达到了 SOTA，P@K 要弱一些；消融实验证明，伪标签描述对于尾部标签预测是有效的</p>
@@ -3294,16 +3650,10 @@ Multi-label Text Classification</p>
 <li><p>对于每个文档样本 x，遍历其他样本，找到与其余弦相似度 topk 的样本</p></li>
 <li><p>将该样本对应的标签、父标签（标签树）编码平均后，得到教师知识</p></li>
 <li><p>使用一个掩码多层自注意力（自左向右）、一个多头注意力层完成编码过程</p>
-<figure>
-<img src="Untitled-9.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure></li>
+<p><img src="Untitled-9.png"></p></li>
 </ul>
 <p>损失函数：基于最大熵的多标签一对多损失</p>
-<figure>
-<img src="Untitled-10.png" alt="Untitled">
-<figcaption aria-hidden="true">Untitled</figcaption>
-</figure>
+<p><img src="Untitled-10.png"></p>
 <p>实验结果：在两个数据集上超过 LightXML 达到了 SOTA</p>
 <h2 id="参考">参考</h2>
 <ul>
@@ -3857,148 +4207,6 @@ Attention(Q,K,V)=softmax(\frac{QK^\intercal}{\sqrt{d_k}})V
       </categories>
       <tags>
         <tag>seq2seq</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>XLNET：基于置换语言任务的自回归模型</title>
-    <url>/blog/2022/04/17/XLNET/</url>
-    <content><![CDATA[<h2 id="摘要">摘要</h2>
-<p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet:
-Generalized Autoregressive Pretraining for Language
-Understanding》，收录于 2019
-NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 <strong>[MASK]
-token 间的依赖关系</strong>以及 [MASK] 导致的<strong>预训练 - 微调差异</strong>。
-XLNet 在 20 项任务上的表现优于
-BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排序。</p>
-<span id="more"></span>
-<h2 id="介绍">介绍</h2>
-<h3 id="自编码vs自回归">自编码 vs 自回归</h3>
-<p>预训练模型常在大规模语料上，通过构建无监督的预训练目标进行训练。其中，自回归
-(AR) 语言建模和自编码 (AE) 是两个最成功的预训练目标。</p>
-<p>自编码方法旨在通过从被破坏的输入重建数据，典型的例子为 BERT 的掩码语言模型（MLM），将若干 token 掩码为 [MASK]，通过上下文的其他 token 预测被掩码的 token。类似完形填空任务，将 “我吃饭了” 掩码为 "我吃 [MASK] 了"，预测 [MASK] 为 "饭"。但 BERT 的缺点在于，它对于多个 [MASK] 标记分开预测，换而言之，<strong>假设它们是互相独立的，没有考虑它们间的依赖关系</strong>。而且，在预训练过程中，[MASK] 的 token
-embedding 为空，对其后续的上下文表征没有任何帮助。而在下游微调任务中，当前 token 的 token
-embedding 对其上下文表征是最重要的。这就导致了上下游间的差异。</p>
-<p>自回归的方法旨在使用自回归模型拟合语料的概率分布，典型的例子为 GPT 的语言模型。将句子概率<span class="math inline"> \(p(x)\)</span> 分解为条件概率的乘积，即<span class="math inline"> \(p(x)=\prod_t
-p(x_t|x_{&lt;t})\)</span>。这种方法非常符合人的认知，但是缺点是无法利用双向的上下文信息。而双向的上下文信息对于下游的理解任务是至关重要的。</p>
-<p>XLNET 希望将 AR 和 AE 的优点结合起来，避免它们的局限性。XLNET 提出了一种名为置换语言模型的预训练目标，即<strong>打乱句子的 token 顺序并使用自回归的方法预测</strong>。这种方法不依赖于掩码、结合了双向上下文信息、自回归训练。XLNet
-在许多下游任务上比 BERT 表现出色，包括 GLUE 语言理解任务、阅读理解任务（如
-SQuAD 和
-RACE），Yelp 和 IMDB 等文本分类任务，以及 ClueWeb09-B 文档排名任务。</p>
-<h2 id="方法">方法</h2>
-<h3 id="置换语言模型">置换语言模型</h3>
-<p>对于长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \(x\)</span>，存在<span class="math inline"> \(T!\)</span> 种排列可用于自回归生成。用<span class="math inline"> \(\mathcal Z_T\)</span> 代表所有长度为<span class="math inline"> \(T\)</span> 的序列<span class="math inline"> \([1,2,\cdots,T]\)</span> 的排列集合，<span class="math inline">\(z_t\)</span> 和<span class="math inline"> \(z_{&lt;t}\)</span> 分别代表排列<span class="math inline"> \(z\in\mathcal Z_T\)</span> 的第<span class="math inline"> \(t\)</span> 个和前<span class="math inline"> \(t-1\)</span> 个元素。置换语言模型的目标可形式化定义为：
-<span class="math display">\[
-\max_\theta \mathbb E_{z\sim\mathcal
-Z_T}[\sum_{t=1}^Tlogp(x_{z_t}|x_{z_{&lt;t}})]
-\]</span> 事实上，只需要每次随机采样一个排列序列<span class="math inline"> \(z\)</span>，优化对数似然即可。而且我们也不需要显式地改变句子顺序，只需要对 Attention 进行掩码即可。后面会介绍到。</p>
-<h3 id="双流自注意力机制">双流自注意力机制</h3>
-<p>虽然已经得到了形式化的训练目标，但是直接使用 Transformer-XL 优化上述目标可能是没什么用的。具体而言，如果使用标准的 softmax 计算下一个 token 的概率分布，即<span class="math inline"> \(p(X_{z_t}|x_{z_{&lt;t}})\)</span>，公式为 <span class="math display">\[
-p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Th_\theta(x_{z_{&lt;t}}))}{\sum_{x'}\exp(e(x')^Th_\theta(x_{z_{&lt;t}})}
-\]</span> 其中，<strong><span class="math inline">\(h_\theta(x_{z_{&lt;t}})\)</span> 是<span class="math inline"> \(x_{z_{t}}\)</span> 的隐藏状态表征，<span class="math inline">\(e(x)\)</span> 是<span class="math inline"> \(x\)</span> 的嵌入向量。可以看到<span class="math inline"> \(h_\theta(x_{z_{&lt;t}})\)</span> 是与要预测的 token 的位置<span class="math inline"> \(z_t\)</span> 无关的。也就是</strong>无论下一个预测的 token 是哪个位置的，得到的概率分布都是相同的<strong>。这显然与我们的期望是相悖的。为了解决这个问题，需要</strong>重参数化<strong>这个概率分布，加入<span class="math inline"> \(z_t\)</span> 的信息： <span class="math display">\[
-p(X_{z_t}=x|x_{z_{&lt;t}})=\frac{\exp(e(x)^Tg_\theta(x_{z_{&lt;t}},z_t))}{\sum_{x'}\exp(e(x')^Tg_\theta(x_{z_{&lt;t}},z_t)}
-\]</span> 其中，</strong><span class="math inline">\(g_\theta\)</span> 是一种新的、依赖于下一个 token 位置的表征 **。</p>
-<p>那么新的问题就来了，怎么建模这个<span class="math inline"> \(g_\theta\)</span> 呢？从形式上可以看出，<span class="math inline">\(g_\theta\)</span> 希望在根据位置<span class="math inline"> \(z_t\)</span> 从已有的上下文<span class="math inline"> \(x_{z_{&lt;t}}\)</span> 中通过注意力机制收集信息。这样就有了两种略显矛盾的需求：</p>
-<ul>
-<li>预测<span class="math inline"> \(x_{z_t}\)</span> 时，<span class="math inline">\(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 只能依赖位置<span class="math inline"> \(z_t\)</span> 而非内容<span class="math inline"> \(x_{z_t}\)</span></li>
-<li> 预测<span class="math inline"> \(j&gt;t\)</span> 的其他标记<span class="math inline"> \(x_{z_j}\)</span> 时，也需要<span class="math inline"> \(x_{z_t}\)</span> 的隐藏表征，此时<span class="math inline"> \(g_\theta(x_{z_{&lt;t}},z_t)\)</span> 应该编码<span class="math inline"> \(x_{z_t}\)</span> 的内容以充分利用上下文信息</li>
-</ul>
-<p>那么，就需要两种上下文表征：</p>
-<ul>
-<li><strong>内容表征</strong><span class="math inline"> \(h_\theta(x_{z_{\le t}})\)</span>，简写为<span class="math inline"> \(h_{z_{\le
-t}}\)</span>，类似标准 Transformer 中的隐藏状态，同时编码上下文和位置</li>
-<li><strong>查询表征</strong><span class="math inline"> \(g_\theta(x_{z_t})\)</span>，简写为<span class="math inline"> \(g_{z_t}\)</span>，只根据<span class="math inline"> \(h_{z_{&lt;t}}\)</span> 和位置<span class="math inline"> \(z_t\)</span> 计算得到</li>
-</ul>
-<p>为便于计算，查询流的第一层初始化为可训练的向量，即<span class="math inline"> \(g_i^{(0)}=w\)</span>，内容流初始化为嵌入向量，即<span class="math inline"> \(h_i^{(0)}=e(x_i)\)</span>。对于其它层<span class="math inline"> \(m=1,\cdots,M\)</span>，使用共享参数更新两种流的向量表征，示意图如下所示：</p>
-<p><img src="two-stream.png"></p>
-<ul>
-<li>图 (a) 为内容流注意力，类比标准 Transformer 中的自注意力，query、key、value 均为有内容的向量表征。</li>
-<li>图 (b) 为查询流注意力，不能获取当前位置的内容<span class="math inline"> \(x_{z_t}\)</span>，以其位置<span class="math inline"> \(z_t\)</span> 为 query，key、value 也均为有内容的向量表征。</li>
-<li>图 (c) 为置换语言模型的训练过程。采样一个排列<span class="math inline"> \(3,2,4,1\)</span>，内容流中，1 可以看到 3,2,4，且根据 1 的内容计算双向自注意力，其 Attention 不需要遮挡；2 只能看到 3 和它本身，因此位置 1,4 需要被遮挡。以此类推。查询流与内容流类似，不过需要额外去掉当前位置的内容，即矩阵中的主对角线全部被遮挡。</li>
-</ul>
-<p>更新公式可以示意为（<strong>注意 KV 里下标<span class="math inline"> \(&lt;,\le\)</span> 的差异</strong>）： <span class="math display">\[
-g_{z_t}^{(m)}\leftarrow
-Attention(Q=g_{z_t}^{(m-1)},KV=h_{z_{&lt;t}}^{(m-1)};\theta)\\
-h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=h_{z_{\le
-t}}^{(m-1)};\theta)
-\]</span> 使用最后一层的<span class="math inline"> \(g_{z_t}^{(M)}\)</span> 来计算上述的条件概率<span class="math inline"> \(p(X_{z_t}=x|x_{z_{&lt;t}})\)</span>。在微调的时候，可以直接将查询流丢弃。</p>
-<h3 id="部分预测">部分预测</h3>
-<p>虽然上述理论很美好，但是早期实验证实其收敛很慢。很容易理解，排列中前一部分的 token 的上下文位置随机，预测下一随机位置的 token 是困难的。为了优化方便，论文只预测排列中最后一部分的 token，它们的上下文最为丰富。形式化而言，将排列<span class="math inline"> \(z\)</span> 划分为上下文<span class="math inline"> \(z_{\le c}\)</span> 和目标<span class="math inline"> \(z_{&gt; c}\)</span>，c 为切分点。使用超参数<span class="math inline"> \(|z|/(|z|-c)\approx
-K\)</span> 控制这个比例。这里类似 BERT 里控制 [MASK] 比例，理论上当然是越大越好，但是太大了不易收敛。上下文部分<span class="math inline"> \(z_{\le
-c}\)</span> 的查询流也不需要计算了，可以节省时间和内存。</p>
-<h3 id="集成transformer-xl">集成 Transformer-XL</h3>
-<p>在 Transformer-XL 的基础上，添加：</p>
-<ul>
-<li><strong>相对位置编码</strong></li>
-<li><strong>段循环机制</strong></li>
-</ul>
-<p>主要介绍下段循环机制。对于过长的输入，往往需要以固定长度 T（如 512）将其分段（segment）。假设两段输入分别为<span class="math inline"> \(\tilde x=s_{1:T},x=s_{T+1:2T}\)</span>，<span class="math inline">\(\tilde z,z\)</span> 分别为其排列顺序，<span class="math inline">\(\tilde
-h^{(m)}\)</span> 为 m 层的向量表征。对于段<span class="math inline"> \(x\)</span>，计算注意力时可以添加<span class="math inline"> \(\tilde
-h^{(m-1)}\)</span> 的注意力，类似记忆网络（Memory Network），如下式所示：
-<span class="math display">\[
-h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde
-h^{(m-1)},h_{z_{\le t}}^{(m-1)}];\theta)
-\]</span> 这样可以缓存和重用前一段的模型结果。</p>
-<h3 id="多段建模">多段建模</h3>
-<p>许多下游任务以多个段为输入，例如问答、对话等。XLNET 参考 BERT，构建 [CLS,
-A, SEP, B,
-SEP] 的输入，用以进行置换语言模型训练。不过事实上，XLNET 并没有使用下句预测的预训练任务，因为它在消融实验里并没有带来帮助。</p>
-<p>继承自相对位置编码的思想，XLNET 引入了<strong>相对段编码</strong>。与为每个段显式加入绝对段编码的 BERT 不同，XLNET 使用两个相对段编码<span class="math inline"> \(s_+,s_-\)</span> 衡量两个位置<span class="math inline"> \(i,j\)</span> 是否来自同一个段，<span class="math inline">\(s_+,s_-\)</span> 是每个注意力头可学习的参数。换而言之，XLNET 只考虑两个位置是否来自一个段，不关心它们来自哪两个段。当位置<span class="math inline"> \(i\)</span> 向<span class="math inline"> \(j\)</span> 计算注意力时，段编码<span class="math inline"> \(s_{ij}\)</span> 用以计算权重<span class="math inline"> \(a_{ij}=(q_i+b)^Ts_{ij}\)</span>，<span class="math inline">\(q_i\)</span> 是标准的查询向量，<span class="math inline">\(b\)</span> 为特定于注意力头的可学习的偏差向量，得到的<span class="math inline"> \(a_{ij}\)</span> 被添加到注意力 ij 间的权重上。直观而言，如果 ij 来自同一个段，这个权重应该更大，反之则更小。相较于绝对段编码，相对段编码更易扩展，而且可以提高泛化能力。</p>
-<h2 id="实验">实验</h2>
-<h3 id="设置">设置</h3>
-<ul>
-<li>预训练数据：包含 BookCorpus、Wikipedia、Giga5、ClueWeb
-2012-B 等，共 126GB。BERT 只使用了前两项共 13GB。</li>
-<li>参数规模：XLNET-Large 和 BERT-Large 架构一致</li>
-<li>训练成本：512 块 TPU，500k 步，5.5 天，完了还是欠拟合</li>
-<li> K=6，即只预测一个句子排列的末尾<span class="math inline"> \(1/6\approx 17%\)</span>，与 BERT
-15% 的掩码率相近</li>
-<li>微调：<strong>基于跨度的预测</strong>（span-based
-prediction）。随机采用一个长度<span class="math inline"> \(L\in
-[1,2,3,4,5]\)</span>，随机采样一段长为 L 的连续的跨度作为预测目标。</li>
-</ul>
-<h3 id="与bert的公平比较">与 BERT 的公平比较</h3>
-<p>XLNET 与 BERT 在相同数据集上训练、架构一致。BERT 选取原生 BERT、全词掩码、无下句预测三种版本中的最优结果。下表为 GLUE、SQuAD 数据集的结果。可以看到在不同下游任务上，XLNET 均超越 BERT，一般一两个点。</p>
-<p><img src="fair-comparison.png"></p>
-<h3 id="其他结果">其他结果</h3>
-<p>下面的 XLNET 就是全量数据上的结果了。</p>
-<p>下表为在 RACE（阅读理解任务）和
-onClueWeb09-B（文档排序任务）测试集的最新结果的比较。RACE 数据集以长度著称，考验了模型的长片段信息捕捉能力。ClueWeb09-B
-文档排序数据集，主要用于测试模型生成的词向量效果。可以看到 XLNET 都是最优的。</p>
-<p><img src="scaling.png"></p>
-<p>下表为在 SQuAD 数据集上的结果，大幅领先 BERT，略优于 RoBERTa。</p>
-<p><img src="SQuAD.png"></p>
-<p>下表为在多个文本分类数据集上的实验结果，主要与 BERT 比较。</p>
-<p><img src="text-classification.png"></p>
-<p>下表为在 GLEU 数据集上，与 RoBERTa 等模型的比较结果。还是大幅领先 BERT，略优于 RoBERTa。</p>
-<p><img src="GLEU.png"></p>
-<h3 id="消融实验">消融实验</h3>
-<p>消融实验旨在具体探究：</p>
-<ul>
-<li>置换语言模型的有效性，对比 MLM</li>
-<li>Transformer-XL 架构的重要性</li>
-<li>一些其他细节：基于跨度预测、双向输入、下句预测</li>
-</ul>
-<p>为了公平比较，所有模型都基于 12 层架构，具有与 BERT-Base
-相同的模型超参数，并且仅在 Wikipedia 和 BooksCorpus
-上进行训练。基线为原始的 BERT-Base 以及使用降噪自编码器（DAE）训练的 Transformer-XL。DAE 和 BERT 差别在于，BERT 只预测 [MASK] token，DAE 预测所有 token。结果如下表所示。</p>
-<p><img src="ablation.png"></p>
-<p>1-4 行可以看出，Tranformer-XL 和置换语言模型确实提供了性能提升。如果删去内存缓存机制（第 5 行），性能明显下降，尤其是涉及长上下文的任务。6-7 行显示，基于跨度的预测和双向输入在 XLNet 中都起着重要作用。最后，不出所料的是，下句预测在 XLNET 里也不一定会带来改进。因此 XLNET 也将其排除在预训练目标之外。</p>
-<h2 id="总结">总结</h2>
-<p>本文提出了一种名为置换语言模型的预训练任务及配套的预训练模型 XLNET，旨在结合自回归和自编码两种预训练目标的优点。消融实验证明，所提出的置换语言模型的预训练目标是有效的，在各项自然语言理解任务上比 BERT 取得了显著改进。不过相较于 RoBERTa 的提升不大。考虑到 RoBERTa 的<strong>可并行性</strong>，可能 NLU 任务还是偏好 RoBERTa 吧。</p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="https://zhuanlan.zhihu.com/p/71916499">飞跃芝麻街：XLNet
-详解 - 知乎 (zhihu.com)</a></li>
-</ul>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>预训练模型</category>
-      </categories>
-      <tags>
-        <tag>预训练模型</tag>
-        <tag>自然语言处理</tag>
-        <tag>XLNET</tag>
       </tags>
   </entry>
   <entry>

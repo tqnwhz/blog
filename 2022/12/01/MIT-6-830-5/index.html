@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.830 数据库实验 Lab 5 实验报告">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/btree.png">
+<meta property="article:published_time" content="2022-12-01T02:09:02.000Z">
+<meta property="article:modified_time" content="2022-12-01T06:27:36.134Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="MIT 6.830">
+<meta property="article:tag" content="B+树">
+<meta property="article:tag" content="索引">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/btree.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/","path":"2022/12/01/MIT-6-830-5/","title":"MIT 6.830 数据库实验 Lab 5 实验报告"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MIT 6.830 数据库实验 Lab 5 实验报告 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E6%89%87%E5%87%BA%E6%90%9C%E7%B4%A2%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">高扇出搜索树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#b%E6%A0%91"><span class="nav-number">2.2.</span> <span class="nav-text">B + 树</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#preliminary"><span class="nav-number">3.1.</span> <span class="nav-text">Preliminary</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#search"><span class="nav-number">3.2.</span> <span class="nav-text">Search</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#insert-split"><span class="nav-number">3.3.</span> <span class="nav-text">Insert （Split）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#delete-steal"><span class="nav-number">3.4.</span> <span class="nav-text">Delete (Steal)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#deletemerge"><span class="nav-number">3.5.</span> <span class="nav-text">Delete（Merge）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">40</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">54</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.830 数据库实验 Lab 5 实验报告
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-12-01 10:09:02 / 修改时间：14:27:36" itemprop="dateCreated datePublished" datetime="2022-12-01T10:09:02+08:00">2022-12-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>Lab
+5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+
+树是最为广泛使用的数据库索引。 <span id="more"></span></p>
+<h2 id="理论知识">理论知识</h2>
+<p>索引用于加快高频字段的查找效率，例如用户 ID 这种字段，基本哪里都要用，每次都做全表扫描是不现实的。索引和记录间形成了一个一对一（多）的关系，取决于索引的键。下面先从简单的搜索树开始，对索引进行介绍。</p>
+<h3 id="高扇出搜索树">高扇出搜索树</h3>
+<p>先考虑简单的情况，在磁盘上按某个字段对表进行了排序。这种情况下不需要记录前后指针，因为物理上这些页面都是按序排列的。然后需要构建索引。为什么不用二分查找呢，因为二分查找也会导致<span class="math inline"> \(log_2N\)</span> 的页面 IO，是比较低效的。
+可以构建一个 <code>&lt;key, Record&gt;</code> 的索引，由于 record
+可能很大，而 key 很小，这种存储也很低效。因此可以使用指向 Page
+的指针，<code>&lt;key,
+PageId&gt;</code>，构建这样的一个搜索文件，在页面内完成二分查找。
+这种算法是复杂度与之前的二分查找类似，只是<strong>常数更小，因为每个页面能存储更多的索引</strong>。这个过程可以递归完成，直到最顶层的索引只需要记录在一个页面中，变成了一个多叉的搜索树。
+在该树下进行二分查找时，会在每个节点完成二分查找，然后定位下一层的节点，直到找到页面内。复杂度为<span class="math inline"> \(log_F(\#Pages)\)</span>，F 为节点的扇出（相较于 2
+有了很大改进）。 分析该算法可知，该算法具有以下特点：</p>
+<ol type="1">
+<li>支持连续扫描。因为数据还是连续存储的</li>
+<li>高扇出。因为索引记录比记录小很多，一个页面可以存储很多条索引。</li>
+<li>不支持插入。当需要插入时，可能会导致页面溢出，这种情况需要后接页面形成链表。当插入过多时，就退化成了线性扫描。</li>
+</ol>
+<p>上述这种算法称为 ISAM（Indexed Sequential Access
+Method），上世纪由 IBM 提出。</p>
+<h3 id="b树">B + 树</h3>
+<p>B + 树与上面的搜索树相似，也是一种多叉搜索树，但它支持动态插入，而且总是平衡的。B + 树的阶记为
+d，每个内部节点（根节点除外）的子节点数量需要处在 [d,2d] 之间，每个节点的最大扇出是
+2d+1，即 2d 个子节点划分得到 2d+1
+个区间。B + 树的叶子节点上保存了左右兄弟的指针，可用于线性扫描。</p>
+<p><img src="btree.png"></p>
+<p>B + 树与 ISAM
+的区别在于，<strong>在底层的叶子页面上，不需要严格按顺序排列</strong>，如上图所示。Page
+3 和 Page 5 是邻居的关系，在磁盘上中间还隔着 Page
+4。但是叶子节点间的前后指针使得可以遍历叶子页面。这也允许了动态地插入和删除。</p>
+<p>典型设置，B + 树的阶为 1600，fill-factor 为
+67%（叶子页面的记录占比）</p>
+<ul>
+<li>平均扇出为 2144</li>
+<li> 假设是 128KB 的页面，每条记录 40B</li>
+<li> 高度为 1 的树，<span class="math inline">\(2144^2=4,596,736\)</span>
+records</li>
+<li> 高度为 2 的树，<span class="math inline">\(2144^3=9,855,401,984\)</span> records 高</li>
+</ul>
+<p>高度为 2 的 B + 树就可以容纳近 10
+亿的数据，B + 树会非常的矮，进而提高查找效率。B + 树的高度很少超过 3 和 4。</p>
+<p><strong>查找</strong>：B + 树的查找与 ISAM
+类似，从根节点起，在内部节点内做二分查找定位子节点，直到定位至叶子页面，再在页面内做二分查找。</p>
+<p><strong>插入</strong>：</p>
+<ul>
+<li>当要插入的页面还有空间时，可以直接在页面内插入并排序。</li>
+<li>当没有空间时，需要新建页面，并将一半的数据转移到新页面，将新页面插入到父节点中
+<ul>
+<li>如果父节点也满了，递归向上</li>
+</ul></li>
+</ul>
+<p><strong>删除</strong>：删去元组后，可能会导致页面不满足阶约束，可以选择：</p>
+<ul>
+<li>直接忽略：数据库场景中，一般插入比删除多，因此删除多出来的空间可以保留，等待后续插入即可</li>
+<li>维护约束：
+<ul>
+<li>当页面不满足约束时，从兄弟页面匀一些多余的元组过来</li>
+<li>如果兄弟页面也没有多余的，就需要合并两个页面，递归向上删除节点</li>
+</ul></li>
+</ul>
+<h2 id="exercise">Exercise</h2>
+<h3 id="preliminary">Preliminary</h3>
+<p>首先，先介绍下 SimpleDB 的 B + 树是怎么设计的。B + 树的页面被分为四种：</p>
+<ul>
+<li>BTreeHeaderPage：保存 B + 树索引文件的首部信息</li>
+<li> BTreeRootPtrPage：用于保存 B + 树根节点的指向，类似一个假根节点，避免插入过程中根节点变化</li>
+<li> BTreeInternalPage：非叶子节点，保存 m 个分界点以及 m+1 个子节点</li>
+<li> BTreeLeafPage：叶子结点，保存元组数据，以及左右兄弟指针</li>
+</ul>
+<p>重点需要打交道的是最后两种，它们继承了抽象类 <code>BtreePage</code>，每个页面内包含一个父指针，用于处理递归向上的逻辑。<code>BTreeInternalPage</code> 暴露了一个 <code>Iterator&lt;BTreeEntry&gt;</code>，其中 <code>BTreeEntry</code> 包含以下属性：</p>
+<ul>
+<li>key：一个值，代表分界点</li>
+<li> leftChildId：左孩子的页面 ID</li>
+<li>rightChildId：右孩子的页面 ID</li>
+</ul>
+<p>一个 <code>BTreeInternalPage</code> 保存 m 个分界点，即 m+1 个子节点。</p>
+<h3 id="search">Search</h3>
+<p>首先，要实现的是查找方法，<code>findLeafPage()</code>，该方法接收一个页面和 <code>Field</code>，返回这个值对应的叶子页面。上面提到，正常在节点内应该是使用二分查找找到对应的孩子节点。由于 <code>BTreeInternalPage</code> 只对外暴露了 <code>Iterator&lt;BTreeEntry&gt;
+iterator()</code> 方法，这里只能使用遍历的方法，找到孩子节点对应的值区间。再递归查找直到找到叶子页面。</p>
+<h3 id="insert-split">Insert （Split）</h3>
+<p>然后来到了重头戏，B + 树的插入。Lab 里将拆分节点分为了两个方法，需要分别实现：</p>
+<ul>
+<li><code>splitLeafPage()</code>：拆分叶子结点，可能需要递归调用父节点的拆分</li>
+<li><code>splitInernalPage()</code>：拆分非叶子节点，可能需要递归调用父节点的拆分</li>
+</ul>
+<p>拆分节点的逻辑可以分为下面几步：</p>
+<ol type="1">
+<li>新建空白页面，转移一半的数据到新页面，一般是把值较大的一半转移过去</li>
+<li>判断父节点是否有空槽，没有的话递归拆父节点</li>
+<li>将新页面关联到父页面
+<ul>
+<li>维护两个页面和父页面间的指向</li>
+<li>在父页面新建 entry，key 为大页面的最小值，
+左右孩子分别为原页面和新页面</li>
+</ul></li>
+<li>对于叶子结点，维护左右兄弟指针</li>
+</ol>
+<p>这里需要注意的是，要把修改后的页面更新在 <code>dirtypages</code> 中，否则会出现读取不一致的现象。Lab 提供了递归的拆分辅助方法，名为 <code>getParentWithEmptySlots</code>，其会判断父页面中是否有空槽，没有的话调用 <code>splitInternalPage</code> 将其拆分，返回一个带有空槽的父页面。</p>
+<h3 id="delete-steal">Delete (Steal)</h3>
+<p>这个 exercise 要求实现带 “偷取” 逻辑。当一个页面不满足半满约束时，需要从它的兄弟页面中匀一些多余的数据过来。根据页面、兄弟的类型，这部分逻辑被分散在三个方法中：</p>
+<ul>
+<li><code>stealFromLeafPage</code>：叶子结点间的偷取，<code>isRightSibling</code> 参数标识是否是右侧兄弟</li>
+<li><code>stealFromLeftInternalPage</code>：从左侧内部节点偷取</li>
+<li><code>stealFromRightInternalPage</code>：从右侧内部节点偷取</li>
+</ul>
+<p>偷取的逻辑可以分为下面几步：</p>
+<ol type="1">
+<li>均匀地把数据匀过去，对于每条数据
+<ol type="1">
+<li>如果是叶子页面的元组记录，转移即可</li>
+<li>如果是内部节点的 key 和 child 记录，需要新建 Entry 插入</li>
+</ol></li>
+<li>更新父节点中 Entry 的 key 值，需要根据左右关系，选择大页面中的最小值作为新的 key 值</li>
+<li>更新父节点指向关系</li>
+</ol>
+<h3 id="deletemerge">Delete（Merge）</h3>
+<p>当偷取已经不能满足需要的时候，需要合并两个均达不到半满的节点。同样的，根据节点类型，可以分为：</p>
+<ul>
+<li><code>mergeLeafPages</code>：合并两个叶子结点</li>
+<li><code>mergeInternalPages</code>：合并内部节点</li>
+</ul>
+<p>合并可以看成偷取的一种极端情况，将两个节点所有的数据都匀到一个节点中，然后删除掉空页面以及父节点中的对应 entry。这个过程中也可能会导致递归向上删除。Lab 提供了 <code>deleteParentEntry</code> 的工具方法来处理删除父节点的 entry 后不满足半满约束的情况，会调用 <code>handleMinOccupancyPage</code> 根据情况调用偷取和合并方法。</p>
+<p>当四个 exercise 做完，理论上已经可以通过这四个 exercise 的所有 Test。由于 SimpleDB 本身是使用的页面级别的锁，不存在意向锁的 phantom 问题，如果锁实现正确的话，应该也可以通过 BTreeNextKeyLockingTest 和 BTreeDeadlockTest。如果到目前为止一切都正确，应该可以通过一个很难的 <code>BTreeTest</code>。</p>
+<h2 id="总结">总结</h2>
+<p>本次 Lab 主要完成了 B + 树的增删查逻辑。Lab 提供了 B + 树索引的整体框架，只需要实现核心的增删查逻辑即可。B + 树还是一个非常复杂的数据结构，自己从头实现的话估计得很久。不过经过这个 Lab，对 B + 树的操作有了更深的认识。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/" title="MIT 6.830 数据库实验 Lab 5 实验报告">https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+              <a href="/blog/tags/MIT-6-830/" rel="tag"><i class="fa fa-tag"></i> MIT 6.830</a>
+              <a href="/blog/tags/B-%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> B+树</a>
+              <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag"><i class="fa fa-tag"></i> 索引</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2022/11/29/MIT-6-830-4/" rel="prev" title="MIT 6.830 数据库实验 Lab 4 实验报告">
+                  <i class="fa fa-chevron-left"></i> MIT 6.830 数据库实验 Lab 4 实验报告
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">146k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">4:26</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
