@@ -21,26 +21,26 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="MoE 今天总结一下最近读过的 MoE 相关的论文、研究进展。 简介 混合专家网络（Mixture-of-Experts，MoE），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。">
+<meta name="description" content="MoE今天总结一下最近读过的 MoE 相关的论文、研究进展。 简介混合专家网络（Mixture-of-Experts，MoE），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MoE 相关工作、研究进展总结">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="MoE 今天总结一下最近读过的 MoE 相关的论文、研究进展。 简介 混合专家网络（Mixture-of-Experts，MoE），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。">
+<meta property="og:description" content="MoE今天总结一下最近读过的 MoE 相关的论文、研究进展。 简介混合专家网络（Mixture-of-Experts，MoE），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/architecture.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%201.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%202.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%203.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%204.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%205.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%206.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%207.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%208.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%209.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/Untitled%2010.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/overfit.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%201.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%202.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%203.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%204.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%205.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%206.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%207.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%208.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%209.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled%2010.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/overfit.png">
 <meta property="article:published_time" content="2022-07-03T01:33:00.000Z">
 <meta property="article:modified_time" content="2022-12-01T05:10:09.637Z">
 <meta property="article:author" content="Tqnwhz">
@@ -48,7 +48,7 @@
 <meta property="article:tag" content="门控">
 <meta property="article:tag" content="MoE">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/architecture.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/architecture.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/">
@@ -165,9 +165,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#moe"><span class="nav-number">1.</span> <span class="nav-text">MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%80%E7%96%8F%E5%99%AA%E5%A3%B0top-k%E9%97%A8%E6%8E%A7"><span class="nav-number">1.1.1.</span> <span class="nav-text">稀疏噪声 Top-k 门控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">1.1.2.</span> <span class="nav-text">负载均衡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%B9%B6%E8%A1%8C"><span class="nav-number">1.1.3.</span> <span class="nav-text">混合并行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.1.4.</span> <span class="nav-text">任务 &amp; 数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.5.</span> <span class="nav-text">问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#switch-transformer"><span class="nav-number">1.2.</span> <span class="nav-text">Switch Transformer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%A8%E6%8E%A7%E7%BD%91%E7%BB%9C"><span class="nav-number">1.2.1.</span> <span class="nav-text">门控网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">负载均衡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%92%B8%E9%A6%8F"><span class="nav-number">1.2.3.</span> <span class="nav-text">蒸馏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7"><span class="nav-number">1.2.4.</span> <span class="nav-text">稳定性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash-layers"><span class="nav-number">1.3.</span> <span class="nav-text">Hash Layers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#base-layers"><span class="nav-number">1.4.</span> <span class="nav-text">BASE Layers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-3"><span class="nav-number">1.4.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dense-to-sparse-gate"><span class="nav-number">1.5.</span> <span class="nav-text">DENSE-TO-SPARSE GATE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%90%E9%AB%98%E8%AE%AD%E7%BB%83%E6%95%88%E7%8E%87"><span class="nav-number">1.5.1.</span> <span class="nav-text">提高训练效率</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tricks-for-training-sparse-translation-models"><span class="nav-number">1.6.</span> <span class="nav-text">Tricks
-for Training Sparse Translation Models</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.6.1.</span> <span class="nav-text">多任务学习</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#efficient-large-scale-language-modeling-with-mixtures-of-experts"><span class="nav-number">1.7.</span> <span class="nav-text">Efficient
-Large Scale Language Modeling with Mixtures of Experts</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7-1"><span class="nav-number">1.7.1.</span> <span class="nav-text">稳定性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gshard"><span class="nav-number">1.8.</span> <span class="nav-text">GShard</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#deepspeed-moe"><span class="nav-number">1.9.</span> <span class="nav-text">DeepSpeed-MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E5%8F%82%E6%95%B0"><span class="nav-number">1.9.1.</span> <span class="nav-text">压缩参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%91%E4%BC%BCtop2"><span class="nav-number">1.9.2.</span> <span class="nav-text">近似 Top2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%92%B8%E9%A6%8F%E7%A8%80%E7%96%8F%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.9.3.</span> <span class="nav-text">蒸馏稀疏模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#st-moe"><span class="nav-number">1.10.</span> <span class="nav-text">ST-MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7-2"><span class="nav-number">1.10.1.</span> <span class="nav-text">稳定性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">1.10.2.</span> <span class="nav-text">微调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%A2%E5%BC%83token%E5%81%A5%E5%A3%AE%E6%80%A7"><span class="nav-number">1.10.3.</span> <span class="nav-text">丢弃 token 健壮性</span></a></li></ol></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MoE"><span class="nav-number">1.</span> <span class="nav-text">MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%80%E7%96%8F%E5%99%AA%E5%A3%B0Top-k%E9%97%A8%E6%8E%A7"><span class="nav-number">1.1.1.</span> <span class="nav-text">稀疏噪声 Top-k 门控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">1.1.2.</span> <span class="nav-text">负载均衡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%B9%B6%E8%A1%8C"><span class="nav-number">1.1.3.</span> <span class="nav-text">混合并行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1-amp-%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.1.4.</span> <span class="nav-text">任务 &amp; 数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.5.</span> <span class="nav-text">问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Switch-Transformer"><span class="nav-number">1.2.</span> <span class="nav-text">Switch Transformer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%A8%E6%8E%A7%E7%BD%91%E7%BB%9C"><span class="nav-number">1.2.1.</span> <span class="nav-text">门控网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">负载均衡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%92%B8%E9%A6%8F"><span class="nav-number">1.2.3.</span> <span class="nav-text">蒸馏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7"><span class="nav-number">1.2.4.</span> <span class="nav-text">稳定性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hash-Layers"><span class="nav-number">1.3.</span> <span class="nav-text">Hash Layers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-2"><span class="nav-number">1.3.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BASE-Layers"><span class="nav-number">1.4.</span> <span class="nav-text">BASE Layers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-3"><span class="nav-number">1.4.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DENSE-TO-SPARSE-GATE"><span class="nav-number">1.5.</span> <span class="nav-text">DENSE-TO-SPARSE GATE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%90%E9%AB%98%E8%AE%AD%E7%BB%83%E6%95%88%E7%8E%87"><span class="nav-number">1.5.1.</span> <span class="nav-text">提高训练效率</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tricks-for-Training-Sparse-Translation-Models"><span class="nav-number">1.6.</span> <span class="nav-text">Tricks for Training Sparse Translation Models</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.6.1.</span> <span class="nav-text">多任务学习</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Efficient-Large-Scale-Language-Modeling-with-Mixtures-of-Experts"><span class="nav-number">1.7.</span> <span class="nav-text">Efficient Large Scale Language Modeling with Mixtures of Experts</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7-1"><span class="nav-number">1.7.1.</span> <span class="nav-text">稳定性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GShard"><span class="nav-number">1.8.</span> <span class="nav-text">GShard</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DeepSpeed-MoE"><span class="nav-number">1.9.</span> <span class="nav-text">DeepSpeed-MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E5%8F%82%E6%95%B0"><span class="nav-number">1.9.1.</span> <span class="nav-text">压缩参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%91%E4%BC%BCTop2"><span class="nav-number">1.9.2.</span> <span class="nav-text">近似 Top2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%92%B8%E9%A6%8F%E7%A8%80%E7%96%8F%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.9.3.</span> <span class="nav-text">蒸馏稀疏模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ST-MoE"><span class="nav-number">1.10.</span> <span class="nav-text">ST-MoE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7-2"><span class="nav-number">1.10.1.</span> <span class="nav-text">稳定性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">1.10.2.</span> <span class="nav-text">微调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%A2%E5%BC%83token%E5%81%A5%E5%A3%AE%E6%80%A7"><span class="nav-number">1.10.3.</span> <span class="nav-text">丢弃 token 健壮性</span></a></li></ol></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -182,18 +180,18 @@ Large Scale Language Modeling with Mixtures of Experts</span></a><ol class="nav-
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -304,7 +302,7 @@ Large Scale Language Modeling with Mixtures of Experts</span></a><ol class="nav-
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.1k</span>
+      <span>4k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -322,139 +320,104 @@ Large Scale Language Modeling with Mixtures of Experts</span></a><ol class="nav-
     
     
     <div class="post-body" itemprop="articleBody">
-        <h1 id="moe">MoE</h1>
-<p>今天总结一下最近读过的 MoE 相关的论文、研究进展。</p>
-<h2 id="简介">简介</h2>
-<p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
+        <h1 id="MoE"><a href="#MoE" class="headerlink" title="MoE"></a>MoE</h1><p>今天总结一下最近读过的 MoE 相关的论文、研究进展。</p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
 <span id="more"></span>
+
 <p>一个例子如下所示。存在 n 个不同的专家，每个专家都是个独立的 FFN，不共享参数。门控网络对每个 token 计算专家网络上的概率分布，取 top2 专家输出的加权和作为 MoE 层的输出。</p>
-<p><img src="architecture.png"></p>
+<p><img src="/blog/architecture.png"></p>
 <p>实现和训练过程中需要注意以下事项：</p>
-<h3 id="稀疏噪声top-k门控">稀疏噪声 Top-k 门控</h3>
-<p>计算 logits 时加入随机噪声，使得每个专家都有激活的机会。</p>
+<h3 id="稀疏噪声Top-k门控"><a href="#稀疏噪声Top-k门控" class="headerlink" title="稀疏噪声Top-k门控"></a>稀疏噪声 Top-k 门控</h3><p>计算 logits 时加入随机噪声，使得每个专家都有激活的机会。</p>
 <p>将 Top-k 之外的 logits 置 0，降低 softmax 开销。</p>
-<h3 id="负载均衡">负载均衡</h3>
-<p>门控网络倾向于为特定的少数专家提供较大的权重。事实上，刚开始受到关注的某些专家会训练地更快，从而会更容易被选择。因此，需要额外的损失项保证专家间的负载均衡。</p>
-<p>原始论文中使用了专家的重要性（batch 内每个 token 在同一专家的分数之和），构造辅助损失，保证每个专家收到的 batch
-token 的重要性相近，又设计了额外的负载损失保证每个专家收到的 token 数量近似。仔细区分的话，重要性损失保证了每个专家都有近似的训练进度，负载损失保证了专家间的负载近似平衡。</p>
+<h3 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h3><p>门控网络倾向于为特定的少数专家提供较大的权重。事实上，刚开始受到关注的某些专家会训练地更快，从而会更容易被选择。因此，需要额外的损失项保证专家间的负载均衡。</p>
+<p>原始论文中使用了专家的重要性（batch 内每个 token 在同一专家的分数之和），构造辅助损失，保证每个专家收到的 batch token 的重要性相近，又设计了额外的负载损失保证每个专家收到的 token 数量近似。仔细区分的话，重要性损失保证了每个专家都有近似的训练进度，负载损失保证了专家间的负载近似平衡。</p>
 <p>下面是重要性损失的公式。负载损失类似。采用这样复杂的损失形式是因为每个专家激活次数是离散量、不可微。</p>
-<p><img src="Untitled.png"></p>
-<h3 id="混合并行">混合并行</h3>
-<p>一般而言，大模型需要分布式数据并行训练。</p>
+<p><img src="/blog/Untitled.png"></p>
+<h3 id="混合并行"><a href="#混合并行" class="headerlink" title="混合并行"></a>混合并行</h3><p>一般而言，大模型需要分布式数据并行训练。</p>
 <p>专家、参数过多时，模型难以容纳在单张卡上。需要做模型并行，将一个或多个专家放在一张卡上，不同的卡保存不同的专家。在门控网络计算完毕，得到每个 token 对应的专家后，通过多卡通信，将每个 token 转移到专家对应的设备上进行计算。</p>
-<h3 id="任务数据集">任务 &amp; 数据集</h3>
-<ul>
+<h3 id="任务-amp-数据集"><a href="#任务-amp-数据集" class="headerlink" title="任务&amp;数据集"></a>任务 &amp; 数据集</h3><ul>
 <li>语言模型：百亿 Google News、维基百科</li>
 <li> NLU 常见基准：GLUE、SuperGLUE、SQuAD</li>
 <li> 摘要：XSum</li>
 <li> 问答：CB Web QA、CB Natural QA、CB Trivia QA</li>
-<li> 翻译：WMT'14</li>
+<li> 翻译：WMT’14</li>
 </ul>
-<h3 id="问题">问题</h3>
-<ul>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
 <li><strong>Top-k 门控</strong>：K 过大会增加通信开销，过小又可能损失性能（缺乏了多位专家的对比）</li>
 <li><strong>负载均衡</strong>：辅助损失形式复杂，且引入了额外的优化目标</li>
 <li><strong>模型并行</strong>：分布式模型并行需要编程上的模型划分、通信、带来额外工程开销</li>
 <li><strong>训练稳定性</strong>：稀疏模型可能存在训练不稳定，即 loss 发散的问题</li>
 <li><strong>难以推理部署</strong>：稀疏大模型需要大量设备才能推理部署</li>
 </ul>
-<h2 id="switch-transformer">Switch Transformer</h2>
-<ul>
+<h2 id="Switch-Transformer"><a href="#Switch-Transformer" class="headerlink" title="Switch Transformer"></a>Switch Transformer</h2><ul>
 <li>多语任务上，取得了相较于密集 T5-XXL 4x 的加速</li>
 </ul>
-<h3 id="门控网络">门控网络</h3>
-<ul>
+<h3 id="门控网络"><a href="#门控网络" class="headerlink" title="门控网络"></a>门控网络</h3><ul>
 <li>主张：原始论文中认为至少需要激活两名专家才能学习到专家间的差异，才能使训练有效。论文主张只使用一个专家，既保证了质量又简化了路由计算，性能更好。</li>
 <li>使用 Top1 门控，降低通信开销。</li>
 </ul>
-<h3 id="负载均衡-1">负载均衡</h3>
-<ul>
+<h3 id="负载均衡-1"><a href="#负载均衡-1" class="headerlink" title="负载均衡"></a>负载均衡</h3><ul>
 <li>动机：简化负载均衡辅助损失，为 tpu 训练，固定专家的最大容量</li>
 <li>使用容量因子静态设置专家容量，溢出的 token 不激活任何专家，退化为残差连接。</li>
 <li>简化辅助损失：使用每个专家分到的 token 比例、重要性的点积构造简化版的辅助损失。</li>
 </ul>
-<p>N 为专家数，T 为 token 数，<span class="math inline">\(\mathcal
-B\)</span> 为 batch 内的所有 token，<span class="math inline">\(f_i\)</span> 为每个专家分到的 token 比例，<span class="math inline">\(P_i\)</span> 为归一化的专家重要性。理想情况下，二者均应该为<span class="math inline"> \(1/N\)</span>。虽然<span class="math inline"> \(f_i\)</span> 不可微，但是<span class="math inline"> \(P_i\)</span> 是可微的。论文称该损失在均匀分布下是最小的。</p>
-<p><img src="Untitled%201.png"></p>
-<h3 id="蒸馏">蒸馏</h3>
-<ul>
+<p>N 为专家数，T 为 token 数，$\mathcal B$ 为 batch 内的所有 token，$f_i$ 为每个专家分到的 token 比例，$P_i$ 为归一化的专家重要性。理想情况下，二者均应该为 $1/N$。虽然 $f_i$ 不可微，但是 $P_i$ 是可微的。论文称该损失在均匀分布下是最小的。</p>
+<p><img src="/blog/Untitled%201.png"></p>
+<h3 id="蒸馏"><a href="#蒸馏" class="headerlink" title="蒸馏"></a>蒸馏</h3><ul>
 <li>动机：将大型稀疏模型蒸馏为小型密集模型</li>
 <li>使用密集模型初始化非专家参数</li>
 <li>使用 25% 教师概率 + 75% 真实标签混合蒸馏</li>
 <li> 5% 的参数保留 30% 的质量</li>
 </ul>
-<h3 id="稳定性">稳定性</h3>
-<ul>
+<h3 id="稳定性"><a href="#稳定性" class="headerlink" title="稳定性"></a>稳定性</h3><ul>
 <li>仅将路由器内部的计算使用 float32 精度，其余使用 bfloat16 不变，兼顾稳定性和效率</li>
 <li>降低参数初始化的标准差，更稳定</li>
 <li>仅提高专家网络的 dropout，避免过拟合。如果增加所有参数的 dropout 会损害性能。</li>
 </ul>
-<h2 id="hash-layers"><strong>Hash Layers</strong></h2>
-<ul>
+<h2 id="Hash-Layers"><a href="#Hash-Layers" class="headerlink" title="Hash Layers"></a><strong>Hash Layers</strong></h2><ul>
 <li>在两个数据集上困惑度优于 Switch Transformer 约 0.5。</li>
 </ul>
-<h3 id="负载均衡-2">负载均衡</h3>
-<ul>
+<h3 id="负载均衡-2"><a href="#负载均衡-2" class="headerlink" title="负载均衡"></a>负载均衡</h3><ul>
 <li>动机：不使用辅助损失达到负载均衡</li>
 <li>通过随机 Hash、聚类 Hash、分散 Hash 多种方法，将建立 token - 专家间的固定 Hash 关系</li>
 <li>使用多头 Hash：将专家和 embedding 分段，做 Hash、计算后再拼接到一起</li>
 </ul>
-<p><img src="Untitled%202.png"></p>
-<h2 id="base-layers"><strong>BASE Layers</strong></h2>
-<h3 id="负载均衡-3">负载均衡</h3>
-<ul>
+<p><img src="/blog/Untitled%202.png"></p>
+<h2 id="BASE-Layers"><a href="#BASE-Layers" class="headerlink" title="BASE Layers"></a><strong>BASE Layers</strong></h2><h3 id="负载均衡-3"><a href="#负载均衡-3" class="headerlink" title="负载均衡"></a>负载均衡</h3><ul>
 <li>动机：不使用辅助损失达到负载均衡</li>
 <li>将负载均衡问题定义为线性分配问题，每个 token 和 expert 点积计算分数，将分数认作将 token 分配个 exper 的收益，按照成熟的线性分配算法求解。为避免专家、token 过多时求解全局最优的开销过大，论文并将其 token 分成若干个组，求解组内的线性分配问题。</li>
-<li>线性分配问题形如：有 n 个 token 和 m 个 expert，矩阵元素 A (n,m) 是将 token
-n 分配给专家 m 得到的收益。满足每个专家分配 token 个数相等时，最高收益的分配方案。</li>
+<li>线性分配问题形如：有 n 个 token 和 m 个 expert，矩阵元素 A (n,m) 是将 token n 分配给专家 m 得到的收益。满足每个专家分配 token 个数相等时，最高收益的分配方案。</li>
 <li>需要两次 all2all 操作，第一次将 token 映射到随机的 worker，worker 求解组内线性分配问题，第二次 worker 将 token 发送给对应的 expert。</li>
 </ul>
-<p><img src="Untitled%203.png"></p>
-<h2 id="dense-to-sparse-gate"><strong>DENSE-TO-SPARSE GATE</strong></h2>
-<h3 id="提高训练效率">提高训练效率</h3>
-<ul>
+<p><img src="/blog/Untitled%203.png"></p>
+<h2 id="DENSE-TO-SPARSE-GATE"><a href="#DENSE-TO-SPARSE-GATE" class="headerlink" title="DENSE-TO-SPARSE GATE"></a><strong>DENSE-TO-SPARSE GATE</strong></h2><h3 id="提高训练效率"><a href="#提高训练效率" class="headerlink" title="提高训练效率"></a>提高训练效率</h3><ul>
 <li>动机：认为专家和稀疏门控的联合训练对模型精度产生负面影响。通过将门控由密集逐渐转为稀疏，将专家和稀疏门的训练解耦</li>
 <li>具体是通过调节门控 softmax 的温度，由大而小，将大于某个分数阈值的专家均激活</li>
 <li>由于密集训练完毕后，专家间自然地就存在分布不均衡，因此没有采用负载均衡控制算法</li>
-<li>结果：
-<ul>
-<li>同样验证集困惑度，取得比 switch transformer
-2x 的训练加速和 1.25x 的 FLOPs 加速</li>
+<li>结果：<ul>
+<li>同样验证集困惑度，取得比 switch transformer 2x 的训练加速和 1.25x 的 FLOPs 加速</li>
 <li>有无负载均衡损失的效果类似，最终专家间负载基本均衡</li>
-</ul></li>
 </ul>
-<p><img src="Untitled%204.png"></p>
-<figure>
-<img src="Untitled%205.png" alt="有无辅助损失的对比">
-<figcaption aria-hidden="true">有无辅助损失的对比</figcaption>
-</figure>
+</li>
+</ul>
+<p><img src="/blog/Untitled%204.png"></p>
+<p><img src="/blog/Untitled%205.png" alt="有无辅助损失的对比"></p>
 <p>有无辅助损失的对比</p>
-<h2 id="tricks-for-training-sparse-translation-models"><strong>Tricks
-for Training Sparse Translation Models</strong></h2>
-<ul>
+<h2 id="Tricks-for-Training-Sparse-Translation-Models"><a href="#Tricks-for-Training-Sparse-Translation-Models" class="headerlink" title="Tricks for Training Sparse Translation Models"></a><strong>Tricks for Training Sparse Translation Models</strong></h2><ul>
 <li>在两个数据集上改善了低资源任务的性能</li>
 </ul>
-<h3 id="多任务学习">多任务学习</h3>
-<ul>
+<h3 id="多任务学习"><a href="#多任务学习" class="headerlink" title="多任务学习"></a>多任务学习</h3><ul>
 <li>动机：大容量的稀疏模型可能会在少资源任务上过拟合。主张这是由于专家很早就开始专业化，很少改变专业化。</li>
 </ul>
-<figure>
-<img src="Untitled%206.png" alt="French为高资源任务，Romanian为低资源语言">
-<figcaption aria-hidden="true">French 为高资源任务，Romanian 为低资源语言</figcaption>
-</figure>
+<p><img src="/blog/Untitled%206.png" alt="French为高资源任务，Romanian为低资源语言"></p>
 <p>French 为高资源任务，Romanian 为低资源语言</p>
 <ul>
 <li>温度采样：训练过程中，按不同温度采样不同任务样本，逐渐加热温度，增大从低资源任务采样数据的比例</li>
 <li>密集预训练：刚开始时固定步数内，专家参数共享进行密集预训练，提高了收敛性</li>
 </ul>
-<figure>
-<img src="Untitled%207.png" alt="专家的过早专业化现象得到了遏制">
-<figcaption aria-hidden="true">专家的过早专业化现象得到了遏制</figcaption>
-</figure>
+<p><img src="/blog/Untitled%207.png" alt="专家的过早专业化现象得到了遏制"></p>
 <p>专家的过早专业化现象得到了遏制</p>
-<h2 id="efficient-large-scale-language-modeling-with-mixtures-of-experts"><strong>Efficient
-Large Scale Language Modeling with Mixtures of Experts</strong></h2>
-<p>关于自回归 MoE 语言模型各种设置的实证研究。</p>
+<h2 id="Efficient-Large-Scale-Language-Modeling-with-Mixtures-of-Experts"><a href="#Efficient-Large-Scale-Language-Modeling-with-Mixtures-of-Experts" class="headerlink" title="Efficient Large Scale Language Modeling with Mixtures of Experts"></a><strong>Efficient Large Scale Language Modeling with Mixtures of Experts</strong></h2><p>关于自回归 MoE 语言模型各种设置的实证研究。</p>
 <p>一些结论：</p>
 <ul>
 <li>相同验证集性能下，MoE 比相同 FLOPs 的密集模型训练速度更快，对域内验证数据快 8-16 倍，域外数据快 2-4 倍。</li>
@@ -462,64 +425,45 @@ Large Scale Language Modeling with Mixtures of Experts</strong></h2>
 <li> MoE 从零样本到少样本间取得的性能提升差于密集模型</li>
 <li> MoE 的微调性能差于密集模型，且在部分数据集上存在微调后性能变差的情况</li>
 </ul>
-<h3 id="稳定性-1">稳定性</h3>
-<p>没有像 Switch
-Transformer 一样调整初始化的权重，而是增大了每个 expert 的学习率。因为与密集的数据并行相比，每个专家接收到的 token
-batch 减少了 E 倍，进而将梯度减小了<span class="math inline"> \(\sqrt
-E\)</span> 倍。E 为专家数量。因此论文主张将学习率增大<span class="math inline"> \(\sqrt E\)</span> 倍。</p>
-<h2 id="gshard">GShard</h2>
-<ul>
+<h3 id="稳定性-1"><a href="#稳定性-1" class="headerlink" title="稳定性"></a>稳定性</h3><p>没有像 Switch Transformer 一样调整初始化的权重，而是增大了每个 expert 的学习率。因为与密集的数据并行相比，每个专家接收到的 token batch 减少了 E 倍，进而将梯度减小了 $\sqrt E$ 倍。E 为专家数量。因此论文主张将学习率增大 $\sqrt E$ 倍。</p>
+<h2 id="GShard"><a href="#GShard" class="headerlink" title="GShard"></a>GShard</h2><ul>
 <li>一个模块，用户使用 api 为关键张量添加注释，模块会自动实现切分和并行，避免人工编程实现的工程开销。将模型设计和实现分离。</li>
 <li>使用 SPMD 而非 MPMD，降低设备增多时的编译开销</li>
 </ul>
-<h2 id="deepspeed-moe">DeepSpeed-MoE</h2>
-<p>提供了端到端的 MoE 训练和推理的解决方案，作为 DeepSpeed 库的一部分，支持最高 3.7 倍的 MoE 压缩，7.3 倍的推理优化。</p>
+<h2 id="DeepSpeed-MoE"><a href="#DeepSpeed-MoE" class="headerlink" title="DeepSpeed-MoE"></a>DeepSpeed-MoE</h2><p>提供了端到端的 MoE 训练和推理的解决方案，作为 DeepSpeed 库的一部分，支持最高 3.7 倍的 MoE 压缩，7.3 倍的推理优化。</p>
 <p>提出了金字塔残差 MoE（PR-MoE），以更少的参数取得了比传统 MoE 更优的性能。</p>
-<h3 id="压缩参数">压缩参数</h3>
-<p>实验证明，网络深层使用专家效果优于浅层，因此，论文提出由浅至深逐渐增加专家的数量。也就是金字塔型。</p>
-<h3 id="近似top2">近似 Top2</h3>
-<p>Top2 门控虽然能带来收益，但是引入了很多训练、通信开销。论文认为，top2 门控优于 top1 门控的原因是，分数第二大的专家<strong>有时</strong>可以纠正第一个专家的错误。因此，论文提出了可以固定一个专家，从剩下的专家里选择最优的。换而言之，在专家之外添加了一个所有 token 都需要经过的 MLP，近似得到 top2 门控的性能。</p>
-<p><img src="Untitled%208.png"></p>
-<h3 id="蒸馏稀疏模型">蒸馏稀疏模型</h3>
-<ul>
+<h3 id="压缩参数"><a href="#压缩参数" class="headerlink" title="压缩参数"></a>压缩参数</h3><p>实验证明，网络深层使用专家效果优于浅层，因此，论文提出由浅至深逐渐增加专家的数量。也就是金字塔型。</p>
+<h3 id="近似Top2"><a href="#近似Top2" class="headerlink" title="近似Top2"></a>近似 Top2</h3><p>Top2 门控虽然能带来收益，但是引入了很多训练、通信开销。论文认为，top2 门控优于 top1 门控的原因是，分数第二大的专家<strong>有时</strong>可以纠正第一个专家的错误。因此，论文提出了可以固定一个专家，从剩下的专家里选择最优的。换而言之，在专家之外添加了一个所有 token 都需要经过的 MLP，近似得到 top2 门控的性能。</p>
+<p><img src="/blog/Untitled%208.png"></p>
+<h3 id="蒸馏稀疏模型"><a href="#蒸馏稀疏模型" class="headerlink" title="蒸馏稀疏模型"></a>蒸馏稀疏模型</h3><ul>
 <li>将知识蒸馏到专家更少的稀疏模型里，而非传统的密集模型，保留稀疏模型训练和推理的优势</li>
 <li>蒸馏过程中逐渐减小蒸馏的影响，避免损害性能</li>
 </ul>
-<figure>
-<img src="Untitled%209.png" alt="完全使用KD损失会在训练近结束时损失性能">
-<figcaption aria-hidden="true">完全使用 KD 损失会在训练近结束时损失性能</figcaption>
-</figure>
+<p><img src="/blog/Untitled%209.png" alt="完全使用KD损失会在训练近结束时损失性能"></p>
 <p>完全使用 KD 损失会在训练近结束时损失性能</p>
-<h2 id="st-moe">ST-MoE</h2>
-<p>旨在解决 MoE 训练过程中的不稳定性以及微调过程中的质量不确定性。</p>
+<h2 id="ST-MoE"><a href="#ST-MoE" class="headerlink" title="ST-MoE"></a>ST-MoE</h2><p>旨在解决 MoE 训练过程中的不稳定性以及微调过程中的质量不确定性。</p>
 <p>论文提出了一个 269B 的稀疏模型，实现了 SOTA</p>
-<h3 id="稳定性-2">稳定性</h3>
-<p>论文尝试了三种常见的提高训练稳定性的方法：</p>
+<h3 id="稳定性-2"><a href="#稳定性-2" class="headerlink" title="稳定性"></a>稳定性</h3><p>论文尝试了三种常见的提高训练稳定性的方法：</p>
 <ul>
 <li>移除乘法交互：去除均方根尺度参数、GEGLU 激活</li>
 <li>添加噪声</li>
 <li>梯度裁剪</li>
 </ul>
 <p>虽然能够提升稳定性， 但均会损害模型质量</p>
-<p>论文提出了一种路由 z-loss，约束梯度，其中，B 是 batch 中 token
-数量，N 是专家的数量，</p>
-<p>x 是路由器接收的 logits。该 loss 惩罚了门控网络中的大的 logits，类似
-l2 正则项。</p>
-<p><img src="Untitled%2010.png"></p>
+<p>论文提出了一种路由 z-loss，约束梯度，其中，B 是 batch 中 token 数量，N 是专家的数量，</p>
+<p>x 是路由器接收的 logits。该 loss 惩罚了门控网络中的大的 logits，类似 l2 正则项。</p>
+<p><img src="/blog/Untitled%2010.png"></p>
 <p>路由 z-loss 能提升稳定性，还能稍微改善模型质量。</p>
-<h3 id="微调">微调</h3>
-<ul>
+<h3 id="微调"><a href="#微调" class="headerlink" title="微调"></a>微调</h3><ul>
 <li>论文认为，稀疏模型微调效果差的原因是其倾向于过拟合。实验也证明，稀疏模型更快微调收敛，证实稀疏模型在数据分布变化时可以高效地适应优化。大任务上微调可以取得比密集模型更性能，但是在较小的任务上差于密集模型</li>
 </ul>
-<p><img src="overfit.png"></p>
+<p><img src="/blog/overfit.png"></p>
 <ul>
 <li>调节 expert 的 dropout 可提升泛化性能</li>
 <li> MoE 只微调非专家参数和微调所有参数性能类似。只微调非专家参数可以加速训练、减小显存。</li>
 <li>密集模型和 MoE 的最优微调超参有较大差别，直接影响最后性能，不能直接照搬。</li>
 </ul>
-<h3 id="丢弃token健壮性">丢弃 token 健壮性</h3>
-<p>微调质量不会因为 10% 的 token
-丢弃率受到显著性能影响。负载不平衡可能不会显着影响模型质量。</p>
+<h3 id="丢弃token健壮性"><a href="#丢弃token健壮性" class="headerlink" title="丢弃token健壮性"></a>丢弃 token 健壮性</h3><p>微调质量不会因为 10% 的 token 丢弃率受到显著性能影响。负载不平衡可能不会显着影响模型质量。</p>
 
     </div>
 
@@ -595,13 +539,13 @@ l2 正则项。</p>
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

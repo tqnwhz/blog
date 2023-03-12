@@ -21,16 +21,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库">
+<meta name="description" content="简介《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上">
 <meta property="og:type" content="article">
 <meta property="og:title" content="复杂知识库问答（KBQA）中的问题迁移">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库">
+<meta property="og:description" content="简介《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/example.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/framework.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/exper-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/framework.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/exper-result.png">
 <meta property="article:published_time" content="2022-03-13T06:54:03.000Z">
 <meta property="article:modified_time" content="2022-03-19T07:49:49.648Z">
 <meta property="article:author" content="Tqnwhz">
@@ -38,7 +38,7 @@
 <meta property="article:tag" content="问答">
 <meta property="article:tag" content="知识图谱">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/example.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/example.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/03/13/Program-Transfer/">
@@ -170,18 +170,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -310,20 +310,16 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="简介">简介</h2>
-<p>《Program Transfer for Answering Complex Questionsover Knowledge
-Bases》是由清华大学和华为合作完成的工作，收录于 ACL
-2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上的 KBQA 性能。
-<span id="more"></span></p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>《Program Transfer for Answering Complex Questionsover Knowledge Bases》是由清华大学和华为合作完成的工作，收录于 ACL 2022 长文中。该文试图通过一个两阶段的方法来完成 KBQA 任务：解析器将 query 解析为知识库操作序列（无参数），参数分析器为每个操作填入参数。通过在复资源知识库预训练，显著提升了在低资源知识库上的 KBQA 性能。</p>
+<span id="more"></span>
+
 <p>本文所讲的方法是语义解析的思想，将 query 先转化为知识库的操作序列，如下图所示。分析出 query 对应的操作序列（Find，Relate..），再为每个操作填入参数（实体、关系等），执行操作即可得到结果。</p>
-<p><img src="example.png"></p>
-<h2 id="背景">背景</h2>
-<p>知识库问答，即 KBQA，旨在利用结构化的知识库来解答 query。在<a href="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/#more">基于知识库的问答综述（KBQA）</a>中提到了，KBQA 有两种主流方法，<strong>语义解析</strong>的方法将 query 转化为 SQL 语句，执行即可得到结果；信息检索的方法在特定子图中将实体按相关性排序，最终得到结果。复杂 KBQA 是指需要处理多跳逻辑的 KBQA 问题。这种情况下，KBQA 所面临的推理路径的监督数据缺失、语义理解能力不足、检索空间过大等问题会更为突出。</p>
+<p><img src="/blog/example.png"></p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>知识库问答，即 KBQA，旨在利用结构化的知识库来解答 query。在<a href="https://tqnwhz.github.io/blog/2021/10/25/KBQA-survey/#more">基于知识库的问答综述（KBQA）</a>中提到了，KBQA 有两种主流方法，<strong>语义解析</strong>的方法将 query 转化为 SQL 语句，执行即可得到结果；信息检索的方法在特定子图中将实体按相关性排序，最终得到结果。复杂 KBQA 是指需要处理多跳逻辑的 KBQA 问题。这种情况下，KBQA 所面临的推理路径的监督数据缺失、语义理解能力不足、检索空间过大等问题会更为突出。</p>
 <p>程序规约是指将 KBQA 问题规约为某个可执行的程序，也就是语义解析的思想。近些年来，一些知识库提供了监督的程序规约信号，在这些知识库上的程序规约问答取得了大幅性能提升。如何使用这些监督信号，提升低资源知识库上的性能呢？本文将其定义为程序迁移任务，该任务面临以下挑战：</p>
 <ul>
 <li><strong>域异构</strong>：由于语言和知识的多样性，源知识库和目标知识库上的知识、问题的表现形式可能相去甚远。</li>
-<li><strong>未知的元素</strong>：源知识库的知识覆盖率往往相当有限，例如 KBQA
-Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
+<li><strong>未知的元素</strong>：源知识库的知识覆盖率往往相当有限，例如 KBQA Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
 <li><strong>过大的搜索空间</strong>：每个知识库操作可选的参数很多，搜索知识库和操作和可选参数不现实。</li>
 </ul>
 <p>本文的贡献包括：</p>
@@ -332,50 +328,34 @@ Pro 数据集只覆盖了 3.9% 的关系和 0.24% 的维基百科概念。</li>
 <li>为程序迁移提出一个两阶段解析框架和本体剪枝策略</li>
 <li>通过扩展实验和消融实验证实了程序迁移的有效性</li>
 </ul>
-<h2 id="框架结构">框架结构</h2>
-<p>这一部分其实非常简单，对着下面这张图就能解释清楚，不需要任何数学公式。</p>
-<p><img src="framework.png"></p>
-<ol type="1">
+<h2 id="框架结构"><a href="#框架结构" class="headerlink" title="框架结构"></a>框架结构</h2><p>这一部分其实非常简单，对着下面这张图就能解释清楚，不需要任何数学公式。</p>
+<p><img src="/blog/framework.png"></p>
+<ol>
 <li>BERT+GRU 将 query 映射为无参数操作序列（与知识库无关）</li>
-<li>利用上一步每个操作的 hidden
-state 投影后在可选参数空间做 softmax，选择参数</li>
+<li>利用上一步每个操作的 hidden state 投影后在可选参数空间做 softmax，选择参数</li>
 <li>参数剪枝：根据 query 维护可能的域、关系、实体集合，并随着参数序列的自回归过程迭代更新。</li>
 </ol>
-<h3 id="源域预训练">源域预训练</h3>
-<p>损失函数包含两部分：操作序列的交叉熵和参数位置的交叉熵，即两个分类任务损失之和。
-<span class="math display">\[
-\mathcal {L}^{pretrain}=-\sum_{(x^S,y^S)\in
-D^S}(logp(y^S_s|x^S)+\sum_{t=1}^{|y_s|}logp(arg_t^S|x^S,o_t^S,\mathcal
-P))
-\]</span></p>
-<h3 id="目标域微调">目标域微调</h3>
-<p>由于目标域缺少源域的监督程序归纳信号，因此需要通过强化学习 / EM 算法来微调。主要步骤是先搜索得到若干个可能的程序，然后执行程序根据结果更新参数。</p>
-<h2 id="实验">实验</h2>
-<h3 id="数据集">数据集</h3>
-<ul>
+<h3 id="源域预训练"><a href="#源域预训练" class="headerlink" title="源域预训练"></a>源域预训练</h3><p>损失函数包含两部分：操作序列的交叉熵和参数位置的交叉熵，即两个分类任务损失之和。<br>$$<br>\mathcal {L}^{pretrain}=-\sum_{(x^S,y^S)\in D^S}(logp(y^S_s|x^S)+\sum_{t=1}^{|y_s|}logp(arg_t^S|x^S,o_t^S,\mathcal P))<br>$$</p>
+<h3 id="目标域微调"><a href="#目标域微调" class="headerlink" title="目标域微调"></a>目标域微调</h3><p>由于目标域缺少源域的监督程序归纳信号，因此需要通过强化学习 / EM 算法来微调。主要步骤是先搜索得到若干个可能的程序，然后执行程序根据结果更新参数。</p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><ul>
 <li>源域：KBQA Pro</li>
 <li> 目标域：WebQuestionSP，ComplexWebQuestions (CWQ)</li>
 <li> 知识库：Freebase</li>
 </ul>
-<h3 id="基线">基线</h3>
-<ul>
+<h3 id="基线"><a href="#基线" class="headerlink" title="基线"></a>基线</h3><ul>
 <li>语义解析：TEX-TRAY，QGG，TeacherNet</li>
 <li> 信息检索：Graft-Net，PullNet</li>
-<li> 消融实验基线：<span class="math inline">\(Ours_{-f}\)</span>（未微调），<span class="math inline">\(Ours_{-p}\)</span>（未预训练），<span class="math inline">\(Ours_{-pa}\)</span>（未预训练参数解析器），<span class="math inline">\(Ours_{-o}\)</span>（缺少本体剪枝）</li>
+<li> 消融实验基线：$Ours_{-f}$（未微调），$Ours_{-p}$（未预训练），$Ours_{-pa}$（未预训练参数解析器），$Ours_{-o}$（缺少本体剪枝）</li>
 </ul>
-<h3 id="评估指标">评估指标</h3>
-<ul>
+<h3 id="评估指标"><a href="#评估指标" class="headerlink" title="评估指标"></a>评估指标</h3><ul>
 <li>F1</li>
 <li>Hits@1：Hits@n 是指正例中处在前 n 个结果中的比例，Hits@1 也就是模型结果第一名为正确结果的比例</li>
 </ul>
 <p>由于数据集中的问题有多个答案，F1 更好地反映了答案的覆盖程度。</p>
-<h3 id="实验结果">实验结果</h3>
-<p><img src="exper-result.png"></p>
-<p>值得关注的是<span class="math inline"> \(Ours_{-p}\)</span> 极差的结果和<span class="math inline"> \(Ours_{-f}\)</span> 的一般表现，表明了预训练的重要性。并且移去预训练参数解析器和本体剪枝策略都会对模型效果有较大影响。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文还是蛮有意思的，用一个比较贴近人认知的框架，把迁移学习应用到 KBQA 中并证实了其有效性。</p>
-<p>近期还会从各高校 ACL2022 录取宣传中找一些值得读的论文。等到 ACL
-2022 公布 accepted list 了就不用这么折腾了。</p>
+<h3 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h3><p><img src="/blog/exper-result.png"></p>
+<p>值得关注的是 $Ours_{-p}$ 极差的结果和 $Ours_{-f}$ 的一般表现，表明了预训练的重要性。并且移去预训练参数解析器和本体剪枝策略都会对模型效果有较大影响。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇论文还是蛮有意思的，用一个比较贴近人认知的框架，把迁移学习应用到 KBQA 中并证实了其有效性。</p>
+<p>近期还会从各高校 ACL2022 录取宣传中找一些值得读的论文。等到 ACL 2022 公布 accepted list 了就不用这么折腾了。</p>
 <p>碎碎念：我也好想发一篇论文啊。</p>
 
     </div>
@@ -452,13 +432,13 @@ P))
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

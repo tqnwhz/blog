@@ -21,21 +21,21 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介 对抗自编码器（Adversarial Autoencoders，AAE）出自 2015 年的《Adversarial Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VA">
+<meta name="description" content="简介对抗自编码器（Adversarial Autoencoders，AAE）出自 2015 年的《Adversarial Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE">
 <meta property="og:type" content="article">
 <meta property="og:title" content="对抗自编码器 AAE">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/10/05/aae/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介 对抗自编码器（Adversarial Autoencoders，AAE）出自 2015 年的《Adversarial Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VA">
+<meta property="og:description" content="简介对抗自编码器（Adversarial Autoencoders，AAE）出自 2015 年的《Adversarial Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/10/05/aae/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/architecture.png">
 <meta property="article:published_time" content="2021-10-05T07:00:49.000Z">
 <meta property="article:modified_time" content="2022-02-19T07:03:44.533Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="VAE">
 <meta property="article:tag" content="GAN">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2021/10/05/aae/architecture.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/architecture.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2021/10/05/aae/">
@@ -152,7 +152,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%8A%97%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">对抗自编码器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#section"><span class="nav-number">3.</span> <span class="nav-text"></span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%8A%97%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">对抗自编码器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text"></span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -289,7 +289,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>708</span>
+      <span>665</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -307,32 +307,27 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="简介">简介</h2>
-<p>对抗自编码器（Adversarial
-Autoencoders，AAE）出自 2015 年的《Adversarial
-Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated
-posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE 的比较。
-<span id="more"></span></p>
-<h2 id="对抗自编码器">对抗自编码器</h2>
-<p>符号定义：</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>对抗自编码器（Adversarial Autoencoders，AAE）出自 2015 年的《Adversarial Autoencoders》，其核心想法是将 VAE 与 GAN 结合，来得到一个更好的生成模型。论文首次提出了聚合后验分布（aggregated posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生成的，这里只是简单分析下其提出的聚合后验分布及与 VAE 的比较。</p>
+<span id="more"></span>
+
+<h2 id="对抗自编码器"><a href="#对抗自编码器" class="headerlink" title="对抗自编码器"></a>对抗自编码器</h2><p>符号定义：</p>
 <ul>
-<li><span class="math inline">\(p(z)\)</span>：隐变量<span class="math inline"> \(z\)</span> 的先验分布</li>
-<li><span class="math inline"> \(q(z|x)\)</span>：编码器分布</li>
-<li><span class="math inline"> \(p(x|z)\)</span>：解码器分布</li>
-<li><span class="math inline"> \(p_d(x)\)</span>：数据<span class="math inline"> \(x\)</span> 分布</li>
-<li><span class="math inline"> \(p(x)\)</span>：模型的分布</li>
+<li>$p (z)$：隐变量 $z$ 的先验分布</li>
+<li> $q (z|x)$：编码器分布</li>
+<li> $p (x|z)$：解码器分布</li>
+<li> $p_d (x)$：数据 $x$ 分布</li>
+<li> $p (x)$：模型的分布</li>
 </ul>
-<p>定义聚合分布<span class="math inline"> \(q(z)\)</span> 为<span class="math inline"> \(q(z)=\int_xq(z|x)p_d(x)dx\)</span>，AAE 添加了<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span> 进行匹配的正则化项，模型结构如下：</p>
-<p><img src="architecture.png"></p>
-<p>可以看到与 VAE 最大的区别是，VAE 是从后验分布<span class="math inline"> \(q(z|x)\)</span> 中采样、使用 KL 散度逼近后验分布与先验分布，AAE 是使用对抗网络来逼近<span class="math inline"> \(q(z)\)</span> 与<span class="math inline"> \(p(z)\)</span>。在此基础上，引入了一个对抗网络判断隐藏状态来自随机先验分布<span class="math inline"> \(p(z)\)</span> 的采样，还是来自<span class="math inline"> \(q(z)\)</span>。在编码器<span class="math inline"> \(q(z|x)\)</span> 的选择上，论文提供了三种候选：</p>
+<p>定义聚合分布 $q (z)$ 为 $q (z)=\int_xq (z|x) p_d (x) dx$，AAE 添加了 $q (z)$ 与 $p (z)$ 进行匹配的正则化项，模型结构如下：</p>
+<p><img src="/blog/architecture.png"></p>
+<p>可以看到与 VAE 最大的区别是，VAE 是从后验分布 $q (z|x)$ 中采样、使用 KL 散度逼近后验分布与先验分布，AAE 是使用对抗网络来逼近 $q (z)$ 与 $p (z)$。在此基础上，引入了一个对抗网络判断隐藏状态来自随机先验分布 $p (z)$ 的采样，还是来自 $q (z)$。在编码器 $q (z|x)$ 的选择上，论文提供了三种候选：</p>
 <ul>
-<li>确定性函数，<span class="math inline">\(z\)</span> 仅与<span class="math inline"> \(x\)</span> 相关。</li>
+<li>确定性函数，$z$ 仅与 $x$ 相关。</li>
 <li>高斯分布，与分布参数和随机性相关。</li>
-<li>通用近似后验，<span class="math inline">\(z\)</span> 与<span class="math inline"> \(x\)</span> 和随机噪声<span class="math inline"> \(\eta\)</span> 相关。通用近似是一种近似分布的方法，确定性函数<span class="math inline"> \(f(x,\eta)\)</span>，<span class="math inline">\(\eta\)</span> 是一个随机噪声，因而其可以看作分布的通用近似。</li>
+<li>通用近似后验，$z$ 与 $x$ 和随机噪声 $\eta$ 相关。通用近似是一种近似分布的方法，确定性函数 $f (x,\eta)$，$\eta$ 是一个随机噪声，因而其可以看作分布的通用近似。</li>
 </ul>
 <p>论文中最终使用了确定性函数，个人猜测是更好收敛一些。</p>
-<h2 id="section"></h2>
-
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
     </div>
 
     
@@ -406,13 +401,13 @@ posterior），并使用它来优化 VAE。事实上这篇论文是在 CV 上生
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

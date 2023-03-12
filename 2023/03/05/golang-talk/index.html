@@ -21,16 +21,16 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。">
+<meta name="description" content="摘要最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅谈 Golang 的优缺点">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2023/03/05/golang-talk/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。">
+<meta property="og:description" content="摘要最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic1.zhimg.com/80/v2-fc238ce2a5d51a01929fc54c8406e7bc_720w.webp?source=1940ef5c">
 <meta property="article:published_time" content="2023-03-05T03:18:07.000Z">
-<meta property="article:modified_time" content="2023-03-12T08:25:14.576Z">
+<meta property="article:modified_time" content="2023-03-12T08:25:30.248Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="Golang">
 <meta name="twitter:card" content="summary">
@@ -166,18 +166,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -258,7 +258,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-03-12 16:25:14" itemprop="dateModified" datetime="2023-03-12T16:25:14+08:00">2023-03-12</time>
+      <time title="修改时间：2023-03-12 16:25:30" itemprop="dateModified" datetime="2023-03-12T16:25:30+08:00">2023-03-12</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -302,85 +302,55 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要">摘要</h2>
-<p>最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。</p>
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。</p>
 <span id="more"></span>
-<h2 id="优点">优点</h2>
-<h3 id="容易入门">容易入门</h3>
-<p>Go 最为人知的一个特点就是 “大道至简”，被誉为 21 世纪的 C 语言。Go 的一大特点是上手简单容易，虽然语法规则与 C、Java 等有较大差异（例如变量声明、无类型隐式转换等），但是还是能比较快地适应。</p>
+
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><h3 id="容易入门"><a href="#容易入门" class="headerlink" title="容易入门"></a>容易入门</h3><p>Go 最为人知的一个特点就是 “大道至简”，被誉为 21 世纪的 C 语言。Go 的一大特点是上手简单容易，虽然语法规则与 C、Java 等有较大差异（例如变量声明、无类型隐式转换等），但是还是能比较快地适应。</p>
 <p>Go 设计的并不复杂，容器只有数组、切片、map；并发只有 goroutine、channel；锁只有互斥锁、读写锁；编程风格只有接口和接口实现，这大大地减少了入门的学习成本和系统的复杂性。当然这种特性也可以称之为 “简陋”，也是我认为 Go 的缺点之一，后面会再提到。</p>
-<h3 id="默认初始化">默认初始化</h3>
-<p>C 语言的一大特点就是随机初始化，未经显式初始化的局部变量的值均为随机数。在 Go 中，所有的类型都有对应的零值，例如 bool 类型默认是 false，int 默认是 0，指针默认是 nil，struct 会递归地为每个字段赋零值。这样虽然可能会多余一些初始化的开销，但是代码会更加健壮。</p>
+<h3 id="默认初始化"><a href="#默认初始化" class="headerlink" title="默认初始化"></a>默认初始化</h3><p>C 语言的一大特点就是随机初始化，未经显式初始化的局部变量的值均为随机数。在 Go 中，所有的类型都有对应的零值，例如 bool 类型默认是 false，int 默认是 0，指针默认是 nil，struct 会递归地为每个字段赋零值。这样虽然可能会多余一些初始化的开销，但是代码会更加健壮。</p>
 <p>包括像 map 访问不存在的元素时，也会默认返回零值，而不是异常。</p>
-<h3 id="多返回值">多返回值</h3>
-<p>C 语言一个典型的问题是不支持多返回值，这意味着要么使用特殊值做异常处理（例如 - 1，null），要么就得新建一个结构体对结果再次包装。Java 提供了 Optional 这一包装类来解决这个问题，虽然解决了这个问题，但还是无法覆盖其他多返回值需要的场景。Python 支持多返回值作为一个 tuple 返回，C++ 可以通过 pair 来部分支持。</p>
+<h3 id="多返回值"><a href="#多返回值" class="headerlink" title="多返回值"></a>多返回值</h3><p>C 语言一个典型的问题是不支持多返回值，这意味着要么使用特殊值做异常处理（例如 - 1，null），要么就得新建一个结构体对结果再次包装。Java 提供了 Optional 这一包装类来解决这个问题，虽然解决了这个问题，但还是无法覆盖其他多返回值需要的场景。Python 支持多返回值作为一个 tuple 返回，C++ 可以通过 pair 来部分支持。</p>
 <p>Go 支持多返回值并且提供了一种良好的编程风格，即一个函数总是应该返回两个参数，结果和对应的解释：</p>
 <ul>
 <li>如果函数只可能存在一种失败情况，解释应该是一个 bool，标识这次操作是否成功。例如 map 查找，失败的唯一原因就是 key 不存在。</li>
 <li>如果函数存在多种失败情况，解释应该是一个 error，标识操作的错误类型。</li>
 </ul>
 <p>这使得 Go 能够比较灵活地处理函数执行过程中可能出现的各种错误，当然这也是有代价的。</p>
-<h3 id="goroutine">goroutine</h3>
-<p>Go 最大、最广为人知的优点之一，可能就是 goroutine 了。goroutine 是一种用户态线程，也叫协程，由运行时去进行 m:n 调度，即 m 个操作系统线程负责 n 个 goroutine 的执行。作为用户态线程，goroutine 的切换没有系统线程切换那么大的开销，需要陷入内核、保存状态等，而且不受操作系统线程数量的限制。goroutine 的数量可以达到成千上万，而 cpu 的线程一般只有几十个。这使得 goroutine 支持相当大的并发，非常适合后端服务器的场景。</p>
-<p>在 C++ 20，Java
-19 中，引入了对协程的支持，Java 中的叫虚拟线程。可惜这一块蛋糕可能已经被 G 抢完了，而且多少公司还在用 c++
-11 和 java 8 呢。</p>
-<h3 id="编译速度快">编译速度快</h3>
-<p>相较于 C++，Go 的一个显著优点是编译速度更快，Go 的 import 支持按需导入，而且能够能够分析文件依赖，利用编译缓存加快编译速度。</p>
-<h3 id="支持垃圾回收">支持垃圾回收</h3>
-<p>Go 是支持垃圾回收的，有着与 Java 类似的垃圾回收机制，通过可达性分析对堆上内存进行分析回收，有时需要 stop
-the
-world，虽然略微影响性能，但是避免了指针乱飞的内存泄漏，还是值得的。C++ 虽然没有垃圾回收，但是有智能指针，使用得当也可以避免内存泄漏。</p>
-<h2 id="缺点">缺点</h2>
-<h3 id="err泛滥">err 泛滥</h3>
-<p>写过 Go 代码的人可能都对 err 深恶痛绝，据说 Go 业务代码中可能有 50% 的代码都是：</p>
+<h3 id="goroutine"><a href="#goroutine" class="headerlink" title="goroutine"></a>goroutine</h3><p>Go 最大、最广为人知的优点之一，可能就是 goroutine 了。goroutine 是一种用户态线程，也叫协程，由运行时去进行 m:n 调度，即 m 个操作系统线程负责 n 个 goroutine 的执行。作为用户态线程，goroutine 的切换没有系统线程切换那么大的开销，需要陷入内核、保存状态等，而且不受操作系统线程数量的限制。goroutine 的数量可以达到成千上万，而 cpu 的线程一般只有几十个。这使得 goroutine 支持相当大的并发，非常适合后端服务器的场景。</p>
+<p>在 C++ 20，Java 19 中，引入了对协程的支持，Java 中的叫虚拟线程。可惜这一块蛋糕可能已经被 G 抢完了，而且多少公司还在用 c++ 11 和 java 8 呢。</p>
+<h3 id="编译速度快"><a href="#编译速度快" class="headerlink" title="编译速度快"></a>编译速度快</h3><p>相较于 C++，Go 的一个显著优点是编译速度更快，Go 的 import 支持按需导入，而且能够能够分析文件依赖，利用编译缓存加快编译速度。</p>
+<h3 id="支持垃圾回收"><a href="#支持垃圾回收" class="headerlink" title="支持垃圾回收"></a>支持垃圾回收</h3><p>Go 是支持垃圾回收的，有着与 Java 类似的垃圾回收机制，通过可达性分析对堆上内存进行分析回收，有时需要 stop the world，虽然略微影响性能，但是避免了指针乱飞的内存泄漏，还是值得的。C++ 虽然没有垃圾回收，但是有智能指针，使用得当也可以避免内存泄漏。</p>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><h3 id="err泛滥"><a href="#err泛滥" class="headerlink" title="err泛滥"></a>err 泛滥</h3><p>写过 Go 代码的人可能都对 err 深恶痛绝，据说 Go 业务代码中可能有 50% 的代码都是：</p>
 <figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> {</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+
 <p>有人把这做成了一个表情包，来调侃 err 的滥用以及引起的代码冗余。当然，我也好想有一个按下 enter 就能输入这个 snippet 的键盘（狗头。</p>
-<figure>
-<img src="https://pic1.zhimg.com/80/v2-fc238ce2a5d51a01929fc54c8406e7bc_720w.webp?source=1940ef5c" alt="img">
-<figcaption aria-hidden="true">img</figcaption>
-</figure>
+<p><img src="https://pic1.zhimg.com/80/v2-fc238ce2a5d51a01929fc54c8406e7bc_720w.webp?source=1940ef5c" alt="img"></p>
 <p>这种代码泛滥的原因在于，复杂业务的每一环可能都会出错的。参数校验会出错、序列化反序列化会出错、rpc 调用会出错等等，任何一个环节出错都需要终止流程。而多返回值的风格广受认可，就导致每个函数调用都需要去判错处理，使得代码复杂而冗余。</p>
-<p>Go 社区对这个问题意见很大，提出了 try 的语法糖希望简化这一判断，参见 <a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/56165">proposal: Go 2: error
-handling: try statement with handler · Issue #56165 · golang/go
-(github.com)</a>，不知道能否被采纳。之前 19 年关于 try 的提案是被拒绝了。</p>
-<h3 id="不支持面向对象">不支持面向对象</h3>
-<p>虽然 Go 中存在接口，但是并不支持面向对象。严格意义上，Go 的风格可能更适合称为面向抽象编程，而非面向对象。Go 中只存在接口和接口的实现，没有父类、继承这些概念。Go 提倡使用组合来结合功能，并提供了匿名嵌入的方法，
-使得可以便捷调用嵌入结构体的方法。这也提供了一种编程风格，但是面向对象的缺失还是使得可选的代码风格减少。</p>
-<h3 id="不支持函数重载">不支持函数重载</h3>
-<p>作为一门现代语言，Go 不支持重载是难以置信的。Go 有很多功能相同只是参数略有差异的函数名，例如 <code>slices.ContainsInt64,slices.ContainsString</code> 分别用于判断切片中是否存在 int64 和字符串。当然这也与 Go
-1.18 之前不支持泛型有关。</p>
-<h3 id="内置的slice和map">内置的 slice 和 map</h3>
-<p>这也是 Go 的设计失误之一。slice、map 不由标准库提供，而是内置在语言核心。这导致了一些非常奇怪、反人类的链式反应：</p>
+<p>Go 社区对这个问题意见很大，提出了 try 的语法糖希望简化这一判断，参见 <a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/56165">proposal: Go 2: error handling: try statement with handler · Issue #56165 · golang/go (github.com)</a>，不知道能否被采纳。之前 19 年关于 try 的提案是被拒绝了。</p>
+<h3 id="不支持面向对象"><a href="#不支持面向对象" class="headerlink" title="不支持面向对象"></a>不支持面向对象</h3><p>虽然 Go 中存在接口，但是并不支持面向对象。严格意义上，Go 的风格可能更适合称为面向抽象编程，而非面向对象。Go 中只存在接口和接口的实现，没有父类、继承这些概念。Go 提倡使用组合来结合功能，并提供了匿名嵌入的方法， 使得可以便捷调用嵌入结构体的方法。这也提供了一种编程风格，但是面向对象的缺失还是使得可选的代码风格减少。</p>
+<h3 id="不支持函数重载"><a href="#不支持函数重载" class="headerlink" title="不支持函数重载"></a>不支持函数重载</h3><p>作为一门现代语言，Go 不支持重载是难以置信的。Go 有很多功能相同只是参数略有差异的函数名，例如 <code>slices.ContainsInt64,slices.ContainsString </code>分别用于判断切片中是否存在 int64 和字符串。当然这也与 Go 1.18 之前不支持泛型有关。</p>
+<h3 id="内置的slice和map"><a href="#内置的slice和map" class="headerlink" title="内置的slice和map"></a>内置的 slice 和 map</h3><p>这也是 Go 的设计失误之一。slice、map 不由标准库提供，而是内置在语言核心。这导致了一些非常奇怪、反人类的链式反应：</p>
 <ul>
 <li>没有好用的容器标准库，只在语言核心提供了 slice 和 map</li>
 <li> 占用 map、append、len、cap 等关键词</li>
 <li>难以扩展，没有通用的接口来实现新的容器类以使得支持 range、len 等</li>
-<li>不满足 duck
-type，容器没有任何方法绑定，不能链式调用，必须使用额外的工具包函数层层套括号</li>
+<li>不满足 duck type，容器没有任何方法绑定，不能链式调用，必须使用额外的工具包函数层层套括号</li>
 <li>给语言迭代更新增加了新的困难</li>
 </ul>
 <p>C++、Java，分别提供了 stl 库和 collection 抽象，实现了包括不限于动态数组、链表、队列堆栈、树等各种复杂的数据结构，大大减少了使用过程中造轮子的过程。作为面向对象的代表，Java 提供了丰富完备的容器接口，可以针对不同场景实现对应的容器，例如并发安全的容器。Python 虽然内置 list 和 dict，但也是以面向对象的方式提供，抽象了 len、iter 等接口，支持自定义容器类。</p>
-<p>众所周知，Go 使用的是 duck
-type，即鸭子类型：一个东西不需要说它自己是鸭子，只要看起来像鸭子，走路、叫像鸭子，它就是鸭子。这种理念下，结构体不需要显式声明实现的接口，由编译器分析是否实现了某个接口。而 Go 语言层面的 slice 和 map 却是不支持鸭子类型的，这两个类型没有方法绑定，只能依赖语言层面提供的其他关键字，例如 len、append 等完成功能。</p>
-<h3 id="简陋而固执">简陋而固执</h3>
-<p>简单过了头，就是简陋。<strong>Go 目前还不支持可重入锁，直到 1.18 前，不支持泛型、TryLock 等操作</strong>。难以想象这是一门现代的编程语言。Google 团队有一种自负在里面，不愿意为了用户考虑，他们的大道至简只是去简化编译器的工作，把大部分工作量留给程序员，这是很反人类的。</p>
+<p>众所周知，Go 使用的是 duck type，即鸭子类型：一个东西不需要说它自己是鸭子，只要看起来像鸭子，走路、叫像鸭子，它就是鸭子。这种理念下，结构体不需要显式声明实现的接口，由编译器分析是否实现了某个接口。而 Go 语言层面的 slice 和 map 却是不支持鸭子类型的，这两个类型没有方法绑定，只能依赖语言层面提供的其他关键字，例如 len、append 等完成功能。</p>
+<h3 id="简陋而固执"><a href="#简陋而固执" class="headerlink" title="简陋而固执"></a>简陋而固执</h3><p>简单过了头，就是简陋。<strong>Go 目前还不支持可重入锁，直到 1.18 前，不支持泛型、TryLock 等操作</strong>。难以想象这是一门现代的编程语言。Google 团队有一种自负在里面，不愿意为了用户考虑，他们的大道至简只是去简化编译器的工作，把大部分工作量留给程序员，这是很反人类的。</p>
 <p>早在十几年前，Google 团队声明可重入锁是不好的设计，滋生 bug，参见 <a target="_blank" rel="noopener" href="https://groups.google.com/g/golang-nuts/c/XqW1qcuZgKg/m/Ui3nQkeLV80J">groups.google.com</a>，于是直到现在 Go 仍不支持可重入锁。但是他们也承认了 TryLock 操作是最终会需要的，过了十多年的 Go1.18 版本才正式支持了 TryLock。</p>
-<p>我部分理解他们的声明，他们认为可重入锁会需要额外的工作去管理 goroutine 持有的锁，相当于 goroutine 需要有 local
-storage 存储这些信息，类似 Java 中的 ThreadLocal。这也是他们在避免的，于是 Go 也不支持这些，只能通过 context 层层透传，用于 goroutine 存储。</p>
-<p>给人的感觉就是 Go 不像是一个产品，产品是从用户需要角度出发，采取各语言的精华，去做出一个易用、好用的产品。可重入锁的优点是很明显的，各函数可以独立工作，也可以协同工作，不需要担心死锁；不支持可重入锁就需要把每个函数写加锁和不加锁两个版本，避免调错函数死锁。他们不仅是认为实现可重入锁是不必要的，甚至拒绝相关的 PR。一他们固执地坚持着自己的观点，把握着 Go 的代码准入权，直至 2021 年的 Go
-1.18 讨论上，Go 语言之父还在反对加入泛型，认为这会导致过大的工作量，而且容易出错。</p>
+<p>我部分理解他们的声明，他们认为可重入锁会需要额外的工作去管理 goroutine 持有的锁，相当于 goroutine 需要有 local storage 存储这些信息，类似 Java 中的 ThreadLocal。这也是他们在避免的，于是 Go 也不支持这些，只能通过 context 层层透传，用于 goroutine 存储。</p>
+<p>给人的感觉就是 Go 不像是一个产品，产品是从用户需要角度出发，采取各语言的精华，去做出一个易用、好用的产品。可重入锁的优点是很明显的，各函数可以独立工作，也可以协同工作，不需要担心死锁；不支持可重入锁就需要把每个函数写加锁和不加锁两个版本，避免调错函数死锁。他们不仅是认为实现可重入锁是不必要的，甚至拒绝相关的 PR。一他们固执地坚持着自己的观点，把握着 Go 的代码准入权，直至 2021 年的 Go 1.18 讨论上，Go 语言之父还在反对加入泛型，认为这会导致过大的工作量，而且容易出错。</p>
 <p>类似的观点还有，Go 的泛型中使用了方括号，而不是尖括号。Go 的 map、slice 使用的也全部是方括号，如果一个函数有泛型、有 map、有 slice，看起来会比较费劲。他们拒绝尖括号的原因是，可能会导致歧义并且他们不愿意通过更改编译器前端解决。可以凝练为，<strong>他们不愿意去顺应用户习惯，而是强迫用户按自己的想法使用并培养习惯</strong>。这可能就是大公司的傲慢。</p>
-<h3 id="不支持枚举">不支持枚举</h3>
-<p>作为一个强类型语言，去除了所有的隐式转换保证代码健壮的语言，居然不支持枚举类型。枚举类型是一个不难实现且可以显著提升代码可读性的特性，迟迟不实现实属不应该。</p>
-<h2 id="总结">总结</h2>
-<p>从我两个多月的 Go 体验下来，感觉 Go 的优点和缺点都非常突出。Go 按 Google 团队的意志提供了一种几乎固定的编码规范，一定程度会方便标准化，但是并不是一门易用、好用、优雅的语言。</p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/563395289">为啥网上这么多人 diss
-Golang？ - 知乎 (zhihu.com)</a></p></li>
-<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/490457306">Go 为什么设计地这么简陋，是为了推广还是在编译器上难以实现？
-- 知乎 (zhihu.com)</a></p></li>
+<h3 id="不支持枚举"><a href="#不支持枚举" class="headerlink" title="不支持枚举"></a>不支持枚举</h3><p>作为一个强类型语言，去除了所有的隐式转换保证代码健壮的语言，居然不支持枚举类型。枚举类型是一个不难实现且可以显著提升代码可读性的特性，迟迟不实现实属不应该。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>从我两个多月的 Go 体验下来，感觉 Go 的优点和缺点都非常突出。Go 按 Google 团队的意志提供了一种几乎固定的编码规范，一定程度会方便标准化，但是并不是一门易用、好用、优雅的语言。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/563395289">为啥网上这么多人 diss Golang？ - 知乎 (zhihu.com)</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/490457306">Go 为什么设计地这么简陋，是为了推广还是在编译器上难以实现？- 知乎 (zhihu.com)</a></p>
+</li>
 </ul>
 
     </div>
@@ -415,8 +385,8 @@ Golang？ - 知乎 (zhihu.com)</a></p></li>
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/blog/2022/12/02/MIT-6-830-6/" rel="prev" title="MIT 6.830 数据库实验 Lab 6 实验报告">
-                  <i class="fa fa-chevron-left"></i> MIT 6.830 数据库实验 Lab 6 实验报告
+                <a href="/blog/2023/02/15/redis-cluster/" rel="prev" title="Redis 集群模式">
+                  <i class="fa fa-chevron-left"></i> Redis 集群模式
                 </a>
             </div>
             <div class="post-nav-item">
@@ -452,13 +422,13 @@ Golang？ - 知乎 (zhihu.com)</a></p></li>
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

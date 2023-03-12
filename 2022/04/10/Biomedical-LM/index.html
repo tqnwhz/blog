@@ -21,25 +21,25 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练">
+<meta name="description" content="摘要《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ACM 2021: 生物医学域的语言模型">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练">
+<meta property="og:description" content="摘要《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/comparison.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/task-intro.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/task-specific-finetune.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/tasks.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/baselines.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/overview-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/vocab-wwm.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/vocab-length.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/ptr-method.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/adversial.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/ner-ablation.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/relation-extraction.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/comparison.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/task-intro.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/task-specific-finetune.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/tasks.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/baselines.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/overview-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/vocab-wwm.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/vocab-length.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/ptr-method.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/adversial.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/ner-ablation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/relation-extraction.png">
 <meta property="article:published_time" content="2022-04-10T07:08:08.000Z">
 <meta property="article:modified_time" content="2022-04-18T01:47:05.021Z">
 <meta property="article:author" content="Tqnwhz">
@@ -47,7 +47,7 @@
 <meta property="article:tag" content="迁移学习">
 <meta property="article:tag" content="生物医学">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/comparison.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/comparison.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/04/10/Biomedical-LM/">
@@ -164,7 +164,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%9F%9F%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">混合域方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%A4%B4%E5%BC%80%E5%A7%8B%E8%AE%AD%E7%BB%83"><span class="nav-number">2.2.</span> <span class="nav-text">从头开始训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%B9%E5%AE%9A%E4%BB%BB%E5%8A%A1%E5%BE%AE%E8%B0%83"><span class="nav-number">3.1.</span> <span class="nav-text">特定任务微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.1.</span> <span class="nav-text">基线模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.2.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.3.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%8D%E8%A1%A8"><span class="nav-number">4.3.1.</span> <span class="nav-text">词表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.3.2.</span> <span class="nav-text">预训练方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.4.</span> <span class="nav-text">微调方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%9F%9F%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">混合域方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%A4%B4%E5%BC%80%E5%A7%8B%E8%AE%AD%E7%BB%83"><span class="nav-number">2.2.</span> <span class="nav-text">从头开始训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E8%AE%BE%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">模型设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%B9%E5%AE%9A%E4%BB%BB%E5%8A%A1%E5%BE%AE%E8%B0%83"><span class="nav-number">3.2.</span> <span class="nav-text">特定任务微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.1.</span> <span class="nav-text">基线模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.2.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.3.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%8D%E8%A1%A8"><span class="nav-number">4.3.1.</span> <span class="nav-text">词表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.3.2.</span> <span class="nav-text">预训练方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E6%96%B9%E6%B3%95"><span class="nav-number">4.4.</span> <span class="nav-text">微调方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -179,18 +179,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -319,102 +319,66 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要">摘要</h2>
-<p>《Domain-Specific Language Model Pretraining for Biomedical Natural
-Language Processing》为微软研究院发表的论文，收录于 2021 年
-ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
 <span id="more"></span>
-<h2 id="介绍">介绍</h2>
-<p>NLP 中，在未标记文本上自监督地训练预训练模型，加之以目标域微调，已经被证实为是行之有效的迁移学习策略，尤其是在目标域数据稀缺、源域和目标域高度相关的情况下。尚不清楚特定领域的预训练是否可以从通用领域的迁移中受益。在生物医学领域，已有的工作表明使用域内文本可以提供超过通用域语言模型的额外收益。然而，这些工作都基于一个普遍的假设 -- 域外文本依然是有用的，并且通常采用混合域方法，例如，通过从现有的通用域语言模型开始特定域的预训练。</p>
-<h3 id="混合域方法">混合域方法</h3>
-<p>混合域方法如下图上半部分所示。基于在互联网、维基百科等预训练得到的通用语言模型，继续进行特定域的预训练。</p>
-<p><img src="comparison.png"></p>
+
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>NLP 中，在未标记文本上自监督地训练预训练模型，加之以目标域微调，已经被证实为是行之有效的迁移学习策略，尤其是在目标域数据稀缺、源域和目标域高度相关的情况下。尚不清楚特定领域的预训练是否可以从通用领域的迁移中受益。在生物医学领域，已有的工作表明使用域内文本可以提供超过通用域语言模型的额外收益。然而，这些工作都基于一个普遍的假设–域外文本依然是有用的，并且通常采用混合域方法，例如，通过从现有的通用域语言模型开始特定域的预训练。</p>
+<h3 id="混合域方法"><a href="#混合域方法" class="headerlink" title="混合域方法"></a>混合域方法</h3><p>混合域方法如下图上半部分所示。基于在互联网、维基百科等预训练得到的通用语言模型，继续进行特定域的预训练。</p>
+<p><img src="/blog/comparison.png"></p>
 <p>然而，这种方法存在以下问题：</p>
 <ul>
 <li><strong>文本差异</strong>。生物医学领域的文本和通用域文本有较大差异，混合域方法增加了负迁移的可能性。</li>
-<li><strong>词表差距</strong>。目标域与通用域的词表差距较大。以 BERT 为例，BERT 的词表是从
-Wikipedia 和 BookCorpus
-生成的，这与生物医学域的词汇差距较大。例如 "naloxone" 一词（纳洛酮），医学里的常用名词，在 BERT 中被拆为四块：[na,
-##lo, ##xon, ##e]</li>
+<li><strong>词表差距</strong>。目标域与通用域的词表差距较大。以 BERT 为例，BERT 的词表是从 Wikipedia 和 BookCorpus 生成的，这与生物医学域的词汇差距较大。例如”naloxone” 一词（纳洛酮），医学里的常用名词，在 BERT 中被拆为四块：[na, ##lo, ##xon, ##e]</li>
 </ul>
-<h3 id="从头开始训练">从头开始训练</h3>
-<p>上图的下半部分是从头开始进行特定域的预训练的例子（train from
-scratch）。from
-scratch 是从头开始的意思，引申一下就是不使用预训练模型，从头开始训练。</p>
-<p>如果目标域本身的文本很少，则混合域预训练方法是有意义的，因为可以从使用相关领域的预训练中受益。但是，生物医学并非如此，它在
-PubMed 中拥有超过 3000
-万个摘要。因此，从头开始的特定领域预训练可能是更好的训练策略。它的优点有：</p>
+<h3 id="从头开始训练"><a href="#从头开始训练" class="headerlink" title="从头开始训练"></a>从头开始训练</h3><p>上图的下半部分是从头开始进行特定域的预训练的例子（train from scratch）。from scratch 是从头开始的意思，引申一下就是不使用预训练模型，从头开始训练。</p>
+<p>如果目标域本身的文本很少，则混合域预训练方法是有意义的，因为可以从使用相关领域的预训练中受益。但是，生物医学并非如此，它在 PubMed 中拥有超过 3000 万个摘要。因此，从头开始的特定领域预训练可能是更好的训练策略。它的优点有：</p>
 <ul>
 <li><strong>域内数据</strong>。使用的数据全部来自域内，不受其他领域文本的影响。</li>
 <li><strong>域内词表</strong>。不受通用域词表限制。</li>
 <li><strong>随机初始化</strong>。神经网络训练使用非凸优化，这意味着<strong>持续的预训练可能无法从通用域语言模型中完全撤消次优初始化</strong>。</li>
 </ul>
 <p>论文实验表明，在生物医学领域，从头开始的特定领域预训练大大优于通用语言模型的继续预训练，从而证明支持混合领域预训练的普遍假设并不总是适用。</p>
-<p>此外，论文在提出了一个生物医学语言理解和推理基准 BLURB（Biomedical
-Language Understanding &amp; Reasoning
-Benchmark），并在 https://aka.ms/BLURB 创建了排行榜。基准中包含：命名实体识别（NER）、循证医学信息提取（PICO）、关系抽取、句子相似度、文档分类、问答等子任务。将子任务得分加权后得到总分数。</p>
+<p>此外，论文在提出了一个生物医学语言理解和推理基准 BLURB（Biomedical Language Understanding &amp; Reasoning Benchmark），并在 <a target="_blank" rel="noopener" href="https://aka.ms/BLURB%E5%88%9B%E5%BB%BA%E4%BA%86%E6%8E%92%E8%A1%8C%E6%A6%9C%E3%80%82%E5%9F%BA%E5%87%86%E4%B8%AD%E5%8C%85%E5%90%AB%EF%BC%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%EF%BC%88NER%EF%BC%89%E3%80%81%E5%BE%AA%E8%AF%81%E5%8C%BB%E5%AD%A6%E4%BF%A1%E6%81%AF%E6%8F%90%E5%8F%96%EF%BC%88PICO%EF%BC%89%E3%80%81%E5%85%B3%E7%B3%BB%E6%8A%BD%E5%8F%96%E3%80%81%E5%8F%A5%E5%AD%90%E7%9B%B8%E4%BC%BC%E5%BA%A6%E3%80%81%E6%96%87%E6%A1%A3%E5%88%86%E7%B1%BB%E3%80%81%E9%97%AE%E7%AD%94%E7%AD%89%E5%AD%90%E4%BB%BB%E5%8A%A1%E3%80%82%E5%B0%86%E5%AD%90%E4%BB%BB%E5%8A%A1%E5%BE%97%E5%88%86%E5%8A%A0%E6%9D%83%E5%90%8E%E5%BE%97%E5%88%B0%E6%80%BB%E5%88%86%E6%95%B0%E3%80%82">https://aka.ms/BLURB 创建了排行榜。基准中包含：命名实体识别（NER）、循证医学信息提取（PICO）、关系抽取、句子相似度、文档分类、问答等子任务。将子任务得分加权后得到总分数。</a></p>
 <p>BLURB 涉及到的任务类型、数据规模和评估指标如下表所示。</p>
-<p><img src="task-intro.png"></p>
-<h2 id="方法">方法</h2>
-<p>采用<strong>预训练 + 特定任务微调</strong>的范式： ### 模型设置</p>
-<ul>
+<p><img src="/blog/task-intro.png"></p>
+<h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><p>采用<strong>预训练 + 特定任务微调</strong>的范式：</p>
+<h3 id="模型设置"><a href="#模型设置" class="headerlink" title="模型设置"></a>模型设置</h3><ul>
 <li>词表：Word Piece 子词模型</li>
 <li>预训练任务包含下局预测（NSP）任务，以便与 BERT 比较</li>
 <li>全词掩码 (WWM)，掩码率为 15%</li>
 <li> 数据集：PubMed5 摘要，包含 1400 万个摘要，32 亿个单词，21 GB。</li>
 </ul>
-<h3 id="特定任务微调">特定任务微调</h3>
-<p>从同一个预训练 BERT 开始，按照下图的架构，依次执行</p>
+<h3 id="特定任务微调"><a href="#特定任务微调" class="headerlink" title="特定任务微调"></a>特定任务微调</h3><p>从同一个预训练 BERT 开始，按照下图的架构，依次执行</p>
 <ul>
 <li><strong>输入转换</strong>：转换为任务所需的输入。例如关系抽取任务中，需要用特殊符号替换实体词；QA 中需要加入特殊分隔符等。</li>
 <li><strong>模型计算</strong>：得到编码向量。</li>
 <li><strong>特征抽取</strong>：从向量中选择任务所需的特征。例如，分类任务取 [CLS] 符号的表征向量，NER 取每个 token 的表征向量。</li>
 <li><strong>预测</strong>：根据任务 + 特征进行预测。例如，NER 使用线性层 / LSTM/CRF 进行分类，句子相似度使用线性层执行回归等。</li>
 </ul>
-<p><img src="task-specific-finetune.png"></p>
+<p><img src="/blog/task-specific-finetune.png"></p>
 <p>BLURB 中的六个任务可分别定义为 token / 句子级别的分类 / 回归任务，如下表所示。</p>
-<p><img src="tasks.png"></p>
-<h2 id="实验">实验</h2>
-<h3 id="基线模型">基线模型</h3>
-<p>实验涉及到的一些基线模型如下：</p>
-<p><img src="baselines.png"></p>
-<p>其中，SciBERT
-是使用生物医学和计算机科学的数据，从头开始生成词汇和预训练。
-然而，从生物医学应用的角度来看，SciBERT
-仍然采用混合域预训练方法，因为计算机科学文本显然是域外的。<code>Wiki +
-Books</code> 的词表，即 BERT 的词表，意味着模型都是从 BERT 继续预训练的。</p>
+<p><img src="/blog/tasks.png"></p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><h3 id="基线模型"><a href="#基线模型" class="headerlink" title="基线模型"></a>基线模型</h3><p>实验涉及到的一些基线模型如下：</p>
+<p><img src="/blog/baselines.png"></p>
+<p>其中，SciBERT 是使用生物医学和计算机科学的数据，从头开始生成词汇和预训练。 然而，从生物医学应用的角度来看，SciBERT 仍然采用混合域预训练方法，因为计算机科学文本显然是域外的。<code>Wiki + Books</code> 的词表，即 BERT 的词表，意味着模型都是从 BERT 继续预训练的。</p>
 <p>可以看到，除了本文的 <code>PubMedBERT</code>，其他模型都是混合域训练的方法。</p>
-<h3 id="实验结果">实验结果</h3>
-<p>BLURB 上的结果如下表所示，其中所有的 BERT 模型都经过了相同的微调过程。通过从头开始进行特定领域的预训练，PubMedBERT
-在大多数生物医学 NLP 任务中明显优于其他 BERT 模型。与使用域外文本训练的
-BERT 模型相比，收益最为显着。</p>
-<p><img src="overview-result.png"></p>
-<h3 id="消融实验">消融实验</h3>
-<h4 id="词表">词表</h4>
-<p>针对两种词表 &amp; 两种掩码方式，论文使用
-PubMedBERT 进行了消融实验。换而言之，两边的预训练方法都是从头开始的，不过是词表和掩码方式有所差异。结果如下表。可以看出，全词掩码是明显优于普通掩码的。从 PubMed 构建的词表在大多数任务上都是优于原始 BERT 的词表的。</p>
-<p><img src="vocab-wwm.png"></p>
+<h3 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h3><p>BLURB 上的结果如下表所示，其中所有的 BERT 模型都经过了相同的微调过程。通过从头开始进行特定领域的预训练，PubMedBERT 在大多数生物医学 NLP 任务中明显优于其他 BERT 模型。与使用域外文本训练的 BERT 模型相比，收益最为显着。</p>
+<p><img src="/blog/overview-result.png"></p>
+<h3 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h3><h4 id="词表"><a href="#词表" class="headerlink" title="词表"></a>词表</h4><p>针对两种词表 &amp; 两种掩码方式，论文使用 PubMedBERT 进行了消融实验。换而言之，两边的预训练方法都是从头开始的，不过是词表和掩码方式有所差异。结果如下表。可以看出，全词掩码是明显优于普通掩码的。从 PubMed 构建的词表在大多数任务上都是优于原始 BERT 的词表的。</p>
+<p><img src="/blog/vocab-wwm.png"></p>
 <p>从词表将句子编码后的平均长度也可以看出来，如下表，可以看出 PubMed 构建的词表的句子平均长度更短，在 QA 上达到了上百的差异。这里也可以看出，原始的 BERT 的词表在 BioASQ 任务上的 tokenize 后的平均句子长度为 <strong>702.4&gt;512，句子被截断了</strong>，怪不得在这个数据集上跟 PubMedBERT 差了十几个点。。。</p>
-<p><img src="vocab-length.png"></p>
-<h4 id="预训练方法">预训练方法</h4>
-<p>下表展示了预训练预料、训练时间对性能的影响。前两列均使用从通用语料 + 生物医学语料混合域预训练的方法，不过词表不同。两列性能比较互有来回，猜测是由于只根据单一域构建词表，混合域预训练性能受限，与只训练一半时间的 PubMed 类似。</p>
-<p><img src="ptr-method.png"></p>
+<p><img src="/blog/vocab-length.png"></p>
+<h4 id="预训练方法"><a href="#预训练方法" class="headerlink" title="预训练方法"></a>预训练方法</h4><p>下表展示了预训练预料、训练时间对性能的影响。前两列均使用从通用语料 + 生物医学语料混合域预训练的方法，不过词表不同。两列性能比较互有来回，猜测是由于只根据单一域构建词表，混合域预训练性能受限，与只训练一半时间的 PubMed 类似。</p>
+<p><img src="/blog/ptr-method.png"></p>
 <p><strong>对抗预训练</strong></p>
 <p>结果如下表所示。对抗预训练还损害了性能。作者认为可能是由于域内语料类别单一，如果预训练语料库更加多样化且相对域外，则对抗性训练更有用。</p>
-<p><img src="adversial.png"></p>
-<h3 id="微调方法">微调方法</h3>
-<p>以 NER、关系抽取为例，在 BERT 之前，都是使用 LSTM 和 CRF 进行标注。由于 BERT 横扫榜单，这种显式建模方法的实用性遭到了质疑。BERT
-模型的顶层已经捕获了整个文本范围内的许多非线性依赖关系。直接进行分类也可以取得很好的效果。在下表中（F1 分数）也可以看出，线性层对在 5 个数据集上都取得了最优。而且线性层是可并行的，LSTM 还要引入额外的串行开销。</p>
-<p><img src="ner-ablation.png"></p>
+<p><img src="/blog/adversial.png"></p>
+<h3 id="微调方法"><a href="#微调方法" class="headerlink" title="微调方法"></a>微调方法</h3><p>以 NER、关系抽取为例，在 BERT 之前，都是使用 LSTM 和 CRF 进行标注。由于 BERT 横扫榜单，这种显式建模方法的实用性遭到了质疑。BERT 模型的顶层已经捕获了整个文本范围内的许多非线性依赖关系。直接进行分类也可以取得很好的效果。在下表中（F1 分数）也可以看出，线性层对在 5 个数据集上都取得了最优。而且线性层是可并行的，LSTM 还要引入额外的串行开销。</p>
+<p><img src="/blog/ner-ablation.png"></p>
 <p><strong>关系抽取中的虚拟化方法和关系编码的影响</strong>。虚拟化（dummify）方法是指在关系抽取中，为了防止过拟合，往往使用特殊符号（例如 $DRUG 和 $GENE）替换实体词。关系编码是指用于关系分类的向量，例如 [CLS] 或者特殊实体开始标记。</p>
-<p>论文对关系编码的三种方法：[CLS]、实体词向量的最大池化、实体首符号的向量，以及输入实体符号的方法：虚拟化、原始文本、在实体前后添加标记进行了比较实验。结果如下表所示。简单地使用原始文本确实会使神经方法面临过拟合风险。对原始文本使用
-[CLS]
-是最糟糕的选择，因为很难判定要抽取哪两个实体间的关系。虚拟化仍然是最可靠的方法，它适用于任何一种关系编码方法。有趣的是，使用实体标记会在两个数据集中产生稍好的结果，因为它似乎可以防止过度拟合，同时保留有用的实体信息。</p>
-<p><img src="relation-extraction.png"></p>
-<h2 id="总结">总结</h2>
-<p>这篇论文研究了” 通用域预训练模型，对于拥有大量未标记文本的特定域的迁移学习，是否有效 “的问题。在生物医学领域的实验表明，从头开始训练（train
-from
-scratch）是更好的选择。论文中还做了非常详细的消融实验，逐个探究词表、训练数据等的影响。</p>
+<p>论文对关系编码的三种方法：[CLS]、实体词向量的最大池化、实体首符号的向量，以及输入实体符号的方法：虚拟化、原始文本、在实体前后添加标记进行了比较实验。结果如下表所示。简单地使用原始文本确实会使神经方法面临过拟合风险。对原始文本使用 [CLS] 是最糟糕的选择，因为很难判定要抽取哪两个实体间的关系。虚拟化仍然是最可靠的方法，它适用于任何一种关系编码方法。有趣的是，使用实体标记会在两个数据集中产生稍好的结果，因为它似乎可以防止过度拟合，同时保留有用的实体信息。</p>
+<p><img src="/blog/relation-extraction.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇论文研究了” 通用域预训练模型，对于拥有大量未标记文本的特定域的迁移学习，是否有效 “的问题。在生物医学领域的实验表明，从头开始训练（train from scratch）是更好的选择。论文中还做了非常详细的消融实验，逐个探究词表、训练数据等的影响。</p>
 
     </div>
 
@@ -490,13 +454,13 @@ scratch）是更好的选择。论文中还做了非常详细的消融实验，�
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

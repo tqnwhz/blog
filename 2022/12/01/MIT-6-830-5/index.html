@@ -21,14 +21,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
+<meta name="description" content="摘要Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MIT 6.830 数据库实验 Lab 5 实验报告">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
+<meta property="og:description" content="摘要Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/btree.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/btree.png">
 <meta property="article:published_time" content="2022-12-01T02:09:02.000Z">
 <meta property="article:modified_time" content="2022-12-01T06:27:36.134Z">
 <meta property="article:author" content="Tqnwhz">
@@ -37,7 +37,7 @@
 <meta property="article:tag" content="B+树">
 <meta property="article:tag" content="索引">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/btree.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/btree.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/12/01/MIT-6-830-5/">
@@ -154,7 +154,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E6%89%87%E5%87%BA%E6%90%9C%E7%B4%A2%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">高扇出搜索树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#b%E6%A0%91"><span class="nav-number">2.2.</span> <span class="nav-text">B + 树</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#preliminary"><span class="nav-number">3.1.</span> <span class="nav-text">Preliminary</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#search"><span class="nav-number">3.2.</span> <span class="nav-text">Search</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#insert-split"><span class="nav-number">3.3.</span> <span class="nav-text">Insert （Split）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#delete-steal"><span class="nav-number">3.4.</span> <span class="nav-text">Delete (Steal)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#deletemerge"><span class="nav-number">3.5.</span> <span class="nav-text">Delete（Merge）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E6%89%87%E5%87%BA%E6%90%9C%E7%B4%A2%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">高扇出搜索树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-%E6%A0%91"><span class="nav-number">2.2.</span> <span class="nav-text">B + 树</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Preliminary"><span class="nav-number">3.1.</span> <span class="nav-text">Preliminary</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Search"><span class="nav-number">3.2.</span> <span class="nav-text">Search</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Insert-%EF%BC%88Split%EF%BC%89"><span class="nav-number">3.3.</span> <span class="nav-text">Insert （Split）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Delete-Steal"><span class="nav-number">3.4.</span> <span class="nav-text">Delete (Steal)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Delete%EF%BC%88Merge%EF%BC%89"><span class="nav-number">3.5.</span> <span class="nav-text">Delete（Merge）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -169,18 +169,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -303,71 +303,47 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要">摘要</h2>
-<p>Lab
-5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+
-树是最为广泛使用的数据库索引。 <span id="more"></span></p>
-<h2 id="理论知识">理论知识</h2>
-<p>索引用于加快高频字段的查找效率，例如用户 ID 这种字段，基本哪里都要用，每次都做全表扫描是不现实的。索引和记录间形成了一个一对一（多）的关系，取决于索引的键。下面先从简单的搜索树开始，对索引进行介绍。</p>
-<h3 id="高扇出搜索树">高扇出搜索树</h3>
-<p>先考虑简单的情况，在磁盘上按某个字段对表进行了排序。这种情况下不需要记录前后指针，因为物理上这些页面都是按序排列的。然后需要构建索引。为什么不用二分查找呢，因为二分查找也会导致<span class="math inline"> \(log_2N\)</span> 的页面 IO，是比较低效的。
-可以构建一个 <code>&lt;key, Record&gt;</code> 的索引，由于 record
-可能很大，而 key 很小，这种存储也很低效。因此可以使用指向 Page
-的指针，<code>&lt;key,
-PageId&gt;</code>，构建这样的一个搜索文件，在页面内完成二分查找。
-这种算法是复杂度与之前的二分查找类似，只是<strong>常数更小，因为每个页面能存储更多的索引</strong>。这个过程可以递归完成，直到最顶层的索引只需要记录在一个页面中，变成了一个多叉的搜索树。
-在该树下进行二分查找时，会在每个节点完成二分查找，然后定位下一层的节点，直到找到页面内。复杂度为<span class="math inline"> \(log_F(\#Pages)\)</span>，F 为节点的扇出（相较于 2
-有了很大改进）。 分析该算法可知，该算法具有以下特点：</p>
-<ol type="1">
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>Lab 5 要求实现 B + 树索引的相关逻辑，包含查找、插入、删除等，过程中需要维护 B + 树的阶性质。索引是一种数据结构，用于实现在某个字段上快速地查找和修改数据记录。对于常访问的字段，构建索引是很有必要的，B+ 树是最为广泛使用的数据库索引。</p>
+<span id="more"></span>
+
+<h2 id="理论知识"><a href="#理论知识" class="headerlink" title="理论知识"></a>理论知识</h2><p>索引用于加快高频字段的查找效率，例如用户 ID 这种字段，基本哪里都要用，每次都做全表扫描是不现实的。索引和记录间形成了一个一对一（多）的关系，取决于索引的键。下面先从简单的搜索树开始，对索引进行介绍。</p>
+<h3 id="高扇出搜索树"><a href="#高扇出搜索树" class="headerlink" title="高扇出搜索树"></a>高扇出搜索树</h3><p>先考虑简单的情况，在磁盘上按某个字段对表进行了排序。这种情况下不需要记录前后指针，因为物理上这些页面都是按序排列的。然后需要构建索引。为什么不用二分查找呢，因为二分查找也会导致 $log_2N$ 的页面 IO，是比较低效的。<br>可以构建一个 <code>&lt;key, Record&gt;</code> 的索引，由于 record 可能很大，而 key 很小，这种存储也很低效。因此可以使用指向 Page 的指针，<code>&lt;key, PageId&gt;</code>，构建这样的一个搜索文件，在页面内完成二分查找。<br>这种算法是复杂度与之前的二分查找类似，只是<strong>常数更小，因为每个页面能存储更多的索引</strong>。这个过程可以递归完成，直到最顶层的索引只需要记录在一个页面中，变成了一个多叉的搜索树。<br>在该树下进行二分查找时，会在每个节点完成二分查找，然后定位下一层的节点，直到找到页面内。复杂度为 $log_F (#Pages)$，F 为节点的扇出（相较于 2 有了很大改进）。<br>分析该算法可知，该算法具有以下特点：</p>
+<ol>
 <li>支持连续扫描。因为数据还是连续存储的</li>
 <li>高扇出。因为索引记录比记录小很多，一个页面可以存储很多条索引。</li>
 <li>不支持插入。当需要插入时，可能会导致页面溢出，这种情况需要后接页面形成链表。当插入过多时，就退化成了线性扫描。</li>
 </ol>
-<p>上述这种算法称为 ISAM（Indexed Sequential Access
-Method），上世纪由 IBM 提出。</p>
-<h3 id="b树">B + 树</h3>
-<p>B + 树与上面的搜索树相似，也是一种多叉搜索树，但它支持动态插入，而且总是平衡的。B + 树的阶记为
-d，每个内部节点（根节点除外）的子节点数量需要处在 [d,2d] 之间，每个节点的最大扇出是
-2d+1，即 2d 个子节点划分得到 2d+1
-个区间。B + 树的叶子节点上保存了左右兄弟的指针，可用于线性扫描。</p>
-<p><img src="btree.png"></p>
-<p>B + 树与 ISAM
-的区别在于，<strong>在底层的叶子页面上，不需要严格按顺序排列</strong>，如上图所示。Page
-3 和 Page 5 是邻居的关系，在磁盘上中间还隔着 Page
-4。但是叶子节点间的前后指针使得可以遍历叶子页面。这也允许了动态地插入和删除。</p>
-<p>典型设置，B + 树的阶为 1600，fill-factor 为
-67%（叶子页面的记录占比）</p>
+<p>上述这种算法称为 ISAM（Indexed Sequential Access Method），上世纪由 IBM 提出。</p>
+<h3 id="B-树"><a href="#B-树" class="headerlink" title="B+树"></a>B + 树</h3><p>B + 树与上面的搜索树相似，也是一种多叉搜索树，但它支持动态插入，而且总是平衡的。B + 树的阶记为 d，每个内部节点（根节点除外）的子节点数量需要处在 [d,2d] 之间，每个节点的最大扇出是 2d+1，即 2d 个子节点划分得到 2d+1 个区间。B + 树的叶子节点上保存了左右兄弟的指针，可用于线性扫描。</p>
+<p><img src="/blog/btree.png"></p>
+<p>B + 树与 ISAM 的区别在于，<strong>在底层的叶子页面上，不需要严格按顺序排列</strong>，如上图所示。Page 3 和 Page 5 是邻居的关系，在磁盘上中间还隔着 Page 4。但是叶子节点间的前后指针使得可以遍历叶子页面。这也允许了动态地插入和删除。</p>
+<p>典型设置，B + 树的阶为 1600，fill-factor 为 67%（叶子页面的记录占比）</p>
 <ul>
 <li>平均扇出为 2144</li>
 <li> 假设是 128KB 的页面，每条记录 40B</li>
-<li> 高度为 1 的树，<span class="math inline">\(2144^2=4,596,736\)</span>
-records</li>
-<li> 高度为 2 的树，<span class="math inline">\(2144^3=9,855,401,984\)</span> records 高</li>
+<li> 高度为 1 的树，$2144^2=4,596,736$ records</li>
+<li> 高度为 2 的树，$2144^3=9,855,401,984$ records 高</li>
 </ul>
-<p>高度为 2 的 B + 树就可以容纳近 10
-亿的数据，B + 树会非常的矮，进而提高查找效率。B + 树的高度很少超过 3 和 4。</p>
-<p><strong>查找</strong>：B + 树的查找与 ISAM
-类似，从根节点起，在内部节点内做二分查找定位子节点，直到定位至叶子页面，再在页面内做二分查找。</p>
+<p>高度为 2 的 B + 树就可以容纳近 10 亿的数据，B + 树会非常的矮，进而提高查找效率。B + 树的高度很少超过 3 和 4。</p>
+<p><strong>查找</strong>：B + 树的查找与 ISAM 类似，从根节点起，在内部节点内做二分查找定位子节点，直到定位至叶子页面，再在页面内做二分查找。</p>
 <p><strong>插入</strong>：</p>
 <ul>
 <li>当要插入的页面还有空间时，可以直接在页面内插入并排序。</li>
-<li>当没有空间时，需要新建页面，并将一半的数据转移到新页面，将新页面插入到父节点中
-<ul>
+<li>当没有空间时，需要新建页面，并将一半的数据转移到新页面，将新页面插入到父节点中<ul>
 <li>如果父节点也满了，递归向上</li>
-</ul></li>
+</ul>
+</li>
 </ul>
 <p><strong>删除</strong>：删去元组后，可能会导致页面不满足阶约束，可以选择：</p>
 <ul>
 <li>直接忽略：数据库场景中，一般插入比删除多，因此删除多出来的空间可以保留，等待后续插入即可</li>
-<li>维护约束：
-<ul>
+<li>维护约束：<ul>
 <li>当页面不满足约束时，从兄弟页面匀一些多余的元组过来</li>
 <li>如果兄弟页面也没有多余的，就需要合并两个页面，递归向上删除节点</li>
-</ul></li>
 </ul>
-<h2 id="exercise">Exercise</h2>
-<h3 id="preliminary">Preliminary</h3>
-<p>首先，先介绍下 SimpleDB 的 B + 树是怎么设计的。B + 树的页面被分为四种：</p>
+</li>
+</ul>
+<h2 id="Exercise"><a href="#Exercise" class="headerlink" title="Exercise"></a>Exercise</h2><h3 id="Preliminary"><a href="#Preliminary" class="headerlink" title="Preliminary"></a>Preliminary</h3><p>首先，先介绍下 SimpleDB 的 B + 树是怎么设计的。B + 树的页面被分为四种：</p>
 <ul>
 <li>BTreeHeaderPage：保存 B + 树索引文件的首部信息</li>
 <li> BTreeRootPtrPage：用于保存 B + 树根节点的指向，类似一个假根节点，避免插入过程中根节点变化</li>
@@ -381,55 +357,48 @@ records</li>
 <li>rightChildId：右孩子的页面 ID</li>
 </ul>
 <p>一个 <code>BTreeInternalPage</code> 保存 m 个分界点，即 m+1 个子节点。</p>
-<h3 id="search">Search</h3>
-<p>首先，要实现的是查找方法，<code>findLeafPage()</code>，该方法接收一个页面和 <code>Field</code>，返回这个值对应的叶子页面。上面提到，正常在节点内应该是使用二分查找找到对应的孩子节点。由于 <code>BTreeInternalPage</code> 只对外暴露了 <code>Iterator&lt;BTreeEntry&gt;
-iterator()</code> 方法，这里只能使用遍历的方法，找到孩子节点对应的值区间。再递归查找直到找到叶子页面。</p>
-<h3 id="insert-split">Insert （Split）</h3>
-<p>然后来到了重头戏，B + 树的插入。Lab 里将拆分节点分为了两个方法，需要分别实现：</p>
+<h3 id="Search"><a href="#Search" class="headerlink" title="Search"></a>Search</h3><p>首先，要实现的是查找方法，<code>findLeafPage()</code>，该方法接收一个页面和 <code>Field</code>，返回这个值对应的叶子页面。上面提到，正常在节点内应该是使用二分查找找到对应的孩子节点。由于 <code>BTreeInternalPage</code> 只对外暴露了<code> Iterator&lt;BTreeEntry&gt; iterator()</code> 方法，这里只能使用遍历的方法，找到孩子节点对应的值区间。再递归查找直到找到叶子页面。</p>
+<h3 id="Insert-（Split）"><a href="#Insert-（Split）" class="headerlink" title="Insert （Split）"></a>Insert （Split）</h3><p>然后来到了重头戏，B + 树的插入。Lab 里将拆分节点分为了两个方法，需要分别实现：</p>
 <ul>
 <li><code>splitLeafPage()</code>：拆分叶子结点，可能需要递归调用父节点的拆分</li>
 <li><code>splitInernalPage()</code>：拆分非叶子节点，可能需要递归调用父节点的拆分</li>
 </ul>
 <p>拆分节点的逻辑可以分为下面几步：</p>
-<ol type="1">
+<ol>
 <li>新建空白页面，转移一半的数据到新页面，一般是把值较大的一半转移过去</li>
 <li>判断父节点是否有空槽，没有的话递归拆父节点</li>
-<li>将新页面关联到父页面
-<ul>
+<li>将新页面关联到父页面<ul>
 <li>维护两个页面和父页面间的指向</li>
-<li>在父页面新建 entry，key 为大页面的最小值，
-左右孩子分别为原页面和新页面</li>
-</ul></li>
+<li>在父页面新建 entry，key 为大页面的最小值， 左右孩子分别为原页面和新页面</li>
+</ul>
+</li>
 <li>对于叶子结点，维护左右兄弟指针</li>
 </ol>
 <p>这里需要注意的是，要把修改后的页面更新在 <code>dirtypages</code> 中，否则会出现读取不一致的现象。Lab 提供了递归的拆分辅助方法，名为 <code>getParentWithEmptySlots</code>，其会判断父页面中是否有空槽，没有的话调用 <code>splitInternalPage</code> 将其拆分，返回一个带有空槽的父页面。</p>
-<h3 id="delete-steal">Delete (Steal)</h3>
-<p>这个 exercise 要求实现带 “偷取” 逻辑。当一个页面不满足半满约束时，需要从它的兄弟页面中匀一些多余的数据过来。根据页面、兄弟的类型，这部分逻辑被分散在三个方法中：</p>
+<h3 id="Delete-Steal"><a href="#Delete-Steal" class="headerlink" title="Delete (Steal)"></a>Delete (Steal)</h3><p>这个 exercise 要求实现带 “偷取” 逻辑。当一个页面不满足半满约束时，需要从它的兄弟页面中匀一些多余的数据过来。根据页面、兄弟的类型，这部分逻辑被分散在三个方法中：</p>
 <ul>
 <li><code>stealFromLeafPage</code>：叶子结点间的偷取，<code>isRightSibling</code> 参数标识是否是右侧兄弟</li>
 <li><code>stealFromLeftInternalPage</code>：从左侧内部节点偷取</li>
 <li><code>stealFromRightInternalPage</code>：从右侧内部节点偷取</li>
 </ul>
 <p>偷取的逻辑可以分为下面几步：</p>
-<ol type="1">
-<li>均匀地把数据匀过去，对于每条数据
-<ol type="1">
+<ol>
+<li>均匀地把数据匀过去，对于每条数据<ol>
 <li>如果是叶子页面的元组记录，转移即可</li>
 <li>如果是内部节点的 key 和 child 记录，需要新建 Entry 插入</li>
-</ol></li>
+</ol>
+</li>
 <li>更新父节点中 Entry 的 key 值，需要根据左右关系，选择大页面中的最小值作为新的 key 值</li>
 <li>更新父节点指向关系</li>
 </ol>
-<h3 id="deletemerge">Delete（Merge）</h3>
-<p>当偷取已经不能满足需要的时候，需要合并两个均达不到半满的节点。同样的，根据节点类型，可以分为：</p>
+<h3 id="Delete（Merge）"><a href="#Delete（Merge）" class="headerlink" title="Delete（Merge）"></a>Delete（Merge）</h3><p>当偷取已经不能满足需要的时候，需要合并两个均达不到半满的节点。同样的，根据节点类型，可以分为：</p>
 <ul>
 <li><code>mergeLeafPages</code>：合并两个叶子结点</li>
 <li><code>mergeInternalPages</code>：合并内部节点</li>
 </ul>
 <p>合并可以看成偷取的一种极端情况，将两个节点所有的数据都匀到一个节点中，然后删除掉空页面以及父节点中的对应 entry。这个过程中也可能会导致递归向上删除。Lab 提供了 <code>deleteParentEntry</code> 的工具方法来处理删除父节点的 entry 后不满足半满约束的情况，会调用 <code>handleMinOccupancyPage</code> 根据情况调用偷取和合并方法。</p>
 <p>当四个 exercise 做完，理论上已经可以通过这四个 exercise 的所有 Test。由于 SimpleDB 本身是使用的页面级别的锁，不存在意向锁的 phantom 问题，如果锁实现正确的话，应该也可以通过 BTreeNextKeyLockingTest 和 BTreeDeadlockTest。如果到目前为止一切都正确，应该可以通过一个很难的 <code>BTreeTest</code>。</p>
-<h2 id="总结">总结</h2>
-<p>本次 Lab 主要完成了 B + 树的增删查逻辑。Lab 提供了 B + 树索引的整体框架，只需要实现核心的增删查逻辑即可。B + 树还是一个非常复杂的数据结构，自己从头实现的话估计得很久。不过经过这个 Lab，对 B + 树的操作有了更深的认识。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本次 Lab 主要完成了 B + 树的增删查逻辑。Lab 提供了 B + 树索引的整体框架，只需要实现核心的增删查逻辑即可。B + 树还是一个非常复杂的数据结构，自己从头实现的话估计得很久。不过经过这个 Lab，对 B + 树的操作有了更深的认识。</p>
 
     </div>
 
@@ -506,13 +475,13 @@ iterator()</code> 方法，这里只能使用遍历的方法，找到孩子节�
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

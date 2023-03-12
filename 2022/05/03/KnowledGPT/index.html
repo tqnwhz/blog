@@ -21,19 +21,19 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 zhaoxlpku&#x2F;KnowledGPT (github.com)。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的">
+<meta name="description" content="摘要《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 zhaoxlpku&#x2F;KnowledGPT (github.com)。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知">
 <meta property="og:type" content="article">
 <meta property="og:title" content="KnowledGPT: 基于预训练语言模型的知识对话">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 zhaoxlpku&#x2F;KnowledGPT (github.com)。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的">
+<meta property="og:description" content="摘要《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 zhaoxlpku&#x2F;KnowledGPT (github.com)。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/architecture.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/wizard-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/CMU-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/human-evaluation.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/ablation-study.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/T-max.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/wizard-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/CMU-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/human-evaluation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/ablation-study.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/T-max.png">
 <meta property="article:published_time" content="2022-05-03T03:26:22.000Z">
 <meta property="article:modified_time" content="2022-05-04T08:19:42.687Z">
 <meta property="article:author" content="Tqnwhz">
@@ -42,7 +42,7 @@
 <meta property="article:tag" content="知识对话">
 <meta property="article:tag" content="语言模型">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/architecture.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/architecture.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/">
@@ -159,7 +159,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%B9%89"><span class="nav-number">3.</span> <span class="nav-text">问题定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E6%84%9F%E7%9F%A5%E7%9F%A5%E8%AF%86%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">4.1.</span> <span class="nav-text">上下文感知知识编码器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%BA%E5%BA%8F%E7%9F%A5%E8%AF%86%E9%80%89%E6%8B%A9%E5%99%A8"><span class="nav-number">4.2.</span> <span class="nav-text">顺序知识选择器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E7%AD%96%E7%95%A5"><span class="nav-number">4.3.</span> <span class="nav-text">学习策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%AA%E6%A0%87%E7%AD%BE%E6%9E%84%E5%BB%BA"><span class="nav-number">4.3.1.</span> <span class="nav-text">伪标签构建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%81%94%E5%90%88%E4%BC%98%E5%8C%96"><span class="nav-number">4.3.2.</span> <span class="nav-text">联合优化</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86%E6%8C%87%E6%A0%87"><span class="nav-number">5.1.</span> <span class="nav-text">数据集 &amp; 指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF"><span class="nav-number">5.2.</span> <span class="nav-text">基线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">5.3.</span> <span class="nav-text">实验结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.3.1.</span> <span class="nav-text">消融实验</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%B9%89"><span class="nav-number">3.</span> <span class="nav-text">问题定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E6%84%9F%E7%9F%A5%E7%9F%A5%E8%AF%86%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">4.1.</span> <span class="nav-text">上下文感知知识编码器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%BA%E5%BA%8F%E7%9F%A5%E8%AF%86%E9%80%89%E6%8B%A9%E5%99%A8"><span class="nav-number">4.2.</span> <span class="nav-text">顺序知识选择器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E7%AD%96%E7%95%A5"><span class="nav-number">4.3.</span> <span class="nav-text">学习策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%AA%E6%A0%87%E7%AD%BE%E6%9E%84%E5%BB%BA"><span class="nav-number">4.3.1.</span> <span class="nav-text">伪标签构建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%81%94%E5%90%88%E4%BC%98%E5%8C%96"><span class="nav-number">4.3.2.</span> <span class="nav-text">联合优化</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86-amp-%E6%8C%87%E6%A0%87"><span class="nav-number">5.1.</span> <span class="nav-text">数据集 &amp; 指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF"><span class="nav-number">5.2.</span> <span class="nav-text">基线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">5.3.</span> <span class="nav-text">实验结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.3.1.</span> <span class="nav-text">消融实验</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -174,18 +174,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -318,167 +318,84 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要">摘要</h2>
-<p>《Knowledge-Grounded Dialogue Generation with Pre-trained Language
-Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP
-2020 主会。代码公开在 <a target="_blank" rel="noopener" href="https://github.com/zhaoxlpku/KnowledGPT">zhaoxlpku/KnowledGPT
-(github.com)</a>。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知识文本中选择知识，并通过一种无监督的方法联合优化知识选择和知识对话生成。论文提出的 KnowLEDGPT 在 Wizard 和 CMU
-DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 <a target="_blank" rel="noopener" href="https://github.com/zhaoxlpku/KnowledGPT">zhaoxlpku/KnowledGPT (github.com)</a>。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知识文本中选择知识，并通过一种无监督的方法联合优化知识选择和知识对话生成。论文提出的 KnowLEDGPT 在 Wizard 和 CMU DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
 <span id="more"></span>
-<h2 id="介绍">介绍</h2>
-<p>数据驱动的开放域对话系统一直饱受通用性、无用回复的问题。当人类参与者试图深入某个特定主题时，这种缺陷尤其严重。虽然预训练模型通过模型扩张、更多的数据改善了这一问题，其可以在训练期间记住足够多的语言模式，但它们仍只能捕获 “平均语义”。当对话需要知识才能进行下去时，除非模型已经在预训练阶段 “见过” 相关知识并以正确的方式存储在参数中且可以正确关联，否则模型生成的回复仍可能是通用无用的。这与人类的真实对话还有着不小的差距。</p>
+
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>数据驱动的开放域对话系统一直饱受通用性、无用回复的问题。当人类参与者试图深入某个特定主题时，这种缺陷尤其严重。虽然预训练模型通过模型扩张、更多的数据改善了这一问题，其可以在训练期间记住足够多的语言模式，但它们仍只能捕获 “平均语义”。当对话需要知识才能进行下去时，除非模型已经在预训练阶段 “见过” 相关知识并以正确的方式存储在参数中且可以正确关联，否则模型生成的回复仍可能是通用无用的。这与人类的真实对话还有着不小的差距。</p>
 <p>最近，出现了两条似乎有望弥合差距的研究方向。第一种是大规模的预训练模型，通过模型扩张、大量数据在预训练期间学到足够多的语言模式，缓解通用性回复的问题。然而，这种简单粗暴的方法还是只能捕获数据的 “平均” 语义。当需要特定知识时，生成的回复仍然可能是通用的。</p>
 <p>另一种方法是显式地引入外部知识。知识可分为结构化的知识图谱和非结构化的文本（维基百科等）。由于高质量的知识图谱更难获得，而非结构化的文本则更易获得，成本低廉而且数量庞大。然而，这些文本往往长而冗余，而预训练模型往往会受到序列长度的限制。事实上，该问题上，模型容量和处理长输入的能力是冲突的。一方面，在海量的文本上预训练，模型必须设置一个输入上限。另一方面，在回复生成时，需要尽可能多的保留候选知识，以保证相关知识的召回。这一冲突是知识对话生成的基本阻碍。</p>
 <p>为了克服这一问题，研究者开始引入知识选择模块，从若干相关知识候选中选择最相关的知识子集，进而显著序列长度。然而，现在的一些方法中，知识选择模块要么与模型强耦合，无法应用在预训练模型中；要么通过人工标注数据训练，成本昂贵。本文提出了一种无监督的方法，将知识选择形式化为基于 BERT 的序列预测任务。通过计算真实回复和候选知识间的相似度作为伪标签，预热模型。再通过强化学习、课程学习的方法，交替更新知识选择模型和回复生成模型。因此，知识选择通过回复生成的反馈得到进一步优化。</p>
-<p>论文在 Wizard of Wikipedia 和 CMU Document Grounded
-Conversations 两个数据集上进行实验。结果表明，模型可以显着优于最先进的方法以及一些以启发式方式使用的预训练模型，达到新的 SOTA。此外，作为副产品，知识选择模块在维基百科向导上的知识选择准确性方面也优于最先进的模型，这意味着其他模型也可以从该组件中受益。</p>
-<h2 id="问题定义">问题定义</h2>
-<ul>
-<li>数据集<span class="math inline"> \(D=\{(U_i,D_i,r_i)\}_{i=1}^N\)</span></li>
-<li><span class="math inline">\(U_i\)</span> 代表上下文</li>
-<li><span class="math inline"> \(D_i\)</span> 代表与<span class="math inline"> \(U_i\)</span> 相关的文档</li>
-<li><span class="math inline"> \(r_i\)</span> 代表给定<span class="math inline"> \(U_i\)</span> 上下文，基于<span class="math inline"> \(D_i\)</span> 的回复</li>
-<li>目标：<span class="math inline">\(\max
-P(r_i|U_i,D_i;\theta)\)</span></li>
+<p>论文在 Wizard of Wikipedia 和 CMU Document Grounded Conversations 两个数据集上进行实验。结果表明，模型可以显着优于最先进的方法以及一些以启发式方式使用的预训练模型，达到新的 SOTA。此外，作为副产品，知识选择模块在维基百科向导上的知识选择准确性方面也优于最先进的模型，这意味着其他模型也可以从该组件中受益。</p>
+<h2 id="问题定义"><a href="#问题定义" class="headerlink" title="问题定义"></a>问题定义</h2><ul>
+<li>数据集 $D={(U_i,D_i,r_i)}_{i=1}^N$</li>
+<li>$U_i$ 代表上下文</li>
+<li> $D_i$ 代表与 $U_i$ 相关的文档</li>
+<li> $r_i$ 代表给定 $U_i$ 上下文，基于 $D_i$ 的回复</li>
+<li>目标：$\max P (r_i|U_i,D_i;\theta)$</li>
 </ul>
-<p>由于论文使用 GPT2 建模此条件概率，因此将上式改写为： <span class="math display">\[
-\begin{aligned}
-P(r_i|U_i,D_i)&amp;=P(r_i|g(U,D);\theta)\\
-&amp;=\prod_i^{l_r}P(r_i|g(U,D),r_{1:t-1};\theta)
-\end{aligned}
-\]</span> <span class="math inline">\(g(U,D)\)</span> 将知识和上下文结合的模块，包含知识选择。问题就变成了如何定义<span class="math inline"> \(g(U,D)\)</span> 和如何微调<span class="math inline"> \(\theta\)</span>。显然，可以直接将<span class="math inline"> \(D\)</span> 和<span class="math inline"> \(U\)</span> 直接拼接在一起然后截断，但是这可能会删去重要的知识且引入噪声，进而影响性能。<span class="math inline">\(g(U,D)\)</span> 的学习面临以下问题：</p>
+<p>由于论文使用 GPT2 建模此条件概率，因此将上式改写为：<br>$$<br>\begin{aligned}<br>P(r_i|U_i,D_i)&amp;=P(r_i|g(U,D);\theta)\<br>&amp;=\prod_i^{l_r}P(r_i|g(U,D),r_{1:t-1};\theta)<br>\end{aligned}<br>$$<br>$g (U,D)$ 将知识和上下文结合的模块，包含知识选择。问题就变成了如何定义 $g (U,D)$ 和如何微调 $\theta$。显然，可以直接将 $D$ 和 $U$ 直接拼接在一起然后截断，但是这可能会删去重要的知识且引入噪声，进而影响性能。$g (U,D)$ 的学习面临以下问题：</p>
 <ul>
 <li>如何对<strong>上下文与外部知识之间的相关性</strong>进行建模</li>
-<li>当<strong>缺少真实知识标签时</strong>如何学习<span class="math inline"> \(g(U,D)\)</span></li>
-<li> 如何将<span class="math inline"> \(g(U,D)\)</span> 和 GPT-2 模型与 D <strong>联合优化</strong>，从而使两者相互促进。</li>
+<li>当<strong>缺少真实知识标签时</strong>如何学习 $g (U,D)$</li>
+<li> 如何将 $g (U,D)$ 和 GPT-2 模型与 D <strong>联合优化</strong>，从而使两者相互促进。</li>
 </ul>
-<h2 id="方法">方法</h2>
-<p>模型的架构如下图所示。在 Transformer
-架构的基础上，知识选择模块由上下文感知<strong>知识编码器</strong>和<strong>顺序知识选择器</strong>组成。知识编码器通过自注意力层捕获上下文
-U 和 D
-中的每个句子之间的交互模式，然后将这些模式馈送到知识选择器，逐步地解码有用的知识。由于无法获得人工标记，学习方法从充分利用回复构建的伪标记开始，通过强化学习方法和课程学习方法交替优化知识选择和回复生成。</p>
-<p><img src="architecture.png"></p>
-<h3 id="上下文感知知识编码器">上下文感知知识编码器</h3>
-<p>虽然名字很玄乎，但是原理很简单。将上下文<span class="math inline"> \(U_i\)</span> 和每个候选知识<span class="math inline"> \(d_i\in
-D_i=(d_1,d_2,\cdots,d_m)\)</span> 分别拼接起来，馈入 BERT，取最后一层的 <strong>[CLS]</strong> 的向量作为上下文表征。也就是架构图左侧的下半部分。用<span class="math inline"> \(E=(e_1,e_2,\cdots,e_m)\)</span> 代表编码器的输出，其中<span class="math inline"> \(e_i\)</span> 代表知识<span class="math inline"> \(d_i\)</span> 和上下文拼接后的上下文表征。</p>
-<h3 id="顺序知识选择器">顺序知识选择器</h3>
-<p>这里的原理也很简单。前面提到，论文将知识选择视作<strong>序列预测</strong>任务（而非序列分类）。换而言之，知识选择模块意在<strong>顺序地解码出一个知识序列子集</strong>。也就是类似 RNN 的自回归方法。这样建模的原因可能是无需额外考虑序列分类时拼接的顺序。</p>
-<p>具体而言，这一块有一个 LSTM 解码器组成，输入为编码器的输出序列<span class="math inline"> \(E\)</span>。解码每一步与输入序列计算 Attention，从知识表征中选择输出，直到输出特殊的结束符号<span class="math inline"> \(e_{spe}\)</span> 或者序列长度达到上限。另外，在解码时的每一步，需要排除已经输出的知识，显然同一个知识没有必要输出两次。最后得到的解码输出就是选择后的知识序列<span class="math inline"> \(D'\)</span>，<span class="math inline">\(g(U,D)\)</span> 定义为<span class="math inline"> \(U\cup D'\)</span>。</p>
-<h3 id="学习策略">学习策略</h3>
-<p>由于知识选择器的训练过程是无标签的，这可能会很困难。在最近的一篇论文中（Kim
-et al., 2020），当人类标签被移除时，知识选择的准确率从 27% 下降到
-0.3%。另外，在端到端的模型中，知识选择的结果作为回复生成的输入，二者耦合纠缠。在训练早期，<span class="math inline">\(g(U,D)\)</span> 可能性能很差，训练噪声传入 GPT-2 再反向传播至<span class="math inline"> \(g(U,D)\)</span>，可能会导致两边模型效果都很差。因此，论文提出了一种弱监督的联合优化策略，如下所示。</p>
-<h4 id="伪标签构建">伪标签构建</h4>
-<p>为了减轻联合优化中的错误累积，论文考虑构建弱监督信号并预热 g (U, D)
-的学习和 GPT-2 的微调。
-直觉来看，人类的回复带有与知识候选相关性的线索，因此可以用来构建伪标签。具体来说，首先根据相似性<span class="math inline"> \(\{Sim(d_t, r)\}_{t=1}^m\)</span> 将<span class="math inline"> \(D=\{d_t\}_{t=1}^m\)</span> 降序排序为<span class="math inline"> \(\{d_{j_t}\}^m_{t=1}\)</span>。其中 $Sim (・,・)
-$ 表示<strong>相似度函数</strong>，例如 uni-gran F1。 然后构建 D 的子集：
-<span class="math display">\[
-\overline D=\{d_{j_1},d_{j_2},\cdots,d_{j_\overline m}\}
-\]</span></p>
-<p><span class="math display">\[
-\overline m=\arg\max_t(Sim(d_{j_{1:t}},r))
-\]</span> 其中，<span class="math inline">\(d_{j_{1:t}}\)</span> 是<span class="math inline"> \(\{d_{j_i}\}_{i=1}^t\)</span> 的拼接结果。上述子集的构建就是取相似性降序知识的前缀拼接结果中，与真实回复相似性最大的拼接结果对应的知识子集。然后以<span class="math inline"> \(\overline
-D\)</span> 为知识选择的伪标签，分别<strong>预热</strong>知识选择模块和回复生成模块。即，通过最大似然分别优化<span class="math inline"> \(D_K=\{(U_i,D_i,\overline
-D_i\}_{i=1}^N\)</span> 和<span class="math inline"> \(D_G=\{(U_i,\overline
-D_i,r_i\}_{i=1}^N\)</span>。</p>
-<h4 id="联合优化">联合优化</h4>
-<p><strong>强化学习</strong>。论文使用策略梯度法继续训练<span class="math inline"> \(g(U,D)\)</span>。其中，<span class="math inline">\(g(U,D)\)</span> 由 GPT-2 进一步监督且直接针对目标指标进行优化（例如实验中的 F1）。具体而言，在知识选择器解码时的每一步，从概率分布<span class="math inline"> \(P(d_i|U,d_{1:t-1})\)</span> 中采样另一个知识，遵循同样的停止策略，定义如下的损失函数：
-<span class="math display">\[
-\mathcal L_K=-\frac 1 N\sum_{i=1}^N(\tilde R_i \sum_{t=1}^{|\tilde
-D_i|}logP(d_{i,j_t}|U_i,d_{i,j_{1:t-1}}))
-\]</span></p>
-<p><span class="math display">\[
-\tilde R_i=R(\tilde D_i)-b
-\]</span> 其中，<span class="math inline">\(R(\tilde
-D_i)=Sim(r'_i,r_i)\)</span>，<span class="math inline">\(r_i'\)</span> 是 GPT-2 利用<span class="math inline"> \(U_i,\tilde D_i\)</span> 生成的回复，<span class="math inline">\(b=\sum_{i=1}^N R(\tilde
-D_i)/N\)</span> 是基线用以减小梯度估计的方差。可以看到，如果获得比基线更高的奖励，即<span class="math inline"> \(R(\tilde D_i)&gt;0\)</span>，则最小化 <span class="math inline">\(\mathcal L_K\)</span> 等效于最大化<span class="math inline"> \(\tilde D_i\)</span> 的条件似然。</p>
-<p><strong>课程学习</strong>。虽然模型已经在伪标签上进行过预热，
-但是在训练之初，<span class="math inline">\(D'\)</span> 可能还是差于<span class="math inline"> \(\overline D\)</span>。因此，论文将<span class="math inline"> \(D',\overline
-D\)</span> 混合，使用课程学习策略微调。具体来说，是设置一个超参数<span class="math inline"> \(p\)</span>，控制从两者间采样<span class="math inline"> \(D\)</span> 作为回复生成模块的输入的概率，并随着训练过程调整<span class="math inline"> \(p\)</span> 的大小，完成从<span class="math inline"> \(\overline D\)</span> 到<span class="math inline"> \(D\)</span> 的迁移。</p>
-<h2 id="实验">实验</h2>
-<h3 id="数据集指标">数据集 &amp; 指标</h3>
-<p>论文在 Wizard of Wikipedia 和 CMU Document Grounded
-Conversations 两个数据集上进行实验。这两个数据集都是在 Amazon Mechanical
-Turk 上通过众包构建的，使用 Wikipedia
-作为知识库，并由数据所有者分为训练集、验证集和测试集。Wizard
-中的数据主题涵盖范围很广（1365
-个），每次对话都发生在有权访问特定主题知识的向导和渴望从向导学习该主题的学徒之间。测试集分为两个子集：Test
-Seen 和 Test Unseen。 Test Seen 包含新的对话，主题出现在训练集中，而
-Test Unseen 中的主题从未出现在训练集和验证集中。与 Wizard 不同，CMU
-DoG 专注于电影领域，除了向导 - 学徒间的对话，数据还包含两个了解文档并试图深入讨论内容的用户之间的对话。</p>
-<p>自动评估指标：真实回复的困惑度 (PPL)、BOW Embedding 和 unigram F1
-作为指标。</p>
+<h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><p>模型的架构如下图所示。在 Transformer 架构的基础上，知识选择模块由上下文感知<strong>知识编码器</strong>和<strong>顺序知识选择器</strong>组成。知识编码器通过自注意力层捕获上下文 U 和 D 中的每个句子之间的交互模式，然后将这些模式馈送到知识选择器，逐步地解码有用的知识。由于无法获得人工标记，学习方法从充分利用回复构建的伪标记开始，通过强化学习方法和课程学习方法交替优化知识选择和回复生成。</p>
+<p><img src="/blog/architecture.png"></p>
+<h3 id="上下文感知知识编码器"><a href="#上下文感知知识编码器" class="headerlink" title="上下文感知知识编码器"></a>上下文感知知识编码器</h3><p>虽然名字很玄乎，但是原理很简单。将上下文 $U_i$ 和每个候选知识 $d_i\in D_i=(d_1,d_2,\cdots,d_m)$ 分别拼接起来，馈入 BERT，取最后一层的 **[CLS]** 的向量作为上下文表征。也就是架构图左侧的下半部分。用 $E=(e_1,e_2,\cdots,e_m)$ 代表编码器的输出，其中 $e_i$ 代表知识 $d_i$ 和上下文拼接后的上下文表征。</p>
+<h3 id="顺序知识选择器"><a href="#顺序知识选择器" class="headerlink" title="顺序知识选择器"></a>顺序知识选择器</h3><p>这里的原理也很简单。前面提到，论文将知识选择视作<strong>序列预测</strong>任务（而非序列分类）。换而言之，知识选择模块意在<strong>顺序地解码出一个知识序列子集</strong>。也就是类似 RNN 的自回归方法。这样建模的原因可能是无需额外考虑序列分类时拼接的顺序。</p>
+<p>具体而言，这一块有一个 LSTM 解码器组成，输入为编码器的输出序列 $E$。解码每一步与输入序列计算 Attention，从知识表征中选择输出，直到输出特殊的结束符号 $e_{spe}$ 或者序列长度达到上限。另外，在解码时的每一步，需要排除已经输出的知识，显然同一个知识没有必要输出两次。最后得到的解码输出就是选择后的知识序列 $D’$，$g (U,D)$ 定义为 $U\cup D’$。</p>
+<h3 id="学习策略"><a href="#学习策略" class="headerlink" title="学习策略"></a>学习策略</h3><p>由于知识选择器的训练过程是无标签的，这可能会很困难。在最近的一篇论文中（Kim et al., 2020），当人类标签被移除时，知识选择的准确率从 27% 下降到 0.3%。另外，在端到端的模型中，知识选择的结果作为回复生成的输入，二者耦合纠缠。在训练早期，$g (U,D)$ 可能性能很差，训练噪声传入 GPT-2 再反向传播至 $g (U,D)$，可能会导致两边模型效果都很差。因此，论文提出了一种弱监督的联合优化策略，如下所示。</p>
+<h4 id="伪标签构建"><a href="#伪标签构建" class="headerlink" title="伪标签构建"></a>伪标签构建</h4><p>为了减轻联合优化中的错误累积，论文考虑构建弱监督信号并预热 g (U, D) 的学习和 GPT-2 的微调。 直觉来看，人类的回复带有与知识候选相关性的线索，因此可以用来构建伪标签。具体来说，首先根据相似性 ${Sim (d_t, r)}<em>{t=1}^m$ 将 $D={d_t}</em>{t=1}^m$ 降序排序为 ${d_{j_t}}^m_{t=1}$。其中 $Sim (・,・) $ 表示<strong>相似度函数</strong>，例如 uni-gran F1。 然后构建 D 的子集：<br>$$<br>\overline D={d_{j_1},d_{j_2},\cdots,d_{j_\overline m}}<br>$$</p>
+<p>$$<br>\overline m=\arg\max_t(Sim(d_{j_{1:t}},r))<br>$$<br>其中，$d_{j_{1:t}}$ 是 ${d_{j_i}} <em>{i=1}^t$ 的拼接结果。上述子集的构建就是取相似性降序知识的前缀拼接结果中，与真实回复相似性最大的拼接结果对应的知识子集。然后以 $\overline D$ 为知识选择的伪标签，分别<strong>预热</strong>知识选择模块和回复生成模块。即，通过最大似然分别优化 $D_K={(U_i,D_i,\overline D_i}</em> {i=1}^N$ 和 $D_G={(U_i,\overline D_i,r_i}_{i=1}^N$。</p>
+<h4 id="联合优化"><a href="#联合优化" class="headerlink" title="联合优化"></a>联合优化</h4><p><strong>强化学习</strong>。论文使用策略梯度法继续训练 $g (U,D)$。其中，$g (U,D)$ 由 GPT-2 进一步监督且直接针对目标指标进行优化（例如实验中的 F1）。具体而言，在知识选择器解码时的每一步，从概率分布 $P (d_i|U,d_{1:t-1})$ 中采样另一个知识，遵循同样的停止策略，定义如下的损失函数：<br>$$<br>\mathcal L_K=-\frac 1 N\sum_{i=1}^N(\tilde R_i \sum_{t=1}^{|\tilde D_i|}logP(d_{i,j_t}|U_i,d_{i,j_{1:t-1}}))<br>$$</p>
+<p>$$<br>\tilde R_i=R(\tilde D_i)-b<br>$$<br>其中，$R (\tilde D_i)=Sim (r’<em>i,r_i)$，$r_i’$ 是 GPT-2 利用 $U_i,\tilde D_i$ 生成的回复，$b=\sum</em>{i=1}^N R (\tilde D_i)/N$ 是基线用以减小梯度估计的方差。可以看到，如果获得比基线更高的奖励，即 $R (\tilde D_i)&gt;0$，则最小化 $\mathcal L_K$ 等效于最大化 $\tilde D_i$ 的条件似然。</p>
+<p><strong>课程学习</strong>。虽然模型已经在伪标签上进行过预热， 但是在训练之初，$D’$ 可能还是差于 $\overline D$。因此，论文将 $D’,\overline D$ 混合，使用课程学习策略微调。具体来说，是设置一个超参数 $p$，控制从两者间采样 $D$ 作为回复生成模块的输入的概率，并随着训练过程调整 $p$ 的大小，完成从 $\overline D$ 到 $D$ 的迁移。</p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><h3 id="数据集-amp-指标"><a href="#数据集-amp-指标" class="headerlink" title="数据集&amp;指标"></a>数据集 &amp; 指标</h3><p>论文在 Wizard of Wikipedia 和 CMU Document Grounded Conversations 两个数据集上进行实验。这两个数据集都是在 Amazon Mechanical Turk 上通过众包构建的，使用 Wikipedia 作为知识库，并由数据所有者分为训练集、验证集和测试集。Wizard 中的数据主题涵盖范围很广（1365 个），每次对话都发生在有权访问特定主题知识的向导和渴望从向导学习该主题的学徒之间。测试集分为两个子集：Test Seen 和 Test Unseen。 Test Seen 包含新的对话，主题出现在训练集中，而 Test Unseen 中的主题从未出现在训练集和验证集中。与 Wizard 不同，CMU DoG 专注于电影领域，除了向导 - 学徒间的对话，数据还包含两个了解文档并试图深入讨论内容的用户之间的对话。</p>
+<p>自动评估指标：真实回复的困惑度 (PPL)、BOW Embedding 和 unigram F1 作为指标。</p>
 <p>人工评估：3 位注释者从流畅度、上下文连贯性和知识相关性三个方面判断回复的质量，并在 {0,1,2}（代表 “坏”、“一般” 和 “好”）中分配一个分数。</p>
-<h3 id="基线">基线</h3>
-<ul>
-<li>Transformer Memory Network (TMN):
-Wizard 数据集论文中提出的模型。</li>
-<li>Incremental Transformer with Deliberation Decoder (ITDD):
-对多轮对话和知识进行增量编码，并使用 Deliberation 技术解码响应。</li>
-<li>Sequential Knowledge Transformer (SKT):
-在最近的一篇论文中发表的具有最佳知识选择性能的顺序潜变量模型，作为 Wizard 数据的基线。</li>
-<li>Disentangled Response Decoder (DRD):
-通过预训练技术解决低资源挑战的模型。论文选择在预训练后使用完整训练数据对所有参数进行微调的一个版本作为基线，因为这样的配置会产生最好的性能。</li>
+<h3 id="基线"><a href="#基线" class="headerlink" title="基线"></a>基线</h3><ul>
+<li>Transformer Memory Network (TMN):  Wizard 数据集论文中提出的模型。</li>
+<li>Incremental Transformer with Deliberation Decoder (ITDD): 对多轮对话和知识进行增量编码，并使用 Deliberation 技术解码响应。</li>
+<li>Sequential Knowledge Transformer (SKT): 在最近的一篇论文中发表的具有最佳知识选择性能的顺序潜变量模型，作为 Wizard 数据的基线。</li>
+<li>Disentangled Response Decoder (DRD): 通过预训练技术解决低资源挑战的模型。论文选择在预训练后使用完整训练数据对所有参数进行微调的一个版本作为基线，因为这样的配置会产生最好的性能。</li>
 </ul>
 <p>论文提出的模型名为 KnowledGPT。除了上述基线，为了验证提出的方法，论文对下面两个模型也进行实验比较：</p>
 <ul>
-<li><span class="math inline">\(GPT-2_{trunc}\)</span>：将上下文和相关知识连接成一个长输入，然后截断该输入以满足
-GPT-2
-模型的长度约束。这是为了检查简单的启发式方法是否适用于该任务。</li>
-<li>SKT+GPT-2：我们将 SKT 选择的候选知识提供给 GPT-2
-以生成回复。这是为了检查是否可以简单地用现成的知识选择模型替换知识选择模块。</li>
+<li>$GPT-2_{trunc}$：将上下文和相关知识连接成一个长输入，然后截断该输入以满足 GPT-2 模型的长度约束。这是为了检查简单的启发式方法是否适用于该任务。</li>
+<li>SKT+GPT-2：我们将 SKT 选择的候选知识提供给 GPT-2 以生成回复。这是为了检查是否可以简单地用现成的知识选择模型替换知识选择模块。</li>
 </ul>
-<h3 id="实验结果">实验结果</h3>
-<p>下两表分别展示了 Wizard 和 CMU DoG 的实验结果。 KnowledGPT
-在两个数据集中的大多数指标上都达到了新的最先进水平，这证明了本文提出方法的有效性。
-<span class="math inline">\(GPT-2_{trunc}\)</span> 比 KnowledGPT
-差，原因是：</p>
+<h3 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h3><p>下两表分别展示了 Wizard 和 CMU DoG 的实验结果。 KnowledGPT 在两个数据集中的大多数指标上都达到了新的最先进水平，这证明了本文提出方法的有效性。 $GPT-2_{trunc}$ 比 KnowledGPT 差，原因是：</p>
 <ul>
-<li><strong>知识损失</strong>：论文发现在 53% 的测试示例（Test Seen+Test
-Unseen）中，真实知识被移除了。 在这种情况下，GPT-2
-只依赖于上下文、其他候选者中的相关知识（由于上下文和知识之间的一对多关系）以及包装在
-GPT-2 参数中的知识进行响应，这 解释了 SKT 和 DRD 的可比性能。</li>
+<li><strong>知识损失</strong>：论文发现在 53% 的测试示例（Test Seen+Test Unseen）中，真实知识被移除了。 在这种情况下，GPT-2 只依赖于上下文、其他候选者中的相关知识（由于上下文和知识之间的一对多关系）以及包装在 GPT-2 参数中的知识进行响应，这 解释了 SKT 和 DRD 的可比性能。</li>
 <li><strong>噪声输入</strong>：即使保留了真实知识，候选知识中的冗余和不相关信息仍然是有害的。</li>
 </ul>
 <p>KnowledGPT 在 Wizard 上的表现也优于 SKT+GPT-2，因为</p>
 <ul>
-<li>KnowledGPT 在知识选择上比 SKT
-更准确，尽管它在学习中没有利用任何人工注释。事实上，SKT 在 Test Seen 和
-Test Unseen 上知识选择的准确率分别为 26.8 和 18.3，而 KnowledGPT
-这两个数字分别为 28.0 和 25.4</li>
+<li>KnowledGPT 在知识选择上比 SKT 更准确，尽管它在学习中没有利用任何人工注释。事实上，SKT 在 Test Seen 和 Test Unseen 上知识选择的准确率分别为 26.8 和 18.3，而 KnowledGPT 这两个数字分别为 28.0 和 25.4</li>
 <li> 在 KnowledGPT 中，知识选择和响应生成是联合优化的。</li>
 </ul>
-<p><img src="wizard-result.png"></p>
-<p><img src="CMU-result.png"></p>
-<p>下表展示了人工评估结果。虽然这三个模型在流畅度上具有可比性，但
-KnowledGPT
-在上下文连贯性和知识相关性方面都优于其他模型，这与自动指标的结果一致。</p>
-<p><img src="human-evaluation.png"></p>
-<h4 id="消融实验">消融实验</h4>
-<p>为了了解学习策略对模型性能的影响，论文将完整的 KnowledGPT
-与以下变体进行了比较：</p>
-<ol type="1">
+<p><img src="/blog/wizard-result.png"></p>
+<p><img src="/blog/CMU-result.png"></p>
+<p>下表展示了人工评估结果。虽然这三个模型在流畅度上具有可比性，但 KnowledGPT 在上下文连贯性和知识相关性方面都优于其他模型，这与自动指标的结果一致。</p>
+<p><img src="/blog/human-evaluation.png"></p>
+<h4 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h4><p>为了了解学习策略对模型性能的影响，论文将完整的 KnowledGPT 与以下变体进行了比较：</p>
+<ol>
 <li><strong>-pseudo</strong>：移除预热阶段</li>
 <li><strong> -joint</strong>：移除联合优化阶段</li>
-<li><strong> -reinforcement</strong>：g (U, D) 在<span class="math inline"> \(D_K\)</span> 上用 MLE 优化后固定</li>
-<li><strong> -curriculum</strong>：GPT-2 在<span class="math inline"> \(D_G\)</span> 上用 MLE 优化后固定</li>
+<li><strong> -reinforcement</strong>：g (U, D) 在 $D_K$ 上用 MLE 优化后固定</li>
+<li><strong> -curriculum</strong>：GPT-2 在 $D_G$ 上用 MLE 优化后固定</li>
 </ol>
 <p>实验结果如下表所示。</p>
-<p><img src="ablation-study.png"></p>
+<p><img src="/blog/ablation-study.png"></p>
 <p>可以得到以下结论：</p>
 <ul>
 <li><strong>伪标签预热对 Wizard 数据集很重要</strong>，移除后性能急速下降。这是因为在 Wizard 中，知识与人类反应之间存在很强的相关性。结果表明，尽管伪标签是用启发式方法构建的，但它仍然包含有价值的信息，允许联合优化从一个好的点开始。</li>
 <li><strong>强化步骤和课程步骤是有用的</strong>。因为强化步骤允许知识选择模块更好地利用 GPT-2 的反馈，并且通过课程步骤 GPT-2 可以逐步利用知识选择模块的输出。</li>
 <li><strong>联合优化是有意义的</strong>。去掉这个阶段会导致性能下降。</li>
 </ul>
-<p>此外，论文还对知识选择数量的上限<span class="math inline"> \(T_{max}\)</span> 做了实验。结果如下表。<span class="math inline">\(T_{max}\)</span> 越大，KnowledGPT 越有可能将真实候选知识纳入生成，PPL 越低。这也解释了为什么<span class="math inline"> \(GPT-2_{trunc}\)</span> 的 PPL 低于
-KnowledGPT。另一方面，较大的 <span class="math inline">\(T_{max}\)</span> 也意味着生成的噪声更多。这就是为什么当
-<span class="math inline">\(T_{max}\)</span> 超过一个值时，F1
-开始下降。</p>
-<p><img src="T-max.png"></p>
-<h2 id="总结">总结</h2>
-<p>论文将大规模的预训练语言模型应用于知识对话生成任务。为此，论文设计了一个知识选择模块，并提出了一种无监督方法来联合优化知识选择和响应生成。两个基准的评估结果表明，论文提出 KnowledGPT 模型实现了新的 SOTA。</p>
+<p>此外，论文还对知识选择数量的上限 $T_{max}$ 做了实验。结果如下表。$T_{max}$ 越大，KnowledGPT 越有可能将真实候选知识纳入生成，PPL 越低。这也解释了为什么 $GPT-2_{trunc}$ 的 PPL 低于 KnowledGPT。另一方面，较大的 $T_{max}$ 也意味着生成的噪声更多。这就是为什么当 $T_{max}$ 超过一个值时，F1 开始下降。</p>
+<p><img src="/blog/T-max.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>论文将大规模的预训练语言模型应用于知识对话生成任务。为此，论文设计了一个知识选择模块，并提出了一种无监督方法来联合优化知识选择和响应生成。两个基准的评估结果表明，论文提出 KnowledGPT 模型实现了新的 SOTA。</p>
 <p>这篇论文提出的联合优化策略，包括伪标签的构建、强化学习和课程学习，都让我眼前一亮。感觉还是蛮有启发性的工作。</p>
 
     </div>
@@ -556,13 +473,13 @@ KnowledGPT。另一方面，较大的 <span class="math inline">\(T_{max}\)</spa
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

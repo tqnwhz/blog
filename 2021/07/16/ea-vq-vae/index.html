@@ -21,21 +21,21 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="题外话 今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！ 简介 EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 V">
+<meta name="description" content="题外话今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！ 简介EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-">
 <meta property="og:type" content="article">
 <meta property="og:title" content="推理文本生成 | EA-VQ-VAE">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/07/16/ea-vq-vae/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="题外话 今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！ 简介 EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 V">
+<meta property="og:description" content="题外话今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！ 简介EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/16/ea-vq-vae/model.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/16/ea-vq-vae/case.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/model.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/case.png">
 <meta property="article:published_time" content="2021-07-16T02:38:05.000Z">
 <meta property="article:modified_time" content="2022-02-19T07:03:44.534Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="VQ-VAE">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2021/07/16/ea-vq-vae/model.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/model.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2021/07/16/ea-vq-vae/">
@@ -152,7 +152,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D"><span class="nav-number">1.</span> <span class="nav-text">题外话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">实现方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#vq-vae"><span class="nav-number">3.1.</span> <span class="nav-text">VQ-VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E6%8D%AE%E7%9A%84%E6%A3%80%E7%B4%A2%E4%B8%8E%E9%80%89%E6%8B%A9"><span class="nav-number">3.2.</span> <span class="nav-text">证据的检索与选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="nav-number">3.3.</span> <span class="nav-text">解码器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">训练过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#vq-vae-1"><span class="nav-number">4.1.</span> <span class="nav-text">VQ-VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E6%8D%AE%E6%84%9F%E7%9F%A5%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="nav-number">4.2.</span> <span class="nav-text">证据感知解码器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AA%E6%A1%88%E7%A0%94%E7%A9%B6"><span class="nav-number">5.</span> <span class="nav-text">个案研究</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D"><span class="nav-number">1.</span> <span class="nav-text">题外话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">实现方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VQ-VAE"><span class="nav-number">3.1.</span> <span class="nav-text">VQ-VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E6%8D%AE%E7%9A%84%E6%A3%80%E7%B4%A2%E4%B8%8E%E9%80%89%E6%8B%A9"><span class="nav-number">3.2.</span> <span class="nav-text">证据的检索与选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="nav-number">3.3.</span> <span class="nav-text">解码器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">训练过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VQ-VAE-1"><span class="nav-number">4.1.</span> <span class="nav-text">VQ-VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E6%8D%AE%E6%84%9F%E7%9F%A5%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="nav-number">4.2.</span> <span class="nav-text">证据感知解码器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AA%E6%A1%88%E7%A0%94%E7%A9%B6"><span class="nav-number">5.</span> <span class="nav-text">个案研究</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -289,7 +289,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3k</span>
+      <span>2.9k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -307,72 +307,31 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="题外话">题外话</h2>
-<p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
-<h2 id="简介">简介</h2>
-<p>EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text
-Generation with Vector Quantised Variational
-AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-VAE 进行推理文本生成。推理文本生成定义为，给定一个事件（例如 “A 偷看了 B 的日记”），从多个维度对该事件进行推断（“A 的心理状态”，“A 的目的”）。而 EA-VQ-VAE 中的 EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
+        <h2 id="题外话"><a href="#题外话" class="headerlink" title="题外话"></a>题外话</h2><p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-VAE 进行推理文本生成。推理文本生成定义为，给定一个事件（例如 “A 偷看了 B 的日记”），从多个维度对该事件进行推断（“A 的心理状态”，“A 的目的”）。而 EA-VQ-VAE 中的 EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
 <span id="more"></span>
-<h2 id="实现方法">实现方法</h2>
-<p>下图展示了整个模型的流程：给定事件<span class="math inline"> \(x\)</span> 后，经过 VQ-VAE 将其映射为离散的隐变量<span class="math inline"> \(z\)</span>，根据事件<span class="math inline"> \(x\)</span> 从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline"> \(y\)</span>。下面逐项介绍模型的细节。</p>
-<p><img src="model.png"></p>
-<h3 id="vq-vae">VQ-VAE</h3>
-<p>VQ-VAE 的详细介绍可以看我的上一篇博客。论文使用的 VQ-VAE 与标准的 VQ-VAE 最主要的区别在于，普通的 VQ-VAE 生成是数据<span class="math inline"> \(x\)</span>，而在推理文本生成任务中，生成的是以符合事件<span class="math inline"> \(x\)</span> 的推理文本<span class="math inline"> \(y\)</span>，换而言之，这是一个<strong>条件模型</strong>，叫它 VQ-CVAE 可能更恰当一点。基于此，下面所述的后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 与先验分布<span class="math inline"> \(p_\theta(z|x)\)</span> 均与标准的 VQ-VAE 有所不同。</p>
+
+<h2 id="实现方法"><a href="#实现方法" class="headerlink" title="实现方法"></a>实现方法</h2><p>下图展示了整个模型的流程：给定事件 $x$ 后，经过 VQ-VAE 将其映射为离散的隐变量 $z$，根据事件 $x$ 从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本 $y$。下面逐项介绍模型的细节。</p>
+<p><img src="/blog/model.png"></p>
+<h3 id="VQ-VAE"><a href="#VQ-VAE" class="headerlink" title="VQ-VAE"></a>VQ-VAE</h3><p>VQ-VAE 的详细介绍可以看我的上一篇博客。论文使用的 VQ-VAE 与标准的 VQ-VAE 最主要的区别在于，普通的 VQ-VAE 生成是数据 $x$，而在推理文本生成任务中，生成的是以符合事件 $x$ 的推理文本 $y$，换而言之，这是一个<strong>条件模型</strong>，叫它 VQ-CVAE 可能更恰当一点。基于此，下面所述的后验分布 $q_\phi (z|x,y)$ 与先验分布 $p_\theta (z|x)$ 均与标准的 VQ-VAE 有所不同。</p>
 <p>本文使用的 VQ-VAE 分为以下三个部分：</p>
 <ul>
-<li>codebook：对应 VQ-VAE 中的隐变量嵌入空间，只是换了个名字，同样是一张<span class="math inline"> \(R^{k*d}\)</span> 的表，由<span class="math inline"> \(k\)</span> 个维度为<span class="math inline"> \(d\)</span> 的隐变量组成</li>
-<li>后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>：同样是一个独热分布，使用最近邻算法将编码器输出<span class="math inline"> \(h_(x,y)\)</span> 映射到最近的隐变量<span class="math inline"> \(z'\)</span></li>
-<li> 先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如 RoBERTa）将事件编码为隐藏状态<span class="math inline"> \(h\)</span>，，再将其映射为 k 个类别，即<span class="math inline"> \(p_\theta(z|x)=softmax(hW_k)\)</span></li>
+<li>codebook：对应 VQ-VAE 中的隐变量嵌入空间，只是换了个名字，同样是一张 $R^{k*d}$ 的表，由 $k$ 个维度为 $d$ 的隐变量组成</li>
+<li>后验分布 $q_\phi (z|x,y)$：同样是一个独热分布，使用最近邻算法将编码器输出 $h_(x,y)$ 映射到最近的隐变量 $z’$</li>
+<li> 先验分布 $p_\theta (z|x)$：先利用预训练的语言模型（例如 RoBERTa）将事件编码为隐藏状态 $h$，，再将其映射为 k 个类别，即 $p_\theta (z|x)=softmax (hW_k)$</li>
 </ul>
-<h3 id="证据的检索与选择">证据的检索与选择</h3>
-<p>去除事件中的停用词后，在大规模文本语料中使用 Elastic
-Search 引擎检索事件，并选取前 K 个得分最高的句子。论文使用的语料库基于 BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
-<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline"> \(x\)</span> 与推理文本<span class="math inline"> \(y\)</span> 均已知，例如给定事件 “A 读了 B 的日记”，与推理文本 “A 感到很愧疚”，那么证据 “A 偷了 B 的日记” 就比 “B 把日记给 A 看” 更合理，此时我们想要建模的就是<span class="math inline"> \(q(c|x,y)\)</span>（c 代表事件上下文，即证据）与<span class="math inline"> \(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline"> \(p(c|z)\)</span>, 而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span> 代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用 Transformer 将其编码为向量<span class="math inline"> \(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span> 与<span class="math inline"> \(q_\phi(z|x,y)\)</span> 类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即：
-<span class="math display">\[
-p_s(c_k|z)=
-\begin{cases}
-1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\
-0 &amp;otherwise
-\end{cases}
-\]</span></p>
-<p><span class="math display">\[
-c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2
-\]</span></p>
-<p>值得注意的是，作者没有使用注意力机制得到的 “软” 分布，而是借鉴 VQ-VAE，采用了一种独热分布将<span class="math inline"> \(z\)</span> 映射到最近的<span class="math inline"> \(c\)</span>。这样的优点是一定程度上降低了学习的难度，由于<span class="math inline"> \(z\)</span> 与<span class="math inline"> \(c\)</span> 处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p>
-<h3 id="解码器">解码器</h3>
-<p>解码器使用的是预训练的 GPT-2，是一个基于 Transformer 的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下 GPT 家族。</p>
-<h2 id="训练过程">训练过程</h2>
-<p>首先单独训练 VQ-VAE 与 codebook，再训练基于后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 的证据感知解码器。</p>
-<h3 id="vq-vae-1">VQ-VAE</h3>
-<p>首先只根据隐变量<span class="math inline"> \(z\)</span> 重构推理文本<span class="math inline"> \(y\)</span>，损失函数与 VQ-VAE 损失函数类似： <span class="math display">\[
-loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||_2^2+\beta||h_{(x,y)}-sg[z]||_2^2
-\]</span></p>
-<p>真实的先验分布可以使用频率近似（<span class="math inline">\(N_{(x)}\)</span> 代表包含<span class="math inline"> \(x\)</span> 事件的数据数量）： <span class="math display">\[
-p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}
-\]</span> 通过 KL 散度来优化先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>: <span class="math display">\[
-loss_{prior}=KL(p(z|x)||p_\theta(z|x))
-\]</span></p>
+<h3 id="证据的检索与选择"><a href="#证据的检索与选择" class="headerlink" title="证据的检索与选择"></a>证据的检索与选择</h3><p>去除事件中的停用词后，在大规模文本语料中使用 Elastic Search 引擎检索事件，并选取前 K 个得分最高的句子。论文使用的语料库基于 BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
+<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件 $x$ 与推理文本 $y$ 均已知，例如给定事件 “A 读了 B 的日记”，与推理文本 “A 感到很愧疚”，那么证据 “A 偷了 B 的日记” 就比 “B 把日记给 A 看” 更合理，此时我们想要建模的就是 $q (c|x,y)$（c 代表事件上下文，即证据）与 $p (c|x)$。考虑到已经有一个后验分布 $q_\phi (z|x,y)$，那么我们可以直接利用隐变量来完成证据的选择，即建模 $p (c|z)$, 而不是再引入一个复杂的神经网络。对于一组证据（$c_\phi$ 代表填充的空证据）${c_1,c_2,\dots,c_K,c_\phi}$，使用 Transformer 将其编码为向量 ${h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}}$。$p_s (c|z)$ 与 $q_\phi (z|x,y)$ 类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即：<br>$$<br>p_s(c_k|z)=<br>\begin{cases}<br>1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \<br>0 &amp;otherwise<br>\end{cases}<br>$$</p>
+<p>$$<br>c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2<br>$$</p>
+<p>值得注意的是，作者没有使用注意力机制得到的 “软” 分布，而是借鉴 VQ-VAE，采用了一种独热分布将 $z$ 映射到最近的 $c$。这样的优点是一定程度上降低了学习的难度，由于 $z$ 与 $c$ 处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p>
+<h3 id="解码器"><a href="#解码器" class="headerlink" title="解码器"></a>解码器</h3><p>解码器使用的是预训练的 GPT-2，是一个基于 Transformer 的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下 GPT 家族。</p>
+<h2 id="训练过程"><a href="#训练过程" class="headerlink" title="训练过程"></a>训练过程</h2><p>首先单独训练 VQ-VAE 与 codebook，再训练基于后验分布 $q_\phi (z|x,y)$ 的证据感知解码器。</p>
+<h3 id="VQ-VAE-1"><a href="#VQ-VAE-1" class="headerlink" title="VQ-VAE"></a>VQ-VAE</h3><p>首先只根据隐变量 $z$ 重构推理文本 $y$，损失函数与 VQ-VAE 损失函数类似：<br>$$<br>loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||<em>2^2+\beta||h</em>{(x,y)}-sg[z]||_2^2<br>$$</p>
+<p>真实的先验分布可以使用频率近似（$N_{(x)}$ 代表包含 $x$ 事件的数据数量）：<br>$$<br>p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}<br>$$<br>通过 KL 散度来优化先验分布 $p_\theta (z|x)$:<br>$$<br>loss_{prior}=KL(p(z|x)||p_\theta(z|x))<br>$$</p>
 <p>不过这里为什么不像 CVAE 一样，直接优化后验分布与先验分布间的 KL 散度，暂时还不是很理解。</p>
-<h3 id="证据感知解码器">证据感知解码器</h3>
-<p>这一部分通过最大化边际似然进行训练： <span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\
-&amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')
-\end{align}
-\]</span>
-然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline"> \(z'\)</span> 最近的<span class="math inline"> \(c_{z'}\)</span> 不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline"> \(c\)</span>，损失函数中应该还有一项是<span class="math inline"> \(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法：
-<span class="math display">\[
-R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))
-\]</span></p>
-<p><span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
-&amp;=logp_m(y|x,c_{z'})-R|||h_{c_{z'}}-z'||_2^2
-\end{align}
-\]</span> 其中，<span class="math inline">\(\delta(x)\)</span> 当 x 大于 0 时为 1，否则为 - 1。<span class="math inline">\(c_r\)</span> 为随机选取的与<span class="math inline"> \(c_{z'}\)</span> 不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当<span class="math inline"> \(R\)</span> 为正时，<span class="math inline">\(logp(y|x)\)</span> 会更大，进而激励模型选择正确的证据。</p>
-<h2 id="个案研究">个案研究</h2>
-<p><img src="case.png"></p>
+<h3 id="证据感知解码器"><a href="#证据感知解码器" class="headerlink" title="证据感知解码器"></a>证据感知解码器</h3><p>这一部分通过最大化边际似然进行训练：<br>$$<br>\begin{align}<br>logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\<br>&amp;=log(p_m(y|x,c_{z’}))+logp_s(c_{z’}|z’)<br>\end{align}<br>$$<br>然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与 $z’$ 最近的 $c_{z’}$ 不一定就是真实有用的证据，如果我们已知真实的证据标签 $c$，损失函数中应该还有一项是 $||c-c_{z’}||<em>2$。为解决这个问题，原论文采取了强化学习的方法：<br>$$<br>R=\delta(p_m(y|x,c</em>{z’})-p_m(y|x,c_r))<br>$$</p>
+<p>$$<br>\begin{align}<br>logp(y|x)&amp;=logp_m(y|x,c_{z’})+Rlogp_s(c_{z’}|z’)\<br>&amp;=logp_m(y|x,c_{z’})-R|||h_{c_{z’}}-z’|| <em>2^2<br>\end{align}<br>$$<br>其中，$\delta (x)$ 当 x 大于 0 时为 1，否则为 - 1。$c_r$ 为随机选取的与 $c</em>{z’}$ 不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当 $R$ 为正时，$logp (y|x)$ 会更大，进而激励模型选择正确的证据。</p>
+<h2 id="个案研究"><a href="#个案研究" class="headerlink" title="个案研究"></a>个案研究</h2><p><img src="/blog/case.png"></p>
 
     </div>
 
@@ -446,13 +405,13 @@ logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">

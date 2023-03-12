@@ -21,15 +21,15 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要 最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。 《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。">
+<meta name="description" content="摘要最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。 《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="有错误论文 - ACL2020：交叉 VAE 用于答案检索">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/03/31/Crossing-VAE/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要 最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。 《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。">
+<meta property="og:description" content="摘要最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。 《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/31/Crossing-VAE/structure.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/31/Crossing-VAE/SQuAD-example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/structure.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/SQuAD-example.png">
 <meta property="article:published_time" content="2022-03-31T15:23:39.000Z">
 <meta property="article:modified_time" content="2022-12-01T05:10:09.634Z">
 <meta property="article:author" content="Tqnwhz">
@@ -38,7 +38,7 @@
 <meta property="article:tag" content="问答">
 <meta property="article:tag" content="负面案例">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/03/31/Crossing-VAE/structure.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/structure.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/03/31/Crossing-VAE/">
@@ -155,7 +155,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%B9%89"><span class="nav-number">3.1.</span> <span class="nav-text">问题定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E5%8F%89vae"><span class="nav-number">3.2.</span> <span class="nav-text">交叉 VAE</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%B9%89"><span class="nav-number">3.1.</span> <span class="nav-text">问题定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E5%8F%89VAE"><span class="nav-number">3.2.</span> <span class="nav-text">交叉 VAE</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -170,18 +170,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">56</span>
+        <span class="site-state-item-count">59</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -310,70 +310,23 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要">摘要</h2>
-<p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
-<p>《Crossing Variational Autoencoders for Answer
-Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL
-2020 中。</p>
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
+<p>《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。</p>
 <span id="more"></span>
-<h2 id="介绍">介绍</h2>
-<p>先按照正常的步骤介绍其背景和方法。</p>
+
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>先按照正常的步骤介绍其背景和方法。</p>
 <p>答案检索，即从答案候选集合中，选择最匹配问题的答案。解决该问题的一个关键因素在于，如何学习到一个好的问题 / 答案的向量表示。传统的方法使用两个编码器 / 变分自编码器（孪生网络）分别学习二者的向量表征。这种方法过于分离，无法捕捉二者之间的对齐语义。因此，本文提出了交叉变分自编码器，类似 Seq2Seq 的方法，学习二者间的语义对齐。</p>
-<p><img src="structure.png"></p>
+<p><img src="/blog/structure.png"></p>
 <p>如上图所示。左一为孪生编码器，分别将答案和问题进行编码，得到向量表征后再判断是否匹配。中间的孪生自编码器也类似，区别在于使用自编码器学习到性质更好的向量表征。但是他们有个共同点：<strong>答案和问题的向量表征是分开编码得到的</strong>。这意味着编码过程中只有单个问题或答案的信息（语义、句法等），而我们关心的是答案和问题是否语义对齐。因此按前一种方法训练得到的向量表征，并不能很好地满足任务的需要。右一为本文提出的孪生交叉 VAE，即在 VAE 的基础上，使用问题和答案的隐变量重构彼此，而非重构自身。从模型结构上，该模型不像 VAE 而更像 Seq2Seq。</p>
-<p>举个例子，在问答中，相似的问题的答案可能相去甚远，相似的答案的问题形式可能也差别很大。下图展示了 SQuAD 数据集上的例子，同一个答案与 17 个不同的问题相对齐。只看这些问题的语义，可能差别很大。也就是<span class="math inline"> \(z_q\)</span> 是分开的，而答案却相同，即<span class="math inline"> \(z_q\)</span> 是固定的。这种情况下，希望<span class="math inline"> \(p(y|z_q,z_a)\)</span> 对这些不同的<span class="math inline"> \(z_q\)</span> 都有较好的对齐效果是比较困难的。</p>
-<p><img src="SQuAD-example.png"></p>
-<p>究其根本，是<strong>同一个答案与不同的问题对齐时，其语义信息侧重点各不相同。</strong>当提问词是 "how
-many"是，答案侧重点为"three"，当提问词为"three
-cities"时，答案侧重点为"New
-Orleans"... 而分开编码得到的向量表征是固定的。要解决这个问题，必须要将答案和问题的编码结合起来。</p>
+<p>举个例子，在问答中，相似的问题的答案可能相去甚远，相似的答案的问题形式可能也差别很大。下图展示了 SQuAD 数据集上的例子，同一个答案与 17 个不同的问题相对齐。只看这些问题的语义，可能差别很大。也就是 $z_q$ 是分开的，而答案却相同，即 $z_q$ 是固定的。这种情况下，希望 $p (y|z_q,z_a)$ 对这些不同的 $z_q$ 都有较好的对齐效果是比较困难的。</p>
+<p><img src="/blog/SQuAD-example.png"></p>
+<p>究其根本，是<strong>同一个答案与不同的问题对齐时，其语义信息侧重点各不相同。</strong>当提问词是”how many” 是，答案侧重点为”three”，当提问词为”three cities” 时，答案侧重点为”New Orleans”… 而分开编码得到的向量表征是固定的。要解决这个问题，必须要将答案和问题的编码结合起来。</p>
 <p>论文的方法在 MRR 和 R@1 上分别取得了 SOTA，分别提升了 1.46% 和 3.65%。不过对比工作里的 BERT 我怀疑是未做 finetune 的，效果太差了。</p>
-<h2 id="方法">方法</h2>
-<h3 id="问题定义">问题定义</h3>
-<p>问题集合：<span class="math inline">\(q\in \mathcal
-Q\)</span>，答案集合：<span class="math inline">\(a\in\mathcal
-A\)</span>。对齐关系三元组定义为<span class="math inline"> \((q,a,y)\)</span>，其中<span class="math inline"> \(y\)</span> 为一个二值变量，标识对齐关系。任务定义为，给定一个问题<span class="math inline"> \(q\)</span> 和一组候选答案<span class="math inline"> \(C(q)\subseteq \mathcal
-A\)</span>，对每个候选答案<span class="math inline"> \(a\in
-C(q)\)</span> 预测<span class="math inline"> \(p(y|q,a)\)</span> 的值。</p>
-<h3 id="交叉vae">交叉 VAE</h3>
-<p>根据条件分布<span class="math inline"> \(p(q|z_a),p(a|z_q)\)</span> 学习交叉重构，<span class="math inline">\(z_a,z_q\)</span> 为变分自编码器的连续隐变量，交叉重构定义为：
-<span class="math display">\[
-p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\\
-p(a|q)=\mathbb E_{z_q\sim p(z_q|q)}[p(a|z_q)]
-\]</span> 问答对的匹配，即计算条件分布<span class="math inline"> \(p(y|a,q)\)</span>，等价于 <span class="math display">\[
-p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
-\]</span> 目标函数包含三部分：</p>
-<p><strong>交叉重构损失</strong>，即两个交叉熵损失之和，公式如下。其中<span class="math inline"> \(E,D\)</span> 分别代表编码器、解码器。 <span class="math display">\[
-\mathcal L_{cross}(\theta_E,\theta_D)=y\cdot \mathbb E_{q\sim
-Q}[-logp_D(q|a,E(a))]+ y\cdot\mathbb E_{a\sim A}[-logp_D(a|q,E(q))]
-\]</span>
-<strong>KL 散度损失</strong>，两部分后先验 KL 散度之和，公式如下： <span class="math display">\[
-\mathcal L_{KL}(\theta_E)=y\cdot \mathbb E_{q\sim
-Q}[D_{KL}((p(z_q|q)||p(z_q))]+ y\cdot \mathbb E_{a\sim
-A}[D_{KL}((p(z_a|a)||p(z_a))]
-\]</span>
-<strong> 问答匹配损失</strong>，最后输出的匹配结果的交叉熵损失，公式如下。其中，<span class="math inline">\(f\)</span> 为匹配函数。 <span class="math display">\[
-\mathcal L_{matching}(\phi_f)=-[y\cdot
-logp_{f_\phi}p(y|z_q,z_a)+(1-y)\cdot logp_{f_\phi}(1-p(y|z_q,z_a))]
-\]</span>
-最后，将三个损失相加，即得到了最终的目标函数，并引入超参数控制权重：
-<span class="math display">\[
-\mathcal J=-\alpha \mathcal L_{cross}-\beta\mathcal
-L_{KL}+\gamma\mathcal L_{matching}
-\]</span></p>
-<h2 id="问题">问题</h2>
-<p>细心的读者可能会发现了，你是要<strong>最小化匹配损失，最后的<span class="math inline"> \(\mathcal
-J\)</span> 应该也是要最小化的。那不就变成最大化 KL 和重构损失了吗？</strong>对，这就是问题所在。论文中提到是要最大化 ELBO 和最小化匹配损失，得到了最后的<span class="math inline"> \(\mathcal J\)</span>。然而事实上，<span class="math inline">\(\mathcal L_{crosss}+\mathcal
-L_{KL}=-ELBO\)</span>，最小化<span class="math inline"> \(\mathcal
-L_{crosss}+\mathcal
-L_{KL}\)</span> 才是在最大化 ELBO。论文作者根本没有分清楚 VAE 的 ELBO 和损失，最后闹出了这种笑话。加之论文中有将 objective 和 loss 混用且使用错误的情况。也侧面印证了这一事实。正确的损失函数应该形如：
-<span class="math display">\[
-\mathcal J=\alpha \mathcal L_{cross}+\beta\mathcal L_{KL}+\gamma\mathcal
-L_{matching}
-\]</span>
-复现性上，我问了实验室的一个师兄，说是论文的结果是复现不出来的，论文也没有公开代码。再加上我本人看到这篇论文第一感觉的强烈违和感，将 VAE 改为 Seq2Seq 的形式，整个 VAE 的公式可能都要重新推导，只改最后的 ELBO 如何保证过程正确？CVAE 可能才是更自然的想法。</p>
-<h2 id="总结">总结</h2>
-<p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
+<h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><h3 id="问题定义"><a href="#问题定义" class="headerlink" title="问题定义"></a>问题定义</h3><p>问题集合：$q\in \mathcal Q$，答案集合：$a\in\mathcal A$。对齐关系三元组定义为 $(q,a,y)$，其中 $y$ 为一个二值变量，标识对齐关系。任务定义为，给定一个问题 $q$ 和一组候选答案 $C (q)\subseteq \mathcal A$，对每个候选答案 $a\in C (q)$ 预测 $p (y|q,a)$ 的值。</p>
+<h3 id="交叉VAE"><a href="#交叉VAE" class="headerlink" title="交叉VAE"></a>交叉 VAE</h3><p>根据条件分布 $p (q|z_a),p (a|z_q)$ 学习交叉重构，$z_a,z_q$ 为变分自编码器的连续隐变量，交叉重构定义为：<br>$$<br>p(q|a)=\mathbb E_{z_a\sim p(z_a|a)}[p(q|z_a)]\<br>p(a|q)=\mathbb E_{z_q\sim p(z_q|q)}[p(a|z_q)]<br>$$<br>问答对的匹配，即计算条件分布 $p (y|a,q)$，等价于<br>$$<br>p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]<br>$$<br>目标函数包含三部分：</p>
+<p><strong>交叉重构损失</strong>，即两个交叉熵损失之和，公式如下。其中 $E,D$ 分别代表编码器、解码器。<br>$$<br>\mathcal L_{cross}(\theta_E,\theta_D)=y\cdot \mathbb E_{q\sim Q}[-logp_D(q|a,E(a))]+ y\cdot\mathbb E_{a\sim A}[-logp_D(a|q,E(q))]<br>$$<br><strong>KL 散度损失</strong>，两部分后先验 KL 散度之和，公式如下：<br>$$<br>\mathcal L_{KL}(\theta_E)=y\cdot \mathbb E_{q\sim Q}[D_{KL}((p(z_q|q)||p(z_q))]+ y\cdot \mathbb E_{a\sim A}[D_{KL}((p(z_a|a)||p(z_a))]<br>$$<br><strong>问答匹配损失</strong>，最后输出的匹配结果的交叉熵损失，公式如下。其中，$f$ 为匹配函数。<br>$$<br>\mathcal L_{matching}(\phi_f)=-[y\cdot logp_{f_\phi}p(y|z_q,z_a)+(1-y)\cdot logp_{f_\phi}(1-p(y|z_q,z_a))]<br>$$<br>最后，将三个损失相加，即得到了最终的目标函数，并引入超参数控制权重：<br>$$<br>\mathcal J=-\alpha \mathcal L_{cross}-\beta\mathcal L_{KL}+\gamma\mathcal L_{matching}<br>$$</p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>细心的读者可能会发现了，你是要<strong>最小化匹配损失，最后的 $\mathcal J$ 应该也是要最小化的。那不就变成最大化 KL 和重构损失了吗？</strong>对，这就是问题所在。论文中提到是要最大化 ELBO 和最小化匹配损失，得到了最后的 $\mathcal J$。然而事实上，$\mathcal L_{crosss}+\mathcal L_{KL}=-ELBO$，最小化 $\mathcal L_{crosss}+\mathcal L_{KL}$ 才是在最大化 ELBO。论文作者根本没有分清楚 VAE 的 ELBO 和损失，最后闹出了这种笑话。加之论文中有将 objective 和 loss 混用且使用错误的情况。也侧面印证了这一事实。正确的损失函数应该形如：<br>$$<br>\mathcal J=\alpha \mathcal L_{cross}+\beta\mathcal L_{KL}+\gamma\mathcal L_{matching}<br>$$<br>复现性上，我问了实验室的一个师兄，说是论文的结果是复现不出来的，论文也没有公开代码。再加上我本人看到这篇论文第一感觉的强烈违和感，将 VAE 改为 Seq2Seq 的形式，整个 VAE 的公式可能都要重新推导，只改最后的 ELBO 如何保证过程正确？CVAE 可能才是更自然的想法。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>读到这里，这篇论文已经没有读下去的必要了。把阅读经验分享出来，希望大家读论文的时候也加以辩证，不要迷信顶会论文，尤其是不开源代码和模型的论文。</p>
 <p>科研路漫，诸君共勉。</p>
 
     </div>
@@ -451,13 +404,13 @@ L_{matching}
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">153k</span>
+    <span title="站点总字数">159k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:38</span>
+    <span title="站点阅读时长">4:49</span>
   </span>
 </div>
 <div class="busuanzi-count">
