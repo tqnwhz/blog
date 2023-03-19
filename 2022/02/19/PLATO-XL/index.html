@@ -21,21 +21,21 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="前言PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale Pre-training of Dialogue Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了百度PLATO 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小冰">
+<meta name="description" content="前言 PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale Pre-training of Dialogue Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了百度PLATO 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小">
 <meta property="og:type" content="article">
 <meta property="og:title" content="PLATO-XL">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="前言PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale Pre-training of Dialogue Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了百度PLATO 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小冰">
+<meta property="og:description" content="前言 PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale Pre-training of Dialogue Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了百度PLATO 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/QR.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/architecture.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/multiparty.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/experiment-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/chat-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/case-study.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/demo.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/other-task.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/QR.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/multiparty.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/experiment-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/chat-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/case-study.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/demo.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/other-task.png">
 <meta property="article:published_time" content="2022-02-19T07:57:05.000Z">
 <meta property="article:modified_time" content="2022-03-04T01:18:28.462Z">
 <meta property="article:author" content="Tqnwhz">
@@ -45,7 +45,7 @@
 <meta property="article:tag" content="闲聊">
 <meta property="article:tag" content="PLATO">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/QR.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/QR.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/02/19/PLATO-XL/">
@@ -162,7 +162,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PLATO-XL"><span class="nav-number">3.</span> <span class="nav-text">PLATO-XL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E7%BB%93%E6%9E%84"><span class="nav-number">3.1.</span> <span class="nav-text">网络结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E8%A7%92%E8%89%B2%E6%84%8F%E8%AF%86%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.2.</span> <span class="nav-text">多角色意识预训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E8%AE%BE%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">预训练设置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF"><span class="nav-number">4.1.</span> <span class="nav-text">基线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87"><span class="nav-number">4.2.</span> <span class="nav-text">评估指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.3.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Case-Study"><span class="nav-number">4.4.</span> <span class="nav-text">Case Study</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%AF%B9%E8%AF%9D%E4%BB%BB%E5%8A%A1"><span class="nav-number">4.5.</span> <span class="nav-text">其他对话任务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#plato-xl"><span class="nav-number">3.</span> <span class="nav-text">PLATO-XL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E7%BB%93%E6%9E%84"><span class="nav-number">3.1.</span> <span class="nav-text">网络结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E8%A7%92%E8%89%B2%E6%84%8F%E8%AF%86%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.2.</span> <span class="nav-text">多角色意识预训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E8%AE%BE%E7%BD%AE"><span class="nav-number">3.3.</span> <span class="nav-text">预训练设置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%BA%BF"><span class="nav-number">4.1.</span> <span class="nav-text">基线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87"><span class="nav-number">4.2.</span> <span class="nav-text">评估指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">4.3.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#case-study"><span class="nav-number">4.4.</span> <span class="nav-text">Case Study</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%AF%B9%E8%AF%9D%E4%BB%BB%E5%8A%A1"><span class="nav-number">4.5.</span> <span class="nav-text">其他对话任务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -321,26 +321,44 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale Pre-training of Dialogue Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了<code>百度PLATO</code> 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小冰。因此今天来读下这篇论文。 </p>
+        <h2 id="前言">前言</h2>
+<p>PLATO-XL 是百度于 2021 年发布的论文《PLATO-XL: Exploring the Large-scale
+Pre-training of Dialogue
+Generation》中提出的模型，旨在探索大规模预训练对话生成任务的效果，在中英文的多项对话任务上取得了 SOTA。目前，百度提供了<code>百度PLATO</code> 微信公众号服务，可供试用。经笔者测试，PLATO 的效果要远优于微软小冰。因此今天来读下这篇论文。</p>
 <span id="more"></span>
-
 <p>下图是微信公众号二维码，大家可以自行体验。</p>
-<p><img src="/blog/QR.png"></p>
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>近些年来，预训练模型的共识是更大的模型 + 更好的数据 = 更好的效果。但是，在对话预训练领域，DialoGPT 的 345M 版本要优于 762M，Blender 的 2.7B 版本要优于 9.4B 的版本，这些反常的现象让人怀疑模型的规模和生成效果是否有清晰的结论关系。本论文指出，对话质量可能还是受益于模型规模，前提是合适的预训练设计。</p>
-<p>PLATO-XL 使用 unified  Transformer 的架构进行训以提高参数效率，并实行了” 多角色意识预训练 “用于区分人物信息。据论文所述，多角色意识预训练能够显著减少多轮对话中的不一致性。论文的英文模型和推理脚本开源在了 <a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/Knover/tree/develop/projects/PLATO-XL">github</a> 上，没有开源训练脚本、中文模型等。这很百度。</p>
+<p><img src="QR.png"></p>
+<h2 id="简介">简介</h2>
+<p>近些年来，预训练模型的共识是更大的模型 + 更好的数据 = 更好的效果。但是，在对话预训练领域，DialoGPT 的 345M 版本要优于 762M，Blender 的 2.7B 版本要优于 9.4B 的版本，这些反常的现象让人怀疑模型的规模和生成效果是否有清晰的结论关系。本论文指出，对话质量可能还是受益于模型规模，前提是合适的预训练设计。</p>
+<p>PLATO-XL 使用 unified
+Transformer 的架构进行训以提高参数效率，并实行了” 多角色意识预训练 “用于区分人物信息。据论文所述，多角色意识预训练能够显著减少多轮对话中的不一致性。论文的英文模型和推理脚本开源在了 <a target="_blank" rel="noopener" href="https://github.com/PaddlePaddle/Knover/tree/develop/projects/PLATO-XL">github</a> 上，没有开源训练脚本、中文模型等。这很百度。</p>
 <p>实验结果表明，PLATO-XL 不仅在开放域闲聊任务取得了 SOTA，也可用于微调后应用于任务型对话、知识增强对话场景，同样取得了 SOTA 效果。</p>
-<h2 id="PLATO-XL"><a href="#PLATO-XL" class="headerlink" title="PLATO-XL"></a>PLATO-XL</h2><h3 id="网络结构"><a href="#网络结构" class="headerlink" title="网络结构"></a>网络结构</h3><p>PLATO-XL 的架构如下图所示，使用 Unified Transformer 的 Seq2Seq 的训练方法。将输入和输出以 [SEP] 间隔，输入内部计算双向 self-attention，输入 - 输出间存在 cross-attention，输出间为单侧的 mask-attention。这种做法的优点是参数利用率高，同一套参数即用来编码又用来解码，得到的模型的泛用性也强。</p>
-<p><img src="/blog/architecture.png"></p>
-<h3 id="多角色意识预训练"><a href="#多角色意识预训练" class="headerlink" title="多角色意识预训练"></a>多角色意识预训练</h3><p>这个名字听着很玄乎，其实思想很简单。从社交媒体中搜集的数据一般如下图所示。多个用户的连续回帖构成了多轮对话。但是由于每个人的性格、观念等的不同，直接拿去训练多轮对话容易产生不一致性。因此 PLATO 引入了角色嵌入（role embedding）来解决这个问题，将角色嵌入和句子向量相加即可。如上面的图所示。</p>
-<p><img src="/blog/multiparty.png"></p>
-<h3 id="预训练设置"><a href="#预训练设置" class="headerlink" title="预训练设置"></a>预训练设置</h3><p>数据集：</p>
+<h2 id="plato-xl">PLATO-XL</h2>
+<h3 id="网络结构">网络结构</h3>
+<p>PLATO-XL 的架构如下图所示，使用 Unified
+Transformer 的 Seq2Seq 的训练方法。将输入和输出以 [SEP] 间隔，输入内部计算双向 self-attention，输入 - 输出间存在 cross-attention，输出间为单侧的 mask-attention。这种做法的优点是参数利用率高，同一套参数即用来编码又用来解码，得到的模型的泛用性也强。</p>
+<p><img src="architecture.png"></p>
+<h3 id="多角色意识预训练">多角色意识预训练</h3>
+<p>这个名字听着很玄乎，其实思想很简单。从社交媒体中搜集的数据一般如下图所示。多个用户的连续回帖构成了多轮对话。但是由于每个人的性格、观念等的不同，直接拿去训练多轮对话容易产生不一致性。因此 PLATO 引入了角色嵌入（role
+embedding）来解决这个问题，将角色嵌入和句子向量相加即可。如上面的图所示。</p>
+<p><img src="multiparty.png"></p>
+<h3 id="预训练设置">预训练设置</h3>
+<p>数据集：</p>
 <ul>
-<li>英文：来自 Reddit，由第三方收集公开于 pushshift.io 上，使用 PLATO-2 的精细清洗流程。训练集为 2005 年到 2019 年的 811M 个样本。词汇表包含 8k BPE token，使用 SentencePiece 构建。</li>
-<li>中文：数据集来自社交媒体，清洗后包含 1.2B 训练样本，词表包含 30k BPE token。</li>
+<li>英文：来自 Reddit，由第三方收集公开于 pushshift.io 上，使用 PLATO-2 的精细清洗流程。训练集为 2005 年到 2019 年的 811M 个样本。词汇表包含 8k
+BPE token，使用 SentencePiece 构建。</li>
+<li>中文：数据集来自社交媒体，清洗后包含 1.2B 训练样本，词表包含 30k BPE
+token。</li>
 </ul>
-<p>PLATO-XL 拥有 11B 参数，使用了 72 个 Transformer 和 32 个注意力头，嵌入维度为 3072，前馈层的隐藏状态为 18432。为了训练的稳定性，PLATO-XL 参考 GPT2 将 Layer Normalization 提前到块开始，并对残差层初始参数进行缩放 $*1/\sqrt N$，N 为残差层数量。</p>
-<p>PLAOT-XL 基于飞桨实现，使用了 256 块 32G V100 进行训练。受限于显存，11B 模型无法容纳在单张卡中，标准的数据并行无法进行。因此将优化器状态、梯度、参数分别保存在不同设备，以减少通信并提高计算效率。为了提高 batch size，论文还使用了梯度检查点，即不保存一部分前向过程中的激活值，在反向传播时重新计算，用时间换空间。</p>
-<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><h3 id="基线"><a href="#基线" class="headerlink" title="基线"></a>基线</h3><ul>
+<p>PLATO-XL
+拥有 11B 参数，使用了 72 个 Transformer 和 32 个注意力头，嵌入维度为 3072，前馈层的隐藏状态为 18432。为了训练的稳定性，PLATO-XL 参考 GPT2 将 Layer
+Normalization 提前到块开始，并对残差层初始参数进行缩放<span class="math inline"> \(*1/\sqrt N\)</span>，N 为残差层数量。</p>
+<p>PLAOT-XL 基于飞桨实现，使用了 256 块 32G
+V100 进行训练。受限于显存，11B 模型无法容纳在单张卡中，标准的数据并行无法进行。因此将优化器状态、梯度、参数分别保存在不同设备，以减少通信并提高计算效率。为了提高 batch
+size，论文还使用了梯度检查点，即不保存一部分前向过程中的激活值，在反向传播时重新计算，用时间换空间。</p>
+<h2 id="实验">实验</h2>
+<h3 id="基线">基线</h3>
+<ul>
 <li>DialoGPT：Reddit 评论， 345M 参数。</li>
 <li>Blender：Reddit 评论预训练 + 人工注释对话数据（BST）微调，2.7B 参数。</li>
 <li>PLATO-2：使用课程学习方法训练。英文：Reddit 评论 + BST 微调，1.6B 参数。中文：1.2B 社交媒体数据集，336M 参数。</li>
@@ -349,7 +367,8 @@
 <li>EVA：1.4B 数据，2.8B 参数。</li>
 </ul>
 <p>此外，论文还与公开的中文聊天机器人：微软小冰、图灵机器人、天猫精灵、小爱同学进行了对比。</p>
-<h3 id="评估指标"><a href="#评估指标" class="headerlink" title="评估指标"></a>评估指标</h3><p>在开放域对话中，自动化指标和人工平板的相关性很小，因此论文主要通过众包平台进行人工评估。</p>
+<h3 id="评估指标">评估指标</h3>
+<p>在开放域对话中，自动化指标和人工平板的相关性很小，因此论文主要通过众包平台进行人工评估。</p>
 <ul>
 <li>连贯性（Coherence）：话语级指标，回复是否与上下文相关和一致。</li>
 <li>信息性（Informativeness）：话语级指标，给定上下文的情况下，回复是否有信息。</li>
@@ -358,23 +377,30 @@
 <p>上述三个指标取值为 [0,1,2]，分数越高越好。为了进一步分析对话质量，还有两个更细粒度的评估指标：</p>
 <ul>
 <li>不一致性（Inconsistency）：细粒度评估连贯性，回复是否与上下文冲突。</li>
-<li>错觉（Hallucination ）：细粒度评估信息性，回复是否存在事实性错误。</li>
+<li>错觉（Hallucination
+）：细粒度评估信息性，回复是否存在事实性错误。</li>
 </ul>
 <p>这两项指标取值为 [0,1]，越小越好。</p>
-<h3 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h3><p>实验结果如下图所示。可以看到 PLATO-XL 在所有指标上都是最优的。但是仅看中文指标，PLATO-XL 和 PLATO-2 的差别却不大，数据规模均为 1.2B，二者可能使用的是同一套数据集。二者的主要差别在不一致性和错觉这两项指标上，其他三项指标差距均不足 0.1，但模型规模差了 30 倍。</p>
+<h3 id="实验结果">实验结果</h3>
+<p>实验结果如下图所示。可以看到 PLATO-XL 在所有指标上都是最优的。但是仅看中文指标，PLATO-XL 和 PLATO-2 的差别却不大，数据规模均为 1.2B，二者可能使用的是同一套数据集。二者的主要差别在不一致性和错觉这两项指标上，其他三项指标差距均不足 0.1，但模型规模差了 30 倍。</p>
 <p>另一个角度看，PLATO-2 是 2020.1 登录 arxiv，EVA 是 2021.10 登录 arxiv，相差近两年，EVA 的模型和数据集的规模都大于 PLATO-2，在论文中表现却全线弱于 PLATO-2。不过 EVA 论文中也未与 PLATO-2 直接比较。这就比较微妙了，要么是 PLATO 的 UniLM 框架要优于 EVA 的 Seq2Seq，要么就是 PLATO 的数据集质量更好。</p>
-<p><img src="/blog/experiment-result.png"></p>
-<p><img src="/blog/chat-result.png"></p>
-<h3 id="Case-Study"><a href="#Case-Study" class="headerlink" title="Case Study"></a>Case Study</h3><p>论文给出了一个对话样例。大家也可以自行去微信公众号体验。</p>
-<p><img src="/blog/case-study.png"></p>
+<p><img src="experiment-result.png"></p>
+<p><img src="chat-result.png"></p>
+<h3 id="case-study">Case Study</h3>
+<p>论文给出了一个对话样例。大家也可以自行去微信公众号体验。</p>
+<p><img src="case-study.png"></p>
 <p>下面这张图是网上的体验图，可以看到基本可以达到以假乱真的地步。我自己试用的过程中，也激发了 PLATO 的四川话属性。相较于微软小冰，对话质量和体验提升可以说是巨大的。</p>
-<p><img src="/blog/demo.png"></p>
-<h3 id="其他对话任务"><a href="#其他对话任务" class="headerlink" title="其他对话任务"></a>其他对话任务</h3><p>将 PLATO-XL 微调后用于任务型对话和知识增强对话，在三个数据集上达到了 SOTA 效果，证实了 PLATO-XL 作为对话 AI 的基础模型的潜力。</p>
-<p><img src="/blog/other-task.png"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>PLATO-XL 的效果确实是非常惊艳，但是代码、数据、模型全部闭源，就 emmmm。模型出于商业角度不开源，数据出于知识产权角度不开源，这篇论文最大的影响就是证实了中文闲聊场景大模型的上限是很高的，但是怎么达到这个上限，我不告诉你。</p>
+<p><img src="demo.png"></p>
+<h3 id="其他对话任务">其他对话任务</h3>
+<p>将 PLATO-XL 微调后用于任务型对话和知识增强对话，在三个数据集上达到了 SOTA 效果，证实了 PLATO-XL 作为对话 AI 的基础模型的潜力。</p>
+<p><img src="other-task.png"></p>
+<h2 id="总结">总结</h2>
+<p>PLATO-XL 的效果确实是非常惊艳，但是代码、数据、模型全部闭源，就 emmmm。模型出于商业角度不开源，数据出于知识产权角度不开源，这篇论文最大的影响就是证实了中文闲聊场景大模型的上限是很高的，但是怎么达到这个上限，我不告诉你。</p>
 <p>英文模型反倒可以开源，毕竟百度也不做国外的生意，开源英文模型和推理脚本，论文应该才更容易接收。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://ai.baidu.com/support/news?action=detail&amp;id=2630&amp;hmpl=yunying=10.22">「比人还会聊天」百度 PLATO 对话机器人开放体验 - https://ai.baidu.com/</a></li>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://ai.baidu.com/support/news?action=detail&amp;id=2630&amp;hmpl=yunying=10.22">「比人还会聊天」百度 PLATO 对话机器人开放体验
+- https://ai.baidu.com/</a></li>
 </ul>
 
     </div>
@@ -459,7 +485,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

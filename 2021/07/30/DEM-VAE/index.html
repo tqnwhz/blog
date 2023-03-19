@@ -21,24 +21,24 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="序言DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于可解释文本生成的分散指数族混合 VAE ”。">
+<meta name="description" content="序言 DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于可解释文本生成的分散指数族混合 VAE ”。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DEM-VAE">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="序言DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于可解释文本生成的分散指数族混合 VAE ”。">
+<meta property="og:description" content="序言 DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于可解释文本生成的分散指数族混合 VAE ”。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/example.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/gm-vae.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/elbo.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/mode-collapse-result.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/lg-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/example.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/gm-vae.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/elbo.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/mode-collapse-result.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/lg-result.png">
 <meta property="article:published_time" content="2021-07-30T01:25:25.000Z">
 <meta property="article:modified_time" content="2022-02-19T07:03:44.527Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="VAE">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/example.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/example.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2021/07/30/DEM-VAE/">
@@ -155,7 +155,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%8F%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">序言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D"><span class="nav-number">2.</span> <span class="nav-text">题外话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">3.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83vs%E5%90%8E%E9%AA%8C%E5%B4%A9%E5%A1%8C"><span class="nav-number">4.</span> <span class="nav-text">模式崩溃 vs 后验崩塌</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">5.</span> <span class="nav-text">解决方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E6%8C%87%E6%95%B0%E6%97%8FVAE"><span class="nav-number">5.1.</span> <span class="nav-text">混合指数族 VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83%E9%97%AE%E9%A2%98"><span class="nav-number">5.2.</span> <span class="nav-text">模式崩溃问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DEM-VAE"><span class="nav-number">5.3.</span> <span class="nav-text">DEM-VAE</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">6.1.</span> <span class="nav-text">模式崩溃实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E6%9C%AC%E7%94%9F%E6%88%90"><span class="nav-number">6.2.</span> <span class="nav-text">文本生成</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%8F%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">序言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D"><span class="nav-number">2.</span> <span class="nav-text">题外话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">3.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83vs%E5%90%8E%E9%AA%8C%E5%B4%A9%E5%A1%8C"><span class="nav-number">4.</span> <span class="nav-text">模式崩溃 vs 后验崩塌</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">5.</span> <span class="nav-text">解决方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E6%8C%87%E6%95%B0%E6%97%8Fvae"><span class="nav-number">5.1.</span> <span class="nav-text">混合指数族 VAE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83%E9%97%AE%E9%A2%98"><span class="nav-number">5.2.</span> <span class="nav-text">模式崩溃问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dem-vae"><span class="nav-number">5.3.</span> <span class="nav-text">DEM-VAE</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%B4%A9%E6%BA%83%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">6.1.</span> <span class="nav-text">模式崩溃实验结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E6%9C%AC%E7%94%9F%E6%88%90"><span class="nav-number">6.2.</span> <span class="nav-text">文本生成</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -310,31 +310,65 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="序言"><a href="#序言" class="headerlink" title="序言"></a>序言</h2><p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p>
+        <h2 id="序言">序言</h2>
+<p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential
+Family Mixture VAEs for Interpretable Text
+Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong>
+VAE ”。</p>
 <span id="more"></span>
-
-<h2 id="题外话"><a href="#题外话" class="headerlink" title="题外话"></a>题外话</h2><p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量 $c$​只包含 $log (#c)$​位的信息，其中 $#c$​为 $c$​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量 $-log (1/#c)=log (#c)$​。）</p>
+<h2 id="题外话">题外话</h2>
+<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
+<h2 id="简介">简介</h2>
+<p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量<span class="math inline"> \(c\)</span>​只包含<span class="math inline"> \(log(\#c)\)</span>​位的信息，其中<span class="math inline"> \(\#c\)</span>​为<span class="math inline"> \(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline"> \(-log(1/\#c)=log(\#c)\)</span>​。）</p>
 <p>混合高斯分布的 VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而 GM-VAE 容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE 退化为只有一个高斯分量的普通 VAE。如下图所示：</p>
-<p><img src="/blog/example.png"></p>
-<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
-<h2 id="模式崩溃vs后验崩塌"><a href="#模式崩溃vs后验崩塌" class="headerlink" title="模式崩溃vs后验崩塌"></a>模式崩溃 vs 后验崩塌</h2><p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
+<p><img src="example.png"></p>
+<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse
+perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
+<h2 id="模式崩溃vs后验崩塌">模式崩溃 vs 后验崩塌</h2>
+<p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
 <p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个 KL 损失项。</p>
-<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><h3 id="混合指数族VAE"><a href="#混合指数族VAE" class="headerlink" title="混合指数族VAE"></a>混合指数族 VAE</h3><p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量 $c$ 代表不同的高斯成分，连续隐变量 $z$ 依赖于 $c$。如下图所示：</p>
-<p><img src="/blog/gm-vae.png"></p>
-<p>其中，实现为依赖关系，虚线为变分后验。其中，$p (c)$​可以近似为均匀分布，$p_\eta (z|c)$​为指数族分布，例如高斯分布。</p>
-<p>测试时：从先验分布 $p (c)$ 中采样一个 $c$，然后从 $c$ 对应的高斯分布中采样隐变量 $p (z|c)$，接着投喂到解码器 $p (x|z)$ 中。</p>
-<p>训练时：通过最大化边际似然 $\int\sum_cp_\eta (z,c) p_\theta (x|z) dz$​​进行训练是不可行的。与 VAE 一样，使用近似后验分布 $q_\phi (z,c|x)=q_\phi (z|x) q_\phi (c|x)$​作为 $p (z,c|x)$​​​的估计，进一步改为优化如下所示的证据下界：</p>
-<p><img src="/blog/elbo.png"></p>
-<h3 id="模式崩溃问题"><a href="#模式崩溃问题" class="headerlink" title="模式崩溃问题"></a>模式崩溃问题</h3><p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到 $\mathcal R_c$ 与 $\mathcal R_z$ 中。作者从指数族分布的参数化定义出发，将损失项 $\mathcal R_z,\mathcal R_c$​重写为 KL 平均正则项与分散项 $\mathcal L_d$​​。<br>$$<br>\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0<br>$$<br>作者得出结论，最小化分散项 $\mathcal L_d$​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示：<br>$$<br>L(\theta;x)=ELBO+\beta \cdot \mathcal L_d<br>$$<br>其中，$\beta$​是一个超参数，通过调整 $\beta$​​来达到平衡模式崩溃与正常训练。</p>
-<h3 id="DEM-VAE"><a href="#DEM-VAE" class="headerlink" title="DEM-VAE"></a>DEM-VAE</h3><p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下：<br>$$<br>\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))<br>$$<br>公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
-<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><h3 id="模式崩溃实验结果"><a href="#模式崩溃实验结果" class="headerlink" title="模式崩溃实验结果"></a>模式崩溃实验结果</h3><p><img src="/blog/mode-collapse-result.png"></p>
+<h2 id="解决方法">解决方法</h2>
+<h3 id="混合指数族vae">混合指数族 VAE</h3>
+<p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Exponential_family">Exponential
+family -
+Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量<span class="math inline"> \(c\)</span> 代表不同的高斯成分，连续隐变量<span class="math inline"> \(z\)</span> 依赖于<span class="math inline"> \(c\)</span>。如下图所示：</p>
+<p><img src="gm-vae.png"></p>
+<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
+<p>测试时：从先验分布<span class="math inline"> \(p(c)\)</span> 中采样一个<span class="math inline"> \(c\)</span>，然后从<span class="math inline"> \(c\)</span> 对应的高斯分布中采样隐变量<span class="math inline"> \(p(z|c)\)</span>，接着投喂到解码器<span class="math inline"> \(p(x|z)\)</span> 中。</p>
+<p>训练时：通过最大化边际似然<span class="math inline"> \(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与 VAE 一样，使用近似后验分布<span class="math inline"> \(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline"> \(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
+<p><img src="elbo.png"></p>
+<h3 id="模式崩溃问题">模式崩溃问题</h3>
+<p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到<span class="math inline"> \(\mathcal R_c\)</span> 与<span class="math inline"> \(\mathcal
+R_z\)</span> 中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline"> \(\mathcal R_z,\mathcal
+R_c\)</span>​重写为 KL 平均正则项与分散项<span class="math inline"> \(\mathcal L_d\)</span>​​。 <span class="math display">\[
+\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb
+E_{q_\phi(c|x)}\eta_c)&gt;=0
+\]</span> 作者得出结论，最小化分散项<span class="math inline"> \(\mathcal
+L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示：
+<span class="math display">\[
+L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
+\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline"> \(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
+<h3 id="dem-vae">DEM-VAE</h3>
+<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下：
+<span class="math display">\[
+\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb
+E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
+\]</span>
+公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
+<h2 id="实验">实验</h2>
+<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
+<p><img src="mode-collapse-result.png"></p>
 <p>可以看出，同时引入互信息项和分散项的 VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
-<h3 id="文本生成"><a href="#文本生成" class="headerlink" title="文本生成"></a>文本生成</h3><p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
-<p><img src="/blog/lg-result.png"></p>
+<h3 id="文本生成">文本生成</h3>
+<p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
+<p><img src="lg-result.png"></p>
 <p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得 NLL（负对数似然）相较基线模型更大，但是 rPPL，BLEU 等指标上取得了更好的结果。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库 (iczhiku.com)</a></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML
+2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库
+(iczhiku.com)</a></p>
 
     </div>
 
@@ -414,7 +448,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

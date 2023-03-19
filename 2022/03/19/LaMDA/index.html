@@ -21,18 +21,18 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要《LaMDA: Language Models for Dialog Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（Language Models for Dialog Application）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和">
+<meta name="description" content="摘要 《LaMDA: Language Models for Dialog Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（Language Models for Dialog Application）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性">
 <meta property="og:type" content="article">
 <meta property="og:title" content="谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要《LaMDA: Language Models for Dialog Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（Language Models for Dialog Application）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和">
+<meta property="og:description" content="摘要 《LaMDA: Language Models for Dialog Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（Language Models for Dialog Application）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/overview.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/pretraining.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/finetune-line.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/finetune.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/toolset.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/overview.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/pretraining.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/finetune-line.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/finetune.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/toolset.png">
 <meta property="article:published_time" content="2022-03-19T07:55:15.000Z">
 <meta property="article:modified_time" content="2022-03-21T07:30:34.298Z">
 <meta property="article:author" content="Tqnwhz">
@@ -40,7 +40,7 @@
 <meta property="article:tag" content="对话生成">
 <meta property="article:tag" content="LaMDA">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/overview.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/overview.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/">
@@ -157,7 +157,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.</span> <span class="nav-text">预训练</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%84%E4%BB%B7%E6%8C%87%E6%A0%87"><span class="nav-number">4.</span> <span class="nav-text">评价指标</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SSI"><span class="nav-number">4.1.</span> <span class="nav-text">SSI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E7%89%B9%E5%AE%9A%E6%8C%87%E6%A0%87"><span class="nav-number">4.2.</span> <span class="nav-text">角色特定指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">4.3.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">5.</span> <span class="nav-text">微调</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A4%E5%88%AB%E5%BC%8F-x2F-%E7%94%9F%E6%88%90%E5%BC%8F%E5%BE%AE%E8%B0%83"><span class="nav-number">5.1.</span> <span class="nav-text">判别式 &#x2F; 生成式微调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E4%BF%A1%E6%81%AF%E7%B3%BB%E7%BB%9F"><span class="nav-number">5.2.</span> <span class="nav-text">调用外部信息系统</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.</span> <span class="nav-text">预训练</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%84%E4%BB%B7%E6%8C%87%E6%A0%87"><span class="nav-number">4.</span> <span class="nav-text">评价指标</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ssi"><span class="nav-number">4.1.</span> <span class="nav-text">SSI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E7%89%B9%E5%AE%9A%E6%8C%87%E6%A0%87"><span class="nav-number">4.2.</span> <span class="nav-text">角色特定指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">4.3.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">5.</span> <span class="nav-text">微调</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A4%E5%88%AB%E5%BC%8F%E7%94%9F%E6%88%90%E5%BC%8F%E5%BE%AE%E8%B0%83"><span class="nav-number">5.1.</span> <span class="nav-text">判别式 &#x2F; 生成式微调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E4%BF%A1%E6%81%AF%E7%B3%BB%E7%BB%9F"><span class="nav-number">5.2.</span> <span class="nav-text">调用外部信息系统</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -294,7 +294,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3k</span>
+      <span>2.9k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -312,54 +312,87 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>《LaMDA: Language Models for Dialog Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（<strong>La</strong>nguage <strong>M</strong>odels for <strong>D</strong>ialog <strong>A</strong>pplication）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和事实性方面的改进很小。而监督数据上的微调能够帮助模型利用外部知识源进行回复，显著改进了安全性和事实性两个指标。</p>
+        <h2 id="摘要">摘要</h2>
+<p>《LaMDA: Language Models for Dialog
+Applications》是谷歌于 2022 年发表的论文，收录在 arxiv 中。论文提出了一个名为 LaMDA（<strong>La</strong>nguage
+<strong>M</strong>odels for <strong>D</strong>ialog
+<strong>A</strong>pplication）的对话模型，拥有 137B 参数，在 1.56T 公开对话数据和网页上预训练。实验证明，虽然模型扩展能够提升对话质量，但是在安全性和事实性方面的改进很小。而监督数据上的微调能够帮助模型利用外部知识源进行回复，显著改进了安全性和事实性两个指标。</p>
 <span id="more"></span>
-
-<p>LaMDA 构建了一个工具集（TS，Tool set），包含：信息检索系统、计算器、翻译器。通过监督数据微调，LaMDA 能够利用这些工具来回答问题，这使得模型能够根据已知知识来源做出响应，减少了幻觉现象。</p>
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>LaMDA 使用单个 Transformer 模型来执行多项任务：它生成潜在响应，然后出于安全考虑对其进行过滤、基于外部知识源并重新排序以找到最高质量的响应。LaMDA 的参数范围从 2B 到 137B 参数，在以上指标上进行测试。结果如下图所示。左侧为质量分数，右侧为安全性和事实性分数。</p>
-<p><img src="/blog/overview.png"></p>
+<p>LaMDA 构建了一个工具集（TS，Tool
+set），包含：信息检索系统、计算器、翻译器。通过监督数据微调，LaMDA 能够利用这些工具来回答问题，这使得模型能够根据已知知识来源做出响应，减少了幻觉现象。</p>
+<h2 id="简介">简介</h2>
+<p>LaMDA
+使用单个 Transformer 模型来执行多项任务：它生成潜在响应，然后出于安全考虑对其进行过滤、基于外部知识源并重新排序以找到最高质量的响应。LaMDA 的参数范围从
+2B 到 137B
+参数，在以上指标上进行测试。结果如下图所示。左侧为质量分数，右侧为安全性和事实性分数。</p>
+<p><img src="overview.png"></p>
 <p>可以观察到：</p>
 <ul>
 <li>单独的模型缩放提高了质量，但它在安全性和接地性方面的改进远远落后于人类表现</li>
-<li>结合缩放和微调在所有指标上显着提高了 LaMDA，尽管模型的性能仍然低于人类水平在安全性和接地性的水平</li>
+<li>结合缩放和微调在所有指标上显着提高了
+LaMDA，尽管模型的性能仍然低于人类水平在安全性和接地性的水平</li>
 </ul>
-<h2 id="预训练"><a href="#预训练" class="headerlink" title="预训练"></a>预训练</h2><p>预训练模型架构都差不多，关键参数如下：</p>
+<h2 id="预训练">预训练</h2>
+<p>预训练模型架构都差不多，关键参数如下：</p>
 <ul>
 <li>参数规模：137B</li>
 <li> 数据集：预训练（2.97B 文档 + 1.12B 对话）</li>
 <li>架构 &amp; 训练目标：Transformer-Decoder，语言模型（预测下一个 token），如下图所示</li>
 <li>训练成本：1024 TPU-v3 * 57.7 天</li>
 </ul>
-<p><img src="/blog/pretraining.png"></p>
-<h2 id="评价指标"><a href="#评价指标" class="headerlink" title="评价指标"></a>评价指标</h2><h3 id="SSI"><a href="#SSI" class="headerlink" title="SSI"></a>SSI</h3><p><strong>SSI</strong> 是合理性、特异性、趣味性三项指标（Sensibleness, Specificity, Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（合理性、特异性两项平均）的改进。各项指标具体含义如下：</p>
+<p><img src="pretraining.png"></p>
+<h2 id="评价指标">评价指标</h2>
+<h3 id="ssi">SSI</h3>
+<p><strong>SSI</strong> 是合理性、特异性、趣味性三项指标（Sensibleness,
+Specificity,
+Interestingnes）的平均值，是谷歌在 Menna 中提出的 SSA（合理性、特异性两项平均）的改进。各项指标具体含义如下：</p>
 <ul>
 <li><strong>合理性</strong>：衡量模型的回复在上下文和不要与前面所说的任何内容相矛盾。然而，通用和无聊的回复，例如 “我不知道” 的合理性分数可能很高。因此只有这一项指标是远远不够的。</li>
-<li><strong>特异性</strong>：衡量模型的回复是否特定于上下文。例如，如果用户说 “我爱欧洲电视网”，而模型回答 “我也是”，那么它的特异性得分为 0。因为这种句式适用于很多上下文。</li>
+<li><strong>特异性</strong>：衡量模型的回复是否特定于上下文。例如，如果用户说 “我爱欧洲电视网”，而模型回答 “我也是”，那么它的特异性得分为
+0。因为这种句式适用于很多上下文。</li>
 <li><strong>趣味性</strong>：衡量模型的回复是否有趣。例如，对 “我如何扔球？” 的回应可能是 “你可以先捡起然后扔球来扔球”，这是有道理的，并且是针对问题的。另一个更深层次和更令人满意的答案可能是 “扔球的一种方法是用双手牢牢握住它，然后再向下摆动你的手臂，伸展你的肘部，然后向上释放球”。</li>
 </ul>
 <p>每项指标对应一个 0/1 标签，正例为 1，负例为 0，算术平均后就是 SSI 的值。</p>
-<h3 id="角色特定指标"><a href="#角色特定指标" class="headerlink" title="角色特定指标"></a>角色特定指标</h3><p><strong>有用性</strong>：如果模型的响应包含基于用户使用信息检索系统进行的独立研究的正确信息，并且用户认为它们有帮助，则它们被标记为有用。<strong>有用的响应是信息性响应的子集</strong>，由用户判断为正确且有用。</p>
+<h3 id="角色特定指标">角色特定指标</h3>
+<p><strong>有用性</strong>：如果模型的响应包含基于用户使用信息检索系统进行的独立研究的正确信息，并且用户认为它们有帮助，则它们被标记为有用。<strong>有用的响应是信息性响应的子集</strong>，由用户判断为正确且有用。</p>
 <p><strong>角色一致性</strong>：如果模型的响应看起来像执行目标角色的代理会说的话，则它们被标记为角色一致。这个与合理性中的一致性不同，这里的一致性是指，例如让模型扮演珠穆朗玛峰，模型的回复中的语气词、设定等都要以珠穆朗玛峰为准。</p>
-<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><p><strong>安全性</strong>是根据 Google 人工智能原则设定的，用以以避免造成伤害风险的意外结果，并避免产生或加强不公平的偏见，这个对应很多条规则，比较复杂，就略过了。</p>
+<h3 id="其他">其他</h3>
+<p><strong>安全性</strong>是根据 Google
+人工智能原则设定的，用以以避免造成伤害风险的意外结果，并避免产生或加强不公平的偏见，这个对应很多条规则，比较复杂，就略过了。</p>
 <p><strong>事实性</strong>：包含外部世界声明的回复中，可由权威外部来源支持的回复的百分比。</p>
 <p><strong>信息性</strong>：在所有回复中，包含已知来源支持的外部世界信息的回复所占的百分比。信息性与事实性仅在限定词上有所不同。因此，像 “这是一个好主意” 这样的回答，如果不包含任何外部世界的信息，就不会影响其事实，但会影响其信息性。</p>
 <p><strong>引用准确度</strong>：引用其来源 URL 的模型回应在所有明确声称外部世界的回应中所占的百分比，不包括众所周知的事实（如 “马有四条腿”）。</p>
-<h2 id="微调"><a href="#微调" class="headerlink" title="微调"></a>微调</h2><h3 id="判别式-x2F-生成式微调"><a href="#判别式-x2F-生成式微调" class="headerlink" title="判别式/生成式微调"></a>判别式 / 生成式微调</h3><p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（合理性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
-<p>LaMDA 生成回复的时候按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;</code> 的模板进行生成，按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;&lt;属性&gt;&lt;分数&gt;</code> 的模板进行判别式微调，例如”What’s up? RESPONSE not much. SENSIBLE 1”。</p>
-<p>得到众包数据后，按照上述模板进行微调。这样在生成时，就能够预测出对应属性值作为筛选的辅助信息。将生成的候选序列按照 $3 *P (sensible) + P (specific) + P (interesting)$ 进行排名，选择排名靠前的候选序列作为下一个响应。</p>
+<h2 id="微调">微调</h2>
+<h3 id="判别式生成式微调">判别式 / 生成式微调</h3>
+<p>为了提高质量，谷歌团队收集了众包人员与 LaMDA 就任何主题交谈的 6400 次对话，每个对话包含 14-30 轮。对于每个模型回复，众包人员为其评估每个质量标签。如果回复不合理（合理性 = 0），不会收集特异性和趣味性标签。同样，如果回复不具体（特异性 = 0），不会收集趣味性标签。</p>
+<p>LaMDA 生成回复的时候按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;</code> 的模板进行生成，按照 <code>&lt;上下文&gt;&lt;哨兵&gt;&lt;回复&gt;&lt;属性&gt;&lt;分数&gt;</code> 的模板进行判别式微调，例如 "What’s
+up? RESPONSE not much. SENSIBLE 1"。</p>
+<p>得到众包数据后，按照上述模板进行微调。这样在生成时，就能够预测出对应属性值作为筛选的辅助信息。将生成的候选序列按照<span class="math inline"> \(3 *P(sensible) + P(specific) +
+P(interesting)\)</span> 进行排名，选择排名靠前的候选序列作为下一个响应。</p>
 <p>可以看到，经过微调 + 生成筛选，LaMDA 的安全性和质量都有了较高提升。论文贴心地给出了两种类型的图。可以看到经过微调的 LaMDA 比仅预训练的基础模型在各项指标上都有提升，在对话质量上已经接近甚至超过了人类的水平，安全性上也十分接近人类的水平。不过事实性和信息性还有一定的差距。</p>
-<p><img src="/blog/finetune-line.png"></p>
-<p><img src="/blog/finetune.png"></p>
-<h3 id="调用外部信息系统"><a href="#调用外部信息系统" class="headerlink" title="调用外部信息系统"></a>调用外部信息系统</h3><p>为了避免幻觉，谷歌团队构建了一个工具集（Toolset，TS），包含：信息检索系统、计算器、翻译器。TS 接收一个字符串作为输入，输出一个字符串的列表。例如，计算器接收 135+7721”，返回 [“7856”]。类似地，翻译器可以接收 “hello in French” 并输出 [“Bonjour”]。信息检索系统可以接收 “Howold is Rafael Nadal?”，并输出 [“Rafael Nadal / Age / 35”]。如果一个工具无法解析输入（例如，计算器无法解析 “Rafael Nadal 几岁？”），它将返回一个空的结果列表，因此不会对最终输出列表做出贡献。</p>
+<p><img src="finetune-line.png"></p>
+<p><img src="finetune.png"></p>
+<h3 id="调用外部信息系统">调用外部信息系统</h3>
+<p>为了避免幻觉，谷歌团队构建了一个工具集（Toolset，TS），包含：信息检索系统、计算器、翻译器。TS 接收一个字符串作为输入，输出一个字符串的列表。例如，计算器接收 135+7721”，返回 [“7856”]。类似地，翻译器可以接收 “hello
+in French” 并输出 [“Bonjour”]。信息检索系统可以接收 “Howold is Rafael
+Nadal?”，并输出 [“Rafael Nadal / Age /
+35”]。如果一个工具无法解析输入（例如，计算器无法解析 “Rafael Nadal
+几岁？”），它将返回一个空的结果列表，因此不会对最终输出列表做出贡献。</p>
 <p>团队收集了 40k 监督的对话数据用于生成，9k 条 LaMDA 的生成候选数据（标记为正确 / 不正确）用于判别排名。这些数据同样是众包人员与 LaMDA 间通过交互式和静态方法收集得到。</p>
 <p>微调分为两部分：</p>
 <ul>
-<li>根据上下文和基础模型响应，获取 TS 查询字符串。例如，Rafael Nadal 几岁？：上下文 + 基础→“TS，Rafael Nadal 的年龄”</li>
-<li> 根据基础回复和 TS 返回结果，预测事实版本回复：例如，“他现在 31 岁”+“Rafael Nadal / Age / 35”。然后它预测事实版本：上下文 + 基础 + 查询 + 片段 →“用户，他现在 35 岁”。</li>
+<li>根据上下文和基础模型响应，获取 TS 查询字符串。例如，Rafael Nadal
+几岁？：上下文 + 基础→“TS，Rafael Nadal 的年龄”</li>
+<li> 根据基础回复和 TS 返回结果，预测事实版本回复：例如，“他现在 31
+岁”+“Rafael Nadal / Age / 35”。然后它预测事实版本：上下文 + 基础 + 查询
++ 片段 →“用户，他现在 35 岁”。</li>
 </ul>
 <p>实际交互的例子如下：</p>
-<p><img src="/blog/toolset.png"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇论文还是挺有意思的，这种生成式 + 判别式微调的方式还是第一次见，而且也可以辅助结果搜索。而且，少量的微调数据就可以取得非常好的效果。引用原文中的一句话：使用适量的人工注释微调数据（不到 0.001% 的预训练数据），可以在更好质量和更安全的对话模型方面取得重大进展。</p>
+<p><img src="toolset.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是挺有意思的，这种生成式 + 判别式微调的方式还是第一次见，而且也可以辅助结果搜索。而且，少量的微调数据就可以取得非常好的效果。引用原文中的一句话：使用适量的人工注释微调数据（不到
+0.001%
+的预训练数据），可以在更好质量和更安全的对话模型方面取得重大进展。</p>
 <p>虽然，说是少量，也有几千上万条数据，而且就论文中的标注复杂度，标注成本也是蛮高的。不过相较于预训练数据的海量数据，微调数据可以说是少的多的多了。</p>
 
     </div>
@@ -442,7 +475,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

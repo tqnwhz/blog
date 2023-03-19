@@ -21,15 +21,15 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。">
+<meta name="description" content="摘要 本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MIT 6.830 数据库实验 Lab 4 实验报告">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/11/29/MIT-6-830-4/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。">
+<meta property="og:description" content="摘要 本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-11-29T02:29:50.000Z">
-<meta property="article:modified_time" content="2022-12-09T06:26:19.150Z">
+<meta property="article:modified_time" content="2023-03-19T07:48:02.896Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MIT 6.830">
@@ -151,7 +151,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%A5%E6%A0%BC%E4%B8%A4%E9%98%B6%E6%AE%B5%E9%94%81"><span class="nav-number">2.1.</span> <span class="nav-text">严格两阶段锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%BB%E9%94%81"><span class="nav-number">2.2.</span> <span class="nav-text">死锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%84%8F%E5%90%91%E9%94%81"><span class="nav-number">2.3.</span> <span class="nav-text">意向锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LockManager"><span class="nav-number">3.1.</span> <span class="nav-text">LockManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lock-Lifetime"><span class="nav-number">3.2.</span> <span class="nav-text">Lock Lifetime</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NO-STEAL"><span class="nav-number">3.3.</span> <span class="nav-text">NO STEAL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Transactions"><span class="nav-number">3.4.</span> <span class="nav-text">Transactions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deadlocks-and-Aborts"><span class="nav-number">3.5.</span> <span class="nav-text">Deadlocks and Aborts</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%A5%E6%A0%BC%E4%B8%A4%E9%98%B6%E6%AE%B5%E9%94%81"><span class="nav-number">2.1.</span> <span class="nav-text">严格两阶段锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%BB%E9%94%81"><span class="nav-number">2.2.</span> <span class="nav-text">死锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%84%8F%E5%90%91%E9%94%81"><span class="nav-number">2.3.</span> <span class="nav-text">意向锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercise"><span class="nav-number">3.</span> <span class="nav-text">Exercise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#lockmanager"><span class="nav-number">3.1.</span> <span class="nav-text">LockManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lock-lifetime"><span class="nav-number">3.2.</span> <span class="nav-text">Lock Lifetime</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#no-steal"><span class="nav-number">3.3.</span> <span class="nav-text">NO STEAL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#transactions"><span class="nav-number">3.4.</span> <span class="nav-text">Transactions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#deadlocks-and-aborts"><span class="nav-number">3.5.</span> <span class="nav-text">Deadlocks and Aborts</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -258,7 +258,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-12-09 14:26:19" itemprop="dateModified" datetime="2022-12-09T14:26:19+08:00">2022-12-09</time>
+      <time title="修改时间：2023-03-19 15:48:02" itemprop="dateModified" datetime="2023-03-19T15:48:02+08:00">2023-03-19</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -306,38 +306,46 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。</p>
+        <h2 id="摘要">摘要</h2>
+<p>本次 Lab 主要实现的数据库的事务功能，包含并发控制、死锁检测等。本 Lab 要求实现一个页面粒度的锁管理器，支持多事务的并发，且使用等待图完成死锁的检测。</p>
 <span id="more"></span>
-
-<h2 id="理论知识"><a href="#理论知识" class="headerlink" title="理论知识"></a>理论知识</h2><p>事务是一个包含多个操作的序列，应当被原子化地执行，其具有以下 ACID 特性：</p>
+<h2 id="理论知识">理论知识</h2>
+<p>事务是一个包含多个操作的序列，应当被原子化地执行，其具有以下 ACID 特性：</p>
 <ul>
 <li>原子性（Atomicity:）：事务中的操作要么都被执行，要么都不被执行。</li>
 <li>一致性（Consistency）：数据库是执行事务前是一致的，在执行事务后依然是一致的。</li>
-<li>隔离性（Isolation）：每个事务的执行与其他事务隔离。实际上 DBMS （数据库管理系统）会在多个事务间交叉执行，并不会按顺序一个个执行，但 DBMS 会保证每个事务看起来是隔离执行的，隐藏了并发的细节。</li>
-<li>持久性（Durability）：如果事务提交到数据库，结果会持久存在，即使刚提交 DBMS 就崩溃了也一样。</li>
+<li>隔离性（Isolation）：每个事务的执行与其他事务隔离。实际上 DBMS
+（数据库管理系统）会在多个事务间交叉执行，并不会按顺序一个个执行，但
+DBMS 会保证每个事务看起来是隔离执行的，隐藏了并发的细节。</li>
+<li>持久性（Durability）：如果事务提交到数据库，结果会持久存在，即使刚提交
+DBMS 就崩溃了也一样。</li>
 </ul>
 <p>事务管理器包含以下两个模块：</p>
 <ul>
 <li>锁管理器：使用共享锁、排它锁、意向锁等实现事务间访问的并发控制</li>
 <li>日志和恢复：当事务需要回滚时，逐步地撤销事务已完成的操作</li>
 </ul>
-<h3 id="严格两阶段锁"><a href="#严格两阶段锁" class="headerlink" title="严格两阶段锁"></a>严格两阶段锁</h3><p>为了保证事务的 ACID 特性，DBMS 使用严格两阶段锁（Strict Two Phase Locking）来完成事务的锁管理，该方法具有以下特点：</p>
+<h3 id="严格两阶段锁">严格两阶段锁</h3>
+<p>为了保证事务的 ACID 特性，DBMS 使用严格两阶段锁（Strict Two Phase
+Locking）来完成事务的锁管理，该方法具有以下特点：</p>
 <ul>
-<li>每个资源有一个共享锁（S，Shared）和排它锁（Exclusive，X）。<ul>
+<li>每个资源有一个共享锁（S，Shared）和排它锁（Exclusive，X）。
+<ul>
 <li>至多一个事务可以持有该资源的排它锁，但是很多其他事务可以持有其的共享锁。</li>
-</ul>
-</li>
+</ul></li>
 <li>事务在读之前必须获得排它锁，在写之前必须获得共享锁</li>
 <li><strong>事务在释放任何锁之后都无法获得新锁</strong>。这是保证可串行性的关键。</li>
 <li><strong>严格两阶段锁特性</strong>：事务在结束前统一释放锁，而非在过程中逐个释放锁。</li>
 </ul>
 <p>最后一点是为了避免级联回滚的问题。级联回滚意味着回滚一个事务会要求回滚另一个事务。考虑下面的场景</p>
-<ol>
+<ol type="1">
 <li>T1 先读、写了 R，但是还没有提交到 DBMS</li>
 <li>T2 后读、写了 R</li>
 </ol>
-<p>这时，要回滚 T1，必须回滚 T2，因为 T2 读的是 T1 写后的数据，如果 T1 回滚了，就不存在 T2 读的数据了，即脏数据。</p>
-<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><p>当事务间存在资源的循环等待，满足死锁条件时，就会发生死锁。在操作系统上，通常有以下三种方法处理死锁：</p>
+<p>这时，要回滚 T1，必须回滚 T2，因为 T2 读的是 T1 写后的数据，如果 T1
+回滚了，就不存在 T2 读的数据了，即脏数据。</p>
+<h3 id="死锁">死锁</h3>
+<p>当事务间存在资源的循环等待，满足死锁条件时，就会发生死锁。在操作系统上，通常有以下三种方法处理死锁：</p>
 <ul>
 <li>预防。按照指定的顺序请求资源，例如静态指定顺序，打破循环等待条件。</li>
 <li>避免。分配时预测是否可能出现死锁。</li>
@@ -345,7 +353,8 @@
 </ul>
 <p>也有一些数据库系统，直接不作处理。如果事务超时了就猜测发生了死锁，直接中止回滚。但这也会误伤真的需要很久才能计算出结果的事务，不提倡。</p>
 <p>DBMS 广泛使用的是基于等待图的死锁检测。一个后台进程周期性地构建事务间的依赖图，当依赖图存在环时，就出现了死锁的循环等待条件，即出现了死锁。这种情况下就需要中止某个环内的事务打破循环，可以根据某些指标确定优先级，例如事务的持续时间、持有锁的数量等。</p>
-<h3 id="意向锁"><a href="#意向锁" class="headerlink" title="意向锁"></a>意向锁</h3><p>锁的粒度需要同时考虑并发性能和管理成本。考虑极端情况：</p>
+<h3 id="意向锁">意向锁</h3>
+<p>锁的粒度需要同时考虑并发性能和管理成本。考虑极端情况：</p>
 <ul>
 <li>只使用一个锁，锁住整个数据库，很简单，但是不能并行</li>
 <li>对每个元组上锁，可以很好的并发，但是锁太多，需要庞大的内存开销，锁管理的负载也会很大</li>
@@ -355,51 +364,57 @@
 <li>细粒度的锁有利于并发</li>
 <li>少数的锁方便管理</li>
 </ul>
-<p>多粒度加锁可以较好地折中，其思想是：</p>
-<ul>
-<li>不应该为所有的事务设置相同的锁粒度</li>
-<li>允许数据可变规模</li>
-<li>定义一个加锁的层级，高层包含低层<ul>
-<li>可以表示为一棵树</li>
-</ul>
-</li>
-</ul>
-<p>当对底层的元组或者页面加共享锁 / 排他锁时，需要相应的为高层页面加意向共享锁和意向排他锁。意向锁的设计允许高层节点进行 S 和 X 加锁时，无需检查所有的底层节点。如果没有意向锁，需要遍历所有底层节点才能知道能否给这个节点加锁。</p>
-<h2 id="Exercise"><a href="#Exercise" class="headerlink" title="Exercise"></a>Exercise</h2><h3 id="LockManager"><a href="#LockManager" class="headerlink" title="LockManager"></a>LockManager</h3><p>该 Exercise 要求实现 <code>BufferPool</code> 中的读页面请求锁、释放锁等功能，指导书要求在页面层级管理锁，不能直接在表层级加锁。指导书建议使用一个 LockManager 类来管理所有的锁，我先介绍下我对这个类的设计。先从简单的资源抽象开始，一个资源应该由一个唯一键标识，例如 Page 有 PageId，Tuple 有 RecordId。因此，LockManager 实际是维护了一个资源 - 锁的 Map，资源是任意类型的 Object。而锁对象（<code>LockItem</code>），应该包含以下属性：持有锁的事务，当前锁的类型。当一个加锁请求（资源，锁类型，事务）到达锁管理器时：</p>
-<ol>
+<p>多粒度加锁可以较好地折中，其思想是： -
+不应该为所有的事务设置相同的锁粒度 - 允许数据可变规模 -
+定义一个加锁的层级，高层包含低层 - 可以表示为一棵树</p>
+<p>当对底层的元组或者页面加共享锁 / 排他锁时，需要相应的为高层页面加意向共享锁和意向排他锁。意向锁的设计允许高层节点进行
+S 和 X
+加锁时，无需检查所有的底层节点。如果没有意向锁，需要遍历所有底层节点才能知道能否给这个节点加锁。</p>
+<h2 id="exercise">Exercise</h2>
+<h3 id="lockmanager">LockManager</h3>
+<p>该 Exercise 要求实现 <code>BufferPool</code> 中的读页面请求锁、释放锁等功能，指导书要求在页面层级管理锁，不能直接在表层级加锁。指导书建议使用一个 LockManager 类来管理所有的锁，我先介绍下我对这个类的设计。先从简单的资源抽象开始，一个资源应该由一个唯一键标识，例如 Page 有 PageId，Tuple 有 RecordId。因此，LockManager 实际是维护了一个资源 - 锁的 Map，资源是任意类型的 Object。而锁对象（<code>LockItem</code>），应该包含以下属性：持有锁的事务，当前锁的类型。当一个加锁请求（资源，锁类型，事务）到达锁管理器时：</p>
+<ol type="1">
 <li>先获取资源的 <code>LockItem</code></li>
-<li><code>LockItem</code> 内，同步地判断能否完成这次加锁<ul>
+<li><code>LockItem</code> 内，同步地判断能否完成这次加锁
+<ul>
 <li>若可以（锁无事务持有，或类型兼容，或可以直接升级锁），则加锁返回</li>
 <li>否则，阻塞在 <code>LockItem</code> 对象上，等待其他事务释放锁后将其唤醒</li>
-</ul>
-</li>
+</ul></li>
 </ol>
 <p>当释放锁请求到达锁管理器时：</p>
-<ol>
+<ol type="1">
 <li>先获取资源的 <code>LockItem</code></li>
 <li><code>LockItem</code> 内，同步地释放锁，并 <code>notifyAll</code> 其他阻塞线程</li>
 </ol>
 <p>在设计上，<code>LockManager</code> 应当遵循单例模式。我查阅了 JAVA 实现单例模式的几种方法，最优雅的就是使用枚举类。JAVA 保证了枚举类型的每个值都有唯一实例，进而可以简洁优雅、线程安全的实现单例模式。</p>
-<h3 id="Lock-Lifetime"><a href="#Lock-Lifetime" class="headerlink" title="Lock Lifetime"></a>Lock Lifetime</h3><p>该 Exercise 要实现严格两阶段的锁生命周期：逐个地申请锁，只有在事务结束时才可以统一释放锁。锁的申请上，可以直接在 <code>BufferPool.getPage</code> 中进行申请，遵循一个即用即申的模式。</p>
+<h3 id="lock-lifetime">Lock Lifetime</h3>
+<p>该 Exercise 要实现严格两阶段的锁生命周期：逐个地申请锁，只有在事务结束时才可以统一释放锁。锁的申请上，可以直接在 <code>BufferPool.getPage</code> 中进行申请，遵循一个即用即申的模式。</p>
 <p>锁的释放上，正常应该在调用 <code>BufferPool.transactionComplete</code> 方法时，统一地释放所有锁。但会有些特殊情况，例如在插入元组的时候，扫到了一个页面没有空槽，这种情况下其实可以释放共享锁了。这看起来跟严格两阶段锁是违背的，但是实际上并不影响，因为插入元组这个操作中，只会对有空槽的页面造成影响。把这些锁及时释放可以允许更多的并行。</p>
-<h3 id="NO-STEAL"><a href="#NO-STEAL" class="headerlink" title="NO STEAL"></a>NO STEAL</h3><p>由于种种原因，事务可能中止，这时需要逐个地回滚事务已经完成的操作。在本次 Lab 中，由于还没有日志模块记录已经完成的操作，要使用 NO STEAL 的模式。该模式的思想是，只有当事务提交到 DBMS 后，才将其脏页面写回磁盘。在页面逐出时不能逐出脏页面。这种思想非常的简单有效，只有事务提交后，脏页面写回磁盘，结果才真正生效。当事务中止时，直接将脏页面丢弃即可，无需额外回滚。但是这种方法也有问题，最大的问题是，BufferPool 中只有脏页面的时候，DBMS 就直接崩溃了。不过这种思想还是有好处的，事实上，页面逐出时，逐出脏页面会导致额外的写回开销，有一种策略就是优先逐出非脏页面，减少 IO。</p>
+<h3 id="no-steal">NO STEAL</h3>
+<p>由于种种原因，事务可能中止，这时需要逐个地回滚事务已经完成的操作。在本次 Lab 中，由于还没有日志模块记录已经完成的操作，要使用 NO
+STEAL 的模式。该模式的思想是，只有当事务提交到 DBMS 后，才将其脏页面写回磁盘。在页面逐出时不能逐出脏页面。这种思想非常的简单有效，只有事务提交后，脏页面写回磁盘，结果才真正生效。当事务中止时，直接将脏页面丢弃即可，无需额外回滚。但是这种方法也有问题，最大的问题是，BufferPool 中只有脏页面的时候，DBMS 就直接崩溃了。不过这种思想还是有好处的，事实上，页面逐出时，逐出脏页面会导致额外的写回开销，有一种策略就是优先逐出非脏页面，减少 IO。</p>
 <p>这个 Exercise 在页面逐出时，按照优先级（例如 LRU）找到第一个非脏页面逐出即可。若页面全脏则抛出异常。</p>
-<h3 id="Transactions"><a href="#Transactions" class="headerlink" title="Transactions"></a>Transactions</h3><p>根据上面已经实现的逻辑，实现 <code>transactionComplete(tid, abort)</code> 方法。当事务中止结束时，丢弃脏页面；提交结束后，写回脏页面。无论哪种结束，事务都需要释放持有的所有锁。</p>
-<h3 id="Deadlocks-and-Aborts"><a href="#Deadlocks-and-Aborts" class="headerlink" title="Deadlocks and Aborts"></a>Deadlocks and Aborts</h3><p>最后来到了本 Lab 的重头戏，死锁的检测。正如前文所说，避免死锁的方法有简单的超时中止，还有基于检测的等待图。指导书要求不能使用简单的超时中止策略，建议在每次分配锁前构建等待图，判断是否会发生死锁。这时，申请加锁就变成了下面的流程：</p>
-<ol>
-<li>判断此次加锁是否会引入新的等待关系<ul>
-<li>会，构建等待图，判断是否有死锁<ul>
+<h3 id="transactions">Transactions</h3>
+<p>根据上面已经实现的逻辑，实现 <code>transactionComplete(tid,
+abort)</code> 方法。当事务中止结束时，丢弃脏页面；提交结束后，写回脏页面。无论哪种结束，事务都需要释放持有的所有锁。</p>
+<h3 id="deadlocks-and-aborts">Deadlocks and Aborts</h3>
+<p>最后来到了本 Lab 的重头戏，死锁的检测。正如前文所说，避免死锁的方法有简单的超时中止，还有基于检测的等待图。指导书要求不能使用简单的超时中止策略，建议在每次分配锁前构建等待图，判断是否会发生死锁。这时，申请加锁就变成了下面的流程：</p>
+<ol type="1">
+<li>判断此次加锁是否会引入新的等待关系
+<ul>
+<li>会，构建等待图，判断是否有死锁
+<ul>
 <li>有，抛出异常</li>
 <li>没有，跳出</li>
-</ul>
-</li>
+</ul></li>
 <li>不会，跳出</li>
-</ul>
-</li>
+</ul></li>
 <li>正常申请锁</li>
 </ol>
-<p>可以看到，最重要的是多了一个<code>等待图</code>对象，需要保证它线程安全。可以直接使用一个 <code>HashMap&lt;TransacationId, LockItem&gt;</code>，<code>HashMap</code> 本身不是线程安全的，需要读写时加 <code>synchornized</code>，也可以使用线程安全的、并发性能更好的 <code>ConcurrentHashMap</code>。它将 <code>HashMap</code> 按键分成了若干个段，读写时只对对应的段加锁，提升了并发性能。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本次 Lab 主要实现了事务的并发控制和死锁检测。正如指导书里面提到的，对并发进行 debug 是非常困难的事情。我本人花了一天时间才找到最后一个 exercise 的代码里的 bug 在哪里。当时还看了很多开源的代码时间，发现全是朴素地超时中止策略，没有使用等待图的。自己实现一遍还是收获颇丰。</p>
+<p>可以看到，最重要的是多了一个<code>等待图</code>对象，需要保证它线程安全。可以直接使用一个 <code>HashMap&lt;TransacationId,
+LockItem&gt;</code>，<code>HashMap</code> 本身不是线程安全的，需要读写时加 <code>synchornized</code>，也可以使用线程安全的、并发性能更好的 <code>ConcurrentHashMap</code>。它将 <code>HashMap</code> 按键分成了若干个段，读写时只对对应的段加锁，提升了并发性能。</p>
+<h2 id="总结">总结</h2>
+<p>本次 Lab 主要实现了事务的并发控制和死锁检测。正如指导书里面提到的，对并发进行 debug 是非常困难的事情。我本人花了一天时间才找到最后一个 exercise 的代码里的 bug 在哪里。当时还看了很多开源的代码实现，发现全是朴素的超时中止策略，没有使用等待图的。自己实现一遍还是收获颇丰。</p>
 
     </div>
 
@@ -481,7 +496,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

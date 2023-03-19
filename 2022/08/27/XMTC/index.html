@@ -21,26 +21,26 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。">
+<meta name="description" content="摘要 本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。 之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="XMTC: 极端多标签文本分类相关工作">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。">
+<meta property="og:description" content="摘要 本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。 之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-1.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-2.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-3.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-4.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-5.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-1.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-6.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/GLOCALXML-exper.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-7.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-8.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-9.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/Untitled-10.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-1.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-2.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-3.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-4.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-5.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-1.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-6.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/GLOCALXML-exper.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-7.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-8.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-9.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled-10.png">
 <meta property="article:published_time" content="2022-08-27T02:32:04.000Z">
 <meta property="article:modified_time" content="2022-12-01T05:10:09.640Z">
 <meta property="article:author" content="Tqnwhz">
@@ -48,7 +48,7 @@
 <meta property="article:tag" content="文本分类">
 <meta property="article:tag" content="多标签">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/Untitled.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/08/27/XMTC/Untitled.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/08/27/XMTC/">
@@ -165,7 +165,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%91%E6%88%98"><span class="nav-number">2.1.</span> <span class="nav-text">挑战</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">2.3.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87"><span class="nav-number">2.4.</span> <span class="nav-text">评估指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#XML-CNN"><span class="nav-number">3.</span> <span class="nav-text">XML-CNN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Attention-XML"><span class="nav-number">4.</span> <span class="nav-text">Attention-XML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-BERT"><span class="nav-number">5.</span> <span class="nav-text">X-BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-Transformers"><span class="nav-number">6.</span> <span class="nav-text">X-Transformers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LightXML"><span class="nav-number">7.</span> <span class="nav-text">LightXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GUDN"><span class="nav-number">8.</span> <span class="nav-text">GUDN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GLO-CALXML"><span class="nav-number">9.</span> <span class="nav-text">GLO-CALXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DEPL"><span class="nav-number">10.</span> <span class="nav-text">DEPL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TReaderXML"><span class="nav-number">11.</span> <span class="nav-text">TReaderXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">12.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%91%E6%88%98"><span class="nav-number">2.1.</span> <span class="nav-text">挑战</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">2.3.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87"><span class="nav-number">2.4.</span> <span class="nav-text">评估指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#xml-cnn"><span class="nav-number">3.</span> <span class="nav-text">XML-CNN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#attention-xml"><span class="nav-number">4.</span> <span class="nav-text">Attention-XML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x-bert"><span class="nav-number">5.</span> <span class="nav-text">X-BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x-transformers"><span class="nav-number">6.</span> <span class="nav-text">X-Transformers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lightxml"><span class="nav-number">7.</span> <span class="nav-text">LightXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gudn"><span class="nav-number">8.</span> <span class="nav-text">GUDN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#glo-calxml"><span class="nav-number">9.</span> <span class="nav-text">GLO-CALXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#depl"><span class="nav-number">10.</span> <span class="nav-text">DEPL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#treaderxml"><span class="nav-number">11.</span> <span class="nav-text">TReaderXML</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">12.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -310,14 +310,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.6k</span>
+      <span>4.7k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>8 分钟</span>
+      <span>9 分钟</span>
     </span>
 </div>
 
@@ -328,36 +328,57 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）的相关工作。<br>之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。</p>
+        <h2 id="摘要">摘要</h2>
+<p>本博客主要总结一下近期看到的一些关于极端多标签文本分类（Extreme
+Multi-Label Text Classification，XMTC）的相关工作。
+之前尝试研究了一个月，发现 SOTA 复现不太出来，只能放弃了换方向了。希望这篇博客能帮到有缘人。</p>
 <span id="more"></span>
-
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>极端多标签文本分类（Extreme Multi-Label Text Classification，XMTC）。给定一段文本，和极多（百、千、万乃至更多）的标签，判断文本所属的标签子集。例如，维基百科有百万级别的标签，每个百科文本都对应若干个标签。亚马逊的商品，有着复杂的垂直标签结构，标签数量也是百万级的。</p>
-<h3 id="挑战"><a href="#挑战" class="headerlink" title="挑战"></a>挑战</h3><p>XMTC 主要面临以下挑战：</p>
+<h2 id="简介">简介</h2>
+<p>极端多标签文本分类（Extreme Multi-Label Text
+Classification，XMTC）。给定一段文本，和极多（百、千、万乃至更多）的标签，判断文本所属的标签子集。例如，维基百科有百万级别的标签，每个百科文本都对应若干个标签。亚马逊的商品，有着复杂的垂直标签结构，标签数量也是百万级的。</p>
+<h3 id="挑战">挑战</h3>
+<p>XMTC 主要面临以下挑战：</p>
 <ul>
 <li>稀疏性：大量标签都只有少数样本与之关联，典型的长尾分布</li>
 <li>计算成本高：标签数量过多，为每个标签独立训练分类器成本过高</li>
 <li>可扩展性：对新增标签的可扩展性</li>
 </ul>
-<p><img src="/blog/Untitled.png" alt="两个XMTC数据集上，只有一半或更少的标签关联至少5个实例"></p>
+<figure>
+<img src="Untitled.png" alt="两个XMTC数据集上，只有一半或更少的标签关联至少5个实例">
+<figcaption aria-hidden="true">两个 XMTC 数据集上，只有一半或更少的标签关联至少 5 个实例</figcaption>
+</figure>
 <p>两个 XMTC 数据集上，只有一半或更少的标签关联至少 5 个实例</p>
-<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><p>XMTC 的方法可以分为以下四类：</p>
-<p>一对多分类：为每个标签构建 OVR（one vs rest）分类器，可以实现较高精度。但当标签数量过多时，训练、预测开销过大。</p>
-<p><strong>目标嵌入的方法</strong>：标签矩阵 $N\times L$ 中，N，L 分别为样本、标签数量。这个矩阵庞大稀疏，难以直接学习到一个可靠的映射。如果可以使用线性映射或者其他方法，完成降维 $L \rightarrow \hat L$ ，就可以学习到特征 - 降维后的标签间的可靠映射。然后再通过升维 $\hat L \rightarrow L$ ，得到真实标签。此类方法的差异主要在降维、升维技术上，例如压缩感知、奇异值分解等。</p>
+<h3 id="解决方法">解决方法</h3>
+<p>XMTC 的方法可以分为以下四类：</p>
+<p>一对多分类：为每个标签构建 OVR（one vs
+rest）分类器，可以实现较高精度。但当标签数量过多时，训练、预测开销过大。</p>
+<p><strong>目标嵌入的方法</strong>：标签矩阵<span class="math inline"> \(N\times
+L\)</span> 中，N，L 分别为样本、标签数量。这个矩阵庞大稀疏，难以直接学习到一个可靠的映射。如果可以使用线性映射或者其他方法，完成降维<span class="math inline"> \(L \rightarrow \hat L\)</span>
+，就可以学习到特征 - 降维后的标签间的可靠映射。然后再通过升维<span class="math inline"> \(\hat L \rightarrow L\)</span>
+，得到真实标签。此类方法的差异主要在降维、升维技术上，例如压缩感知、奇异值分解等。</p>
 <p><strong>集成树的方法</strong>：类似决策树，区别在于使用特征的加权和而非单一特征的信息增益进行划分，健壮性更好。</p>
 <p><strong>深度学习方法</strong>：使用深度学习特征，而非传统的词袋、tf-idf 特征。</p>
-<h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><p>其中的 L 是标签数量，可以看到大型数据集上，有几十万标签，规模是很大的。</p>
-<p><img src="/blog/Untitled-1.png"></p>
-<h3 id="评估指标"><a href="#评估指标" class="headerlink" title="评估指标"></a>评估指标</h3><p>对于文档，根据分数输出一个有序的标签列表。然后使用排序指标评估：</p>
+<h3 id="数据集">数据集</h3>
+<p>其中的 L 是标签数量，可以看到大型数据集上，有几十万标签，规模是很大的。</p>
+<p><img src="Untitled-1.png"></p>
+<h3 id="评估指标">评估指标</h3>
+<p>对于文档，根据分数输出一个有序的标签列表。然后使用排序指标评估：</p>
 <ul>
 <li>Precision@TopK: TopK 的查准率，越高越好</li>
 <li> NDCG@TopK: 归一化折损累计增益，越高越好</li>
 </ul>
-<h2 id="XML-CNN"><a href="#XML-CNN" class="headerlink" title="XML-CNN"></a>XML-CNN</h2><p>2017，Deep Learning for Extreme Multi-label Text Classification</p>
-<p>首次使用深度学习方法解决 XMTC 问题，使用 CNN + 交叉熵 loss。为了避免池化层后直接接分类线性层的参数过多，中间引入了一个较小的线性层，大小为 $h$。</p>
-<p><img src="/blog/Untitled-2.png" alt="模型结构图，红色的方框为较小的线性层"></p>
+<h2 id="xml-cnn">XML-CNN</h2>
+<p>2017，Deep Learning for Extreme Multi-label Text Classification</p>
+<p>首次使用深度学习方法解决 XMTC 问题，使用 CNN + 交叉熵 loss。为了避免池化层后直接接分类线性层的参数过多，中间引入了一个较小的线性层，大小为<span class="math inline"> \(h\)</span>。</p>
+<figure>
+<img src="Untitled-2.png" alt="模型结构图，红色的方框为较小的线性层">
+<figcaption aria-hidden="true">模型结构图，红色的方框为较小的线性层</figcaption>
+</figure>
 <p>模型结构图，红色的方框为较小的线性层</p>
 <p>结果：在六个数据集上基本达到了 SOTA，消融实验证明 BCE 损失、动态池化、小线性层都是有效的。</p>
-<h2 id="Attention-XML"><a href="#Attention-XML" class="headerlink" title="Attention-XML"></a>Attention-XML</h2><p>2019 AttentionXML: Label Tree-based Attention-Aware Deep Model for High-Performance Extreme Multi-Label Text Classification</p>
+<h2 id="attention-xml">Attention-XML</h2>
+<p>2019 AttentionXML: Label Tree-based Attention-Aware Deep Model for
+High-Performance Extreme Multi-Label Text Classification</p>
 <p>做法：</p>
 <p>构建宽而矮的概率标签树（plt），减少错误积累</p>
 <ul>
@@ -367,40 +388,49 @@
 <p>为每一层训练一个 Bi-LSTM 多分类器</p>
 <ul>
 <li>对每个样本，每层只使用上层该样本的 Top-C 候选的孩子节点训练，类似负采样</li>
-<li>每个标签对输入序列计算 attention 得到 $\hat m_i$，通过共享的全连接、输出层映射到分数</li>
+<li>每个标签对输入序列计算 attention 得到<span class="math inline"> \(\hat
+m_i\)</span>，通过共享的全连接、输出层映射到分数</li>
 <li>预测的时候，使用链式法则，得到每个标签的概率分数</li>
 <li>使用 BCE loss 训练，使用三棵 plt 集成取得最好性能</li>
 </ul>
-<p><img src="/blog/Untitled-3.png"></p>
+<p><img src="Untitled-3.png"></p>
 <p>结果：未集成的 AttentionXML 已经超过了 XML-CNN 达到了 SOTA，集成后性能提升半个点或更多</p>
-<h2 id="X-BERT"><a href="#X-BERT" class="headerlink" title="X-BERT"></a>X-BERT</h2><p>2019 X-BERT: eXtreme Multi-label Text Classification using Bidirectional Encoder Representations from Transformers</p>
+<h2 id="x-bert">X-BERT</h2>
+<p>2019 X-BERT: eXtreme Multi-label Text Classification using
+Bidirectional Encoder Representations from Transformers</p>
 <p>首次将 BERT 扩展到 XMTC 任务，解决以下挑战：</p>
 <ul>
 <li>直接分类忽视了标签间的依赖关系、相关性</li>
 <li> SoftMax 瓶颈</li>
 </ul>
 <p>论文提出了一个三阶段模型：</p>
-<ol>
+<ol type="1">
 <li>ELMo 编码标签描述 + tf-idf 特征，KMeans 聚类标签得到 K 个簇</li>
 <li> BERT 完成 K 个簇上的多分类</li>
 <li>使用一对多分类器完成簇内标签的判断</li>
 </ol>
 <p>在四个数据集上达到了 SOTA，未与 AttentionXML 比较</p>
-<h2 id="X-Transformers"><a href="#X-Transformers" class="headerlink" title="X-Transformers"></a>X-Transformers</h2><p>2020，Taming Pretrained Transformers for Extreme Multi-label Text Classification</p>
+<h2 id="x-transformers">X-Transformers</h2>
+<p>2020，Taming Pretrained Transformers for Extreme Multi-label Text
+Classification</p>
 <ul>
-<li>XLNET 编码标签描述 + 正样本聚合特征（Positive Instance Feature Aggregation, PIFA），进行分层聚类</li>
+<li>XLNET 编码标签描述 + 正样本聚合特征（Positive Instance Feature
+Aggregation, PIFA），进行分层聚类</li>
 </ul>
-<p><img src="/blog/Untitled-4.png"></p>
+<p><img src="Untitled-4.png"></p>
 <ul>
-<li> BERT/RoBERTa/XLNET Large + 平方 Hinge-loss 微调聚类标签的多分类（三模型集成效果最好）</li>
-<li>使用 tf-idf + 嵌入特征，构建线性 OVA 分类器，使用混合采样策略构建负样本<ol>
+<li> BERT/RoBERTa/XLNET Large + 平方 Hinge-loss
+微调聚类标签的多分类（三模型集成效果最好）</li>
+<li>使用 tf-idf + 嵌入特征，构建线性 OVA 分类器，使用混合采样策略构建负样本
+<ol type="1">
 <li>使用聚类簇内其他标签对应的样本作为负样本</li>
 <li>使用其他 Topb 聚类簇内标签样本作为负样本</li>
-</ol>
-</li>
+</ol></li>
 </ul>
 <p>跟 X-BERT 一批人做的，效果超过了 X-BERT，AttentionXML</p>
-<h2 id="LightXML"><a href="#LightXML" class="headerlink" title="LightXML"></a>LightXML</h2><p>2021 LightXML: Transformer with Dynamic Negative Sampling for High-Performance Extreme Multi-label Text Classification</p>
+<h2 id="lightxml">LightXML</h2>
+<p>2021 LightXML: Transformer with Dynamic Negative Sampling for
+High-Performance Extreme Multi-label Text Classification</p>
 <p>动机，解决 X-Transformers，Attention-XML 的以下问题：</p>
 <ul>
 <li>使用多个模型集成，计算资源和成本过高</li>
@@ -417,33 +447,40 @@
 <ul>
 <li>1 块 16G V100</li>
 </ul>
-<p><img src="/blog/Untitled-5.png"></p>
+<p><img src="Untitled-5.png"></p>
 <p>数据集统计信息</p>
-<p><img src="/blog/Untitled-1.png"></p>
+<p><img src="Untitled-1.png"></p>
 <p>使用 3 个模型或者 3 个聚类结果进行集成</p>
 <p>结果：在五个数据集上超过了 X-Transformers，达到了 SOTA。消融实验证明 5 个 cls 拼接有助于收敛，动态负采样能够提升性能</p>
-<h2 id="GUDN"><a href="#GUDN" class="headerlink" title="GUDN"></a>GUDN</h2><p>2022，GUDN: A novel guide network for extreme multi-label text classification</p>
+<h2 id="gudn">GUDN</h2>
+<p>2022，GUDN: A novel guide network for extreme multi-label text
+classification</p>
 <p>动机：LightXML 未使用标签语义信息</p>
 <p>做法：</p>
 <ul>
 <li>特征提取：BERT 编码特征文本，取最后 10 层的 CLS 拼接作为标签提取的特征</li>
-<li>引导网络：事实上就是辅助 loss。使用以下两种：文档表征和标签表征间的 MSE loss；标签表征用于分类的 BCE loss</li>
+<li>引导网络：事实上就是辅助 loss。使用以下两种：文档表征和标签表征间的 MSE
+loss；标签表征用于分类的 BCE loss</li>
 <li> 分类排名：对中等数据集直接使用线性层分类；对大标签数据集使用 BOW 聚类 + 动态负采样，类似 LightXML</li>
 </ul>
-<p><img src="/blog/Untitled-6.png"></p>
+<p><img src="Untitled-6.png"></p>
 <p>实验资源：</p>
 <ul>
 <li>4 块 24G 3090</li>
 </ul>
 <p>结果：</p>
 <p>在四个数据集上基本达到了 SOTA，超过 LightXML。消融实验证明，论文提出的两个辅助 loss 是有效的。</p>
-<h2 id="GLO-CALXML"><a href="#GLO-CALXML" class="headerlink" title="GLO-CALXML"></a>GLO-CALXML</h2><p>2022，Exploiting Local and Global Features in Transformer-based Extreme Multi-label Text Classification</p>
+<h2 id="glo-calxml">GLO-CALXML</h2>
+<p>2022，Exploiting Local and Global Features in Transformer-based
+Extreme Multi-label Text Classification</p>
 <p>这篇论文是目前的 SOTA，把 Eurlex-4k 数据集上的 precision 提高了 3 个点多，可惜我没有复现出来。</p>
 <p>动机：传统方法只使用 CLS 作为文档表征，只有全局表征，可能缺失信息。</p>
 <p>做法：</p>
 <ul>
 <li>每个标签有 global embedding 和 local embedding</li>
-<li>global embedding 和 cls 计算全局概率，local embedding 作为 query 与第一层所有 token embedding 做 attention，取加权和计算局部特征的概率</li>
+<li>global embedding 和 cls 计算全局概率，local
+embedding 作为 query 与第一层所有 token
+embedding 做 attention，取加权和计算局部特征的概率</li>
 <li> loss：两个概率的 BCE loss 之和</li>
 <li>预测：使用两个概率平均值</li>
 </ul>
@@ -452,47 +489,59 @@
 <ul>
 <li>没有使用标签树，只在标签较少的三个数据集上进行了实验</li>
 <li>使用 3 个预训练模型集成</li>
-<li>在两个数据集上超过了 LightXML（只使用单模型的情况也是超过的）， 与 GUDN 互有胜负</li>
+<li>在两个数据集上超过了 LightXML（只使用单模型的情况也是超过的），
+与 GUDN 互有胜负</li>
 <li>消融实验证明，局部特征和全局特征的融合是有效的</li>
 </ul>
 <p>以下是三模型集成结果，可以看出在 Eurlex-4k 和 Wiki10-31K 上分别有 3 个点、2 个点的提升，有点降维打击了。</p>
-<p><img src="/blog/GLOCALXML-exper.png"></p>
-<h2 id="DEPL"><a href="#DEPL" class="headerlink" title="DEPL"></a>DEPL</h2><p>2022，Long-tailed Extreme Multi-label Text Classification with Generated Pseudo Label Descriptions</p>
-<p>动机：传统模型都使用 precision@topk 指标，该指标不能很好反应尾部标签的分类性能，论文提出使用 macro-averaged F1@k，使得不同标签有相同的权重。</p>
-<p><img src="/blog/Untitled-7.png" alt="横坐标，数量由少到多的标签id，纵坐标，Macro-F1@19"></p>
+<p><img src="GLOCALXML-exper.png"></p>
+<h2 id="depl">DEPL</h2>
+<p>2022，Long-tailed Extreme Multi-label Text Classification with
+Generated Pseudo Label Descriptions</p>
+<p>动机：传统模型都使用 precision@topk 指标，该指标不能很好反应尾部标签的分类性能，论文提出使用 macro-averaged
+F1@k，使得不同标签有相同的权重。</p>
+<figure>
+<img src="Untitled-7.png" alt="横坐标，数量由少到多的标签id，纵坐标，Macro-F1@19">
+<figcaption aria-hidden="true">横坐标，数量由少到多的标签 id，纵坐标，Macro-F1@19</figcaption>
+</figure>
 <p>横坐标，数量由少到多的标签 id，纵坐标，Macro-F1@19</p>
 <p>做法：</p>
 <p>将 XMTC 定义为检索任务，根据文档检索标签。为了解决标签文本过短的问题，使用 SVM 构建分类器，并根据 token 重要性生成标签伪描述。具体来说：</p>
 <ul>
-<li>基于文档的 tf-id 特征 + 点积相似度函数 + hinge loss 训练稀疏分类器，训练维度为词表大小的 label embedding，将其中元素认为是 token 对 label 的重要性，选 topk 的 token 拼接到标签名后</li>
+<li>基于文档的 tf-id 特征 + 点积相似度函数 + hinge
+loss 训练稀疏分类器，训练维度为词表大小的 label
+embedding，将其中元素认为是 token 对 label 的重要性，选 topk 的 token 拼接到标签名后</li>
 <li>使用 BERT 编码，文档表征选择 cls，标签表征选择最后一层的池化结果，使用点积衡量相似性</li>
 <li>负采样，根据第一步分类器的 top 负样本和随机填充的负样本构建标签子集</li>
 <li>融合：文档表征后接线性层，得到概率分布 A；点积相似性结果得到另一个概率分布；两者平均作为最终结果</li>
 </ul>
 <p>框架如下：</p>
-<p><img src="/blog/Untitled-8.png"></p>
-<p>评价指标：除了 P@k，Macro F1@K，还有 PSP@K，PSP@K 是加权版的 P@K，预测正确尾部标签的收益更高</p>
-<p>结果：在 Macro F1@k，PSP@K 上达到了 SOTA，P@K 要弱一些；消融实验证明，伪标签描述对于尾部标签预测是有效的</p>
-<h2 id="TReaderXML"><a href="#TReaderXML" class="headerlink" title="TReaderXML"></a>TReaderXML</h2><p>2022 Exploiting Dynamic and Fine-grained Semantic Scope for Extreme Multi-label Text Classification</p>
+<p><img src="Untitled-8.png"></p>
+<p>评价指标：除了 P@k，Macro F1@K，还有 PSP@K，PSP@K 是加权版的 P<span class="citation" data-cites="K">@K</span>，预测正确尾部标签的收益更高</p>
+<p>结果：在 Macro
+F1@k，PSP@K 上达到了 SOTA，P@K 要弱一些；消融实验证明，伪标签描述对于尾部标签预测是有效的</p>
+<h2 id="treaderxml">TReaderXML</h2>
+<p>2022 Exploiting Dynamic and Fine-grained Semantic Scope for Extreme
+Multi-label Text Classification</p>
 <p>一篇比较奇怪的论文</p>
 <p>动机：传统方法使用聚类获得标签簇，但是这些簇只有粗粒度的语义，难以建模具体语义</p>
 <p>做法：构建细粒度的教师知识优化样本语义</p>
 <p>基于层次结构假设，如果一个样本与标签 A 相关，与标签 A 的父标签也相关</p>
 <ul>
-<li><p>对于每个文档样本 x，遍历其他样本，找到与其余弦相似度 topk 的样本</p>
-</li>
-<li><p>将该样本对应的标签、父标签（标签树）编码平均后，得到教师知识</p>
-</li>
+<li><p>对于每个文档样本 x，遍历其他样本，找到与其余弦相似度 topk 的样本</p></li>
+<li><p>将该样本对应的标签、父标签（标签树）编码平均后，得到教师知识</p></li>
 <li><p>使用一个掩码多层自注意力（自左向右）、一个多头注意力层完成编码过程</p>
-<p>  <img src="/blog/Untitled-9.png"></p>
-</li>
+<p><img src="Untitled-9.png"></p></li>
 </ul>
 <p>损失函数：基于最大熵的多标签一对多损失</p>
-<p><img src="/blog/Untitled-10.png"></p>
+<p><img src="Untitled-10.png"></p>
 <p>实验结果：在两个数据集上超过 LightXML 达到了 SOTA</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://analyticsindiamag.com/what-is-extreme-multilabel-text-classification/">什么是极端多标签文本分类？ (analyticsindiamag.com)</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/342922980">算法理论 01 SVD 奇异值分解 - 知乎 (zhihu.com)</a></li>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://analyticsindiamag.com/what-is-extreme-multilabel-text-classification/">什么是极端多标签文本分类？
+(analyticsindiamag.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/342922980">算法理论 01
+SVD 奇异值分解 - 知乎 (zhihu.com)</a></li>
 </ul>
 
     </div>
@@ -575,7 +624,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

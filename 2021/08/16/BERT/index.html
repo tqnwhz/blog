@@ -21,22 +21,22 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（Bidirectional Encoder Representations from Transformers）可谓是 NLP 历史上划">
+<meta name="description" content="简介 今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（Bidirectional Encoder Representations from Transformers）可谓是 NLP 历史上">
 <meta property="og:type" content="article">
 <meta property="og:title" content="BERT">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/08/16/BERT/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（Bidirectional Encoder Representations from Transformers）可谓是 NLP 历史上划">
+<meta property="og:description" content="简介 今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（Bidirectional Encoder Representations from Transformers）可谓是 NLP 历史上">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/architecture.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/embedding.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/16/BERT/architecture.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2021/08/16/BERT/embedding.png">
 <meta property="article:published_time" content="2021-08-16T05:45:32.000Z">
 <meta property="article:modified_time" content="2022-02-19T07:03:44.526Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="预训练模型">
 <meta property="article:tag" content="BERT">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/architecture.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2021/08/16/BERT/architecture.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2021/08/16/BERT/">
@@ -153,7 +153,9 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%EF%BC%88%E8%AF%AD%E8%A8%80%EF%BC%89%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">预训练（语言）模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%88masked-language-model%EF%BC%8CMLM%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">掩码语言模型（masked language model，MLM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BERT"><span class="nav-number">3.</span> <span class="nav-text">BERT</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E8%A1%A8%E5%BE%81"><span class="nav-number">3.1.</span> <span class="nav-text">输入输出表征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.2.</span> <span class="nav-text">预训练</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.2.1.</span> <span class="nav-text">掩码语言模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8B%E5%8F%A5%E9%A2%84%E6%B5%8B%EF%BC%88Next-Sentence-Prediction%EF%BC%8CNSP%EF%BC%89"><span class="nav-number">3.2.2.</span> <span class="nav-text">下句预测（Next Sentence Prediction，NSP）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">3.3.</span> <span class="nav-text">微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E4%BB%BB%E5%8A%A1"><span class="nav-number">5.1.</span> <span class="nav-text">预训练任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%A4%A7%E5%B0%8F"><span class="nav-number">5.2.</span> <span class="nav-text">模型大小</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E6%AD%A5%E6%95%B0"><span class="nav-number">5.3.</span> <span class="nav-text">训练步数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%89%B9%E5%BE%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">5.4.</span> <span class="nav-text">基于特征的方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">6.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">预训练（语言）模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8Bmasked-language-modelmlm"><span class="nav-number">2.1.</span> <span class="nav-text">掩码语言模型（masked
+language model，MLM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bert"><span class="nav-number">3.</span> <span class="nav-text">BERT</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E8%A1%A8%E5%BE%81"><span class="nav-number">3.1.</span> <span class="nav-text">输入输出表征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-number">3.2.</span> <span class="nav-text">预训练</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.2.1.</span> <span class="nav-text">掩码语言模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8B%E5%8F%A5%E9%A2%84%E6%B5%8Bnext-sentence-predictionnsp"><span class="nav-number">3.2.2.</span> <span class="nav-text">下句预测（Next Sentence
+Prediction，NSP）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">3.3.</span> <span class="nav-text">微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">消融实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E4%BB%BB%E5%8A%A1"><span class="nav-number">5.1.</span> <span class="nav-text">预训练任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%A4%A7%E5%B0%8F"><span class="nav-number">5.2.</span> <span class="nav-text">模型大小</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E6%AD%A5%E6%95%B0"><span class="nav-number">5.3.</span> <span class="nav-text">训练步数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%89%B9%E5%BE%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">5.4.</span> <span class="nav-text">基于特征的方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">6.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -312,10 +314,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》。BERT（<strong>B</strong>idirectional <strong>E</strong>ncoder Representations from <strong>T</strong>ransformers）可谓是 NLP 历史上划时代的预训练模型，在 11 项自然语言处理任务上都取得了 state-of-the-art。并且，Google 将 BERT 的代码与预训练模型全部开源，便于大家使用。</p>
+        <h2 id="简介">简介</h2>
+<p>今天来看读的是大名鼎鼎的 BERT，出自论文 Google 团队 2018 年的论文《BERT:
+Pre-training of Deep Bidirectional Transformers for Language
+Understanding》。BERT（<strong>B</strong>idirectional
+<strong>E</strong>ncoder Representations from
+<strong>T</strong>ransformers）可谓是 NLP 历史上划时代的预训练模型，在 11 项自然语言处理任务上都取得了 state-of-the-art。并且，Google 将 BERT 的代码与预训练模型全部开源，便于大家使用。</p>
 <span id="more"></span>
-
-<h2 id="预训练（语言）模型"><a href="#预训练（语言）模型" class="headerlink" title="预训练（语言）模型"></a>预训练（语言）模型</h2><p>预训练语言模型是自然语言处理中的重要部分，与计算机视觉中的预训练模型类似，也是为了从特定的下游任务中脱离出来，在大量数据上预训练可以解决通用任务的模型。这样以来，下流任务可以根据自己的任务特点进行微调，而不需要从头训练。这样做的好处非常明显：</p>
+<h2 id="预训练语言模型">预训练（语言）模型</h2>
+<p>预训练语言模型是自然语言处理中的重要部分，与计算机视觉中的预训练模型类似，也是为了从特定的下游任务中脱离出来，在大量数据上预训练可以解决通用任务的模型。这样以来，下流任务可以根据自己的任务特点进行微调，而不需要从头训练。这样做的好处非常明显：</p>
 <ul>
 <li>训练时间更短</li>
 <li>数据要求更少</li>
@@ -326,11 +333,19 @@
 <li>基于特征的预训练模型，指利用语言模型的中间结果，作为额外的特征，引入到下游任务中。典型的就是 ELMO。特点：<strong>模型参数是固定的</strong>。</li>
 <li>基于微调的预训练模型，指在语言模型的基础上，加入少量的特定任务参数（例如分类任务，加一层 softmax），再在任务数据上微调模型，典型的就是 GPT。特点：<strong>模型参数需要微调</strong>。</li>
 </ul>
-<p>在 BERT 之前的预训练模型，例如 ELMO 与 GPT，存在的一个重要问题是它们只从单向建模了序列。虽然 ELMO 是使用的双向 LSTM，也只是把双向的隐藏状态进行了拼接，双向的特征信息也没有很好地进行融合。形式化的来说，标准的语言模型就是单向的，当前词的选择只依赖于先前词，例如从左到右方向：<br>$$<br>P_{l2r}(x_1,x_2,\dots,x_n)=\prod_{t=1}^nP(x_t|x_{&lt;t})<br>$$</p>
-<h3 id="掩码语言模型（masked-language-model，MLM）"><a href="#掩码语言模型（masked-language-model，MLM）" class="headerlink" title="掩码语言模型（masked language model，MLM）"></a>掩码语言模型（masked language model，MLM）</h3><p>考虑到标准的语言模型所存在的问题，BERT 提出了一种掩码语言模型的任务，具体做法为：随机遮挡输入中的部分单词，目标是仅根据单词的上下文预测当前位置本来的单词（即遮掩前的单词）。与从左到右的语言模型不同，掩码语言模型能够融合单词的左右上下文。形式化而言，对于 $x_t$ 的概率分布，掩码语言模型计算的是 $P (x_t|x_{&lt;t},x_{&gt;t})$，标准的语言模型计算的是 $P (x_t|x_{&lt;t})$。但值得注意的是，掩码语言模型并不是传统的语言模型，一些论文中可能存在二者混用的情况。语言模型的定义可以看我之前的博客 <a href="https://tqnwhz.github.io/blog/2021/07/22/language-model/#more">语言模型 | 一隅</a>。</p>
+<p>在 BERT 之前的预训练模型，例如 ELMO 与 GPT，存在的一个重要问题是它们只从单向建模了序列。虽然 ELMO 是使用的双向 LSTM，也只是把双向的隐藏状态进行了拼接，双向的特征信息也没有很好地进行融合。形式化的来说，标准的语言模型就是单向的，当前词的选择只依赖于先前词，例如从左到右方向：
+<span class="math display">\[
+P_{l2r}(x_1,x_2,\dots,x_n)=\prod_{t=1}^nP(x_t|x_{&lt;t})
+\]</span></p>
+<h3 id="掩码语言模型masked-language-modelmlm">掩码语言模型（masked
+language model，MLM）</h3>
+<p>考虑到标准的语言模型所存在的问题，BERT 提出了一种掩码语言模型的任务，具体做法为：随机遮挡输入中的部分单词，目标是仅根据单词的上下文预测当前位置本来的单词（即遮掩前的单词）。与从左到右的语言模型不同，掩码语言模型能够融合单词的左右上下文。形式化而言，对于<span class="math inline"> \(x_t\)</span> 的概率分布，掩码语言模型计算的是<span class="math inline"> \(P(x_t|x_{&lt;t},x_{&gt;t})\)</span>，标准的语言模型计算的是<span class="math inline"> \(P(x_t|x_{&lt;t})\)</span>。但值得注意的是，掩码语言模型并不是传统的语言模型，一些论文中可能存在二者混用的情况。语言模型的定义可以看我之前的博客
+<a href="https://tqnwhz.github.io/blog/2021/07/22/language-model/#more">语言模型
+| 一隅</a>。</p>
 <p>个人认为掩码语言模型的思路与 cbow 的思想是有些像的，根据一个单词的上下文来预测这个词。</p>
-<h2 id="BERT"><a href="#BERT" class="headerlink" title="BERT"></a>BERT</h2><p>BERT 主要分为两个阶段：预训练和微调。两者流程如下所示：</p>
-<p><img src="/blog/architecture.png"></p>
+<h2 id="bert">BERT</h2>
+<p>BERT 主要分为两个阶段：预训练和微调。两者流程如下所示：</p>
+<p><img src="architecture.png"></p>
 <p>可以看到，除了输出层，预训练和微调的架构基本上是完全一致的。预训练的权重将会作为下流微调任务的参数的初始权重。在序列中，BERT 加入了两个特殊标记：</p>
 <ul>
 <li>[CLS]：添加于序列起始位置，作为整个序列的表示，可以用于分类任务。</li>
@@ -338,52 +353,70 @@
 </ul>
 <p>BERT 由若干个 <strong>Transformer 编码器</strong>（注意只有编码器）组成，在论文中，作者提出了两种规模的 BERT：</p>
 <ul>
-<li>$BERT_{BASE}$​：由 12 个 Transformer 编码器堆叠而成，隐节点大小为 768，自注意力机制有 12 个头，约 110M 参数。</li>
-<li>$BERT_{LARGE}$​：由 24 个 Transformer 编码器堆叠而成，隐节点大小为 1024，自注意力机制有 16 个头，约 340M 参数。</li>
+<li><span class="math inline">\(BERT_{BASE}\)</span>​：由 12 个 Transformer 编码器堆叠而成，隐节点大小为 768，自注意力机制有 12 个头，约 110M 参数。</li>
+<li><span class="math inline">\(BERT_{LARGE}\)</span>​：由 24 个 Transformer 编码器堆叠而成，隐节点大小为 1024，自注意力机制有 16 个头，约 340M 参数。</li>
 </ul>
-<h3 id="输入输出表征"><a href="#输入输出表征" class="headerlink" title="输入输出表征"></a>输入输出表征</h3><p>在输入表征上，BERT 使用了 WordPiece 的词嵌入，词表大小为 30000。WordPiece 是一种子词模型，token 粒度介于整个单词与字符之间，例如会将 “working” 这个单词拆分为 “work”、“ing” 两个 token 存储在词表中，”ing” 又可以与其他的动词结合，这样就可以用更小的词表存储更多的单词，也没有损失太多的语义信息。</p>
+<h3 id="输入输出表征">输入输出表征</h3>
+<p>在输入表征上，BERT 使用了 WordPiece 的词嵌入，词表大小为 30000。WordPiece 是一种子词模型，token 粒度介于整个单词与字符之间，例如会将 “working” 这个单词拆分为 “work”、“ing” 两个 token 存储在词表中，"ing" 又可以与其他的动词结合，这样就可以用更小的词表存储更多的单词，也没有损失太多的语义信息。</p>
 <p>BERT 的输入既可以是单个序列，也可以是一对序列（例如问答场景）。应用于一对序列时，需要插入 [SEP] 分隔符，并且要使用段嵌入向量。对于输入的每个 token，它的输入表征为以下三个向量的和：</p>
 <ul>
 <li>符号向量（token embedding），也就是我们传统意义上所说的词向量。</li>
-<li>段向量（segement embedding），用以区分一对序列中的两个不同的序列。</li>
+<li>段向量（segement
+embedding），用以区分一对序列中的两个不同的序列。</li>
 <li>位置向量（position embedding），用以编码位置信息。</li>
 </ul>
-<p><img src="/blog/embedding.png"></p>
+<p><img src="embedding.png"></p>
 <p>值得注意的是，<strong>以上三种词向量全部通过学习得到</strong>，这与 Transformer 不同。Transformer 中的位置向量是通过三角函数计算得到，而 BERT 是通过学习得到的。就这一点作者似乎没有进行解释，而 Transformer 的作者在论文中实验结果是，学习得到与使用三角函数的位置向量效果相近，而三角函数更易扩展。一种说法是 BERT 使用的语料更大，可能可以学习到更好的位置向量。</p>
-<h3 id="预训练"><a href="#预训练" class="headerlink" title="预训练"></a>预训练</h3><h4 id="掩码语言模型"><a href="#掩码语言模型" class="headerlink" title="掩码语言模型"></a>掩码语言模型</h4><p>在训练时，按一定比例（实验中为 15%）随机屏蔽输入序列中的部分单词（使用 [MASK] 替换），然后预测被屏蔽掉的单词，而不是重建整个输入序列。这个过程与完形填空类似，想象一个句子中有几个单词空缺，掩码语言模型的目标就是根据上下文成功预测空缺的单词。这与语言模型的训练方式还是有较大差别的。</p>
+<h3 id="预训练">预训练</h3>
+<h4 id="掩码语言模型">掩码语言模型</h4>
+<p>在训练时，按一定比例（实验中为 15%）随机屏蔽输入序列中的部分单词（使用 [MASK] 替换），然后预测被屏蔽掉的单词，而不是重建整个输入序列。这个过程与完形填空类似，想象一个句子中有几个单词空缺，掩码语言模型的目标就是根据上下文成功预测空缺的单词。这与语言模型的训练方式还是有较大差别的。</p>
 <p>上述方式虽然听上去很合理，但有一个问题，在下流任务的微调阶段，并不会出现 [MASK] 标记，这一定程度上导致了预训练与微调间的不匹配。为了解决这种情况，BERT 并不总是使用 [MASK] 替换掉需要屏蔽的单词，而是按照概率执行对应操作：</p>
 <ul>
 <li>80% 替换为 [MASK]</li>
 <li>10% 替换为随机其他单词</li>
 <li> 10% 保持不变</li>
 </ul>
-<p>之后，被屏蔽掉的单词会被用以预测原本的单词，换而言之，预测概率变为 $P (x_t|x_{&lt;t},x_{mask},x_{&gt;t})$。这样能够缓解预训练与微调间的不匹配情况。直观来看，BERT 会参考被屏蔽掉单词，因为它有 10% 的概率就是真实的单词，但也不会完全依赖这个单词，因为 10% 的概率还是很小的。</p>
-<h4 id="下句预测（Next-Sentence-Prediction，NSP）"><a href="#下句预测（Next-Sentence-Prediction，NSP）" class="headerlink" title="下句预测（Next Sentence Prediction，NSP）"></a>下句预测（Next Sentence Prediction，NSP）</h4><p>考虑到 NLP 中的很多任务例如问答、自然语言推理都基于句子间关系的理解，而这种句子间的关系不能被语言模型捕获，因此 BERT 提出了一个名为下句预测的预训练任务。顾名思义，这个任务的目标是判断两个句子是否构成上下句的关系。这个任务的数据非常容易获得，在大规模语料上获取连续的两句话，并以 50% 的概率替换真实的下句话，即可得到正负样本分布均匀的数据集。</p>
-<h3 id="微调"><a href="#微调" class="headerlink" title="微调"></a>微调</h3><p>在微调时，只需要将特定任务的输入输出放到 BERT 中，微调所有参数，输入的形式可以是单个句子或句子对，可以应用的任务举例如下：</p>
+<p>之后，被屏蔽掉的单词会被用以预测原本的单词，换而言之，预测概率变为<span class="math inline"> \(P(x_t|x_{&lt;t},x_{mask},x_{&gt;t})\)</span>。这样能够缓解预训练与微调间的不匹配情况。直观来看，BERT 会参考被屏蔽掉单词，因为它有 10% 的概率就是真实的单词，但也不会完全依赖这个单词，因为 10% 的概率还是很小的。</p>
+<h4 id="下句预测next-sentence-predictionnsp">下句预测（Next Sentence
+Prediction，NSP）</h4>
+<p>考虑到 NLP 中的很多任务例如问答、自然语言推理都基于句子间关系的理解，而这种句子间的关系不能被语言模型捕获，因此 BERT 提出了一个名为下句预测的预训练任务。顾名思义，这个任务的目标是判断两个句子是否构成上下句的关系。这个任务的数据非常容易获得，在大规模语料上获取连续的两句话，并以 50% 的概率替换真实的下句话，即可得到正负样本分布均匀的数据集。</p>
+<h3 id="微调">微调</h3>
+<p>在微调时，只需要将特定任务的输入输出放到 BERT 中，微调所有参数，输入的形式可以是单个句子或句子对，可以应用的任务举例如下：</p>
 <ul>
 <li>单个句子：文本分类、序列标注、情绪分析（利用 [CLS] 符号）</li>
 <li>句子对：释义、问答等任务</li>
 </ul>
 <p>对于句子对，传统的模型往往将其拆分分开处理，而 BERT 将句子对同时投喂到模型中，能够更好地捕获句子间关系。</p>
-<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>实验部分主要介绍了 BERT 微调之后是怎么横扫涵盖通用语言评理解评估等十一项任务的，基线模型有 biLSTM+elmo，GPT 等，这里就不多介绍了。有兴趣的可以去看看原文。</p>
-<h2 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h2><p>消融实验更像是控制变量法，对于模型中的多个改进，控制变量来分析哪个改进对于效果的提升是最大的，这就是消融实验。消融实验细节可以看原文，我在这里总结一下消融实验的结论：</p>
-<h3 id="预训练任务"><a href="#预训练任务" class="headerlink" title="预训练任务"></a>预训练任务</h3><ul>
-<li>去除下句预测后的 BERT 模型在 QNLI, MNLI 等涉及句子对的任务上的性能损失严重，证明下句预测对于句子间关系的捕获还是很有作用的。</li>
+<h2 id="实验">实验</h2>
+<p>实验部分主要介绍了 BERT 微调之后是怎么横扫涵盖通用语言评理解评估等十一项任务的，基线模型有 biLSTM+elmo，GPT 等，这里就不多介绍了。有兴趣的可以去看看原文。</p>
+<h2 id="消融实验">消融实验</h2>
+<p>消融实验更像是控制变量法，对于模型中的多个改进，控制变量来分析哪个改进对于效果的提升是最大的，这就是消融实验。消融实验细节可以看原文，我在这里总结一下消融实验的结论：</p>
+<h3 id="预训练任务">预训练任务</h3>
+<ul>
+<li>去除下句预测后的 BERT 模型在 QNLI,
+MNLI 等涉及句子对的任务上的性能损失严重，证明下句预测对于句子间关系的捕获还是很有作用的。</li>
 <li>仅使用从左到右的语言模型训练的 BERT 比使用掩码语言模型训练得到的 BERT 效果要差，证明掩码语言模型训练方式的有效性。</li>
 </ul>
-<h3 id="模型大小"><a href="#模型大小" class="headerlink" title="模型大小"></a>模型大小</h3><ul>
+<h3 id="模型大小">模型大小</h3>
+<ul>
 <li>参数越多，各项任务上的效果越好，非常的真实。</li>
 </ul>
-<h3 id="训练步数"><a href="#训练步数" class="headerlink" title="训练步数"></a>训练步数</h3><ul>
-<li>BERT 真的需要在 128,000 字符 /batch 上训练 1,000,000 步才能达到这么好的效果，训练一百万步比五十万步的 BERT 在 MNLI 获得了 1% 的提升。</li>
+<h3 id="训练步数">训练步数</h3>
+<ul>
+<li>BERT 真的需要在 128,000 字符 /batch
+上训练 1,000,000 步才能达到这么好的效果，训练一百万步比五十万步的 BERT 在 MNLI 获得了 1% 的提升。</li>
 <li>掩码语言模型的收敛慢于自左向右的语言模型，但就精度而言，掩码语言模型几乎在训练之初就强于语言模型。</li>
 </ul>
-<h3 id="基于特征的方法"><a href="#基于特征的方法" class="headerlink" title="基于特征的方法"></a>基于特征的方法</h3><ul>
+<h3 id="基于特征的方法">基于特征的方法</h3>
+<ul>
 <li>BERT 对基于特征和微调的方法都是有效的。</li>
 </ul>
-<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>论文提出了一种全新的预训练任务–掩码语言模型，并在该任务和下句预测任务上预训练了一个基于双向 Transformer 的深层模型 BERT。在十一项 NLP 任务上的微调实验结果表明，BERT 的效果优于现有的预训练模型。</p>
+<h2 id="结论">结论</h2>
+<p>论文提出了一种全新的预训练任务 -- 掩码语言模型，并在该任务和下句预测任务上预训练了一个基于双向 Transformer 的深层模型 BERT。在十一项 NLP 任务上的微调实验结果表明，BERT 的效果优于现有的预训练模型。</p>
 <p>BERT 的论文断断续续读了几天，读下来感觉醍醐灌顶，很多之前模棱两可的东西都真正了解了。果然读论文还是要读原文，别人的博客只是参考。后面有空了再读一读 BERT 的源码，又想去读 GPT 的论文，时间也太少了。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/46833276">论文解读：BERT 模型及 fine-tuning - 知乎 (zhihu.com)</a></p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/46833276">论文解读：BERT 模型及 fine-tuning
+- 知乎 (zhihu.com)</a></p>
 
     </div>
 
@@ -464,7 +497,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

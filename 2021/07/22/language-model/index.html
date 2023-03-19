@@ -21,12 +21,12 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="简介语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。">
+<meta name="description" content="简介 语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="语言模型">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2021/07/22/language-model/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="简介语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。">
+<meta property="og:description" content="简介 语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-07-22T07:26:35.000Z">
 <meta property="article:modified_time" content="2022-02-19T07:03:44.536Z">
@@ -149,7 +149,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#N-gram"><span class="nav-number">3.</span> <span class="nav-text">N-gram</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%AA%97%E5%8F%A3%E7%9A%84%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">4.</span> <span class="nav-text">基于窗口的神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CRNN"><span class="nav-number">5.</span> <span class="nav-text">循环神经网络 RNN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#n-gram"><span class="nav-number">3.</span> <span class="nav-text">N-gram</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%AA%97%E5%8F%A3%E7%9A%84%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">4.</span> <span class="nav-text">基于窗口的神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9Crnn"><span class="nav-number">5.</span> <span class="nav-text">循环神经网络 RNN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -304,24 +304,53 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
+        <h2 id="简介">简介</h2>
+<p>语言模型是自然语言处理的一个重要部分，在很多生成式任务中，都离不开语言模型。今天我想梳理一下我所理解的语言模型及其发展。</p>
 <span id="more"></span>
-
-<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>对于一串语言序列 $w_1w_2\dots w_n$，语言模型试图分析其出现的概率，即 $P (w_1,w_2,\dots,w_n)$​​​​。进而，可以通过概率大小判断文本是否合理。例如句子 “学生们打开了书” 的概率应该比 “学生们打开了玛卡巴卡” 高得多，即更像是人说的话。</p>
-<p>在之前的 VQ-VAE 中，我们提到过自回归模型，按照自回归的思路，如果第 n 个单词只与前 n-1 个单词相关，那么句子的概率可以转化为如下形式：<br>$$<br>P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})<br>$$<br>那么怎么求解右侧的式子呢？</p>
-<h2 id="N-gram"><a href="#N-gram" class="headerlink" title="N-gram"></a>N-gram</h2><p>首先要提到的是 N-gram 模型。为了解决上面这个问题，N-gram 模型引入了马尔科夫假设，认为某一个词只与它之前的 $N-1$ 个词有关。以 4-gram 为例，即每个词只与其之前的 3 个词有关，即：<br>$$<br>P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})<br>$$<br>换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计：<br>$$<br>P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})}<br>$$<br>进而整个句子的概率可以计算如下：<br>$$<br>P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})<br>$$<br>上述的方法虽然简单直接，但是有以下缺点：</p>
+<h2 id="定义">定义</h2>
+<p>对于一串语言序列<span class="math inline"> \(w_1w_2\dots
+w_n\)</span>，语言模型试图分析其出现的概率，即<span class="math inline"> \(P(w_1,w_2,\dots,w_n)\)</span>​​​​。进而，可以通过概率大小判断文本是否合理。例如句子 “学生们打开了书” 的概率应该比 “学生们打开了玛卡巴卡” 高得多，即更像是人说的话。</p>
+<p>在之前的 VQ-VAE 中，我们提到过自回归模型，按照自回归的思路，如果第 n 个单词只与前 n-1 个单词相关，那么句子的概率可以转化为如下形式：
+<span class="math display">\[
+P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1:1})
+\]</span> 那么怎么求解右侧的式子呢？</p>
+<h2 id="n-gram">N-gram</h2>
+<p>首先要提到的是 N-gram 模型。为了解决上面这个问题，N-gram 模型引入了马尔科夫假设，认为某一个词只与它之前的<span class="math inline"> \(N-1\)</span> 个词有关。以 4-gram 为例，即每个词只与其之前的 3 个词有关，即：
+<span class="math display">\[
+P(w_n|w_{n-1:1})=P(w_n|w_{n-1},w_{n-2},w_{n-3})
+\]</span>
+换而言之，只要在大规模语料中进行频数的统计，那么就可以得到上述概率的估计：
+<span class="math display">\[
+P(w_n|w_{n-1},w_{n-2},w_{n-3})=\frac{C(w_n,w_{n-1},w_{n-2},w_{n-3})}{C(w_{n-1},w_{n-2},w_{n-3})}
+\]</span> 进而整个句子的概率可以计算如下： <span class="math display">\[
+P(w_1,w_2,\dots,w_n)=\prod_t^nP(w_t|w_{t-1},w_{t-2},w_{t-3})
+\]</span> 上述的方法虽然简单直接，但是有以下缺点：</p>
 <ul>
 <li>稀疏问题：一些片段可能没有在语料中出现，计数为 0，在概率连乘之下整句概率变为 0。</li>
 <li>存储问题：随着 n 的增大，存储量指数级上升，而 n 过小时模型性能又会很差。</li>
 </ul>
-<h2 id="基于窗口的神经网络"><a href="#基于窗口的神经网络" class="headerlink" title="基于窗口的神经网络"></a>基于窗口的神经网络</h2><p>在 N-gram 的基础上，使用神经网络来计算条件概率。同样以 4-gram 为例，计算用公式表达如下:<br>$$<br>\begin{align}<br>P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\<br>&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])<br>\end{align}<br>$$<br>思路非常简单，即将前 N-1 个词输入到神经网络，由神经网络计算得到第 N 个词的概率分布。这样做解决了 N-gram 的稀疏问题与存储问题，但也存在一些问题：</p>
+<h2 id="基于窗口的神经网络">基于窗口的神经网络</h2>
+<p>在 N-gram 的基础上，使用神经网络来计算条件概率。同样以 4-gram 为例，计算用公式表达如下:
+<span class="math display">\[
+\begin{align}
+P(w_n|w_{n-1:1})&amp;=P(w_n|w_{n-1},w_{n-2},w_{n-3})\\
+&amp;=softmax(W[w_{n-1};w_{n-2};w_{n-3}])
+\end{align}
+\]</span>
+思路非常简单，即将前 N-1 个词输入到神经网络，由神经网络计算得到第 N 个词的概率分布。这样做解决了 N-gram 的稀疏问题与存储问题，但也存在一些问题：</p>
 <ul>
-<li>缺少参数共享：以上述公式为例，$W$​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
+<li>缺少参数共享：以上述公式为例，<span class="math inline">\(W\)</span>​​​中可以分为三部分，分别处理前三个词。然而，词向量的处理逻辑应该是相似的（因为他们都是同样的方法训练出来的）。</li>
 <li>需要变化窗口大小时，矩阵 W 的形状也需要变化，进而需要重新训练。</li>
 </ul>
-<h2 id="循环神经网络RNN"><a href="#循环神经网络RNN" class="headerlink" title="循环神经网络RNN"></a>循环神经网络 RNN</h2><p>RNN 的思路同样也很直接，使用同一个矩阵 $W$ 来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN 的公式如下:<br>$$<br>h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)<br>$$</p>
-<p>$$<br>\hat{y_t}=softmax(W^{(S)}h_t)<br>$$</p>
-<p>其中，$\sigma$ 是激活函数，$h_t$ 是 t 时刻的隐藏状态，$W$ 是参数矩阵。</p>
+<h2 id="循环神经网络rnn">循环神经网络 RNN</h2>
+<p>RNN 的思路同样也很直接，使用同一个矩阵<span class="math inline"> \(W\)</span> 来处理词向量，并使用一个隐藏状态来记录已处理的信息（换而言之，就无需马尔科夫假设）。RNN 的公式如下:
+<span class="math display">\[
+h_t=\sigma(W^{(hh)}h_{t-1}+W^{(hx)}x_t)
+\]</span></p>
+<p><span class="math display">\[
+\hat{y_t}=softmax(W^{(S)}h_t)
+\]</span></p>
+<p>其中，<span class="math inline">\(\sigma\)</span> 是激活函数，<span class="math inline">\(h_t\)</span> 是 t 时刻的隐藏状态，<span class="math inline">\(W\)</span> 是参数矩阵。</p>
 <p>RNN 有以下优点：</p>
 <ul>
 <li>能够处理任意长度的序列。</li>
@@ -332,7 +361,9 @@
 <li>会出现梯度消失和梯度爆炸问题。</li>
 <li>不支持并行化，计算较慢。（可以说是自回归模型的通病）</li>
 </ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/63397627">CS224N 笔记 (六)：语言模型与 RNN - 知乎 (zhihu.com)</a></p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/63397627">CS224N 笔记 (六)：语言模型与 RNN
+- 知乎 (zhihu.com)</a></p>
 
     </div>
 
@@ -412,7 +443,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

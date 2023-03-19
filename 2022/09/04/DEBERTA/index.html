@@ -21,26 +21,26 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
-<meta name="description" content="摘要DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型，论文收录于 ICLR 2021 中。DeBERTa (Decoding-enhanced BERT with disentangled attention)，顾名思义，相较于普通的 BERT，DeBERTa 加强了其解码能">
+<meta name="description" content="摘要 DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型， 论文收录于 ICLR 2021 中。DeBERTa (Decoding-enhanced BERT with disentangled attention)， 顾名思义，相较于普通的 BERT，DeBERTa 加强了其">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DeBERTa: 注意力解纠缠和解码加强版的 BERT">
 <meta property="og:url" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/index.html">
 <meta property="og:site_name" content="一隅">
-<meta property="og:description" content="摘要DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型，论文收录于 ICLR 2021 中。DeBERTa (Decoding-enhanced BERT with disentangled attention)，顾名思义，相较于普通的 BERT，DeBERTa 加强了其解码能">
+<meta property="og:description" content="摘要 DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型， 论文收录于 ICLR 2021 中。DeBERTa (Decoding-enhanced BERT with disentangled attention)， 顾名思义，相较于普通的 BERT，DeBERTa 加强了其">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/decoder-layer.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/GLEU.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/SQuADs.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/base.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/ablation.png">
-<meta property="og:image" content="https://tqnwhz.github.io/blog/1.5B.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/decoder-layer.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/GLEU.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/SQuADs.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/base.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/ablation.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/1.5B.png">
 <meta property="article:published_time" content="2022-09-04T05:53:04.000Z">
 <meta property="article:modified_time" content="2022-09-04T08:46:41.387Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="预训练模型">
 <meta property="article:tag" content="DEBERTA">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tqnwhz.github.io/blog/decoder-layer.png">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/decoder-layer.png">
 
 
 <link rel="canonical" href="https://tqnwhz.github.io/blog/2022/09/04/DEBERTA/">
@@ -157,7 +157,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E8%80%A6%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="nav-number">3.1.</span> <span class="nav-text">解耦注意力</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%A7%A3%E7%A0%81%E5%A2%9E%E5%BC%BA"><span class="nav-number">3.2.</span> <span class="nav-text">掩码解码增强</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">4.</span> <span class="nav-text">微调</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%A7%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.1.</span> <span class="nav-text">大模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.2.</span> <span class="nav-text">小模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.3.</span> <span class="nav-text">消融实验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#15%E4%BA%BF"><span class="nav-number">5.4.</span> <span class="nav-text">15 亿</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E8%80%A6%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="nav-number">3.1.</span> <span class="nav-text">解耦注意力</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A9%E7%A0%81%E8%A7%A3%E7%A0%81%E5%A2%9E%E5%BC%BA"><span class="nav-number">3.2.</span> <span class="nav-text">掩码解码增强</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83"><span class="nav-number">4.</span> <span class="nav-text">微调</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.</span> <span class="nav-text">实验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%A7%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.1.</span> <span class="nav-text">大模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.2.</span> <span class="nav-text">小模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="nav-number">5.3.</span> <span class="nav-text">消融实验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%BF"><span class="nav-number">5.4.</span> <span class="nav-text">15 亿</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -306,45 +306,80 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH DIS-ENTANGLED ATTENTION》中提出的预训练模型，<br>论文收录于 ICLR 2021 中。DeBERTa (<strong>De</strong>coding-enhanced <strong>BERT</strong> with disentangled <strong>a</strong>ttention)，<br>顾名思义，相较于普通的 BERT，DeBERTa 加强了其解码能力，解耦了注意力。DeBERTa 第一次在 SuperGLEU 基准上超越了人类，<br>在 MNLI、SQuAD、RACE 数据集上相较于 RoBERTa 也有较大的提升（0.9%-3.6%）。</p>
+        <h2 id="摘要">摘要</h2>
+<p>DeBERTa 是微软于去年在《DEBERTA: DECODING-ENHANCED BERT WITH
+DIS-ENTANGLED ATTENTION》中提出的预训练模型， 论文收录于 ICLR
+2021 中。DeBERTa (<strong>De</strong>coding-enhanced
+<strong>BERT</strong> with disentangled <strong>a</strong>ttention)，
+顾名思义，相较于普通的 BERT，DeBERTa 加强了其解码能力，解耦了注意力。DeBERTa 第一次在 SuperGLEU 基准上超越了人类，
+在 MNLI、SQuAD、RACE 数据集上相较于 RoBERTa 也有较大的提升（0.9%-3.6%）。</p>
 <span id="more"></span>
-
-<p>DeBERTa 的模型和代码开源在 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeBERTa1">github</a>。<br>现在 SuperGLEU 上的第一已经是 ST-MoE-32B 了，不过排在 DeBERTa 之前的模型参数量似乎都是 DeBERTa 的数倍，<br>这说明 DeBERTa 还是很有读一下的必要的。</p>
-<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>DeBERTa 对于 BERT 共两个改进点，注意力解耦与增强掩码解码。具体体现在：</p>
-<p><strong>注意力解纠缠。</strong>BERT 中，不同类型的 embedding 求和作为最终的表征（例如 token embedding、position embedding）。<br>DeBERTa 对每个单词使用两个向量进行表示，分别对内容、位置进行编码。单词间的注意力权重由解纠缠矩阵分别根据其内容和相对位置计算。</p>
-<p><strong>增强的掩码解码器。</strong>DeBETa 也是使用掩码语言模型进行预训练，与 BERT 类似。在这个任务设定下，被掩码词的绝对位置有时是很重要的。<br>例如 “a new <strong>store</strong> opened beside the new <strong>mall</strong>.” 这句话，如果对”store” 和”wall” 进行掩码，两者的上下文、语义都接近，但是句法作用是不同的（例如谁是主语）。<br>这些细微差距很大程度上与绝对位置相关，因此 DeBERTa 在 softmax 层前合并了绝对位置嵌入。<br>在该层中，模型基于聚合上下文和绝对位置预测被掩码的单词。</p>
+<p>DeBERTa 的模型和代码开源在 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeBERTa1">github</a>。
+现在 SuperGLEU 上的第一已经是 ST-MoE-32B 了，不过排在 DeBERTa 之前的模型参数量似乎都是 DeBERTa 的数倍，
+这说明 DeBERTa 还是很有读一下的必要的。</p>
+<h2 id="介绍">介绍</h2>
+<p>DeBERTa 对于 BERT 共两个改进点，注意力解耦与增强掩码解码。具体体现在：</p>
+<p><strong>注意力解纠缠。</strong>BERT 中，不同类型的 embedding 求和作为最终的表征（例如
+token embedding、position embedding）。
+DeBERTa 对每个单词使用两个向量进行表示，分别对内容、位置进行编码。单词间的注意力权重由解纠缠矩阵分别根据其内容和相对位置计算。</p>
+<p><strong>增强的掩码解码器。</strong>DeBETa 也是使用掩码语言模型进行预训练，与 BERT 类似。在这个任务设定下，被掩码词的绝对位置有时是很重要的。
+例如 “a new <strong>store</strong> opened beside the new
+<strong>mall</strong>."这句话，如果对"store"和"wall" 进行掩码，两者的上下文、语义都接近，但是句法作用是不同的（例如谁是主语）。
+这些细微差距很大程度上与绝对位置相关，因此 DeBERTa 在 softmax 层前合并了绝对位置嵌入。
+在该层中，模型基于聚合上下文和绝对位置预测被掩码的单词。</p>
 <p>另外，论文还提出了一种新的虚拟对抗训练方法，用于微调 plm 到下游的 NLP 任务。该方法有效地提高了模型的泛化能力。</p>
-<h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><h3 id="解耦注意力"><a href="#解耦注意力" class="headerlink" title="解耦注意力"></a>解耦注意力</h3><p>对于位置 $i$ 的 token，论文使用两个向量 ${H_i},{P_{i|j}}$ 分别代表它的内容嵌入和与位置 $j$token 的相对距离。位置 $i$ 与位置 $j$ 的 token 间的注意力分数可以分解为下面四个部分：<br>$$<br>\begin{aligned}<br>A_{i,j}&amp;={H_i,P_{i|j}}\times{H_j,P_{j|i}}^T\<br>&amp;=H_iH_i^T+H_iP_{j|i}^T+P_{i|j}H_j^T+P_{i|j}P_{j|i}^T<br>\end{aligned}<br>$$<br>也就是说，一对 token 间的注意力权重可以用内容到内容、内容到位置、位置到内容、位置到位置四个注意力的解纠缠矩阵进行计算。</p>
+<h2 id="架构">架构</h2>
+<h3 id="解耦注意力">解耦注意力</h3>
+<p>对于位置<span class="math inline"> \(i\)</span> 的 token，论文使用两个向量<span class="math inline"> \(\{H_i\},\{P_{i|j}\}\)</span> 分别代表它的内容嵌入和与位置<span class="math inline"> \(j\)</span>token 的相对距离。位置<span class="math inline"> \(i\)</span> 与位置<span class="math inline"> \(j\)</span> 的 token 间的注意力分数可以分解为下面四个部分：
+<span class="math display">\[
+\begin{aligned}
+A_{i,j}&amp;=\{H_i,P_{i|j}\}\times\{H_j,P_{j|i}\}^T\\
+&amp;=H_iH_i^T+H_iP_{j|i}^T+P_{i|j}H_j^T+P_{i|j}P_{j|i}^T
+\end{aligned}
+\]</span>
+也就是说，一对 token 间的注意力权重可以用内容到内容、内容到位置、位置到内容、位置到位置四个注意力的解纠缠矩阵进行计算。</p>
 <p>传统的相对位置嵌入方法只使用一个单独的嵌入矩阵，计算相对位置偏差，再用于计算注意力分数。这相当于只使用了上述公式中的 “位置到位置” 注意力。论文认为位置到内容也很重要，建模了位置和内容间的交叉关系。此外，由于 DeBERTa 本身使用的就是相对位置嵌入，所以直接将上述公式中的位置到位置注意力部分删除了。</p>
 <p>接下来就是使用两套 Query、Key 矩阵，分别将内容、位置嵌入映射到 query、key，然后求解注意力分数了。</p>
-<h3 id="掩码解码增强"><a href="#掩码解码增强" class="headerlink" title="掩码解码增强"></a>掩码解码增强</h3><p>为了将绝对位置信息融入到 MLM 预测中，DeBERTa 在在解码掩码字时只使用绝对位置作为补充信息，在 Transformer 层中使用相对位置信息。因此，论文称 DeBERTa 的解码组件为增强掩码解码器（Enhanced Mask Decoder，EMD），其结构如下所示，由 n 个共享权重的块堆叠而成。$H$ 代表前一层 Transformer 输出的隐藏状态，$I$ 代表解码所须的信息，例如绝对位置嵌入或前一层 EMD 的输出。第一层 EMD 的 $I$ 是绝对位置嵌入信息，后续层的 $I$ 是前一层 EMD 的输出。</p>
-<p><img src="/blog/decoder-layer.png"></p>
+<h3 id="掩码解码增强">掩码解码增强</h3>
+<p>为了将绝对位置信息融入到 MLM 预测中，DeBERTa 在在解码掩码字时只使用绝对位置作为补充信息，在 Transformer 层中使用相对位置信息。因此，论文称 DeBERTa 的解码组件为增强掩码解码器（Enhanced
+Mask Decoder，EMD），其结构如下所示，由 n 个共享权重的块堆叠而成。<span class="math inline">\(H\)</span> 代表前一层 Transformer 输出的隐藏状态，<span class="math inline">\(I\)</span> 代表解码所须的信息，例如绝对位置嵌入或前一层 EMD 的输出。第一层 EMD 的<span class="math inline"> \(I\)</span> 是绝对位置嵌入信息，后续层的<span class="math inline"> \(I\)</span> 是前一层 EMD 的输出。</p>
+<p><img src="decoder-layer.png"></p>
 <p>在实证研究中，论文比较了这两种使用绝对位置的方法，发现 EMD 的效果要好得多。论文推测，BERT 使用的较早的合并绝对位置可能会妨碍模型学习足够的相对位置信息。而且 EMD 的共享参数也没有过多增加模型参数量。</p>
-<h2 id="微调"><a href="#微调" class="headerlink" title="微调"></a>微调</h2><p>DeBERTa 使用了一种虚拟对抗训练算法，Scale-invariant-Fine-Tuning (SiFT)，是 Miyato 等人 (2018) 中描述的算法的变体。</p>
+<h2 id="微调">微调</h2>
+<p>DeBERTa 使用了一种虚拟对抗训练算法，Scale-invariant-Fine-Tuning
+(SiFT)，是 Miyato 等人 (2018) 中描述的算法的变体。</p>
 <p>虚拟对抗训练是一种提高模型泛化能力的正则化方法。通过改进模型对对抗样本的鲁棒性实现。对抗样本是通过对输入进行小的扰动来创建的。在 NLP 中，是在单词嵌入进行扰动，而非原始单词序列。然而，嵌入向量的取值范围在不同的词和模型中是不同的。对于具有数十亿个参数的大型模型，方差会变得更大，导致对抗训练的一些不稳定性。</p>
 <p>论文受层标准化启发，提出了 SiFT 算法，通过对归一化的词嵌入应用扰动来提高训练的稳定性。具体来说，将 DeBERTa 微调到下游的 NLP 任务时，SiFT 首先将词嵌入向量归一化为随机向量，然后对归一化后的嵌入向量进行扰动。实验发现，规范化大大提高了微调模型的性能。这种改进在较大的 DeBERTa 模型中更为突出。</p>
-<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>论文在数个 NLU 基准上测试了 DeBERTa。</p>
-<h3 id="大模型"><a href="#大模型" class="headerlink" title="大模型"></a>大模型</h3><p>与 BERT 相同的设定预训练 DeBERTa，区别在于使用的是 BPE 子词模型。预训练使用了 96 个 V100，20 天。下面是 GLEU 榜单的结果。</p>
-<p><img src="/blog/GLEU.png"></p>
+<h2 id="实验">实验</h2>
+<p>论文在数个 NLU 基准上测试了 DeBERTa。</p>
+<h3 id="大模型">大模型</h3>
+<p>与 BERT 相同的设定预训练 DeBERTa，区别在于使用的是 BPE 子词模型。预训练使用了 96 个 V100，20 天。下面是 GLEU 榜单的结果。</p>
+<p><img src="GLEU.png"></p>
 <p>下面是 MNLI、SQuAD 等基准上的结果。</p>
-<p><img src="/blog/SQuADs.png"></p>
+<p><img src="SQuADs.png"></p>
 <p>可以看出 DeBERTa 已经超过了自回归的 XLNET，可见其性能。</p>
-<h3 id="小模型"><a href="#小模型" class="headerlink" title="小模型"></a>小模型</h3><p>base 模型的设置与 BERT-base 一致，12 层的架构。结果如下，可以看出相较于 XLNET 和 RoBERTa 是有明显改进的。</p>
-<p><img src="/blog/base.png"></p>
-<h3 id="消融实验"><a href="#消融实验" class="headerlink" title="消融实验"></a>消融实验</h3><p>为了验证结果，论文首先重新训练了一个 RoBERTa-base，作为基准。</p>
+<h3 id="小模型">小模型</h3>
+<p>base 模型的设置与 BERT-base 一致，12 层的架构。结果如下，可以看出相较于 XLNET 和 RoBERTa 是有明显改进的。</p>
+<p><img src="base.png"></p>
+<h3 id="消融实验">消融实验</h3>
+<p>为了验证结果，论文首先重新训练了一个 RoBERTa-base，作为基准。</p>
 <p>消融实验主要测试了三种变体：</p>
 <ul>
 <li>-EMD：没有增强掩码解码器，也就是跟 BERT 一样直接 softmax</li>
 <li>-C2P：没有内容 - 位置间的注意力</li>
 <li> -P2C：没有位置 - 内容间的注意力。由于 XLNET 也使用了相对位置偏差，这种设置接近接近于 XLNET+EMD</li>
 </ul>
-<p><img src="/blog/ablation.png"></p>
+<p><img src="ablation.png"></p>
 <p>从表格可以看出，删除 DeBERTa 中的任何一个组件都会导致性能的大幅下降，尤其是在 SQuAD 数据集上。</p>
-<h3 id="15亿"><a href="#15亿" class="headerlink" title="15亿"></a>15 亿</h3><p>为了测试 DeBERTa 的上限，论文还构建了一个 48 层，共计 15 亿参数的 DeBERTa，首次以单个模型在 SuperGLUE 上超过了人类，集成性能也取得了第一名，具体分数如下。</p>
-<p><img src="/blog/1.5B.png"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇论文其实回答了一个蛮重要的问题，相信 NLP 新人刚了解 BERT 的时候，或多或少都会对 embedding 直接相加有一些疑问。解纠缠和绝对位置的融合，同时兼顾了绝对位置的句法信息，和相对位置的邻接关系。解纠缠也使得各个 embedding 更为灵活结合。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://aestheticisma.github.io/2021/11/24/deberta/">DeBERTa 论文解读 - Fan’s Blog (aestheticisma.github.io)</a></li>
+<h3 id="亿">15 亿</h3>
+<p>为了测试 DeBERTa 的上限，论文还构建了一个 48 层，共计 15 亿参数的 DeBERTa，首次以单个模型在 SuperGLUE 上超过了人类，集成性能也取得了第一名，具体分数如下。</p>
+<p><img src="1.5B.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文其实回答了一个蛮重要的问题，相信 NLP 新人刚了解 BERT 的时候，或多或少都会对 embedding 直接相加有一些疑问。解纠缠和绝对位置的融合，同时兼顾了绝对位置的句法信息，和相对位置的邻接关系。解纠缠也使得各个 embedding 更为灵活结合。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://aestheticisma.github.io/2021/11/24/deberta/">DeBERTa
+论文解读 - Fan's Blog (aestheticisma.github.io)</a></li>
 </ul>
 
     </div>
@@ -426,7 +461,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

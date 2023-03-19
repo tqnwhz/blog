@@ -290,7 +290,14 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet: Generalized Autoregressive Pretraining for Language Understanding》，收录于 2019 NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 **[MASK] token 间的依赖关系<strong>以及 [MASK] 导致的</strong>预训练 - 微调差异 **。 XLNet 在 20 项任务上的表现优于 BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排序。</p>
+          <h2 id="摘要">摘要</h2>
+<p>XLNET 是由卡耐基梅隆大学和谷歌于 2019 年提出的<strong>自回归预训练模型</strong>，论文名为《XLNet:
+Generalized Autoregressive Pretraining for Language
+Understanding》，收录于 2019
+NIPS 中。其动机是为了解决 BERT 面临的两个问题：忽视了 <strong>[MASK]
+token 间的依赖关系</strong>以及 [MASK] 导致的<strong>预训练 - 微调差异</strong>。
+XLNet 在 20 项任务上的表现优于
+BERT，通常大幅度提高，包括问答、自然语言推理、情感分析和文档排序。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/04/17/XLNET/#more" rel="contents">
@@ -396,7 +403,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>《Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing》为微软研究院发表的论文，收录于 2021 年 ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
+          <h2 id="摘要">摘要</h2>
+<p>《Domain-Specific Language Model Pretraining for Biomedical Natural
+Language Processing》为微软研究院发表的论文，收录于 2021 年
+ACM 中。论文旨在探讨，特定领域的预训练也可以从通用领域语言模型开始受益，这一假设是否适用于具有大规模未标记数据的领域（例如生物医学）。论文证实，相较于从通用领域继续预训练，从头开始训练预训练模型能够获得更好的性能。此外，论文还提出了一个新的生物医学 NLP 基准 BLURB，并创建了排行榜。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/04/10/Biomedical-LM/#more" rel="contents">
@@ -502,7 +512,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP 2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。</p>
+          <h2 id="摘要">摘要</h2>
+<p>BERT、RoBERTa 此类预训练模型虽然能够提升语义文本相似度（STS）任务的性能，但是在某些场景下会带来巨大的计算开销。例如，利用 BERT 从 10000 个句子的集合中找到最相似的两个句子，需要进行约 5000 万次推理，大约 65 个小时。因此，《Sentence-BERT:
+Sentence Embeddings using Siamese BERT-Networks》，来自 EMNLP
+2019，提出了 Sentence-BERT（SBERT），使用孪生或三胞胎 BERT + 余弦相似度计算语义相似度。可以将上述例子的 65 小时降低至 5 秒钟，同时保证准确率。STS 和迁移任务上的实验证明，SBERT 和 SRoBERTa 已经成为句向量标识的 SOTA 方法。
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/04/04/Sentence-BERT/#more" rel="contents">
@@ -608,8 +621,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
-<p>《Crossing Variational Autoencoders for Answer Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL 2020 中。</p>
+          <h2 id="摘要">摘要</h2>
+<p>最近读了一篇想法有趣、公式有错误、复现不出来的 ACL 论文。发出来分享一下。希望大家也不要迷信 ACL 论文，读论文过程中保持独立思考。</p>
+<p>《Crossing Variational Autoencoders for Answer
+Retrieval》提出了一种基于交叉 VAE 的答案检索方法，通过交叉 VAE 来对齐答案和问题之间的语义。论文收录于 ACL
+2020 中。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/03/31/Crossing-VAE/#more" rel="contents">
@@ -719,7 +735,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese Dialogue Systems withLarge-Scale Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA 2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a target="_blank" rel="noopener" href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
+          <h2 id="简介">简介</h2>
+<p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese
+Dialogue Systems withLarge-Scale
+Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA
+2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a target="_blank" rel="noopener" href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/03/24/EVA2-0/#more" rel="contents">
@@ -775,7 +795,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">

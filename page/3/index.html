@@ -268,7 +268,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3.7k</span>
+      <span>3.6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -286,7 +286,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>今天来介绍一个很好用的深度学习框架，PyTorch Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 / 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单设置即可调用，无需重复造轮子。</p>
+          <h2 id="摘要">摘要</h2>
+<p>今天来介绍一个很好用的深度学习框架，PyTorch
+Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 / 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch
+Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单设置即可调用，无需重复造轮子。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/08/11/pytorch-lightning/#more" rel="contents">
@@ -374,7 +377,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4k</span>
+      <span>4.1k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -392,8 +395,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="MoE"><a href="#MoE" class="headerlink" title="MoE"></a>MoE</h1><p>今天总结一下最近读过的 MoE 相关的论文、研究进展。</p>
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
+          <h1 id="moe">MoE</h1>
+<p>今天总结一下最近读过的 MoE 相关的论文、研究进展。</p>
+<h2 id="简介">简介</h2>
+<p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/07/03/MoE-Summary/#more" rel="contents">
@@ -493,7 +498,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>上篇回顾了经典论文专家混合网络 MoE，今天读一篇 Google 团队在 22 年 2 月出炉的大作《ST-MoE: Designing Stable and Transferable Sparse Expert Models》，旨在解决训练过程中的不稳定性以及微调过程中的质量不确定性。论文提出的 269B 的稀疏模型，计算成本与 32B 的密集模型相当。稀疏模型第一次在迁移学习中实现了 SOTA。</p>
+          <h2 id="摘要">摘要</h2>
+<p>上篇回顾了经典论文专家混合网络 MoE，今天读一篇 Google 团队在 22 年 2 月出炉的大作《ST-MoE:
+Designing Stable and Transferable Sparse Expert
+Models》，旨在解决训练过程中的不稳定性以及微调过程中的质量不确定性。论文提出的 269B 的稀疏模型，计算成本与 32B 的密集模型相当。稀疏模型第一次在迁移学习中实现了 SOTA。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/06/12/ST-MoE/#more" rel="contents">
@@ -599,7 +607,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>今天来读一篇关于条件计算的论文，《<strong>Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer</strong>》，收录于 2017 年 ICLR。神经网络模型的容量（ capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计算性能下降。本文提出了一种条件计算的方法，对每个样本只激活部分参数，可以在不成比例地增加计算量的情况下显着增加模型容量，实现了超过 1000 倍的容量提升，在大型语言建模和机器翻译基准上，这些模型以更低的计算成本实现了新的 SOTA。</p>
+          <h2 id="摘要">摘要</h2>
+<p>今天来读一篇关于条件计算的论文，《<strong>Outrageously Large Neural
+Networks: The Sparsely-Gated Mixture-of-Experts
+Layer</strong>》，收录于 2017 年 ICLR。神经网络模型的容量（
+capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计算性能下降。本文提出了一种条件计算的方法，对每个样本只激活部分参数，可以在不成比例地增加计算量的情况下显着增加模型容量，实现了超过 1000 倍的容量提升，在大型语言建模和机器翻译基准上，这些模型以更低的计算成本实现了新的 SOTA。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/06/05/MoE/#more" rel="contents">
@@ -709,7 +721,12 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>《Knowledge-Grounded Dialogue Generation with Pre-trained Language Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP 2020 主会。代码公开在 <a target="_blank" rel="noopener" href="https://github.com/zhaoxlpku/KnowledGPT">zhaoxlpku/KnowledGPT (github.com)</a>。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知识文本中选择知识，并通过一种无监督的方法联合优化知识选择和知识对话生成。论文提出的 KnowLEDGPT 在 Wizard 和 CMU DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
+          <h2 id="摘要">摘要</h2>
+<p>《Knowledge-Grounded Dialogue Generation with Pre-trained Language
+Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP
+2020 主会。代码公开在 <a target="_blank" rel="noopener" href="https://github.com/zhaoxlpku/KnowledGPT">zhaoxlpku/KnowledGPT
+(github.com)</a>。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知识文本中选择知识，并通过一种无监督的方法联合优化知识选择和知识对话生成。论文提出的 KnowLEDGPT 在 Wizard 和 CMU
+DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/blog/2022/05/03/KnowledGPT/#more" rel="contents">
@@ -765,7 +782,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:49</span>
+    <span title="站点阅读时长">4:48</span>
   </span>
 </div>
 <div class="busuanzi-count">
