@@ -918,6 +918,61 @@ p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
       </tags>
   </entry>
   <entry>
+    <title>DEM-VAE</title>
+    <url>/blog/2021/07/30/DEM-VAE/</url>
+    <content><![CDATA[<h2 id="序言">序言</h2>
+<p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p>
+<span id="more"></span>
+<h2 id="题外话">题外话</h2>
+<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
+<h2 id="简介">简介</h2>
+<p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量<span class="math inline"> \(c\)</span>​只包含<span class="math inline"> \(log(\#c)\)</span>​位的信息，其中<span class="math inline"> \(\#c\)</span>​为<span class="math inline"> \(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline"> \(-log(1/\#c)=log(\#c)\)</span>​。）</p>
+<p>混合高斯分布的 VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而 GM-VAE 容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE 退化为只有一个高斯分量的普通 VAE。如下图所示：</p>
+<p><img src="example.png"></p>
+<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
+<h2 id="模式崩溃vs后验崩塌">模式崩溃 vs 后验崩塌</h2>
+<p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
+<p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个 KL 损失项。</p>
+<h2 id="解决方法">解决方法</h2>
+<h3 id="混合指数族vae">混合指数族 VAE</h3>
+<p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量<span class="math inline"> \(c\)</span> 代表不同的高斯成分，连续隐变量<span class="math inline"> \(z\)</span> 依赖于<span class="math inline"> \(c\)</span>。如下图所示：</p>
+<p><img src="gm-vae.png"></p>
+<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
+<p>测试时：从先验分布<span class="math inline"> \(p(c)\)</span> 中采样一个<span class="math inline"> \(c\)</span>，然后从<span class="math inline"> \(c\)</span> 对应的高斯分布中采样隐变量<span class="math inline"> \(p(z|c)\)</span>，接着投喂到解码器<span class="math inline"> \(p(x|z)\)</span> 中。</p>
+<p>训练时：通过最大化边际似然<span class="math inline"> \(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与 VAE 一样，使用近似后验分布<span class="math inline"> \(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline"> \(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
+<p><img src="elbo.png"></p>
+<h3 id="模式崩溃问题">模式崩溃问题</h3>
+<p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到<span class="math inline"> \(\mathcal R_c\)</span> 与<span class="math inline"> \(\mathcal R_z\)</span> 中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline"> \(\mathcal R_z,\mathcal R_c\)</span>​重写为 KL 平均正则项与分散项<span class="math inline"> \(\mathcal L_d\)</span>​​。 <span class="math display">\[
+\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0
+\]</span> 作者得出结论，最小化分散项<span class="math inline"> \(\mathcal L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示： <span class="math display">\[
+L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
+\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline"> \(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
+<h3 id="dem-vae">DEM-VAE</h3>
+<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下： <span class="math display">\[
+\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
+\]</span> 公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
+<h2 id="实验">实验</h2>
+<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
+<p><img src="mode-collapse-result.png"></p>
+<p>可以看出，同时引入互信息项和分散项的 VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
+<h3 id="文本生成">文本生成</h3>
+<p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
+<p><img src="lg-result.png"></p>
+<p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得 NLL（负对数似然）相较基线模型更大，但是 rPPL，BLEU 等指标上取得了更好的结果。</p>
+<h2 id="总结">总结</h2>
+<p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
+<h2 id="参考">参考</h2>
+<p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库 (iczhiku.com)</a></p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>文本生成</category>
+      </categories>
+      <tags>
+        <tag>VAE</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>DeBERTa: 注意力解纠缠和解码加强版的 BERT</title>
     <url>/blog/2022/09/04/DEBERTA/</url>
     <content><![CDATA[<h2 id="摘要">摘要</h2>
@@ -985,61 +1040,6 @@ A_{i,j}&amp;=\{H_i,P_{i|j}\}\times\{H_j,P_{j|i}\}^T\\
       <tags>
         <tag>预训练模型</tag>
         <tag>DEBERTA</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>DEM-VAE</title>
-    <url>/blog/2021/07/30/DEM-VAE/</url>
-    <content><![CDATA[<h2 id="序言">序言</h2>
-<p>DEM-VAE 是字节跳动 AI LAB 团队于 2020 年发表的《Dispersed Exponential Family Mixture VAEs for Interpretable Text Generation》论文中提出的模型，论文收录在 ICML 中。论文名直译为 “用于<strong>可解释</strong>文本生成的<strong>分散指数族混合</strong> VAE ”。</p>
-<span id="more"></span>
-<h2 id="题外话">题外话</h2>
-<p>最近实习面试结束了，回来更新博客了。“黄色的树林里分出两条路，可惜我不能同时去涉足”，最近有些感慨。看到这篇博客的人，希望这篇博客能对你有所帮助，也希望你天天开心。</p>
-<h2 id="简介">简介</h2>
-<p>连续型 VAE 的隐变量难以解释分散属性，例如主题、对话动作等。这一点与 VQ-VAE 的动机相似。然而只使用分散隐变量的 VAE 的表达能力有限，隐变量<span class="math inline"> \(c\)</span>​只包含<span class="math inline"> \(log(\#c)\)</span>​位的信息，其中<span class="math inline"> \(\#c\)</span>​为<span class="math inline"> \(c\)</span>​​可选值的数量。（这里的意思应该是信息论中的 “信息量”，默认隐变量服从均匀分布，各值取得的概率相等，信息量<span class="math inline"> \(-log(1/\#c)=log(\#c)\)</span>​。）</p>
-<p>混合高斯分布的 VAE（GM-VAE）提供了一种自然的想法，将分散隐变量与连续隐变量结合：每个高斯分布代表一个分散属性值，分量的值代表属性相同的句子。在理想情况下，不同高斯分布的均值与方差应该差别很大。然而 GM-VAE 容易出现模式崩溃问题，这使得不同高斯分布的均值与方差非常接近，GM-VAE 退化为只有一个高斯分量的普通 VAE。如下图所示：</p>
-<p><img src="example.png"></p>
-<p>在本文中，作者证明了模式崩溃问题不仅存在于 GM-VAE 中，而是具有指数族混合先验分布的 VAE（EM-VAE）的普遍问题，由证据下界中的一个分散项引起。进而，作者提出了一个船新的 DEM-VAE，在 EM-VAE 的目标函数里引入了额外一项分散项。按照论文的说法，DEM-VAE 虽然适度减小了句子的似然（由于引入了新的损失项），但是在 rPPL（reverse perplexity）与 BLEU 得到了更好的结果，并且能够有效地避免模式崩溃问题。</p>
-<h2 id="模式崩溃vs后验崩塌">模式崩溃 vs 后验崩塌</h2>
-<p>普通的 VAE 会面临后验坍塌（KL 散度消失）的问题，具体而言，KL 损失项在训练之初迅速变为 0。而本文要解决的是模式崩溃问题，是指先验分布中的多个模式崩溃为一个模式。模式崩溃会后验坍塌之间无必然联系。在后验坍塌未出现时，也可能出现模式崩溃。</p>
-<p>虽然本文采用的解决方案与之前的解决后验坍塌的方案有些相似：找到目标函数中导致问题的那一项并削弱它的影响。但是本文采用的解决方案只引入了一个启发式的分散项，而不是整个 KL 损失项。</p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="混合指数族vae">混合指数族 VAE</h3>
-<p>混合指数族 VAE 是指使用混合指数族分布作为先验分布的 VAE（<a href="https://en.wikipedia.org/wiki/Exponential_family">Exponential family - Wikipedia</a>），最为常见的就是混合高斯分布的 VAE，GM-VAE，它的先验分布为混合的高斯分布。GM-VAE 使用一个分散变量<span class="math inline"> \(c\)</span> 代表不同的高斯成分，连续隐变量<span class="math inline"> \(z\)</span> 依赖于<span class="math inline"> \(c\)</span>。如下图所示：</p>
-<p><img src="gm-vae.png"></p>
-<p>其中，实现为依赖关系，虚线为变分后验。其中，<span class="math inline">\(p(c)\)</span>​可以近似为均匀分布，<span class="math inline">\(p_\eta(z|c)\)</span>​为指数族分布，例如高斯分布。</p>
-<p>测试时：从先验分布<span class="math inline"> \(p(c)\)</span> 中采样一个<span class="math inline"> \(c\)</span>，然后从<span class="math inline"> \(c\)</span> 对应的高斯分布中采样隐变量<span class="math inline"> \(p(z|c)\)</span>，接着投喂到解码器<span class="math inline"> \(p(x|z)\)</span> 中。</p>
-<p>训练时：通过最大化边际似然<span class="math inline"> \(\int\sum_cp_\eta(z,c)p_\theta(x|z)dz\)</span>​​进行训练是不可行的。与 VAE 一样，使用近似后验分布<span class="math inline"> \(q_\phi(z,c|x)=q_\phi(z|x)q_\phi(c|x)\)</span>​作为<span class="math inline"> \(p(z,c|x)\)</span>​​​的估计，进一步改为优化如下所示的证据下界：</p>
-<p><img src="elbo.png"></p>
-<h3 id="模式崩溃问题">模式崩溃问题</h3>
-<p>作者通过研究 ELBO 目标函数，将导致模式崩溃的原因定位到<span class="math inline"> \(\mathcal R_c\)</span> 与<span class="math inline"> \(\mathcal R_z\)</span> 中。作者从指数族分布的参数化定义出发，将损失项<span class="math inline"> \(\mathcal R_z,\mathcal R_c\)</span>​重写为 KL 平均正则项与分散项<span class="math inline"> \(\mathcal L_d\)</span>​​。 <span class="math display">\[
-\mathcal L_d=\mathbb E_{q_\phi(c|x)}A(\eta_c)-A(\mathbb E_{q_\phi(c|x)}\eta_c)&gt;=0
-\]</span> 作者得出结论，最小化分散项<span class="math inline"> \(\mathcal L_d\)</span>​使得先验分布的加权方差（即模式崩溃趋势）。这一部分的数学推导较为复杂，有兴趣的可以去看看原文。因此，作者提出在损失函数中加入一项正的分散项来抵消这一趋势，最终损失函数如下所示： <span class="math display">\[
-L(\theta;x)=ELBO+\beta \cdot \mathcal L_d
-\]</span> 其中，<span class="math inline">\(\beta\)</span>​是一个超参数，通过调整<span class="math inline"> \(\beta\)</span>​​来达到平衡模式崩溃与正常训练。</p>
-<h3 id="dem-vae">DEM-VAE</h3>
-<p>在上述方法基础上，作者发现，使用额外的互信息项能够进一步优化可解释性，这一部分可以在实验结果中看到。互信息项在之前的工作中用于缓解 KL 散度消失的问题，定义如下： <span class="math display">\[
-\mathcal L_{mi}=\mathcal H(c)-\mathcal H(c|x)=\mathbb E_x\mathbb E_{q_\phi(c|x)}(logq_\phi(c|x)-logq_\phi(c))
-\]</span> 公式部分介绍完毕。在模型结构上，编码器为 GRU 等循环单元、解码器为一个语言模型。</p>
-<h2 id="实验">实验</h2>
-<h3 id="模式崩溃实验结果">模式崩溃实验结果</h3>
-<p><img src="mode-collapse-result.png"></p>
-<p>可以看出，同时引入互信息项和分散项的 VAE（DGM-VAE，DEM-VAE）的各个分量分布有着较为明显的分类边界，没有出现模式崩溃问题。</p>
-<h3 id="文本生成">文本生成</h3>
-<p>作者使用四个指标：逆困惑度、BLEU、词级 KL 散度、负对数似然来评估文本生成的质量。其中，逆困惑度是指一个 LSTM 语言模型，从 VAE 的先验分布中采样的数据上进行训练，再在测试集上进行评估。实验结果如下：</p>
-<p><img src="lg-result.png"></p>
-<p>可以看到，正如前文作者所说，由于引入了额外的分散项，使得 NLL（负对数似然）相较基线模型更大，但是 rPPL，BLEU 等指标上取得了更好的结果。</p>
-<h2 id="总结">总结</h2>
-<p>这篇论文也是离散 VAE 的一种尝试，在混合高斯分布的基础上，引入额外的分散项来解决模式崩溃问题。这使得模型的解释性更强。与之前介绍过得 EQ-VAE 相比，隐变量可以表征更多信息。感觉还是很有意义的工作，就是有点难懂。。。</p>
-<h2 id="参考">参考</h2>
-<p><a href="https://www.iczhiku.com/hotspotDetail/q7K2UUl4a6Isl4ZlEzOrgg==">ICML 2021 | DEM-VAE：一类新的可解释文本生成模型 - IC 智库 (iczhiku.com)</a></p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
-      </categories>
-      <tags>
-        <tag>VAE</tag>
       </tags>
   </entry>
   <entry>
@@ -1131,122 +1131,6 @@ e_{ij}=a(s_{i-1},h_j)\\
         <tag>自然语言处理</tag>
         <tag>对话系统</tag>
         <tag>综述</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>智源 EVA2.0: 聊天机器人 EVA 加强版</title>
-    <url>/blog/2022/03/24/EVA2-0/</url>
-    <content><![CDATA[<h2 id="简介">简介</h2>
-<p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese Dialogue Systems withLarge-Scale Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA 2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
-<span id="more"></span>
-<h2 id="数据">数据</h2>
-<p>论文提出了相关性、通顺性、娱乐性等指标用于分析数据质量，并进行数据处理。</p>
-<h3 id="质量指标">质量指标</h3>
-<h4 id="相关性">相关性</h4>
-<p>相关性可以反映上下文和回复间的连贯性、参与度，可以通过一些直觉公式进行估计，或者训练一个 NLU 分类模型。</p>
-<p>直觉来看，上下文和回复越相关，同时包含在二者中的单词越多。因此，这一部分分数定义为上下文<span class="math inline"> \(C\)</span> 和回复<span class="math inline"> \(R\)</span> 之间的单词覆盖率，具体公式为: <span class="math display">\[
-S_1=\sum_{w_i\in C,w_j\in R} dist(w_i,w_j)^\tau I(w_i=w_j)
-\]</span> 其中，<span class="math inline">\(dist(w_i,w_j)\)</span> 为<span class="math inline"> \(w_i\)</span> 和<span class="math inline"> \(w_j\)</span> 在对话中的轮次距离，<span class="math inline">\(\tau\)</span> 用于调整分数。</p>
-<p>训练模型的方法，论文在 LCCC 数据集上训练了一个<span class="math inline"> \(BERT_{BASE}\)</span> 模型，用于判别上下文和回复是否对应，在测试集上得到了 93.0% 的准确度和 0.86 的 F1 分数。这一部分分数公式如下，也就是分类的<span class="math inline"> \(logits\)</span>。 <span class="math display">\[
-S_2=logp(1|C,R)
-\]</span> 很显然，神经网络的方法更健壮一些。训练过程和细节论文未提，猜测应该就是正例 + 随机构建负例进行分类吧。不过这里也有一个有趣的地方。LCCC 数据集数据集是 BERT 分类 + 规则过滤进行清洗的，BERT 是在人工标注的 10w 条数据上训练的。EVA 1.0 版本中的 WDC-Dialog 只提到了规则过滤。2.0 从 LCCC 数据集去训练分类器，相当于是逆向了 LCCC 的分类模型，省去了人工标注数据的成本。</p>
-<h4 id="通顺性">通顺性</h4>
-<p>论文使用 kenlm，一个统计语言模型工具，来计算每个句子的概率，对话的通顺分数是每轮次分数之和，公式如下： <span class="math display">\[
-S_3=-\frac1n\sum logP(w_1^i,w_2^i,\dots,w_{|u_i|}^i)
-\]</span></p>
-<h4 id="娱乐性">娱乐性</h4>
-<p>由于中文社交媒体上有很多娱乐明星的粉丝（点名微博了属于是），相关对话中会包含一些不想要的信息，并且这些语言习惯也和正常聊天有所差异。因此，论文计算娱乐明星在对话中的占比，计算娱乐分数。</p>
-<h3 id="数据改进">数据改进</h3>
-<ul>
-<li><strong>数据集改进</strong>：作者发现有些数据集不适合开放域对话场景，例如京东客服对话 JDDC 数据集，使用它训练会导致说话口吻像电商客服，因此将其从 WDC-Dialog 中移除。</li>
-<li><strong>回复数量改进</strong>：来自微博等社交媒体的数据集中，存在一个上下文对应相当多回复的情况。这些回复非常相似有时会严重影响性能。因此作者为每个上下文设置了最大回复数量并进行过滤。</li>
-<li><strong>规则过滤</strong>：作者在 EVA 1.0 的规则上做了进一步的改进，例如将繁体字转为简体字，移除不合理的连续标点符号等。</li>
-<li><strong>基于分类器的过滤</strong>：根据质量分数的加权<span class="math inline"> \(S=\alpha S_1+\beta S_2+\gamma S_3\)</span> 对样本进行过滤，去除质量分数低于阈值的样本。</li>
-</ul>
-<h3 id="数据扩展">数据扩展</h3>
-<p>来自社交媒体的数据会夹杂很多的流行语，而它们在日常对话中并不常见，这会导致偏差。因此，作者还从公开来源收集了以下四种数据，共计 12GB。</p>
-<ul>
-<li>电影和电视剧的对话字幕</li>
-<li>小说和故事中的对话</li>
-<li>百度知道的问答对</li>
-<li>已有的公开众包对话：DuConv，KdConv，DuRecDial，NaturalConv</li>
-</ul>
-<h3 id="数据统计信息">数据统计信息</h3>
-<p>下表展示了 EVA 2.0 和 1.0 的数据集对比。可以看到 EVA 2.0 的数据集不足 1.0 版本的<span class="math inline"> \(1/3\)</span>，但显著提升了质量。相关性、通顺性的提升与数据调整中的过滤方式大致有个对应关系，例如规则过滤主要改善通顺性。另外，个人感觉数据调整中会根据质量分数过滤，再采用质量分数来评估似乎欠妥。可能再各自随机采样样本进行人工标注更有说服力一些。</p>
-<p><img src="statistics.png"></p>
-<h2 id="模型">模型</h2>
-<p>模型还是 Seq2Seq 的 Transformer，不过和 EVA 1.0、t5 不一样的是，使用的是 scaled Attention，即计算 Attention 的时候除以了<span class="math inline"> \(\sqrt d\)</span>。论文主要讨论了两个模型的两个配置：层数和角色信息。</p>
-<p>基于 Seq2Seq 的对话模型的编码器和解码器层数往往不是一致，解码器要比编码器更深以达到更好的生成效果。但是，更深的编码器也能提高对话上下文理解能力。因此，论文在控制参数规模情况下，尝试了不同的层数比例。</p>
-<p>近期工作指出，在长对话中，预训练模型可能会混淆它们的角色，因为模型是在角色信息复杂的社交媒体数据上训练得到的。因此，需要为对话模型添加角色信息保证一致性。例如，PLATO-XL 在多角色对话中添加了角色嵌入。不过由于 WDC-Dialog 数据集角色信息的缺失（例如字幕中一般不会包含角色信息），如果要添加角色信息，只能强制将对话认定为两个角色间进行的对话。论文同时使用了角色嵌入和角色标识符并测试效果。</p>
-<h3 id="预训练">预训练</h3>
-<p>论文研究了两种预训练方法：从头开始预训练或者从长文档预训练的模型再进行预训练。直觉来看，在长文档上预训练的模型已经学到了一些知识。但是由于文档和对话的差异性，不清楚这对对话任务是否会起到正面作用。</p>
-<h3 id="解码策略">解码策略</h3>
-<p>论文在上尝试了以下几种不同的解码策略。虽然有研究在英文对话机器人上对这些策略进行了实验，论文认为解码策略是语言相关的，中文的结论可能不同。</p>
-<ul>
-<li><strong>贪心搜索（Greedy Search）</strong>：朴素解码，每步选概率最大的 token，公式为<span class="math inline"> \(y_t=\arg\max_{y_t} P(y_t|x;y_{&lt;t})=softmax(h_t)\)</span></li>
-<li><strong> 采样（Sampling）</strong>：每步根据概率分布采样 token，公式为<span class="math inline"> \(y_t\sim P(y_t|x;y_{&lt;t})=softmax(h_t/T)\)</span>，<span class="math inline">\(T\)</span> 为温度系数，增大低概率 token 被采样的概率。</li>
-<li><strong>光束搜索（Beam Search）</strong>：贪心搜索的改进，避免局部最优。同时维护多个解码序列，最终选择概率最大的序列。</li>
-<li><strong>长度控制（Length Control）</strong>：朴素解码策略倾向于生成短而通用的序列，长度控制可改善这一问题，常与光束搜索搭配使用。<strong>最小长度约束方法</strong>：在解码时将 &lt;EOS&gt; 的概率置 0 直至达到最小长度要求。<strong>长度惩罚</strong>：光束搜索时对候选序列分数除以<span class="math inline"> \(l^\alpha\)</span>，其中<span class="math inline"> \(l\)</span> 为序列长度，<span class="math inline">\(alpha\)</span> 越高越偏向长序列（beam search 的 score 是<span class="math inline"> \(logp\)</span>，为负数）。</li>
-<li><strong>处理重复（Handling Repetitions）</strong>：语言模型生成普遍会出现重复现象。No-Repeat-N-Gram 策略禁止生成对话历史中存在的 n-gram。</li>
-</ul>
-<h2 id="实验">实验</h2>
-<ul>
-<li><strong>自动评估指标</strong>：uni-gram F1 (F1), ROUGE-L (R-L),BLEU-4 (B-4), distinct 4-grams (D-4)</li>
-<li><strong> 人工评估指标</strong>：合理性、特异性、一致性</li>
-</ul>
-<h3 id="层数">层数</h3>
-<p>6-18 代表编码器 6 层，解码器 18 层。表格可以看出，层数平衡的架构是最优的。</p>
-<p><img src="layer.png"></p>
-<h3 id="角色信息">角色信息</h3>
-<p>还是上面的表格，加入角色信息后性能有所下降。作者解释为由于数据集中角色信息的缺失，强迫模型将多角色对话认作两个角色间进行的对话反而会带来反面效果。</p>
-<h3 id="预训练策略">预训练策略</h3>
-<p>下两表为两种训练策略的自动和人工评估结果。可以看出，在文档预训练的模型继续训练的模型只在知识指标上效果更优，在对话指标上都不如从头训练模型。</p>
-<p><img src="pretraining-auto.png"></p>
-<p><img src="pretraining-human.png"></p>
-<h3 id="解码策略-1">解码策略</h3>
-<p>下两表为解码策略的自动和人工评估结果。贪婪搜索默认与 no-repeat-n-gram 结合起来，因为简单的贪婪搜索通常会导致重复。</p>
-<p>结论：</p>
-<ul>
-<li>没有在所有指标上最优的解码策略</li>
-<li>采样能够生成多样的回复，但会损失合理性</li>
-<li>无重复 n-gram 的简单贪心解码在人类评估中产生了令人惊讶的良好性能</li>
-<li>模型在最小长度约束下倾向于生成自相矛盾的响应（与英文不同）</li>
-<li>光束搜索结合采样、长度惩罚、禁止重复取得了相对均衡的性能</li>
-</ul>
-<p><img src="decode-auto.png"></p>
-<p><img src="decode-human.png"></p>
-<h3 id="最终评估">最终评估</h3>
-<p>论文将 EVA 2.0 和 1.0、CPM 进行了对比。结果如下两表。baseline 还是有点少。</p>
-<p><img src="evaluation.png"></p>
-<h2 id="举个栗子">举个栗子</h2>
-<p>下面举几个栗子来具体展示一下。可以看到，EVA 2.0 虽然有时能取得较好的对话效果，但还是会有不一致、幻觉、不安全、缺少同理心这些问题。这正是谷歌 LaMDA 想要解决的问题，可以参考我的另一篇博客<a href="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/#more">谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人</a>。</p>
-<h3 id="好">好</h3>
-<p><img src="nice-example.png"></p>
-<h3 id="不一致">不一致</h3>
-<p><img src="inconsistent-example.png"></p>
-<h3 id="幻觉">幻觉</h3>
-<p><img src="hallucination.png"></p>
-<h3 id="不安全">不安全</h3>
-<p><img src="unsafe-example.png"></p>
-<h3 id="缺少同理心">缺少同理心</h3>
-<p><img src="lack-empathy.png"></p>
-<h2 id="总结">总结</h2>
-<p>这篇论文还是蛮有价值的，讨论了模型规模和数据规模之外，影响模型性能的因素。类似 RoBERTa 之于 BERT，可以作为炼丹的参考。不过读完之后我最关心的几个问题还是没有解决：</p>
-<ul>
-<li>模型架构上，PLATO 采用的 unified Transformer 和 EVA 的 Seq2Seq，孰优孰劣？虽然有论文做过实验，但是其模型规模、数据规模都达不到预训练模型的水平。</li>
-<li>基线对比上，还是没有跟 PLATO-XL 进行比较。虽然感觉 EVA 2.0 大概率是比不过 PLATO-XL 的，但还是想了解一下差距、可能的解释、改进等。</li>
-</ul>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>对话生成</category>
-        <category>预训练模型</category>
-      </categories>
-      <tags>
-        <tag>预训练模型</tag>
-        <tag>自然语言处理</tag>
-        <tag>对话生成</tag>
-        <tag>Transformer</tag>
       </tags>
   </entry>
   <entry>
@@ -1382,6 +1266,122 @@ S_3=-\frac1n\sum logP(w_1^i,w_2^i,\dots,w_{|u_i|}^i)
         <tag>问答</tag>
         <tag>知识库</tag>
         <tag>KBQA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>智源 EVA2.0: 聊天机器人 EVA 加强版</title>
+    <url>/blog/2022/03/24/EVA2-0/</url>
+    <content><![CDATA[<h2 id="简介">简介</h2>
+<p>EVA 2.0 是智源、清华在论文《EVA2.0: Investigating Open-Domain Chinese Dialogue Systems withLarge-Scale Pre-Training》中提出的对话模型，论文于 3.17 登陆 arxiv，也就是一周前。EVA2.0 旨在探究数据质量、模型架构、训练方法、解码策略等因素的影响，而不是进一步扩张模型和数据。经过以上优化后，仅 300M 参数的 EVA 2.0 就达到了 2.8B 的 EVA 1.0 的水平。代码和模型见 <a href="https://github.com/thu-coai/EVA">thu-coai/EVA</a>。</p>
+<span id="more"></span>
+<h2 id="数据">数据</h2>
+<p>论文提出了相关性、通顺性、娱乐性等指标用于分析数据质量，并进行数据处理。</p>
+<h3 id="质量指标">质量指标</h3>
+<h4 id="相关性">相关性</h4>
+<p>相关性可以反映上下文和回复间的连贯性、参与度，可以通过一些直觉公式进行估计，或者训练一个 NLU 分类模型。</p>
+<p>直觉来看，上下文和回复越相关，同时包含在二者中的单词越多。因此，这一部分分数定义为上下文<span class="math inline"> \(C\)</span> 和回复<span class="math inline"> \(R\)</span> 之间的单词覆盖率，具体公式为: <span class="math display">\[
+S_1=\sum_{w_i\in C,w_j\in R} dist(w_i,w_j)^\tau I(w_i=w_j)
+\]</span> 其中，<span class="math inline">\(dist(w_i,w_j)\)</span> 为<span class="math inline"> \(w_i\)</span> 和<span class="math inline"> \(w_j\)</span> 在对话中的轮次距离，<span class="math inline">\(\tau\)</span> 用于调整分数。</p>
+<p>训练模型的方法，论文在 LCCC 数据集上训练了一个<span class="math inline"> \(BERT_{BASE}\)</span> 模型，用于判别上下文和回复是否对应，在测试集上得到了 93.0% 的准确度和 0.86 的 F1 分数。这一部分分数公式如下，也就是分类的<span class="math inline"> \(logits\)</span>。 <span class="math display">\[
+S_2=logp(1|C,R)
+\]</span> 很显然，神经网络的方法更健壮一些。训练过程和细节论文未提，猜测应该就是正例 + 随机构建负例进行分类吧。不过这里也有一个有趣的地方。LCCC 数据集数据集是 BERT 分类 + 规则过滤进行清洗的，BERT 是在人工标注的 10w 条数据上训练的。EVA 1.0 版本中的 WDC-Dialog 只提到了规则过滤。2.0 从 LCCC 数据集去训练分类器，相当于是逆向了 LCCC 的分类模型，省去了人工标注数据的成本。</p>
+<h4 id="通顺性">通顺性</h4>
+<p>论文使用 kenlm，一个统计语言模型工具，来计算每个句子的概率，对话的通顺分数是每轮次分数之和，公式如下： <span class="math display">\[
+S_3=-\frac1n\sum logP(w_1^i,w_2^i,\dots,w_{|u_i|}^i)
+\]</span></p>
+<h4 id="娱乐性">娱乐性</h4>
+<p>由于中文社交媒体上有很多娱乐明星的粉丝（点名微博了属于是），相关对话中会包含一些不想要的信息，并且这些语言习惯也和正常聊天有所差异。因此，论文计算娱乐明星在对话中的占比，计算娱乐分数。</p>
+<h3 id="数据改进">数据改进</h3>
+<ul>
+<li><strong>数据集改进</strong>：作者发现有些数据集不适合开放域对话场景，例如京东客服对话 JDDC 数据集，使用它训练会导致说话口吻像电商客服，因此将其从 WDC-Dialog 中移除。</li>
+<li><strong>回复数量改进</strong>：来自微博等社交媒体的数据集中，存在一个上下文对应相当多回复的情况。这些回复非常相似有时会严重影响性能。因此作者为每个上下文设置了最大回复数量并进行过滤。</li>
+<li><strong>规则过滤</strong>：作者在 EVA 1.0 的规则上做了进一步的改进，例如将繁体字转为简体字，移除不合理的连续标点符号等。</li>
+<li><strong>基于分类器的过滤</strong>：根据质量分数的加权<span class="math inline"> \(S=\alpha S_1+\beta S_2+\gamma S_3\)</span> 对样本进行过滤，去除质量分数低于阈值的样本。</li>
+</ul>
+<h3 id="数据扩展">数据扩展</h3>
+<p>来自社交媒体的数据会夹杂很多的流行语，而它们在日常对话中并不常见，这会导致偏差。因此，作者还从公开来源收集了以下四种数据，共计 12GB。</p>
+<ul>
+<li>电影和电视剧的对话字幕</li>
+<li>小说和故事中的对话</li>
+<li>百度知道的问答对</li>
+<li>已有的公开众包对话：DuConv，KdConv，DuRecDial，NaturalConv</li>
+</ul>
+<h3 id="数据统计信息">数据统计信息</h3>
+<p>下表展示了 EVA 2.0 和 1.0 的数据集对比。可以看到 EVA 2.0 的数据集不足 1.0 版本的<span class="math inline"> \(1/3\)</span>，但显著提升了质量。相关性、通顺性的提升与数据调整中的过滤方式大致有个对应关系，例如规则过滤主要改善通顺性。另外，个人感觉数据调整中会根据质量分数过滤，再采用质量分数来评估似乎欠妥。可能再各自随机采样样本进行人工标注更有说服力一些。</p>
+<p><img src="statistics.png"></p>
+<h2 id="模型">模型</h2>
+<p>模型还是 Seq2Seq 的 Transformer，不过和 EVA 1.0、t5 不一样的是，使用的是 scaled Attention，即计算 Attention 的时候除以了<span class="math inline"> \(\sqrt d\)</span>。论文主要讨论了两个模型的两个配置：层数和角色信息。</p>
+<p>基于 Seq2Seq 的对话模型的编码器和解码器层数往往不是一致，解码器要比编码器更深以达到更好的生成效果。但是，更深的编码器也能提高对话上下文理解能力。因此，论文在控制参数规模情况下，尝试了不同的层数比例。</p>
+<p>近期工作指出，在长对话中，预训练模型可能会混淆它们的角色，因为模型是在角色信息复杂的社交媒体数据上训练得到的。因此，需要为对话模型添加角色信息保证一致性。例如，PLATO-XL 在多角色对话中添加了角色嵌入。不过由于 WDC-Dialog 数据集角色信息的缺失（例如字幕中一般不会包含角色信息），如果要添加角色信息，只能强制将对话认定为两个角色间进行的对话。论文同时使用了角色嵌入和角色标识符并测试效果。</p>
+<h3 id="预训练">预训练</h3>
+<p>论文研究了两种预训练方法：从头开始预训练或者从长文档预训练的模型再进行预训练。直觉来看，在长文档上预训练的模型已经学到了一些知识。但是由于文档和对话的差异性，不清楚这对对话任务是否会起到正面作用。</p>
+<h3 id="解码策略">解码策略</h3>
+<p>论文在上尝试了以下几种不同的解码策略。虽然有研究在英文对话机器人上对这些策略进行了实验，论文认为解码策略是语言相关的，中文的结论可能不同。</p>
+<ul>
+<li><strong>贪心搜索（Greedy Search）</strong>：朴素解码，每步选概率最大的 token，公式为<span class="math inline"> \(y_t=\arg\max_{y_t} P(y_t|x;y_{&lt;t})=softmax(h_t)\)</span></li>
+<li><strong> 采样（Sampling）</strong>：每步根据概率分布采样 token，公式为<span class="math inline"> \(y_t\sim P(y_t|x;y_{&lt;t})=softmax(h_t/T)\)</span>，<span class="math inline">\(T\)</span> 为温度系数，增大低概率 token 被采样的概率。</li>
+<li><strong>光束搜索（Beam Search）</strong>：贪心搜索的改进，避免局部最优。同时维护多个解码序列，最终选择概率最大的序列。</li>
+<li><strong>长度控制（Length Control）</strong>：朴素解码策略倾向于生成短而通用的序列，长度控制可改善这一问题，常与光束搜索搭配使用。<strong>最小长度约束方法</strong>：在解码时将 &lt;EOS&gt; 的概率置 0 直至达到最小长度要求。<strong>长度惩罚</strong>：光束搜索时对候选序列分数除以<span class="math inline"> \(l^\alpha\)</span>，其中<span class="math inline"> \(l\)</span> 为序列长度，<span class="math inline">\(alpha\)</span> 越高越偏向长序列（beam search 的 score 是<span class="math inline"> \(logp\)</span>，为负数）。</li>
+<li><strong>处理重复（Handling Repetitions）</strong>：语言模型生成普遍会出现重复现象。No-Repeat-N-Gram 策略禁止生成对话历史中存在的 n-gram。</li>
+</ul>
+<h2 id="实验">实验</h2>
+<ul>
+<li><strong>自动评估指标</strong>：uni-gram F1 (F1), ROUGE-L (R-L),BLEU-4 (B-4), distinct 4-grams (D-4)</li>
+<li><strong> 人工评估指标</strong>：合理性、特异性、一致性</li>
+</ul>
+<h3 id="层数">层数</h3>
+<p>6-18 代表编码器 6 层，解码器 18 层。表格可以看出，层数平衡的架构是最优的。</p>
+<p><img src="layer.png"></p>
+<h3 id="角色信息">角色信息</h3>
+<p>还是上面的表格，加入角色信息后性能有所下降。作者解释为由于数据集中角色信息的缺失，强迫模型将多角色对话认作两个角色间进行的对话反而会带来反面效果。</p>
+<h3 id="预训练策略">预训练策略</h3>
+<p>下两表为两种训练策略的自动和人工评估结果。可以看出，在文档预训练的模型继续训练的模型只在知识指标上效果更优，在对话指标上都不如从头训练模型。</p>
+<p><img src="pretraining-auto.png"></p>
+<p><img src="pretraining-human.png"></p>
+<h3 id="解码策略-1">解码策略</h3>
+<p>下两表为解码策略的自动和人工评估结果。贪婪搜索默认与 no-repeat-n-gram 结合起来，因为简单的贪婪搜索通常会导致重复。</p>
+<p>结论：</p>
+<ul>
+<li>没有在所有指标上最优的解码策略</li>
+<li>采样能够生成多样的回复，但会损失合理性</li>
+<li>无重复 n-gram 的简单贪心解码在人类评估中产生了令人惊讶的良好性能</li>
+<li>模型在最小长度约束下倾向于生成自相矛盾的响应（与英文不同）</li>
+<li>光束搜索结合采样、长度惩罚、禁止重复取得了相对均衡的性能</li>
+</ul>
+<p><img src="decode-auto.png"></p>
+<p><img src="decode-human.png"></p>
+<h3 id="最终评估">最终评估</h3>
+<p>论文将 EVA 2.0 和 1.0、CPM 进行了对比。结果如下两表。baseline 还是有点少。</p>
+<p><img src="evaluation.png"></p>
+<h2 id="举个栗子">举个栗子</h2>
+<p>下面举几个栗子来具体展示一下。可以看到，EVA 2.0 虽然有时能取得较好的对话效果，但还是会有不一致、幻觉、不安全、缺少同理心这些问题。这正是谷歌 LaMDA 想要解决的问题，可以参考我的另一篇博客<a href="https://tqnwhz.github.io/blog/2022/03/19/LaMDA/#more">谷歌 LaMDA：高达 137B 参数的 “全能型” 聊天机器人</a>。</p>
+<h3 id="好">好</h3>
+<p><img src="nice-example.png"></p>
+<h3 id="不一致">不一致</h3>
+<p><img src="inconsistent-example.png"></p>
+<h3 id="幻觉">幻觉</h3>
+<p><img src="hallucination.png"></p>
+<h3 id="不安全">不安全</h3>
+<p><img src="unsafe-example.png"></p>
+<h3 id="缺少同理心">缺少同理心</h3>
+<p><img src="lack-empathy.png"></p>
+<h2 id="总结">总结</h2>
+<p>这篇论文还是蛮有价值的，讨论了模型规模和数据规模之外，影响模型性能的因素。类似 RoBERTa 之于 BERT，可以作为炼丹的参考。不过读完之后我最关心的几个问题还是没有解决：</p>
+<ul>
+<li>模型架构上，PLATO 采用的 unified Transformer 和 EVA 的 Seq2Seq，孰优孰劣？虽然有论文做过实验，但是其模型规模、数据规模都达不到预训练模型的水平。</li>
+<li>基线对比上，还是没有跟 PLATO-XL 进行比较。虽然感觉 EVA 2.0 大概率是比不过 PLATO-XL 的，但还是想了解一下差距、可能的解释、改进等。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>对话生成</category>
+        <category>预训练模型</category>
+      </categories>
+      <tags>
+        <tag>预训练模型</tag>
+        <tag>自然语言处理</tag>
+        <tag>对话生成</tag>
+        <tag>Transformer</tag>
       </tags>
   </entry>
   <entry>
@@ -1577,6 +1577,122 @@ P(r_i|U_i,D_i)&amp;=P(r_i|g(U,D);\theta)\\
         <tag>自然语言处理</tag>
         <tag>对话生成</tag>
         <tag>LaMDA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MIT 6.824 Lab1 实验报告: MapReduce</title>
+    <url>/blog/2023/08/05/MIT-6-824-1/</url>
+    <content><![CDATA[<h2 id="摘要">摘要</h2>
+<p>本篇是 MIT 6.824 Lab1 的实验报告。MIT 6.824 是一门分布式系统的课程 ，最近打算系统地学习一下，我把课程资源放在了博客末尾，感兴趣的同学也可以一起来学。Lab 1 中，要求用 Golang 实现一个 MapReduce 的框架。</p>
+<span id="more"></span>
+<p>遵循课程规定，本文没有放出核心代码，只介绍了一些结构设计和流程思考，可放心食用。</p>
+<h2 id="实验准备">实验准备</h2>
+<h3 id="拉取代码">拉取代码</h3>
+<p>在实验指导书中 <a href="https://pdos.csail.mit.edu/6.824/labs/lab-mr.html">6.5840 Lab 1: MapReduce (mit.edu)</a>，包含了代码库的地址和一些简单介绍。</p>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> git://g.csail.mit.edu/6.5840-golabs-2023 6.5840</span><br><span class="line">$ <span class="built_in">cd</span> 6.5840</span><br><span class="line">$ ls</span><br><span class="line">Makefile src</span><br><span class="line">$</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="代码骨架介绍">代码骨架介绍</h3>
+<p>以 <code>src</code> 为当前目录，Lab 1 里需要关注的是以下几个部分：</p>
+<ul>
+<li><code>mr/</code>：MapReduce 的核心逻辑，包含协调器（Coordinator）、Worker、RPC 三部分，需要自己实现。</li>
+<li><code>mrapps/</code>：MapReduce 的应用，用于测试，例如 <code>wc.go</code> 就是单词计数（WordCount）</li>
+<li><code>main/mrsequential.go</code>：MapReduce 的串行启动版本，可以参考一些文件读写的代码</li>
+<li><code>main/mrcoordinator.go, main/mrworker.go</code>：coordinator、worker 的启动类</li>
+</ul>
+<h3 id="理论知识">理论知识</h3>
+<p>MapReduce 框架中，包含两种角色和两个阶段（两种任务）。</p>
+<p>两个阶段：</p>
+<ul>
+<li>Map 阶段：对分块文件运行 Map 函数
+<ul>
+<li>函数签名：<code>func Map(filename string, contents string) []mr.KeyValue</code></li>
+<li>接收文件名、文件内容为参数，返回 [key,value] 的列表</li>
+</ul></li>
+<li> Reduce 阶段：对同一个 KEY 的 VALUE 聚合结果进行规约计算
+<ul>
+<li>函数签名：<code>func Reduce(key string, values []string) string</code></li>
+<li>key 为 Map 阶段产生的某个 key，values 为 Map 阶段该 key 对应的所有 value 的列表</li>
+</ul></li>
+<li><strong> Reduce 阶段必须在所有 Map 任务都完成之后才能开始</strong>，否则会丢失数据</li>
+</ul>
+<p>两种角色是 Coordinator 和 Worker：</p>
+<ul>
+<li>Coordinator：负责协调任务的执行，将 Map/Reduce 任务下发给 Worker，监听 Worker 状态，如果 Worker 宕机对相关任务进行重新下发</li>
+<li> Worker：负责任务的执行，以心跳与 Coordinator 周期交互</li>
+</ul>
+<p>整体的流程如下：</p>
+<ol type="1">
+<li>Coordinator 得到输入文件的切片</li>
+<li> Coordinator 向 Worker 发送 Map 任务</li>
+<li> Worker 上报 Map 任务执行完成，中间结果存储在 Intermediate Files 中</li>
+<li><strong>所有 Map 任务执行完毕后</strong>，Coordinator 对同一个 key 的中间结果进行聚合，下发 Reduce 任务</li>
+<li> Worker 上报 Reduce 任务执行完成，结果写到输出文件中</li>
+<li>所有 Reduce 任务执行完毕，退出</li>
+</ol>
+<p><img src="mapreduce_architecture.png"></p>
+<p>需要注意的是，Worker 可能由于种种原因宕机，所以需要做容错处理。Coordinator 与 Worker 保持心跳，在发现心跳超时一定阈值后，需要把 Worker 标记为已下线，重新下发任务。</p>
+<p>另外，考虑 Worker 宕机的时机，如果 Worker 在写入 Reduce 的输出结果时宕机，写了一半的文件可能会产生误解，指导书里的建议是先把结果写到临时文件中，等到运行结束再重命名。</p>
+<h2 id="rpc">RPC</h2>
+<p>首先需要思考的是，Coordinator 和 Worker 间的通信有几种。目前的架构下，只能由 Worker 主动向 Coordinator 发起请求，获得回应，消息种类可能是：</p>
+<ul>
+<li>请求一个任务</li>
+<li>上报心跳</li>
+<li>上报任务结果</li>
+</ul>
+<p>需要在 RPC 文件里定义好这些请求的 request 和 reply，例如，任务请求的例子如下：</p>
+<figure class="highlight go"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> AcquireTaskRequest <span class="keyword">struct</span> {</span><br><span class="line">	WorkerCode <span class="keyword">string</span> <span class="comment">// worker id</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> AcquireTaskReply <span class="keyword">struct</span> {</span><br><span class="line">	Mode    <span class="keyword">int8</span>     <span class="comment">// 任务模式</span></span><br><span class="line">	Files   []<span class="keyword">string</span> <span class="comment">// 输入</span></span><br><span class="line">	NReduce <span class="keyword">int</span>      <span class="comment">//  reduce桶数量</span></span><br><span class="line">	TaskId  <span class="keyword">string</span>   <span class="comment">// 任务Id</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>设计上，worker 侧最好带有一个唯一的 code，方便追踪和排错，任务也是。此外，任务还需要指定一个执行模式，map/reduce/ 其他。由于 go 没有枚举类型，这里用一个 int8 表示。稍加设计，可以发现任务类型可分为四种：</p>
+<ul>
+<li>map</li>
+<li>reduce</li>
+<li>wait：要求 worker 等待一段时间，后续可能会有任务</li>
+<li> done；要求 worker 退出，后续不可能有任务了</li>
+</ul>
+<p>类似地，可以定义心跳、任务结果上报的请求和响应，这里就省去了。考虑到上报结果和请求任务总是成对出现的，设计上也可以进行合并。</p>
+<h2 id="coordinator">Coordinator</h2>
+<figure class="highlight go"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> {</span><br><span class="line">	Id           <span class="keyword">string</span>    <span class="comment">// 任务Id</span></span><br><span class="line">	Mode         <span class="keyword">int8</span>      <span class="comment">// 运行模式</span></span><br><span class="line">	Files        []<span class="keyword">string</span>  <span class="comment">// 输入文件</span></span><br><span class="line">	WorkerCode   <span class="keyword">string</span>    <span class="comment">// 运行Worker的标识</span></span><br><span class="line">	LastBeatTime time.Time <span class="comment">// 最后一次心跳时间</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Coordinator <span class="keyword">struct</span> {</span><br><span class="line">	sync.Mutex                          <span class="comment">// 互斥锁</span></span><br><span class="line">	Files              []<span class="keyword">string</span>         <span class="comment">// 分片文件</span></span><br><span class="line">	NReduce            <span class="keyword">int</span>              <span class="comment">// reduce 桶数</span></span><br><span class="line">	RunningTaskMap     <span class="keyword">map</span>[<span class="keyword">string</span>]*Task <span class="comment">// 运行中的任务</span></span><br><span class="line">	PendingTasks       []*Task          <span class="comment">// 待运行的任务</span></span><br><span class="line">	MapDone            <span class="keyword">bool</span>             <span class="comment">// Map阶段是否结束</span></span><br><span class="line">	ReduceDone         <span class="keyword">bool</span>             <span class="comment">// Reduce阶段是否结束</span></span><br><span class="line">	ReduceFiles        <span class="keyword">map</span>[<span class="keyword">int</span>][]<span class="keyword">string</span> <span class="comment">// Reduce桶的中间文件</span></span><br><span class="line">	LastWorkerBeatTime time.Time        <span class="comment">// 最后一次Worker心跳时间</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>Coordinator 包含两种 goroutine，rpc 处理的 goroutine、主 goroutine，需要加锁避免竞态条件、保证可见性。</p>
+<p>Coordinator 的流程如下：</p>
+<ul>
+<li>初始化 Map 任务</li>
+<li>当 Worker 请求任务时：
+<ul>
+<li>如果有待执行的 map / 任务，下发</li>
+<li>如果没有待执行的 map 任务，且还处在 map 阶段，要求 worker 等待</li>
+<li>如果在 reduce 阶段，下发待执行的 reduce 任务，<strong>不存在在要求 worker 等待</strong></li>
+</ul></li>
+<li>当 Worker 上报任务结果时
+<ul>
+<li>如果 map 任务全部执行完毕，切换到 reduce 阶段，初始化 reduce 任务</li>
+<li>如果 reduce 任务全部执行完毕，退出</li>
+</ul></li>
+</ul>
+<p>此外，需要有一个后台 goroutine 扫描失联的任务，重新下发，这也是为什么没有任务时要求 worker 等待。</p>
+<p>需要注意的是，在 Golang 中，由于没有 <code>volatile</code> 这样的字段可以保证可见性，因此要对于共享变量的读写都要加锁来保证可见性。由于 Coordinator 侧没有很重的业务计算逻辑，加锁时间不会太长，可以接受。</p>
+<h2 id="worker">Worker</h2>
+<figure class="highlight go"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> worker <span class="keyword">struct</span> {</span><br><span class="line">	sync.Mutex</span><br><span class="line">	WorkerCode  <span class="keyword">string</span>                          <span class="comment">// worker id</span></span><br><span class="line">	TaskId      <span class="keyword">string</span>                          <span class="comment">// task id</span></span><br><span class="line">	Mode        <span class="keyword">int8</span>                            <span class="comment">// 任务模式</span></span><br><span class="line">	InputFiles  []<span class="keyword">string</span>                        <span class="comment">// 任务输入文件</span></span><br><span class="line">	ReduceFiles [][]<span class="keyword">string</span>                      <span class="comment">// reduce输出</span></span><br><span class="line">	Done        <span class="keyword">bool</span>                            <span class="comment">// 任务执行结束</span></span><br><span class="line">	MapF        <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">string</span>, <span class="keyword">string</span>)</span> []<span class="title">KeyValue</span> // <span class="title">map</span>函数</span></span><br><span class="line">	ReduceF     <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">string</span>, []<span class="keyword">string</span>)</span> <span class="title">string</span>   // <span class="title">reduce</span>函数</span></span><br><span class="line">	NReduce     <span class="keyword">int</span>                             <span class="comment">// reduce 桶数量</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>Worker 侧存在两个 goroutine，任务执行和心跳维护。</p>
+<p>在 Worker 侧的主逻辑里，需要重复执行：</p>
+<ul>
+<li>请求任务</li>
+<li>根据任务类型、执行任务并上报结果</li>
+</ul>
+<p>在心跳维护组件里，每隔一段时间上报任务的心跳（任务 Id）。</p>
+<p>可以发现，<code>TaskId</code> 作为共享变量、也需要加锁才能保证可见性。但是需要额外考虑的是，Worker 侧可能有耗时的计算逻辑，如果对函数整个加锁，心跳线程长时间获取不到锁就会阻塞，就出问题了。</p>
+<p>因此，<strong>需要尽量缩小锁的范围</strong>。<strong>锁的目的是保护共享变量的读写</strong>，分析可知，这种情况下，共享变量只有 <code>TaskId</code>，因此，可以抽一个函数，只对获取 <code>TaskId</code> 这一步加锁，就可以避免锁范围太大导致的问题。</p>
+<h2 id="课程资源">课程资源</h2>
+<ul>
+<li>课程首页：<a href="https://pdos.csail.mit.edu/6.824/schedule.html">6.5840 Schedule: Spring 2023 (mit.edu)</a></li>
+<li>b 站课程视频：<a href="https://www.bilibili.com/video/BV1R7411t71W/?p=1&amp;vd_source=05e9e6106f7d1eabead6a8b9f4ab5820">Lecture 1- Introduction_哔哩哔哩_bilibili</a></li>
+<li>Lab 1 指导书：<a href="https://pdos.csail.mit.edu/6.824/labs/lab-mr.html">6.5840 Lab 1: MapReduce (mit.edu)</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>MIT 6.824</category>
+      </categories>
+      <tags>
+        <tag>MIT 6.824</tag>
+        <tag>分布式系统</tag>
+        <tag>MapReduce</tag>
       </tags>
   </entry>
   <entry>
@@ -3658,78 +3774,6 @@ h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde h^{(m-1)},h_{z_{\
       </tags>
   </entry>
   <entry>
-    <title>推理文本生成 | EA-VQ-VAE</title>
-    <url>/blog/2021/07/16/ea-vq-vae/</url>
-    <content><![CDATA[<h2 id="题外话">题外话</h2>
-<p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
-<h2 id="简介">简介</h2>
-<p>EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-VAE 进行推理文本生成。推理文本生成定义为，给定一个事件（例如 “A 偷看了 B 的日记”），从多个维度对该事件进行推断（“A 的心理状态”，“A 的目的”）。而 EA-VQ-VAE 中的 EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
-<span id="more"></span>
-<h2 id="实现方法">实现方法</h2>
-<p>下图展示了整个模型的流程：给定事件<span class="math inline"> \(x\)</span> 后，经过 VQ-VAE 将其映射为离散的隐变量<span class="math inline"> \(z\)</span>，根据事件<span class="math inline"> \(x\)</span> 从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline"> \(y\)</span>。下面逐项介绍模型的细节。</p>
-<p><img src="model.png"></p>
-<h3 id="vq-vae">VQ-VAE</h3>
-<p>VQ-VAE 的详细介绍可以看我的上一篇博客。论文使用的 VQ-VAE 与标准的 VQ-VAE 最主要的区别在于，普通的 VQ-VAE 生成是数据<span class="math inline"> \(x\)</span>，而在推理文本生成任务中，生成的是以符合事件<span class="math inline"> \(x\)</span> 的推理文本<span class="math inline"> \(y\)</span>，换而言之，这是一个<strong>条件模型</strong>，叫它 VQ-CVAE 可能更恰当一点。基于此，下面所述的后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 与先验分布<span class="math inline"> \(p_\theta(z|x)\)</span> 均与标准的 VQ-VAE 有所不同。</p>
-<p>本文使用的 VQ-VAE 分为以下三个部分：</p>
-<ul>
-<li>codebook：对应 VQ-VAE 中的隐变量嵌入空间，只是换了个名字，同样是一张<span class="math inline"> \(R^{k*d}\)</span> 的表，由<span class="math inline"> \(k\)</span> 个维度为<span class="math inline"> \(d\)</span> 的隐变量组成</li>
-<li>后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>：同样是一个独热分布，使用最近邻算法将编码器输出<span class="math inline"> \(h_(x,y)\)</span> 映射到最近的隐变量<span class="math inline"> \(z'\)</span></li>
-<li> 先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如 RoBERTa）将事件编码为隐藏状态<span class="math inline"> \(h\)</span>，，再将其映射为 k 个类别，即<span class="math inline"> \(p_\theta(z|x)=softmax(hW_k)\)</span></li>
-</ul>
-<h3 id="证据的检索与选择">证据的检索与选择</h3>
-<p>去除事件中的停用词后，在大规模文本语料中使用 Elastic Search 引擎检索事件，并选取前 K 个得分最高的句子。论文使用的语料库基于 BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
-<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline"> \(x\)</span> 与推理文本<span class="math inline"> \(y\)</span> 均已知，例如给定事件 “A 读了 B 的日记”，与推理文本 “A 感到很愧疚”，那么证据 “A 偷了 B 的日记” 就比 “B 把日记给 A 看” 更合理，此时我们想要建模的就是<span class="math inline"> \(q(c|x,y)\)</span>（c 代表事件上下文，即证据）与<span class="math inline"> \(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline"> \(p(c|z)\)</span>, 而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span> 代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用 Transformer 将其编码为向量<span class="math inline"> \(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span> 与<span class="math inline"> \(q_\phi(z|x,y)\)</span> 类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即： <span class="math display">\[
-p_s(c_k|z)=
-\begin{cases}
-1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\
-0 &amp;otherwise
-\end{cases}
-\]</span></p>
-<p><span class="math display">\[
-c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2
-\]</span></p>
-<p>值得注意的是，作者没有使用注意力机制得到的 “软” 分布，而是借鉴 VQ-VAE，采用了一种独热分布将<span class="math inline"> \(z\)</span> 映射到最近的<span class="math inline"> \(c\)</span>。这样的优点是一定程度上降低了学习的难度，由于<span class="math inline"> \(z\)</span> 与<span class="math inline"> \(c\)</span> 处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p>
-<h3 id="解码器">解码器</h3>
-<p>解码器使用的是预训练的 GPT-2，是一个基于 Transformer 的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下 GPT 家族。</p>
-<h2 id="训练过程">训练过程</h2>
-<p>首先单独训练 VQ-VAE 与 codebook，再训练基于后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 的证据感知解码器。</p>
-<h3 id="vq-vae-1">VQ-VAE</h3>
-<p>首先只根据隐变量<span class="math inline"> \(z\)</span> 重构推理文本<span class="math inline"> \(y\)</span>，损失函数与 VQ-VAE 损失函数类似： <span class="math display">\[
-loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||_2^2+\beta||h_{(x,y)}-sg[z]||_2^2
-\]</span></p>
-<p>真实的先验分布可以使用频率近似（<span class="math inline">\(N_{(x)}\)</span> 代表包含<span class="math inline"> \(x\)</span> 事件的数据数量）： <span class="math display">\[
-p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}
-\]</span> 通过 KL 散度来优化先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>: <span class="math display">\[
-loss_{prior}=KL(p(z|x)||p_\theta(z|x))
-\]</span></p>
-<p>不过这里为什么不像 CVAE 一样，直接优化后验分布与先验分布间的 KL 散度，暂时还不是很理解。</p>
-<h3 id="证据感知解码器">证据感知解码器</h3>
-<p>这一部分通过最大化边际似然进行训练： <span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\
-&amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')
-\end{align}
-\]</span> 然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline"> \(z'\)</span> 最近的<span class="math inline"> \(c_{z'}\)</span> 不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline"> \(c\)</span>，损失函数中应该还有一项是<span class="math inline"> \(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法： <span class="math display">\[
-R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))
-\]</span></p>
-<p><span class="math display">\[
-\begin{align}
-logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
-&amp;=logp_m(y|x,c_{z'})-R|||h_{c_{z'}}-z'||_2^2
-\end{align}
-\]</span> 其中，<span class="math inline">\(\delta(x)\)</span> 当 x 大于 0 时为 1，否则为 - 1。<span class="math inline">\(c_r\)</span> 为随机选取的与<span class="math inline"> \(c_{z'}\)</span> 不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当<span class="math inline"> \(R\)</span> 为正时，<span class="math inline">\(logp(y|x)\)</span> 会更大，进而激励模型选择正确的证据。</p>
-<h2 id="个案研究">个案研究</h2>
-<p><img src="case.png"></p>
-]]></content>
-      <categories>
-        <category>自然语言处理</category>
-        <category>文本生成</category>
-      </categories>
-      <tags>
-        <tag>VQ-VAE</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>EA-VQ-VAE 代码学习（1）</title>
     <url>/blog/2021/07/17/ea-vq-vae-code/</url>
     <content><![CDATA[<h2 id="简介">简介</h2>
@@ -3837,6 +3881,78 @@ logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
       </categories>
       <tags>
         <tag>Golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>推理文本生成 | EA-VQ-VAE</title>
+    <url>/blog/2021/07/16/ea-vq-vae/</url>
+    <content><![CDATA[<h2 id="题外话">题外话</h2>
+<p>今天是我的生日，希望能看到这篇博客的你天天开心。如果今天还恰好是你的生日，希望你生日快乐！</p>
+<h2 id="简介">简介</h2>
+<p>EA-VQ-VAE 是微软团队于 2020 年发表的《Evidence-Aware Inferential Text Generation with Vector Quantised Variational AutoEncoder》中提出的模型，该文发表在 ACL 上。该文的主要工作是利用 VQ-VAE 进行推理文本生成。推理文本生成定义为，给定一个事件（例如 “A 偷看了 B 的日记”），从多个维度对该事件进行推断（“A 的心理状态”，“A 的目的”）。而 EA-VQ-VAE 中的 EA（Evidence-Aware）指的是利用证据来进行推理文本生成。</p>
+<span id="more"></span>
+<h2 id="实现方法">实现方法</h2>
+<p>下图展示了整个模型的流程：给定事件<span class="math inline"> \(x\)</span> 后，经过 VQ-VAE 将其映射为离散的隐变量<span class="math inline"> \(z\)</span>，根据事件<span class="math inline"> \(x\)</span> 从文本语料中检索证据，再一起投喂给解码器输出最终的推理文本<span class="math inline"> \(y\)</span>。下面逐项介绍模型的细节。</p>
+<p><img src="model.png"></p>
+<h3 id="vq-vae">VQ-VAE</h3>
+<p>VQ-VAE 的详细介绍可以看我的上一篇博客。论文使用的 VQ-VAE 与标准的 VQ-VAE 最主要的区别在于，普通的 VQ-VAE 生成是数据<span class="math inline"> \(x\)</span>，而在推理文本生成任务中，生成的是以符合事件<span class="math inline"> \(x\)</span> 的推理文本<span class="math inline"> \(y\)</span>，换而言之，这是一个<strong>条件模型</strong>，叫它 VQ-CVAE 可能更恰当一点。基于此，下面所述的后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 与先验分布<span class="math inline"> \(p_\theta(z|x)\)</span> 均与标准的 VQ-VAE 有所不同。</p>
+<p>本文使用的 VQ-VAE 分为以下三个部分：</p>
+<ul>
+<li>codebook：对应 VQ-VAE 中的隐变量嵌入空间，只是换了个名字，同样是一张<span class="math inline"> \(R^{k*d}\)</span> 的表，由<span class="math inline"> \(k\)</span> 个维度为<span class="math inline"> \(d\)</span> 的隐变量组成</li>
+<li>后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>：同样是一个独热分布，使用最近邻算法将编码器输出<span class="math inline"> \(h_(x,y)\)</span> 映射到最近的隐变量<span class="math inline"> \(z'\)</span></li>
+<li> 先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>：先利用预训练的语言模型（例如 RoBERTa）将事件编码为隐藏状态<span class="math inline"> \(h\)</span>，，再将其映射为 k 个类别，即<span class="math inline"> \(p_\theta(z|x)=softmax(hW_k)\)</span></li>
+</ul>
+<h3 id="证据的检索与选择">证据的检索与选择</h3>
+<p>去除事件中的停用词后，在大规模文本语料中使用 Elastic Search 引擎检索事件，并选取前 K 个得分最高的句子。论文使用的语料库基于 BookCorpus，由一万多篇故事书组成，因为作者认为故事中会对事件的起因和结果介绍地较为清晰。</p>
+<p>证据的选择与隐变量类似，在训练阶段和推理阶段有着不同的逻辑。在训练阶段，事件<span class="math inline"> \(x\)</span> 与推理文本<span class="math inline"> \(y\)</span> 均已知，例如给定事件 “A 读了 B 的日记”，与推理文本 “A 感到很愧疚”，那么证据 “A 偷了 B 的日记” 就比 “B 把日记给 A 看” 更合理，此时我们想要建模的就是<span class="math inline"> \(q(c|x,y)\)</span>（c 代表事件上下文，即证据）与<span class="math inline"> \(p(c|x)\)</span>。考虑到已经有一个后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span>，那么我们可以直接利用隐变量来完成证据的选择，即建模<span class="math inline"> \(p(c|z)\)</span>, 而不是再引入一个复杂的神经网络。对于一组证据（<span class="math inline">\(c_\phi\)</span> 代表填充的空证据）<span class="math inline">\(\{c_1,c_2,\dots,c_K,c_\phi\}\)</span>，使用 Transformer 将其编码为向量<span class="math inline"> \(\{h_{c_1},h_{c_2},\dots,h_{c_K},h_{c_\phi}\}\)</span>。<span class="math inline">\(p_s(c|z)\)</span> 与<span class="math inline"> \(q_\phi(z|x,y)\)</span> 类似，也是一个独热分布，再通过最近邻算法选取最近的证据，即： <span class="math display">\[
+p_s(c_k|z)=
+\begin{cases}
+1 &amp;if\ k=\arg\min_j||h_{c_j}-z||_2 \\
+0 &amp;otherwise
+\end{cases}
+\]</span></p>
+<p><span class="math display">\[
+c_z=c_k\ where\ k=\arg\min_j||h_{c_j}-z||_2
+\]</span></p>
+<p>值得注意的是，作者没有使用注意力机制得到的 “软” 分布，而是借鉴 VQ-VAE，采用了一种独热分布将<span class="math inline"> \(z\)</span> 映射到最近的<span class="math inline"> \(c\)</span>。这样的优点是一定程度上降低了学习的难度，由于<span class="math inline"> \(z\)</span> 与<span class="math inline"> \(c\)</span> 处在同一个语义空间，解码器利用起来的效率会更高。而且这样做也更为统一。但我总觉得注意力机制得到的结果会更好一点，论文里没有进行比较属实有点伤。</p>
+<h3 id="解码器">解码器</h3>
+<p>解码器使用的是预训练的 GPT-2，是一个基于 Transformer 的语言模型。这里就不多赘述了，有兴趣的小伙伴可以去了解一下 GPT 家族。</p>
+<h2 id="训练过程">训练过程</h2>
+<p>首先单独训练 VQ-VAE 与 codebook，再训练基于后验分布<span class="math inline"> \(q_\phi(z|x,y)\)</span> 的证据感知解码器。</p>
+<h3 id="vq-vae-1">VQ-VAE</h3>
+<p>首先只根据隐变量<span class="math inline"> \(z\)</span> 重构推理文本<span class="math inline"> \(y\)</span>，损失函数与 VQ-VAE 损失函数类似： <span class="math display">\[
+loss_{rec}=-logp(y|x,h_{(x,y)}+sg[z-h_{(x,y)}])+||sg[h_{(x,y)}]-z||_2^2+\beta||h_{(x,y)}-sg[z]||_2^2
+\]</span></p>
+<p>真实的先验分布可以使用频率近似（<span class="math inline">\(N_{(x)}\)</span> 代表包含<span class="math inline"> \(x\)</span> 事件的数据数量）： <span class="math display">\[
+p(z|x)=\sum_{(x,y_i)\in D}\frac{q_\phi(z|x,y_i)}{N_{(x)}}
+\]</span> 通过 KL 散度来优化先验分布<span class="math inline"> \(p_\theta(z|x)\)</span>: <span class="math display">\[
+loss_{prior}=KL(p(z|x)||p_\theta(z|x))
+\]</span></p>
+<p>不过这里为什么不像 CVAE 一样，直接优化后验分布与先验分布间的 KL 散度，暂时还不是很理解。</p>
+<h3 id="证据感知解码器">证据感知解码器</h3>
+<p>这一部分通过最大化边际似然进行训练： <span class="math display">\[
+\begin{align}
+logp(y|x)&amp;=E_{z\sim q_\phi}[\sum_{c\in C}logp_m(y|x,c)p_s(c|z)]\\
+&amp;=log(p_m(y|x,c_{z'}))+logp_s(c_{z'}|z')
+\end{align}
+\]</span> 然而，由于真实的证据是未知的，直接优化上述似然函数可能得不到正确结果。具体而言，与<span class="math inline"> \(z'\)</span> 最近的<span class="math inline"> \(c_{z'}\)</span> 不一定就是真实有用的证据，如果我们已知真实的证据标签<span class="math inline"> \(c\)</span>，损失函数中应该还有一项是<span class="math inline"> \(||c-c_{z'}||_2\)</span>。为解决这个问题，原论文采取了强化学习的方法： <span class="math display">\[
+R=\delta(p_m(y|x,c_{z'})-p_m(y|x,c_r))
+\]</span></p>
+<p><span class="math display">\[
+\begin{align}
+logp(y|x)&amp;=logp_m(y|x,c_{z'})+Rlogp_s(c_{z'}|z')\\
+&amp;=logp_m(y|x,c_{z'})-R|||h_{c_{z'}}-z'||_2^2
+\end{align}
+\]</span> 其中，<span class="math inline">\(\delta(x)\)</span> 当 x 大于 0 时为 1，否则为 - 1。<span class="math inline">\(c_r\)</span> 为随机选取的与<span class="math inline"> \(c_{z'}\)</span> 不同的证据。这样设计的原因是，正确的证据相较于其他证据应该能够提高生成正确推理文本的概率。当<span class="math inline"> \(R\)</span> 为正时，<span class="math inline">\(logp(y|x)\)</span> 会更大，进而激励模型选择正确的证据。</p>
+<h2 id="个案研究">个案研究</h2>
+<p><img src="case.png"></p>
+]]></content>
+      <categories>
+        <category>自然语言处理</category>
+        <category>文本生成</category>
+      </categories>
+      <tags>
+        <tag>VQ-VAE</tag>
       </tags>
   </entry>
   <entry>
