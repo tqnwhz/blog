@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本文介绍了笔者在做 cachelab 一节的实验报告。该 lab 要求使用 C 语言实现 cache memory 的映射淘汰逻辑，并通过分块处理减少代码中的 cache miss。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSAPP-Lab-4 实验报告: cachelab">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本文介绍了笔者在做 cachelab 一节的实验报告。该 lab 要求使用 C 语言实现 cache memory 的映射淘汰逻辑，并通过分块处理减少代码中的 cache miss。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/set_associative.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/matrix_multi.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/matrix_multi_blocking.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/matrix_multi_results.png">
+<meta property="article:published_time" content="2023-12-17T14:28:23.000Z">
+<meta property="article:modified_time" content="2024-01-17T12:56:39.633Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="体系结构">
+<meta property="article:tag" content="csapp">
+<meta property="article:tag" content="实验报告">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/set_associative.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/","path":"2023/12/17/CSAPP-Lab-4/","title":"CSAPP-Lab-4 实验报告: cachelab"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CSAPP-Lab-4 实验报告: cachelab | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#cache"><span class="nav-number">2.1.</span> <span class="nav-text">cache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text">矩阵乘法的优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%9D%97%E4%BC%98%E5%8C%96"><span class="nav-number">2.3.</span> <span class="nav-text">分块优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cache-simulator"><span class="nav-number">3.</span> <span class="nav-text">cache simulator</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-number">3.1.</span> <span class="nav-text">命令行参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#trace%E8%A7%A3%E6%9E%90"><span class="nav-number">3.2.</span> <span class="nav-text">trace 解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lru-cache"><span class="nav-number">3.3.</span> <span class="nav-text">lru cache</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#trans"><span class="nav-number">4.</span> <span class="nav-text">trans</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#x32"><span class="nav-number">4.1.</span> <span class="nav-text">32x32</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#section"><span class="nav-number">4.2.</span> <span class="nav-text">64*64</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#section-1"><span class="nav-number">4.3.</span> <span class="nav-text">61*67</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CSAPP-Lab-4 实验报告: cachelab
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-12-17 22:28:23" itemprop="dateCreated datePublished" datetime="2023-12-17T22:28:23+08:00">2023-12-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-01-17 20:56:39" itemprop="dateModified" datetime="2024-01-17T20:56:39+08:00">2024-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" itemprop="url" rel="index"><span itemprop="name">实验报告</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>13k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>23 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本文介绍了笔者在做 cachelab 一节的实验报告。该 lab 要求使用 C 语言实现 cache
+memory 的映射淘汰逻辑，并通过分块处理减少代码中的 cache miss。
+<span id="more"></span></p>
+<h2 id="理论知识">理论知识</h2>
+<h3 id="cache">cache</h3>
+<p>cache，即缓存，既是一种思想，也是计算机体系结构里的一块内存。前者大家很熟悉了，通过缓存耗时操作结果来降低延时，例如 redis 就是常用的缓存中间件。后者的话，处于寄存器与主存之间的高速存储，常分为 L1、L2、L3 三级，用于提供热点数据的快速访问，这也是本文 cache 的涵义。</p>
+<p>cache 希望达到的目标有两个：</p>
+<ul>
+<li><strong>充分利用存储空间</strong>：减少不必要的 cache 淘汰，提高命中率</li>
+<li><strong>快速查找</strong>：查找地址在 cache 中的速度要尽可能快，因为这是很基础的功能</li>
+</ul>
+<p>cache 的核心问题是，内存地址与 cache 存储间的映射关系是怎样的，常有以下几种组织形式：</p>
+<ul>
+<li>全相联（Fully Associative）：一个内存地址都可以存储在 cache 任意位置
+<ul>
+<li>优点：充分利用存储空间</li>
+<li>缺点：查找效率差，O (n)，n 为 cache 条数</li>
+</ul></li>
+<li>直接映射（Direct
+Mapped）：一个内存地址被唯一映射到 cache 固定位置，例如取模
+<ul>
+<li>优点：查找效率高，O (1)</li>
+<li> 缺点：不能充分利用空间</li>
+</ul></li>
+<li>组相联（Set
+Associative）：平衡两者优点，将 cache 分为若干个组，一个内存地址被唯一映射到一个组，组内全相连
+<ul>
+<li>优点：调整超参数（组的数量），可以取得存储和速度的均衡</li>
+<li>缺点：超参数怎么调呢？</li>
+</ul></li>
+</ul>
+<p>事实上，全相联和直接映射可以看做组相联的特例。cache 可以定义为一个三元组<span class="math inline"> \((S,E,B)\)</span>：有着<span class="math inline"> \(2^S\)</span> 个组，组内有<span class="math inline"> \(E\)</span> 条 cache，每条 cache 可以存放<span class="math inline"> \(2^B\)</span> 字节的数据。一个内存地址被拆分为标签段（tag）、组索引段（set
+index）与块内偏移（block offset）三部分。如下图所示。</p>
+<p><img src="set_associative.png"></p>
+<p>全相联可以看做<span class="math inline"> \(S=1\)</span> 的组相联，直接映射可以看做<span class="math inline"> \(E=1\)</span> 块的组相联。块是 cache 读写数据的最小单位，这意味着程序需要读取一个字节时，例如数组元素 A [0]，加载到 cache 的不仅是 A [0] 本身，而是以 A 开始的一整个块，包含 A [0]，A [1]... 这也是我们常说的预读。如果程序访问内存的模式满足这种模式，就能取得很好的<strong>空间局部性</strong>（temporal
+locality），提高缓存命中率，进而提升程序性能。反过来，如果不满足这种模式，就会损害性能。</p>
+<p>一个典型的坏例子是二维数组的遍历，代码如下所示。在 C 语言中，二维数组是以行存储的一维数组。假设 cache 只能存储一个块，一个块可以包含 8 个 int，N&gt;8，下面的代码的行为是，访问 a [i][0]，加载 a [i][0]-a [i][7]，访问 a [i+1][0]，丢弃已有 cache，加载 a [i+1][0]-a [i+1][7]，访问 a [i+2][0]，丢弃已有 cache，加载 a [i+2][0]-a [i+2][7]。。。依次重复，可以看到，缓存的预读没有起到任何作用，每次读取都无法命中缓存，带来性能开销。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sumarraycols</span><span class="params">(<span class="keyword">int</span> a[M][N])</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, j, sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; N; j++)</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; M; i++)</span><br><span class="line">        	sum += a[i][j];</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果交换两个循环的顺序，代码变为：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sumarraycols</span><span class="params">(<span class="keyword">int</span> a[M][N])</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, j, sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; M; i++)</span><br><span class="line">    	<span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; N; j++)</span><br><span class="line">        	sum += a[i][j];</span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>就可以很大程度提升局部性，代码的行为是，访问 a [i][0]，加载 a [i][0]-a [i][7]，访问 a [i][1]-a [i][7]，均命中缓存，访问 a [i][8]，丢弃缓存，加载 a [i][8]-a [i][15]。。。缓存命中率大大提高，由 0 变为 7/8。</p>
+<h3 id="矩阵乘法的优化">矩阵乘法的优化</h3>
+<p>上述思路也可以用于优化矩阵乘法。n*n 两矩阵乘法的简单代码为：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">    <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; n; j++) {</span><br><span class="line">        sum = <span class="number">0.0</span>;</span><br><span class="line">        <span class="keyword">for</span> (k = <span class="number">0</span>; k &lt; n; k++)</span><br><span class="line">            sum += A[i][k]*B[k][j];</span><br><span class="line">        C[i][j] += sum;</span><br><span class="line">	}</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到，A 的访问模式是满足步长为 1 的空间局部性的，缓存命中率高，而 B 的访问模式满足步长为 n 的局部性，命中率差。这里我们只关心最内层循环，假设一个块为 32
+Bytes，元素为 double 占 8
+Bytes，即一个块可以存储 4 个元素。那么，最内层循环中，A 的缓存失效率为 0.25，B 的缓存失效率为 1。</p>
+<p>交换三层循环的顺序，可以带来缓存命中率的收益。三层循环共有 6 种顺序，上面的顺序是 ijk，将它交换为 jik 结果不变。</p>
+<p>如果变为 jki 或 kj，性能会变得更差，jki 代码如下。最内层循环中，C 的缓存失效率为 1，A 的缓存失效率为 1。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; n; j++)</span><br><span class="line">    <span class="keyword">for</span> (k = <span class="number">0</span>; k &lt; n; k++) {</span><br><span class="line">        r = B[k][j];</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">        	C[i][j] += A[i][k]*r;</span><br><span class="line">    }</span><br></pre></td></tr></tbody></table></figure>
+<p>如果变为 jki 或 kj，性能会达到最好，kij 代码如下。最内层循环中，C 的缓存失效率为 0.25，B 的缓存失效率为 0.25。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (k = <span class="number">0</span>; k &lt; n; k++)</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++) {</span><br><span class="line">        r = A[i][k];</span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; n; j++)</span><br><span class="line">        	C[i][j] += r*B[k][j];</span><br><span class="line">	}</span><br></pre></td></tr></tbody></table></figure>
+<p>整理可以得到如下表格。</p>
+<p><img src="matrix_multi.png"></p>
+<h3 id="分块优化">分块优化</h3>
+<p>上面的做法带来的命中率的提升，但仍有优化的空间。优化的思想是对矩阵进行分块，来进一步提升局部性。它的思想是尽量最大化一个块数据的用处。分析上面的代码可以发现，一个块被加载到 cache 之后，例如 B，每个元素只参与了一次运算，就会被逐出。当 C 的索引发生变化时，会再次需要加载同样的块进来，这带来了开销。根本原因在于，是在元素这个维度进行的运算，而不是块的维度。</p>
+<p>代码如下所示</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bijk</span><span class="params">(<span class="built_in">array</span> A, <span class="built_in">array</span> B, <span class="built_in">array</span> C, <span class="keyword">int</span> n, <span class="keyword">int</span> bsize)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, j, k, kk, jj;</span><br><span class="line">    <span class="keyword">double</span> sum;</span><br><span class="line">    <span class="keyword">int</span> en = bsize * (n / bsize); <span class="comment">/* Amount that fits evenly into blocks */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; n; j++)</span><br><span class="line">            C[i][j] = <span class="number">0.0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (kk = <span class="number">0</span>; kk &lt; en; kk += bsize)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (jj = <span class="number">0</span>; jj &lt; en; jj += bsize)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">            {</span><br><span class="line">                <span class="keyword">for</span> (j = jj; j &lt; jj + bsize; j++)</span><br><span class="line">                {</span><br><span class="line">                    sum = C[i][j];</span><br><span class="line">                    <span class="keyword">for</span> (k = kk; k &lt; kk + bsize; k++)</span><br><span class="line">                    {</span><br><span class="line">                        sum += A[i][k] * B[k][j];</span><br><span class="line">                    }</span><br><span class="line">                    C[i][j] = sum;</span><br><span class="line">                }</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>访问模式如下图所示，每次从 A 选出一条 1*bsize 的行，与 B 中 bsize*bsize 的块进行乘法，叠加在 1*bsize 的 C 切片上。</p>
+<p><img src="matrix_multi_blocking.png"></p>
+<p>性能结果如下图所示。可以看出，当矩阵大时，分块可以带来显著的收益。而矩阵小时，分块带来的额外运算成本就不能忽略了。</p>
+<p><img src="matrix_multi_results.png"></p>
+<h2 id="cache-simulator">cache simulator</h2>
+<p>本节要求我们模拟任意的<span class="math inline"> \((S,E,B)\)</span> 的 cache 逻辑，并支持命令行传入参数，读入 trace 文件得到 cache
+hit、miss、eviction 的结果。分析可以发现，工作分为两部分：</p>
+<ul>
+<li>支持命令行参数和 trace 文件解析</li>
+<li>基于 lru 的 cache</li>
+</ul>
+<h3 id="命令行参数">命令行参数</h3>
+<p>虽然 C 自带的 main 签名 <code>int main(int argc,char
+**argv)</code> 就可以用于解析命令行参数，但对于参数传值有些过于简陋了，指导书建议我们使用 <code>getopt</code> 函数，介绍可以详见 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/qingergege/p/5914218.html">Linux 下 getopt () 函数的简单使用
+- 青儿哥哥 - 博客园 (cnblogs.com)</a>。getopt 函数原型如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getopt</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> * <span class="keyword">const</span> argv[ ],<span class="keyword">const</span> <span class="keyword">char</span> * optstring)</span></span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>前两个参数来自 main 的签名，最后一个是以冒号分割的选项字符串，表示参数的模式，冒号表示必须传参。命令行参数解析代码如下，使用 <code>atoi</code> 函数将字符串转为整型，<code>extern
+char *optarg;</code> 是一个保存了参数值的全局变量。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> opt;</span><br><span class="line"><span class="keyword">int</span> s, E, b;</span><br><span class="line"><span class="keyword">char</span> *tracefile;</span><br><span class="line"><span class="keyword">int</span> verbose_flag = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> ((opt = getopt(argc, argv, <span class="string">"hvs:E:b:t:"</span>)) != <span class="number">-1</span>)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">switch</span> (opt)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'h'</span>:</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"Usage: %s [-hv] -s &lt;s&gt; -E &lt;E&gt; -b &lt;b&gt; -t &lt;tracefile&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">            <span class="built_in">exit</span>(EXIT_SUCCESS);</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'v'</span>:</span><br><span class="line">            verbose_flag = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'s'</span>:</span><br><span class="line">            s = atoi(optarg);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'E'</span>:</span><br><span class="line">            E = atoi(optarg);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'b'</span>:</span><br><span class="line">            b = atoi(optarg);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'t'</span>:</span><br><span class="line">            tracefile = optarg;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Usage: %s [-hv] -s &lt;s&gt; -E &lt;E&gt; -b &lt;b&gt; -t &lt;tracefile&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">            <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="trace解析">trace 解析</h3>
+<p>这一部分比较简单，读入文件后，根据首字母过滤掉以 <code>I</code> 开头的指令访问，使用 <code>strtoull</code> 函数将字符串转为 <code>unsigned
+long
+long</code> 的 64 位地址。由于指导书说保证地址对齐，因此可以忽略掉 trace 中的 <code>size</code> 字段，对 trace 每一行，构造如下的 cache 访问对象。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">CacheVisit</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> address;</span><br><span class="line">    <span class="keyword">long</span> <span class="keyword">long</span> size;</span><br><span class="line">    <span class="comment">// 1 L, 2 M, 3 S</span></span><br><span class="line">    <span class="keyword">int</span> op;</span><br><span class="line">} CacheVisit;</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="lru-cache">lru cache</h3>
+<p>刷 LeetCode 的同学都知道，可以用双向链表 + hash 实现一个 O (1) 的 lru
+cache。但在 cache memory 里，这种方法会浪费很多空间，由于一个 Set 里的 cache
+line 数量有限，直接暴力查找淘汰性能也不会太差。我这里是只使用了双向链表，按访问时间顺序排列，头部插入，尾部淘汰。也可以使用数组保存，或者 cache
+line 保存时间戳等。</p>
+<p>为了高内聚低耦合，我设计了单独的 <code>cache.h,
+cache.c</code> 来存放相关代码。<code>cache.h</code> 中声明结构体对象和暴露必要的函数。代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOAD 1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MODIFY 2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> STORE 3</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">CacheLine</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">long</span> <span class="keyword">long</span> tag;</span><br><span class="line">    <span class="keyword">short</span> valid;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">CacheLine</span> *<span class="title">prev</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">CacheLine</span> *<span class="title">next</span>;</span></span><br><span class="line">} CacheLine;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">CacheSet</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">int</span> associativity;</span><br><span class="line">    <span class="keyword">int</span> blockSize;</span><br><span class="line">    <span class="keyword">int</span> size;</span><br><span class="line">    CacheLine *head;</span><br><span class="line">    CacheLine *tail;</span><br><span class="line">} CacheSet;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">CacheResult</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">int</span> miss;</span><br><span class="line">    <span class="keyword">int</span> hit;</span><br><span class="line">    <span class="keyword">int</span> eviction;</span><br><span class="line">} CacheResult;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">CacheVisit</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> address;</span><br><span class="line">    <span class="keyword">long</span> <span class="keyword">long</span> size;</span><br><span class="line">    <span class="comment">// 1 L, 2 M, 3 S</span></span><br><span class="line">    <span class="keyword">int</span> op;</span><br><span class="line">} CacheVisit;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">Cache</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    CacheSet **sets;</span><br><span class="line">    <span class="keyword">int</span> t;</span><br><span class="line">    <span class="keyword">int</span> s;</span><br><span class="line">    <span class="keyword">int</span> b;</span><br><span class="line">} Cache;</span><br><span class="line"></span><br><span class="line"><span class="function">Cache *<span class="title">newCache</span><span class="params">(<span class="keyword">int</span> s, <span class="keyword">int</span> E, <span class="keyword">int</span> b)</span></span>;</span><br><span class="line"><span class="function">CacheResult <span class="title">fetch</span><span class="params">(Cache *cache, CacheVisit *visit)</span></span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>这里我们并不关心 cache 存放的数据，因此 <code>CacheResult</code> 中只需要存储 miss、hit 和 eviction 的数量即可。cache 模块只需要向外暴露构造方法和访问方法即可，遵循最小原则。</p>
+<p>在 <code>cache.c</code> 中，实现这些函数的功能，代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"cache.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;math.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;assert.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">parseAddress</span><span class="params">(Cache *cache, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> address, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> *tag, <span class="keyword">int</span> *setIdx)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">insertToHead</span><span class="params">(CacheSet *<span class="built_in">set</span>, CacheLine *node)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">evictLRU</span><span class="params">(CacheSet *<span class="built_in">set</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">unlinkLine</span><span class="params">(CacheLine *node)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function">CacheSet *<span class="title">newCacheSet</span><span class="params">(<span class="keyword">int</span> blockSize, <span class="keyword">int</span> E)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    CacheSet *<span class="built_in">set</span> = (CacheSet *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(CacheSet));</span><br><span class="line">    <span class="built_in">set</span>-&gt;blockSize = blockSize;</span><br><span class="line">    <span class="built_in">set</span>-&gt;associativity = E;</span><br><span class="line">    <span class="built_in">set</span>-&gt;head = (CacheLine *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(CacheLine));</span><br><span class="line">    <span class="built_in">set</span>-&gt;tail = (CacheLine *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(CacheLine));</span><br><span class="line">    <span class="built_in">set</span>-&gt;head-&gt;next = <span class="built_in">set</span>-&gt;tail;</span><br><span class="line">    <span class="built_in">set</span>-&gt;tail-&gt;prev = <span class="built_in">set</span>-&gt;head;</span><br><span class="line">    <span class="built_in">set</span>-&gt;size = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">set</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function">Cache *<span class="title">newCache</span><span class="params">(<span class="keyword">int</span> s, <span class="keyword">int</span> E, <span class="keyword">int</span> b)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">size_t</span> capacity = (<span class="keyword">size_t</span>)<span class="built_in">pow</span>(<span class="number">2</span>, s);</span><br><span class="line">    Cache *cache = (Cache *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(Cache));</span><br><span class="line">    CacheSet **sets = (CacheSet **)<span class="built_in">malloc</span>(capacity * <span class="keyword">sizeof</span>(CacheSet *));</span><br><span class="line">    <span class="keyword">int</span> blockSize = (<span class="keyword">int</span>)<span class="built_in">pow</span>(<span class="number">2</span>, b);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; capacity; i++)</span><br><span class="line">    {</span><br><span class="line">        sets[i] = newCacheSet(blockSize, E);</span><br><span class="line">    }</span><br><span class="line">    cache-&gt;sets = sets;</span><br><span class="line">    cache-&gt;b = b;</span><br><span class="line">    cache-&gt;s = s;</span><br><span class="line">    cache-&gt;t = <span class="number">64</span> - b - s;</span><br><span class="line">    <span class="keyword">return</span> cache;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function">CacheLine *<span class="title">find</span><span class="params">(CacheLine *head, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> tag)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (CacheLine *p = head; p != <span class="literal">NULL</span>; p = p-&gt;next)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (p-&gt;tag == tag &amp;&amp; p-&gt;valid)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">return</span> p;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function">CacheResult <span class="title">fetch</span><span class="params">(Cache *cache, CacheVisit *visit)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> tag;</span><br><span class="line">    <span class="keyword">int</span> setIdx;</span><br><span class="line">    parseAddress(cache, visit-&gt;address, &amp;tag, &amp;setIdx);</span><br><span class="line">    <span class="comment">// printf("%lld, %d, %llx\n", visit-&gt;address, setIdx, tag);</span></span><br><span class="line">    CacheSet *<span class="built_in">set</span> = cache-&gt;sets[setIdx];</span><br><span class="line">    <span class="comment">// fetch from set</span></span><br><span class="line">    CacheLine *line = find(<span class="built_in">set</span>-&gt;head, tag);</span><br><span class="line">    CacheResult result = {<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>};</span><br><span class="line">    <span class="keyword">if</span> (line != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        result.hit += <span class="number">1</span> + (visit-&gt;op == MODIFY);</span><br><span class="line">        unlinkLine(line);</span><br><span class="line">        insertToHead(<span class="built_in">set</span>, line);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">set</span>-&gt;associativity == <span class="built_in">set</span>-&gt;size)</span><br><span class="line">    {</span><br><span class="line">        evictLRU(<span class="built_in">set</span>);</span><br><span class="line">        result.eviction += <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">set</span>-&gt;size--;</span><br><span class="line">    }</span><br><span class="line">    result.miss += <span class="number">1</span>;</span><br><span class="line">    result.hit += visit-&gt;op == MODIFY;</span><br><span class="line">    line = (CacheLine *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(CacheLine));</span><br><span class="line">    line-&gt;tag = tag;</span><br><span class="line">    line-&gt;valid = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">set</span>-&gt;size++;</span><br><span class="line">    insertToHead(<span class="built_in">set</span>, line);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">parseAddress</span><span class="params">(Cache *cache, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> address, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> *tag, <span class="keyword">int</span> *setIdx)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    address &gt;&gt;= cache-&gt;b;</span><br><span class="line">    *setIdx = (<span class="keyword">int</span>)(address &amp; ((<span class="number">1</span> &lt;&lt; cache-&gt;s) - <span class="number">1</span>));</span><br><span class="line">    *tag = address &gt;&gt; cache-&gt;s;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">insertToHead</span><span class="params">(CacheSet *<span class="built_in">set</span>, CacheLine *node)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    node-&gt;prev = <span class="built_in">set</span>-&gt;head;</span><br><span class="line">    node-&gt;next = <span class="built_in">set</span>-&gt;head-&gt;next;</span><br><span class="line">    node-&gt;prev-&gt;next = node;</span><br><span class="line">    node-&gt;next-&gt;prev = node;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">unlinkLine</span><span class="params">(CacheLine *node)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    node-&gt;prev-&gt;next = node-&gt;next;</span><br><span class="line">    node-&gt;next-&gt;prev = node-&gt;prev;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">removeLine</span><span class="params">(CacheLine *node)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    unlinkLine(node);</span><br><span class="line">    <span class="built_in">free</span>(node);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">evictLRU</span><span class="params">(CacheSet *<span class="built_in">set</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    assert(<span class="built_in">set</span>-&gt;associativity == <span class="built_in">set</span>-&gt;size);</span><br><span class="line">    removeLine(<span class="built_in">set</span>-&gt;tail-&gt;prev);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="trans">trans</h2>
+<p>本节要求我们编写矩阵转置的代码，最小化 cache
+miss。cache 的设置为直接映射，<span class="math inline">\(S=5,E=1,B=5\)</span>，数组元素是 int 类型，这意味着 cache 每块可以存储 8 个数，一共有 32 块。基础的转置函数如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">trans</span><span class="params">(<span class="keyword">int</span> M, <span class="keyword">int</span> N, <span class="keyword">int</span> A[N][M], <span class="keyword">int</span> B[M][N])</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, j, tmp;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; N; i++)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; M; j++)</span><br><span class="line">        {</span><br><span class="line">            tmp = A[i][j];</span><br><span class="line">            B[j][i] = tmp;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>由于不同的矩阵形状会导致不同的访问模式，指导书也允许我们针对不同的形状做特殊优化。因此我们可以一个个进行分析。</p>
+<h3 id="x32">32x32</h3>
+<p>首先打印出 A，B 的地址，分别为 <code>0x10d080,
+0x14d080</code>，二者地址的后 10 个 bit 相同，意味着会映射到同一个组，进而发生直接映射下的冲突。接下来，分析 A，B 内部和相互的冲突模式。对于内部的地址<span class="math inline"> \(p\)</span> 与<span class="math inline"> \(p+2^{10}\)</span>，两者有着相同的组索引，进而冲突，差距正好是 32 个块，也就是 32*8/32=8 行。这意味如果访问了第 0 行后再次访问第 8 行，就会出现 cache 淘汰。</p>
+<p>而 A，B 之间，由于地址是对齐的，也会出现上述的 cache 淘汰，不同的是，当 A 和 B 访问同一个块时，也会出现淘汰，不仅仅是差 8 行。</p>
+<p>接下来，分析基础代码、A 的访问满足步长为 1 的空间局部性，每 8 个元素会导致 1 次
+cache
+miss，总 miss 数 = 32*32/8=128。B 的访问满足步长为 32 的局部性，每次访问都会 cache
+miss，因为过了 8 行之后 cache 就被淘汰了，下次访问又需要重新加载，总 miss 数 = 32*32=1024，加和为 1052。使用 test-trans 测试后发现 miss 数为 1183，大于我们分析的结果。这是由于 A 和 B 之间的 cache 淘汰，影响了命中率。</p>
+<p>上面分析得到，只有 A 和 B 访问的<strong>块的列索引相同</strong>，<strong>行索引相差为 8 的整数倍</strong>时，才会出现冲突。又由于 A 和 B 的访问模式是关于对角线对称的，又要列索引相同，不难发现冲突只会发生在对角线上（<strong>对角线元素所在的块</strong>），每行一次，共计 32 次。1052+32=1184，正好多一次。这是由于最后一行的时候，冲突发生在 A 最后一个元素访问结束，B 覆盖掉 A 之后，A 不需要再次访问这个块，冲突是无意义的，需要减去这一次，所以是 1183。</p>
+<p>下一步使用分块优化。不难发现 8x8 的块比较合适，因为 cache 块中只能存 8 个元素，而且块的边长大于 8 之后，会引发新的直接映射冲突。可以写出如下的分块代码，其中 <code>height=width=8</code>。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (x = <span class="number">0</span>; x &lt; N; x += height)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">for</span> (y = <span class="number">0</span>; y &lt; M; y += width)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (i = x; i &lt; x + height; i++)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">for</span> (j = y; j &lt; y + width; j++)</span><br><span class="line">            {</span><br><span class="line">                tmp = A[i][j];</span><br><span class="line">                B[j][i] = tmp;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>理论分析的话，A 与 B 的每个块都会 miss 8 次，一共有 16 个块，总共是 miss
+256 次。还需要考虑相互冲突。以第一个 8*8 的块为例，访问模式为：</p>
+<ol type="1">
+<li>加载 A [0]：A [0][0]</li>
+<li> 加载 B [0]，淘汰 A [0]：B [0][0]</li>
+<li><strong> 加载 A [0]，淘汰 B [0]</strong>：A[0][1]</li>
+<li> 加载 B [1]-B [7]：B [1][0]-B [7][0]，A [0][2]-A [0][7]</li>
+<li> 加载 A [1]，淘汰 B [1]：A [1][0]</li>
+<li><strong> 加载 B [0]，淘汰 A [0]</strong>：B[0][1]</li>
+<li><strong> 加载 B [1]，淘汰 A [1]</strong>：B[1][1]</li>
+<li><strong> 加载 A [1]，淘汰 B [1]</strong>：A[1][2]</li>
+<li> 加载 B [2]-B [7]：B [1][1]-B [7][1]，A [1][2]-A [1][7]</li>
+<li> 加载 A [2]，淘汰 B [2]：A [2][0]，B [0] 命中</li>
+<li><strong>加载 B [1]，淘汰 A [1]</strong>：A[2][1]</li>
+<li><strong> 加载 B [2]，淘汰 A [2]</strong>：B[2][2]</li>
+<li><strong> 加载 A [2]，淘汰 B [2]</strong>：A[2][3]</li>
+<li>...</li>
+</ol>
+<p>注意其中的加粗部分，是由于相互冲突引发的额外加载。可以发现，一个块内部，除去第一行外，每一行都会引发 3 次额外 miss，因此总 miss 数为 256+4*(1+7*3)=344。使用 test-trans 测试后，结果为 343，同样需要减去最后一次。这与我们的分析是一致的。</p>
+<p>接下来问题就是，如何减少这种互相冲突。不难发现，冲突的一大原因在于，访问 A 的对角线行后，会立刻加载 B 的对角线行，使得 A 的缓存失效。后续重新加载 A 又会使得 B 的缓存失效。粗略估计，这会导致 32*2=64
+miss。要解决这个问题，可以使用将 A 的一行保存到寄存器里（局部变量中），避免冲突。代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (x = <span class="number">0</span>; x &lt; N; x += height)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">for</span> (y = <span class="number">0</span>; y &lt; M; y += width)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (i = x; i &lt; min(N, x + height); i++)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">int</span> tmp0 = A[i][y];</span><br><span class="line">            <span class="keyword">int</span> tmp1 = A[i][y + <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp2 = A[i][y + <span class="number">2</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp3 = A[i][y + <span class="number">3</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp4 = A[i][y + <span class="number">4</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp5 = A[i][y + <span class="number">5</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp6 = A[i][y + <span class="number">6</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp7 = A[i][y + <span class="number">7</span>];</span><br><span class="line">            B[y][i] = tmp0;</span><br><span class="line">            B[y + <span class="number">1</span>][i] = tmp1;</span><br><span class="line">            B[y + <span class="number">2</span>][i] = tmp2;</span><br><span class="line">            B[y + <span class="number">3</span>][i] = tmp3;</span><br><span class="line">            B[y + <span class="number">4</span>][i] = tmp4;</span><br><span class="line">            B[y + <span class="number">5</span>][i] = tmp5;</span><br><span class="line">            B[y + <span class="number">6</span>][i] = tmp6;</span><br><span class="line">            B[y + <span class="number">7</span>][i] = tmp7;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>测试后，发现 miss 数为 287，减少了 57 的 miss，与 64 相近，符合我们的估计。</p>
+<h3 id="section">64*64</h3>
+<p>打印出 A，B 的地址，依然分别为 <code>0x10d080,
+0x14d080</code>，相互冲突情况与上面类似。自冲突的话，相差 32*8/64=4 行，因此先尝试 4*4 的情况。</p>
+<p>理论上分析，不带局部变量优化的版本，A 每 8 个元素 miss 1 次，B 每 4 个 miss
+1 次，64*64/8+64*64/4=1536 次，再考虑相互的冲突，使用 test-trans 实测为 1891，开启局部变量后为 1699。可以发现，4*4 的块浪费了太多 cache，优化上限（不存在冲突）时 miss 数都高于 1300。因此，我们需要更充分地利用 cache 空间。</p>
+<p>但是，8*8 的块模式下，B 有严重的冲突问题。不带局部变量版本，A 每 8 个元素 miss
+1 次，B 每 1 个 miss
+1 次（下面块冲突覆盖掉上面的块），估计 64*64/8+64*64=4068 次，实测 4723，已经与暴力求解相当，没有起到任何的优化效果。那么该怎么做呢？</p>
+<p>4*4 分块的一个明显的问题在于块内数据的浪费，以 A 的第一个块为例，读入了 4 行 * 8=32 个 int，只用到了左侧的 4*4 的块，右半部分的数字根本没有用到，就会被 B 覆盖掉。而读入的 B，也只写入了左半部分，右半部分没有写入，又会被 A 的下一个块覆盖。</p>
+<p>那么一个直接的想法是，能不能把这些块利用起来，提高吞吐量？我们可以把 8*8 划分为 4*4 的四个块。当读入 A 的前 4 行时：</p>
+<ul>
+<li>将 A 的左上块对称存放到 B 的左上</li>
+<li>将 A 的右上块对称存放到 B 的右上</li>
+</ul>
+<p>当读入 A 的左下块时：</p>
+<ul>
+<li>将 A 的左上对称存放到 B 的右上</li>
+<li>将 B 的原右上对称存放到 B 的左上</li>
+</ul>
+<p>读入 A 的右下块时，将其对称存放到 B 的右下。</p>
+<p>这样以来，通过 B 的右上进行中转，我们减少了一次 A 的 4*4 块读入，提高了 cache
+的利用率。</p>
+<p>代码如下。值得注意的是第二个循环中，需要考虑 <strong>A 该以列读还是以行读？</strong>答案是以列读。A 以列读的模式下，B 的左下和右上都是行写入，且冲突只有 B 之间冲突，其余 3 块 cache 均是 A，此时冲突最少。如果 A 以行读，B 的左上和右下都是列写入，互相冲突，B 的每次写入都无法命中缓存，性能极差。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (x = <span class="number">0</span>; x &lt; N; x += <span class="number">8</span>)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">for</span> (y = <span class="number">0</span>; y &lt; M; y += <span class="number">8</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (i = x; i &lt; x + <span class="number">4</span>; i++)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">int</span> tmp0 = A[i][y];</span><br><span class="line">            <span class="keyword">int</span> tmp1 = A[i][y + <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp2 = A[i][y + <span class="number">2</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp3 = A[i][y + <span class="number">3</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp4 = A[i][y + <span class="number">4</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp5 = A[i][y + <span class="number">5</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp6 = A[i][y + <span class="number">6</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp7 = A[i][y + <span class="number">7</span>];</span><br><span class="line">            <span class="comment">// A的左上对称到B左上</span></span><br><span class="line">            B[y][i] = tmp0;</span><br><span class="line">            B[y + <span class="number">1</span>][i] = tmp1;</span><br><span class="line">            B[y + <span class="number">2</span>][i] = tmp2;</span><br><span class="line">            B[y + <span class="number">3</span>][i] = tmp3;</span><br><span class="line">            <span class="comment">// A的右上暂存到B右上</span></span><br><span class="line">            B[y][i + <span class="number">4</span>] = tmp4;</span><br><span class="line">            B[y + <span class="number">1</span>][i + <span class="number">4</span>] = tmp5;</span><br><span class="line">            B[y + <span class="number">2</span>][i + <span class="number">4</span>] = tmp6;</span><br><span class="line">            B[y + <span class="number">3</span>][i + <span class="number">4</span>] = tmp7;</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = y, i = x + <span class="number">4</span>; j++)</span><br><span class="line">        {</span><br><span class="line">            <span class="comment">// A左下</span></span><br><span class="line">            <span class="keyword">int</span> tmp0 = A[i][j];</span><br><span class="line">            <span class="keyword">int</span> tmp1 = A[i + <span class="number">1</span>][j];</span><br><span class="line">            <span class="keyword">int</span> tmp2 = A[i + <span class="number">2</span>][j];</span><br><span class="line">            <span class="keyword">int</span> tmp3 = A[i + <span class="number">3</span>][j];</span><br><span class="line">            <span class="comment">// B右上</span></span><br><span class="line">            <span class="keyword">int</span> tmp4 = B[j][i];</span><br><span class="line">            <span class="keyword">int</span> tmp5 = B[j][i + <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp6 = B[j][i + <span class="number">2</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp7 = B[j][i + <span class="number">3</span>];</span><br><span class="line">            <span class="comment">// A左下写到B右上</span></span><br><span class="line">            B[j][i] = tmp0;</span><br><span class="line">            B[j][i + <span class="number">1</span>] = tmp1;</span><br><span class="line">            B[j][i + <span class="number">2</span>] = tmp2;</span><br><span class="line">            B[j][i + <span class="number">3</span>] = tmp3;</span><br><span class="line">            <span class="comment">// B右上到B左下</span></span><br><span class="line">            B[j + <span class="number">4</span>][i - <span class="number">4</span>] = tmp4;</span><br><span class="line">            B[j + <span class="number">4</span>][i - <span class="number">3</span>] = tmp5;</span><br><span class="line">            B[j + <span class="number">4</span>][i - <span class="number">2</span>] = tmp6;</span><br><span class="line">            B[j + <span class="number">4</span>][i - <span class="number">1</span>] = tmp7;</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">for</span> (i = x + <span class="number">4</span>; i &lt; x + <span class="number">8</span>; i++)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">int</span> tmp4 = A[i][y + <span class="number">4</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp5 = A[i][y + <span class="number">5</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp6 = A[i][y + <span class="number">6</span>];</span><br><span class="line">            <span class="keyword">int</span> tmp7 = A[i][y + <span class="number">7</span>];</span><br><span class="line">            B[y + <span class="number">4</span>][i] = tmp4;</span><br><span class="line">            B[y + <span class="number">5</span>][i] = tmp5;</span><br><span class="line">            B[y + <span class="number">6</span>][i] = tmp6;</span><br><span class="line">            B[y + <span class="number">7</span>][i] = tmp7;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>经过测试，miss 数为 1179，满足了要求。</p>
+<h3 id="section-1">61*67</h3>
+<p>这个的难点在于不规则的形状，使得寄存器优化和子块划分都很困难。但幸运的是，这个题标准不高。使用 8*8 的子块暴力都只有 2118 的 miss，与要求的 2000 已经非常相近。切换成 16*16 的子块后，miss 数变为了 1992，擦线满分。</p>
+<h2 id="总结">总结</h2>
+<p>毕业答辩通过了！cache 实在是太好玩了！</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://csapp.cs.cmu.edu/2e/waside/waside-blocking.pdf">csapp.cs.cmu.edu/2e/waside/waside-blocking.pdf</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/" title="CSAPP-Lab-4 实验报告: cachelab">https://tqnwhz.github.io/blog/2023/12/17/CSAPP-Lab-4/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="tag"><i class="fa fa-tag"></i> 体系结构</a>
+              <a href="/blog/tags/csapp/" rel="tag"><i class="fa fa-tag"></i> csapp</a>
+              <a href="/blog/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" rel="tag"><i class="fa fa-tag"></i> 实验报告</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/04/CSAPP-Lab-3/" rel="prev" title="CSAPP-Lab-3 实验报告: attacklab">
+                  <i class="fa fa-chevron-left"></i> CSAPP-Lab-3 实验报告: attacklab
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/21/CSAPP-Lab-5/" rel="next" title="CSAPP-Lab-5 实验报告: shelllab">
+                  CSAPP-Lab-5 实验报告: shelllab <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">291k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">8:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

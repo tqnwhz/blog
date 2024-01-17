@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本文介绍了笔者在做 malloclab 一节的实验报告。该 lab 要求使用 C 语言实现动态内存管理功能，即 malloc,free,realloc 三个函数，完成堆上内存的申请与释放。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSAPP-Lab-6 实验报告: malloclab">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本文介绍了笔者在做 malloclab 一节的实验报告。该 lab 要求使用 C 语言实现动态内存管理功能，即 malloc,free,realloc 三个函数，完成堆上内存的申请与释放。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/implicit_list.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/explicit_block.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/explicit_list.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/malloc_chunk.png">
+<meta property="article:published_time" content="2023-12-29T02:23:04.000Z">
+<meta property="article:modified_time" content="2024-01-17T12:56:39.638Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="体系结构">
+<meta property="article:tag" content="csapp">
+<meta property="article:tag" content="实验报告">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/implicit_list.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/","path":"2023/12/29/CSAPP-Lab-6/","title":"CSAPP-Lab-6 实验报告: malloclab"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CSAPP-Lab-6 实验报告: malloclab | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="nav-number">2.1.</span> <span class="nav-text">动态内存管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#malloc"><span class="nav-number">2.2.</span> <span class="nav-text">malloc</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">3.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">3.2.</span> <span class="nav-text">宏定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mm_init"><span class="nav-number">3.3.</span> <span class="nav-text">mm_init</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mm_malloc"><span class="nav-number">3.4.</span> <span class="nav-text">mm_malloc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mm_free"><span class="nav-number">3.5.</span> <span class="nav-text">mm_free</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mm_realloc"><span class="nav-number">3.6.</span> <span class="nav-text">mm_realloc</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C%E4%B8%8E%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">结果与总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%8F%AF%E8%83%BD%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">实验可能遇到的问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#traces%E8%B7%AF%E5%BE%84%E9%97%AE%E9%A2%98"><span class="nav-number">5.1.</span> <span class="nav-text">traces 路径问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#asmerrno.h-no-such-file-or-directory"><span class="nav-number">5.2.</span> <span class="nav-text">asm&#x2F;errno.h: No such file
+or directory</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AE%B5%E9%94%99%E8%AF%AF"><span class="nav-number">5.3.</span> <span class="nav-text">段错误</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CSAPP-Lab-6 实验报告: malloclab
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-12-29 10:23:04" itemprop="dateCreated datePublished" datetime="2023-12-29T10:23:04+08:00">2023-12-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-01-17 20:56:39" itemprop="dateModified" datetime="2024-01-17T20:56:39+08:00">2024-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" itemprop="url" rel="index"><span itemprop="name">实验报告</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>21 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本文介绍了笔者在做 malloclab 一节的实验报告。该 lab 要求使用 C 语言实现动态内存管理功能，即 <code>malloc,free,realloc</code> 三个函数，完成堆上内存的申请与释放。</p>
+<span id="more"></span>
+<h2 id="理论知识">理论知识</h2>
+<h3 id="动态内存管理">动态内存管理</h3>
+<p>在程序虚拟内存空间中，栈是由编译器维护的、用于存放局部变量的区域。栈的空间受限，不能用于存储大型对象（linux
+栈只有 8MB），而且局部变量随着函数执行完毕自动回收，这使得栈所存储的变量的生命周期也受到了限制。堆是由程序员维护的、用于保存大型对象的区域。在 C 语言中，可以通过 <code>malloc</code> 申请堆内存，<code>free</code> 释放内存。</p>
+<p>动态内存管理的核心是一个分配器，处理到来的内存分配请求，需要考虑以下问题：</p>
+<ul>
+<li>给定一个指针，我们如何知道需要释放多少内存？
+<ul>
+<li>给块添加头部信息，记录块的大小</li>
+</ul></li>
+<li>如何记录未分配的块？
+<ul>
+<li>固定大小的块，可以使用 bitmap 记录</li>
+<li>一般而言，通用的、大小不定的块，使用<strong>空闲链表</strong>记录</li>
+</ul></li>
+<li>实际需要的空间比未分配的空间要小的时候，剩下的空间怎么办？
+<ul>
+<li>如果剩余大小大于一定阈值，将其拆分，否则整块返回</li>
+</ul></li>
+<li>如果有多个区域满足条件，如何选择？
+<ul>
+<li>首次适应、下一次适应等<strong>分配算法</strong></li>
+</ul></li>
+<li>释放空间之后如何进行记录？
+<ul>
+<li>将首部的空闲 bit 置 1</li>
+</ul></li>
+</ul>
+<p>这些问题的核心在于，空闲链表如何组织，以及分配算法怎样选取。</p>
+<p>空闲链表有以下几种组织方式：</p>
+<p><strong>隐式空闲链表</strong>，如下图所示。每个块的首部记录了块大小以及空闲标记，相当于使用数组实现的单向链表，同时包含了空闲块和非空闲块。这种方式下，<code>malloc</code> 需要从第一个块开始遍历，最坏 O (n) 才能找到合适的块，n 为块的数量。<code>free</code> 时需要与左右的空闲块合并，左侧的块也需要从头开始遍历才能访问到，也需要 O (n) 时间，性能很差。</p>
+<p><img src="implicit_list.png"></p>
+<p><strong>显式空闲链表</strong>，如下图所示。思想是在空闲块中添加前后向指针，指向相邻的空闲块，得到了显式的空闲链表。这样就可以减少 <code>malloc</code> 的复杂度为 O (f)，f 为空闲块的数量。在空闲块的末尾，添加了一个尾部记录了块的大小，并在每个块的首部记录了前一个块是否空闲，这样可以在 O (1) 的时间内完成相邻空闲块的合并。</p>
+<p><img src="explicit_block.png"></p>
+<p><img src="explicit_list.png"></p>
+<p><strong>分隔空闲链表</strong>，在显式空闲链表的基础上，根据空闲块的大小，拆分到不同的链表中。当新请求到来时，只需要在满足大小的链表中搜索即可，进一步减少了 <code>malloc</code> 的常数。</p>
+<h3 id="malloc">malloc</h3>
+<p><code>malloc</code> 的原型为：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">size_t</span> __size)</span></span></span><br></pre></td></tr></tbody></table></figure>
+<p>malloc ()
+并不是系统调用，而是 C 语言库函数，内部通过 <code>brk</code> 或者 <code>mmap</code> 的系统调用来扩展虚拟内存空间。<code>malloc</code> 使用了显式空闲链表的方法，块的结构如下所示：</p>
+<p><img src="malloc_chunk.png"></p>
+<p>不同的是，空闲块没有记录尾部，而是在首部新加了一个字段存储前一个块的大小。由于 <code>malloc</code> 返回的地址总是 8 字节对齐的，因此块的大小也会对齐到 8 的整数倍。这意味着 size 的后 3 位永远是 0，这里就是使用了这三位来存储额外的信息：块属于主分配区或者非主分配区（A），前一个块是否空闲（P），从哪个内存区域获得的虚拟内存（M）。这些空闲块构成了内存池，当新请求到来时，<code>malloc</code> 会尝试先从内存池分配，如果分配成功就无需系统调用，失败则再通过 <code>brk</code> 或者 <code>mmap</code> 调用申请内存。<code>free</code> 时同理，先归还到内存池，当堆顶空闲内存超出阈值时，再通过 <code>sbrk</code> 归还给系统。</p>
+<p>malloc 的详细介绍可以参考 <a target="_blank" rel="noopener" href="https://jacktang816.github.io/post/mallocandfree/">malloc 和 free 的实现原理解析
+- JackTang's Blog
+(jacktang816.github.io)</a>。值得注意的是，<code>malloc</code> 只申请了虚拟内存，也就是说，操作系统仅为这些地址创建了页表项，但没有将它们与物理地址关联起来。当这些内存被访问到之后，才会触发缺页异常，申请物理内存。</p>
+<h2 id="代码实现">代码实现</h2>
+<h3 id="思路">思路</h3>
+<p>我使用了隔离显式空闲链表的方法，使用多个空闲链表存储不同大小的空闲块，<code>malloc</code> 时只需要在<span class="math inline"> \(\ge
+size\)</span> 的链表中查找，来达到减小常数的效果。在块内部的 header 中，存储大小、本块与前一个块的空闲信息。在空闲块里，额外存储指向空闲链表前驱和后继的指针。</p>
+<p>这个大思路下，两个重要的问题是，空闲链表与大小的关系如何映射，空闲链表的头部存储在哪里？对于第一个问题，我参考 linux 的伙伴系统，不同链表存储的块大小呈倍数关系，例如第一条链存 [8,16) Bytes 的块，第二条链存 [16,32) Bytes 的块，以此类推。这样的优点是，链表的数量不会太多，最多只有<span class="math inline"> \(O(logn)\)</span> 条链，缺点是不同链的块数量不够均匀。第二个问题，我选择存储在了堆的首部，在 <code>mm_init</code> 时对其初始化。</p>
+<p>思路确定好之后，可以先拆分一些小的宏函数，来实现常用的功能。</p>
+<h3 id="宏定义">宏定义</h3>
+<p>我将常用操作封装了很多宏函数，如下所示。这些宏函数的命名都很直观，例如 <code>HEADER</code> 用于读取块的头部信息，<code>HAS_PRED_BLOCK</code> 是判断一个块有没有前向相邻的块（是否达到了边界）、<code>SUCC_BLOCK</code> 用于获取后一个块的起始地址。这些宏是随着代码的编写逐渐补充的。</p>
+<p>与函数相比，宏在预处理期被展开，没有函数调用的开销，相当于被内联的函数，适合封装一些指针运算逻辑，这些代码往往需要复用。由于宏的可读性差、参数类型不直观、容易出现优先级问题，不推荐封装很复杂的逻辑。在我的实践中，也是针对参数类型取不同的名字，例如 <code>header_p</code> 意味着一个 <code>header
+*</code> 的参数，<code>address</code> 代表 <code>void
+*</code> 等，来避免类型误用的问题。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* single word (4) or double word (8) alignment */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALIGNMENT 8</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* rounds up to the nearest multiple of ALIGNMENT */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALIGN(size) (((size) + (ALIGNMENT - 1)) &amp; ~0x7)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SIZE_T_SIZE (ALIGN(sizeof(size_t)))</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> header_t size_t</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HEADER_T_SIZE SIZE_T_SIZE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> footer_t header_t</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FOOTER_T_SIZE HEADER_T_SIZE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> uint32 unsigned long</span></span><br><span class="line"><span class="comment">// 空闲链表的数量</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SEG_TABLE_SIZE 16</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 最小块与最小空闲块的大小</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MIN_BLOCK_SIZE HEADER_T_SIZE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MIN_FREE_BLOCK_SIZE 24 <span class="comment">// 8+4+4+8</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 隔离表的起始位置</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> **seg_table;</span><br><span class="line"><span class="comment">// 块的起始边界</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *block_start;</span><br><span class="line"><span class="comment">// flag的偏移</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FREE_BIT 0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PRED_FREE_BIT 1</span></span><br><span class="line"><span class="comment">// 读取header信息</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HEADER(address) (*(header_t *)(address))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FOOTER(address) (HEADER(address))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> GET_OPTIONS(header) ((header) &amp; (ALIGNMENT - 1))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> GET_SIZE(header) ((header)-GET_OPTIONS(header))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> GEN_HEADER(size, free, pred_free) ((size) | ((free) &lt;&lt; (FREE_BIT)) | ((pred_free) &lt;&lt; (PRED_FREE_BIT)))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> IS_FREE(header) (((header)) &amp; (1 &lt;&lt; FREE_BIT))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> IS_PRED_FREE(header) ((header) &amp; (1 &lt;&lt; PRED_FREE_BIT))</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 前后边界信息</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAS_PRED_BLOCK(address) ((uint32)(address) &gt; (uint32)block_start)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SUCC_BLOCK(address) ((void *)((char *)(address) + GET_SIZE(HEADER(address))))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAS_SUCC_BLOCK(address) ((uint32)SUCC_BLOCK(address) &lt; (uint32)mem_heap_hi())</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置header字段</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SET_SIZE(header_p, size) (*(header_p) = (size) | GET_OPTIONS(*(header_p)))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SET_FREE(header_p) (*(header_p) |= (1 &lt;&lt; FREE_BIT))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SET_PRED_FREE(header_p) (*(header_p) |= (1 &lt;&lt; PRED_FREE_BIT))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SET_BUSY(header_p) (*(header_p) &amp;= ~(1 &lt;&lt; FREE_BIT))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SET_PRED_BUSY(header_p) (*(header_p) &amp;= ~(1 &lt;&lt; PRED_FREE_BIT))</span></span><br><span class="line"><span class="comment">// 空闲块的前驱、后继指针的偏移量</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PREV_OFFSET HEADER_T_SIZE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NEXT_OFFSET (HEADER_T_SIZE + sizeof(void *))</span></span><br><span class="line"><span class="comment">// 获取指向prev和next的指针, aka, void **</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PPREV(address) ((void **)((char *)(address) + PREV_OFFSET))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PNEXT(address) ((void **)((char *)(address) + NEXT_OFFSET))</span></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="mm_init">mm_init</h3>
+<p>申请一块内存用于存储隔离空闲链表的头部 <code>seg_table</code>，并初始化。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * mm_init - initialize the malloc package.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mm_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    seg_table = mem_heap_hi();</span><br><span class="line">    mem_sbrk(SEG_TABLE_SIZE * <span class="keyword">sizeof</span>(<span class="keyword">void</span> *));</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; SEG_TABLE_SIZE; i++)</span><br><span class="line">    {</span><br><span class="line">        seg_table[i] = <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    block_start = seg_table + SEG_TABLE_SIZE;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="mm_malloc">mm_malloc</h3>
+<p>优先从空闲块中查找<span class="math inline"> \(\ge
+size\)</span> 的块，采用首次适应的策略，若：</p>
+<ul>
+<li>查找失败，则通过 <code>mem_sbrk</code> 申请新内存</li>
+<li>查找成功，选择是否对块进行拆分，返回 </li>
+</ul>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * mm_malloc - Allocate a block. If no free blocks satisfying the size, allocate a new one by incrementing the brk pointer.</span></span><br><span class="line"><span class="comment"> *     Always allocate a block whose size is a multiple of the alignment.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">mm_malloc</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> newsize = ALIGN(size + SIZE_T_SIZE);</span><br><span class="line">    <span class="keyword">void</span> *address = fetch_free_block_ge(newsize);</span><br><span class="line">    <span class="keyword">if</span> (address != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> (<span class="keyword">void</span> *)((<span class="keyword">char</span> *)address + SIZE_T_SIZE);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">void</span> *p = mem_sbrk(newsize);</span><br><span class="line">    <span class="keyword">if</span> (p == (<span class="keyword">void</span> *)<span class="number">-1</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    {</span><br><span class="line">        *(<span class="keyword">size_t</span> *)p = newsize;</span><br><span class="line">        <span class="keyword">return</span> (<span class="keyword">void</span> *)((<span class="keyword">char</span> *)p + SIZE_T_SIZE);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这段代码的核心在于 <code>fetch_free_block_ge</code> 函数，代码如下。它的逻辑为，先获取 size 对应的空闲链表，依次向后遍历，直到找到一个大小符合的空闲块。通过 <code>remove_free_block</code> 函数将其从空闲链表移除，<code>split_block</code> 函数对其进行拆分。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 获取一个大于或等于给定大小的空闲块</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * @param size </span></span><br><span class="line"><span class="comment"> * @return void* </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">fetch_free_block_ge</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> index = get_seg_index(size);</span><br><span class="line">    <span class="keyword">size_t</span> bsize;</span><br><span class="line">    <span class="keyword">for</span> (; index &lt; SEG_TABLE_SIZE; index++)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">void</span> *address = seg_table[index]; address != <span class="literal">NULL</span>; address = *PNEXT(address))</span><br><span class="line">        {</span><br><span class="line">            bsize = GET_SIZE(HEADER(address));</span><br><span class="line">            <span class="keyword">if</span> (bsize &gt;= size)</span><br><span class="line">            {</span><br><span class="line">                remove_free_block(address);</span><br><span class="line">                split_block(address, size);</span><br><span class="line">                SET_BUSY((<span class="keyword">header_t</span> *)address);</span><br><span class="line">                <span class="keyword">if</span> (HAS_SUCC_BLOCK(address))</span><br><span class="line">                {</span><br><span class="line">                    SET_PRED_BUSY((<span class="keyword">header_t</span> *)SUCC_BLOCK(address));</span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">return</span> address;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>代码中用到的工具函数代码如下。需要注意的是，在 <code>remove_free_block</code> 中，由于空闲块的前驱可能是链头，不是常规的空闲块，二者的读写模式有所差异，需要做区分。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 获取 size 对应的空闲链表索引</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param size</span></span><br><span class="line"><span class="comment"> * @return int</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">get_seg_index</span><span class="params">(<span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> index = SEG_TABLE_SIZE - <span class="number">1</span>; index &gt;= <span class="number">0</span>; index--)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (size &gt;= (MIN_BLOCK_SIZE &lt;&lt; index))</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">return</span> index;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"get_seg_index ERROR! size %zu\n"</span>, size);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 将空闲块从空闲链表中删除</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param address</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">remove_free_block</span><span class="params">(<span class="keyword">void</span> *address)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">header_t</span> cur_header = HEADER(address);</span><br><span class="line">    <span class="keyword">size_t</span> size = GET_SIZE(cur_header);</span><br><span class="line">    <span class="keyword">int</span> index = get_seg_index(size);</span><br><span class="line">    <span class="keyword">void</span> **pprev = PPREV(address);</span><br><span class="line">    <span class="keyword">void</span> **pnext = PNEXT(address);</span><br><span class="line">    <span class="keyword">void</span> **seg_head = seg_table + index;</span><br><span class="line">    <span class="keyword">if</span> (*seg_head == address)</span><br><span class="line">    {</span><br><span class="line">        *seg_head = *pnext;</span><br><span class="line">        <span class="keyword">if</span> (*pnext != <span class="literal">NULL</span>)</span><br><span class="line">        {</span><br><span class="line">            *PPREV(*pnext) = seg_head;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    {</span><br><span class="line">        *PNEXT(*pprev) = *pnext;</span><br><span class="line">        <span class="keyword">if</span> (*pnext != <span class="literal">NULL</span>)</span><br><span class="line">        {</span><br><span class="line">            *PPREV(*pnext) = *pprev;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 将一个块 size 之后的部分拆分空闲块（如果满足大小要求），返回是否成功</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param address</span></span><br><span class="line"><span class="comment"> * @param size</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">split_block</span><span class="params">(<span class="keyword">void</span> *address, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">header_t</span> header = HEADER(address);</span><br><span class="line">    <span class="keyword">size_t</span> bsize = GET_SIZE(header);</span><br><span class="line">    <span class="keyword">if</span> (bsize &gt;= size + MIN_FREE_BLOCK_SIZE)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">void</span> *rest = (<span class="keyword">char</span> *)address + size;</span><br><span class="line">        SET_SIZE((<span class="keyword">header_t</span> *)address, size);</span><br><span class="line">        init_header_footer(rest, bsize - size, <span class="number">1</span>, IS_FREE(header));</span><br><span class="line">        insert_free_block(rest);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 初始化块的 header 和 footer（如果空闲）</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param address</span></span><br><span class="line"><span class="comment"> * @param size</span></span><br><span class="line"><span class="comment"> * @param free</span></span><br><span class="line"><span class="comment"> * @param pred_free</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">init_header_footer</span><span class="params">(<span class="keyword">void</span> *address, <span class="keyword">size_t</span> size, <span class="keyword">int</span> <span class="built_in">free</span>, <span class="keyword">int</span> pred_free)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">header_t</span> header = GEN_HEADER(size, <span class="built_in">free</span>, pred_free);</span><br><span class="line">    *(<span class="keyword">header_t</span> *)address = header;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">free</span>)</span><br><span class="line">    {</span><br><span class="line">        *(<span class="keyword">footer_t</span> *)((<span class="keyword">char</span> *)address + size - FOOTER_T_SIZE) = header;</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="mm_free">mm_free</h3>
+<p>free 需要做以下几件事情，拆分为独立的宏或函数</p>
+<ul>
+<li>将块标记为空闲：<code>SET_FREE</code> 与 <code>SET_PRED_FREE</code></li>
+<li>与相邻空闲块合并：<code>coalesce_block</code></li>
+<li>添加到空闲链表：<code>insert_free_block</code></li>
+</ul>
+<p>代码如下，根据 <code>ptr</code> 获取块的地址，获取相邻空闲块的地址，进入合并逻辑。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * mm_free - Freeing a block does nothing.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mm_free</span><span class="params">(<span class="keyword">void</span> *ptr)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">void</span> *predecessor;</span><br><span class="line">    <span class="keyword">void</span> *successor = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">void</span> *address = (<span class="keyword">char</span> *)ptr - HEADER_T_SIZE;</span><br><span class="line">    <span class="keyword">header_t</span> header = HEADER(address);</span><br><span class="line">    predecessor = HAS_PRED_BLOCK(address) &amp;&amp; IS_PRED_FREE(header) ? pred_free_block(address) : <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span> (HAS_SUCC_BLOCK(address))</span><br><span class="line">    {</span><br><span class="line">        successor = SUCC_BLOCK(address);</span><br><span class="line">        SET_PRED_FREE((<span class="keyword">header_t</span> *)successor);</span><br><span class="line">        successor = IS_FREE(HEADER(successor)) ? successor : <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    coalesce_block(predecessor, address, successor);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>核心在于 <code>coalesce_block</code> 函数，计算合并后块的总大小，将其插入到对应的空闲链表中。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 合并相邻的空闲块</span></span><br><span class="line"><span class="comment"> * 假设当前块不处在空闲链表中</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">coalesce_block</span><span class="params">(<span class="keyword">void</span> *predecessor, <span class="keyword">void</span> *cur, <span class="keyword">void</span> *successor)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">header_t</span> cur_header = HEADER(cur);</span><br><span class="line">    <span class="keyword">if</span> (predecessor != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        remove_free_block(predecessor);</span><br><span class="line">        <span class="keyword">header_t</span> header = HEADER(predecessor);</span><br><span class="line">        <span class="comment">// 计算合并后的大小</span></span><br><span class="line">        <span class="keyword">size_t</span> size = GET_SIZE(header) + GET_SIZE(cur_header);</span><br><span class="line">        <span class="keyword">if</span> (successor != <span class="literal">NULL</span>)</span><br><span class="line">        {</span><br><span class="line">            size += GET_SIZE(HEADER(successor));</span><br><span class="line">            remove_free_block(successor);</span><br><span class="line">        }</span><br><span class="line">        init_header_footer(predecessor, size, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">        insert_free_block(predecessor);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">size_t</span> size = GET_SIZE(cur_header);</span><br><span class="line">    <span class="keyword">if</span> (successor != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        size += GET_SIZE(HEADER(successor));</span><br><span class="line">        remove_free_block(successor);</span><br><span class="line">    }</span><br><span class="line">    init_header_footer(cur, size, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">    insert_free_block(cur);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 将空闲块插入对应的空闲链表</span></span><br><span class="line"><span class="comment"> * 根据header获取大小</span></span><br><span class="line"><span class="comment"> * @param address block address</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">insert_free_block</span><span class="params">(<span class="keyword">void</span> *address)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">size_t</span> cur_header = *(<span class="keyword">size_t</span> *)address;</span><br><span class="line">    <span class="keyword">size_t</span> size = GET_SIZE(cur_header);</span><br><span class="line">    <span class="keyword">int</span> index = get_seg_index(size);</span><br><span class="line">    <span class="keyword">void</span> **pprev = PPREV(address);</span><br><span class="line">    <span class="keyword">void</span> **pnext = PNEXT(address);</span><br><span class="line">    *pprev = seg_table + index;</span><br><span class="line">    *pnext = seg_table[index];</span><br><span class="line">    <span class="keyword">void</span> *old = seg_table[index];</span><br><span class="line">    seg_table[index] = address;</span><br><span class="line">    <span class="keyword">if</span> (old != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        *PPREV(old) = address;</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="mm_realloc">mm_realloc</h3>
+<p>朴素的 <code>realloc</code> 可以这样实现：<code>mm_malloc</code> 新的内存，<code>memcpy</code> 将原内容拷贝到内存，<code>mm_free</code> 掉原本的内存。这种方法可以工作，但有以下问题：</p>
+<ul>
+<li>时间开销：耗时为三部分耗时之和</li>
+<li>空间开销：引发内存碎片</li>
+</ul>
+<p>可以明确的是，针对通用的情况，上述逻辑是正确合理的，但是在某些情况下，可以做优化，例如：</p>
+<ul>
+<li><code>realloc</code> 用于减少块的大小，此时无需 <code>mm_malloc</code> 与 <code>memcpy</code>，可以直接返回，或者拆分小的空闲块后再返回</li>
+<li>原有块的后方存在空闲块，二者合并后满足大小要求。相当于就地完成了 <code>malloc</code>，省去了 <code>memcpy</code>。</li>
+</ul>
+<p>针对这两种情况，可以编写如下的代码</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * mm_realloc - Implemented simply in terms of mm_malloc and mm_free</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">mm_realloc</span><span class="params">(<span class="keyword">void</span> *ptr, <span class="keyword">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">void</span> *address = (<span class="keyword">char</span> *)ptr - HEADER_T_SIZE;</span><br><span class="line">    size = ALIGN(size + SIZE_T_SIZE);</span><br><span class="line">    <span class="keyword">header_t</span> header = HEADER(address);</span><br><span class="line">    <span class="keyword">size_t</span> old_size = GET_SIZE(header);</span><br><span class="line">    <span class="comment">// 判断是否是减少的情况，就地减少</span></span><br><span class="line">    <span class="keyword">if</span> (old_size &gt; size)</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 能否拆出来一个空闲块</span></span><br><span class="line">        split_block(address, size);</span><br><span class="line">        <span class="keyword">return</span> (<span class="keyword">char</span> *)address + HEADER_T_SIZE;</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">// 判断合并后续空闲块后能否达到size，省去malloc与拷贝</span></span><br><span class="line">    <span class="keyword">if</span> (HAS_SUCC_BLOCK(address))</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">void</span> *succ = SUCC_BLOCK(address);</span><br><span class="line">        <span class="keyword">header_t</span> succ_header = HEADER(succ);</span><br><span class="line">        <span class="keyword">size_t</span> succ_size = GET_SIZE(succ_header);</span><br><span class="line">        <span class="keyword">if</span> (IS_FREE(succ_header) &amp;&amp; old_size + succ_size &gt;= size)</span><br><span class="line">        {</span><br><span class="line">            remove_free_block(succ);</span><br><span class="line">            <span class="comment">// 拆分后半部分空闲块</span></span><br><span class="line">            SET_SIZE((<span class="keyword">header_t</span> *)address, old_size + succ_size);</span><br><span class="line">            split_block(address, size);</span><br><span class="line">            <span class="keyword">return</span> (<span class="keyword">char</span> *)address + HEADER_T_SIZE;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">// 原本的 realloc 逻辑</span></span><br><span class="line">    <span class="keyword">void</span> *oldptr = ptr;</span><br><span class="line">    <span class="keyword">void</span> *newptr;</span><br><span class="line">    <span class="keyword">size_t</span> copySize;</span><br><span class="line"></span><br><span class="line">    newptr = mm_malloc(size);</span><br><span class="line">    <span class="keyword">if</span> (newptr == <span class="literal">NULL</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    copySize = *(<span class="keyword">size_t</span> *)((<span class="keyword">char</span> *)oldptr - SIZE_T_SIZE);</span><br><span class="line">    <span class="keyword">if</span> (size &lt; copySize)</span><br><span class="line">        copySize = size;</span><br><span class="line">    <span class="built_in">memcpy</span>(newptr, oldptr, copySize);</span><br><span class="line">    mm_free(oldptr);</span><br><span class="line">    <span class="keyword">return</span> newptr;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="结果与总结">结果与总结</h2>
+<p>使用 <code>mdriver</code> 评估，得到 87 分，结果如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Results for mm malloc:</span><br><span class="line">trace  valid  util     ops      secs  Kops</span><br><span class="line"> 0       yes   98%    5694  0.000160 35677</span><br><span class="line"> 1       yes   98%    5848  0.000198 29550</span><br><span class="line"> 2       yes   98%    6648  0.000217 30608</span><br><span class="line"> 3       yes   99%    5380  0.000140 38346</span><br><span class="line"> 4       yes   99%   14400  0.000229 62772</span><br><span class="line"> 5       yes   91%    4800  0.000250 19215</span><br><span class="line"> 6       yes   90%    4800  0.000260 18462</span><br><span class="line"> 7       yes   55%   12000  0.000213 56259</span><br><span class="line"> 8       yes   51%   24000  0.000432 55543</span><br><span class="line"> 9       yes   17%   14401  0.000527 27300</span><br><span class="line">10       yes   57%   14401  0.000268 53695</span><br><span class="line">Total          78%  112372  0.002895 38812</span><br><span class="line"></span><br><span class="line">Perf index = 47 (util) + 40 (thru) = 87/100</span><br><span class="line">correct:11</span><br><span class="line">perfidx:87</span><br></pre></td></tr></tbody></table></figure>
+<p>虽然没有拿到满分，但整体做完还是非常酣畅淋漓的体验。从学完之后满腹经纶但又无从下手，到摸索如何设计与抽象函数，再到被各种段错误折磨，最后豁然开朗、茅塞顿开，用 “酣畅淋漓” 这四个字形容在合适不过了！</p>
+<h2 id="实验可能遇到的问题">实验可能遇到的问题</h2>
+<h3 id="traces路径问题">traces 路径问题</h3>
+<p>在 <code>config.h</code> 中，修改 TRACEDIR 为相对路径。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TRACEDIR <span class="meta-string">"./traces/"</span></span></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="asmerrno.h-no-such-file-or-directory">asm/errno.h: No such file
+or directory</h3>
+<p>参见 stackoverflow：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/14795608/asm-errno-h-no-such-file-or-directory">linux
+- asm/errno.h: No such file or directory - Stack Overflow</a></p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ln -s /usr/include/asm-generic /usr/include/asm</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="段错误">段错误</h3>
+<p>为 GCC 添加 <code>-g</code> 参数创建用于调试的评测文件，使用 gdb 启动程序，发生段错误后输出 <code>bt</code>，即 <code>backtrace</code> 命令，即可打印出堆栈和报错行数，还可以打印不同变量的值。建议关闭 <code>-O2</code> 选项来避免变量被优化了无法查看值。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/483719414">malloc
+是如何分配内存的？ - 知乎 (zhihu.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://wdxtub.com/csapp/thin-csapp-7/2016/04/16/">【读薄
+CSAPP】柒 虚拟内存与动态内存分配 | 小土刀 2.0 (wdxtub.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/afs/cs/academic/class/15213-f10/www/lectures/17-allocation-basic.pdf">17-allocation-basic.pdf
+(cmu.edu)</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/57863097">malloc 的实现原理
+内存池 mmap sbrk 链表 - 知乎 (zhihu.com)</a></li>
+<li><a target="_blank" rel="noopener" href="https://jacktang816.github.io/post/mallocandfree/">malloc 和 free 的实现原理解析
+- JackTang's Blog (jacktang816.github.io)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/" title="CSAPP-Lab-6 实验报告: malloclab">https://tqnwhz.github.io/blog/2023/12/29/CSAPP-Lab-6/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="tag"><i class="fa fa-tag"></i> 体系结构</a>
+              <a href="/blog/tags/csapp/" rel="tag"><i class="fa fa-tag"></i> csapp</a>
+              <a href="/blog/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" rel="tag"><i class="fa fa-tag"></i> 实验报告</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/21/CSAPP-Lab-5/" rel="prev" title="CSAPP-Lab-5 实验报告: shelllab">
+                  <i class="fa fa-chevron-left"></i> CSAPP-Lab-5 实验报告: shelllab
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/30/CSAPP-Lab-7/" rel="next" title="CSAPP-Lab-7 实验报告: proxylab">
+                  CSAPP-Lab-7 实验报告: proxylab <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">291k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">8:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

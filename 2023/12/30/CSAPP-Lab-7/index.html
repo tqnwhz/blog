@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本文介绍了笔者在做 proxylab 一节的实验报告。该 lab 旨在使用 C 语言实现简易的网络代理，通过实践 socket 编程来更好地从程序员的角度理解网络交互。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSAPP-Lab-7 实验报告: proxylab">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本文介绍了笔者在做 proxylab 一节的实验报告。该 lab 旨在使用 C 语言实现简易的网络代理，通过实践 socket 编程来更好地从程序员的角度理解网络交互。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/socket_interface.png">
+<meta property="article:published_time" content="2023-12-30T14:00:50.000Z">
+<meta property="article:modified_time" content="2024-01-17T12:56:39.641Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="体系结构">
+<meta property="article:tag" content="csapp">
+<meta property="article:tag" content="实验报告">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/socket_interface.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/","path":"2023/12/30/CSAPP-Lab-7/","title":"CSAPP-Lab-7 实验报告: proxylab"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CSAPP-Lab-7 实验报告: proxylab | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#socket%E9%80%9A%E4%BF%A1"><span class="nav-number">2.1.</span> <span class="nav-text">socket 通信</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%B9%B6%E5%8F%91"><span class="nav-number">2.2.</span> <span class="nav-text">进程并发</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text">IO 多路复用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%B9%B6%E5%8F%91"><span class="nav-number">2.4.</span> <span class="nav-text">线程并发</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#part-1"><span class="nav-number">3.</span> <span class="nav-text">Part 1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#part-2"><span class="nav-number">4.</span> <span class="nav-text">Part 2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#part-3"><span class="nav-number">5.</span> <span class="nav-text">Part 3</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E4%B8%8E%E7%BB%93%E6%9E%9C"><span class="nav-number">6.</span> <span class="nav-text">代码与结果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CSAPP-Lab-7 实验报告: proxylab
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-12-30 22:00:50" itemprop="dateCreated datePublished" datetime="2023-12-30T22:00:50+08:00">2023-12-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-01-17 20:56:39" itemprop="dateModified" datetime="2024-01-17T20:56:39+08:00">2024-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" itemprop="url" rel="index"><span itemprop="name">实验报告</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>18k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>32 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本文介绍了笔者在做 proxylab 一节的实验报告。该 lab 旨在使用 C 语言实现简易的网络代理，通过实践 socket 编程来更好地从程序员的角度理解网络交互。</p>
+<span id="more"></span>
+<p>这一部分的实验其实难度不大，本篇更多的是梳理一些理论知识。</p>
+<h2 id="理论知识">理论知识</h2>
+<h3 id="socket通信">socket 通信</h3>
+<p><strong>网络套接字</strong>（英语：Network
+socket；又译<strong>网络套接字</strong>、<strong>网络接口</strong>、<strong>网络插槽</strong>）在计算机科学中是电脑网络中进程间收发数据的端点。socket 中往往包含协议族（IPV4、IPV6 等）、socket 类型（有无连接等）、传输层协议（TCP 或 UDP）等信息，与远端主机建立连接并进行通信。在 linux 上，一切 IO 都被抽象成了文件操作，网络 IO 也不例外，也是通过一系列函数调用得到代表网络连接的文件描述符（fd），接着就可以进行读写操作。从客户端和服务端的角度，一次 socket 通信的流程如下图所示：</p>
+<p><img src="socket_interface.png"></p>
+<p>客户端侧：</p>
+<ol type="1">
+<li><code>getaddrinfo</code> 获取服务端信息</li>
+<li><code>socket</code> 创建 socket 对象，完全本地操作，不涉及网络通信</li>
+<li><code>connect</code> 与远端服务端建立连接，获取文件描述符</li>
+<li>通过 <code>read/write</code> 读写网络读写，<code>read</code> 阻塞，<code>write</code> 不阻塞</li>
+<li><code>close</code> 关闭文件描述符</li>
+</ol>
+<p>服务端侧：</p>
+<ol type="1">
+<li><code>getaddrinfo</code> 获取服务端信息</li>
+<li><code>socket</code> 创建 socket 对象，完全本地操作，不涉及网络通信</li>
+<li><code>bind</code> 将 socket 与本地端口绑定</li>
+<li><code>listen</code> 进入被动监听状态</li>
+<li><code>accept</code> 阻塞等待新的连接到来</li>
+<li>通过 <code>read/write</code> 读写网络读写，<code>read</code> 阻塞，<code>write</code> 不阻塞</li>
+<li><code>close</code> 关闭文件描述符</li>
+</ol>
+<p>按照这个流程，可以写出如下的服务端程序：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> listenfd, connfd;</span><br><span class="line">    <span class="keyword">char</span> hostname[MAXLINE], port[MAXLINE];</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Check command-line args */</span></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line">	<span class="comment">// 封装前几个步骤</span></span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        clientlen = <span class="keyword">sizeof</span>(clientaddr);</span><br><span class="line">        <span class="comment">// 阻塞等待新连接</span></span><br><span class="line">        connfd = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen);</span><br><span class="line">        Getnameinfo((SA *)&amp;clientaddr, clientlen, hostname, MAXLINE,</span><br><span class="line">                    port, MAXLINE, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"Accepted connection from (%s, %s)\n"</span>, hostname, port);</span><br><span class="line">        <span class="comment">// 与客户端交互</span></span><br><span class="line">        doit(connfd);</span><br><span class="line">        Close(connfd);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这样的代码是有效的，但是缺点在于，每次只能处理一个客户端连接，其余的连接只能排队等到这个用户关闭连接后才能被受理。假设没有自动关闭连接的机制，连接中的用户离开电脑几个小时，服务端对外表现完全不可用，这是显然无法接受的。因此，服务端需要并行处理多个连接的能力。</p>
+<h3 id="进程并发">进程并发</h3>
+<p><code>fork</code> 创建子进程，用于处理客户端的读写，主进程只负责进行连接的建立，代码如下所示。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> listenfd, connfd;</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    Signal(SIGCHLD, sigchld_handler);</span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        clientlen = <span class="keyword">sizeof</span>(struct sockaddr_storage);</span><br><span class="line">        connfd = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen);</span><br><span class="line">        <span class="keyword">if</span> (Fork() == <span class="number">0</span>)</span><br><span class="line">        {</span><br><span class="line">            Close(listenfd); <span class="comment">/* Child closes its listening socket */</span></span><br><span class="line">            echo(connfd);    <span class="comment">/* Child services client */</span></span><br><span class="line">            Close(connfd);   <span class="comment">/* Child closes connection with client */</span></span><br><span class="line">            <span class="built_in">exit</span>(<span class="number">0</span>);         <span class="comment">/* Child exits */</span></span><br><span class="line">        }</span><br><span class="line">        Close(connfd); <span class="comment">/* Parent closes connected socket (important!) */</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这种方式有以下优点：</p>
+<ul>
+<li>安全：各个子进程有独立的地址空间，不会意外修改掉其他进程的内存。</li>
+</ul>
+<p>缺点在于：</p>
+<ul>
+<li>不便利：难以在父子进程或其他进程间共享状态，需要通过进程通信（IPC）的方式。</li>
+<li>开销大：进程的创建、销毁、切换都需要很大的开销。</li>
+</ul>
+<h3 id="io多路复用">IO 多路复用</h3>
+<p>也称为事件驱动的<strong>并发模型</strong>。利用 <code>select/epoll</code> 的系统调用，实现在一个进程内监听多个 IO 事件，并进行处理，核心代码如下。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"csapp.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">{</span>                                <span class="comment">/* Represents a pool of connected descriptors */</span></span><br><span class="line">    <span class="keyword">int</span> maxfd;                   <span class="comment">/* Largest descriptor in read_set */</span></span><br><span class="line">    fd_set read_set;             <span class="comment">/* Set of all active descriptors */</span></span><br><span class="line">    fd_set ready_set;            <span class="comment">/* Subset of descriptors ready for reading */</span></span><br><span class="line">    <span class="keyword">int</span> nready;                  <span class="comment">/* Number of ready descriptors from select */</span></span><br><span class="line">    <span class="keyword">int</span> maxi;                    <span class="comment">/* High water index into client array */</span></span><br><span class="line">    <span class="keyword">int</span> clientfd[FD_SETSIZE];    <span class="comment">/* Set of active descriptors */</span></span><br><span class="line">    <span class="keyword">rio_t</span> clientrio[FD_SETSIZE]; <span class="comment">/* Set of active read buffers */</span></span><br><span class="line">} pool;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> byte_cnt = <span class="number">0</span>; <span class="comment">/* Counts total bytes received by server */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> listenfd, connfd;</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line">    <span class="keyword">static</span> pool pool;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    }</span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line">    init_pool(listenfd, &amp;pool);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 等待 新连接/已经建立连接的事件到来</span></span><br><span class="line">        pool.ready_set = pool.read_set;</span><br><span class="line">        pool.nready = Select(pool.maxfd + <span class="number">1</span>, &amp;pool.ready_set, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 有新连接到来</span></span><br><span class="line">        <span class="keyword">if</span> (FD_ISSET(listenfd, &amp;pool.ready_set))</span><br><span class="line">        {</span><br><span class="line">            clientlen = <span class="keyword">sizeof</span>(struct sockaddr_storage);</span><br><span class="line">            connfd = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen);</span><br><span class="line">            <span class="comment">// 添加并开始监听新的客户端连接</span></span><br><span class="line">            add_client(connfd, &amp;pool);</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 检查已经建立连接的客户端事件，并进行处理</span></span><br><span class="line">        check_clients(&amp;pool);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">add_client</span><span class="params">(<span class="keyword">int</span> connfd, pool *p)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    p-&gt;nready--;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; FD_SETSIZE; i++) <span class="comment">/* Find an available slot */</span></span><br><span class="line">        <span class="keyword">if</span> (p-&gt;clientfd[i] &lt; <span class="number">0</span>)</span><br><span class="line">        {</span><br><span class="line">            <span class="comment">/* Add connected descriptor to the pool */</span></span><br><span class="line">            p-&gt;clientfd[i] = connfd;</span><br><span class="line">            Rio_readinitb(&amp;p-&gt;clientrio[i], connfd);</span><br><span class="line"></span><br><span class="line">            <span class="comment">/* Add the descriptor to descriptor set */</span></span><br><span class="line">            FD_SET(connfd, &amp;p-&gt;read_set);</span><br><span class="line"></span><br><span class="line">            <span class="comment">/* Update max descriptor and pool high water mark */</span></span><br><span class="line">            <span class="keyword">if</span> (connfd &gt; p-&gt;maxfd)</span><br><span class="line">                p-&gt;maxfd = connfd;</span><br><span class="line">            <span class="keyword">if</span> (i &gt; p-&gt;maxi)</span><br><span class="line">                p-&gt;maxi = i;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">    <span class="keyword">if</span> (i == FD_SETSIZE) <span class="comment">/* Couldn’t find an empty slot */</span></span><br><span class="line">        app_error(<span class="string">"add_client error: Too many clients"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">check_clients</span><span class="params">(pool *p)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, connfd, n;</span><br><span class="line">    <span class="keyword">char</span> buf[MAXLINE];</span><br><span class="line">    <span class="keyword">rio_t</span> rio;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; (i &lt;= p-&gt;maxi) &amp;&amp; (p-&gt;nready &gt; <span class="number">0</span>); i++)</span><br><span class="line">    {</span><br><span class="line">        connfd = p-&gt;clientfd[i];</span><br><span class="line">        rio = p-&gt;clientrio[i];</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* If the descriptor is ready, echo a text line from it */</span></span><br><span class="line">        <span class="keyword">if</span> ((connfd &gt; <span class="number">0</span>) &amp;&amp; (FD_ISSET(connfd, &amp;p-&gt;ready_set)))</span><br><span class="line">        {</span><br><span class="line">            p-&gt;nready--;</span><br><span class="line">            <span class="keyword">if</span> ((n = Rio_readlineb(&amp;rio, buf, MAXLINE)) != <span class="number">0</span>)</span><br><span class="line">            {</span><br><span class="line">                byte_cnt += n;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"Server received %d (%d total) bytes on fd %d\n"</span>,</span><br><span class="line">                       n, byte_cnt, connfd);</span><br><span class="line">                Rio_writen(connfd, buf, n);</span><br><span class="line">            }</span><br><span class="line"></span><br><span class="line">            <span class="comment">/* EOF detected, remove descriptor from pool */</span></span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            {</span><br><span class="line">                Close(connfd);</span><br><span class="line">                FD_CLR(connfd, &amp;p-&gt;read_set);</span><br><span class="line">                p-&gt;clientfd[i] = <span class="number">-1</span>;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看出来，核心的逻辑在于维护要监听的 <code>fd</code> 列表，在一个循环中，使用 <code>Select</code> 反复监听 IO 事件到来，并进行处理：</p>
+<ul>
+<li>来自 <code>listenfd</code> 的新连接：通过 <code>Accept</code> 获取新的连接 <code>connfd</code>，添加到客户端列表中，并开始监听</li>
+<li>来自已经建立连接的 <code>connfd</code> 的读写：读取并处理，如果收到 EOF，关闭连接移除监听</li>
+</ul>
+<p>这种方式有以下优点：</p>
+<ul>
+<li>灵活：程序员可以更好地控制程序的行为，比如为某些客户端优先提供服务。</li>
+<li>单线程：只有一个线程，可以方便地在不同函数内共享全局变量，没有并发问题，也更利于调试。</li>
+</ul>
+<p>也有着以下缺点：</p>
+<ul>
+<li>编程复杂度：事件驱动的编程模型的复杂度是基于进程的方法的数倍，而且并发粒度越细，模型越复杂。对比之下，基于进程的方法容易设计出干净的代码结构。</li>
+<li>无法利用多核优势：只使用了单线程。</li>
+</ul>
+<h3 id="线程并发">线程并发</h3>
+<p>与进程的思想类似，使用线程来实现。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"csapp.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">echo</span><span class="params">(<span class="keyword">int</span> connfd)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> listenfd, *connfdp;</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line">    <span class="keyword">pthread_t</span> tid;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    }</span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        clientlen = <span class="keyword">sizeof</span>(struct sockaddr_storage);</span><br><span class="line">        connfdp = Malloc(<span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">        *connfdp = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen);</span><br><span class="line">        <span class="comment">// 创建新线程处理客户端的连接</span></span><br><span class="line">        Pthread_create(&amp;tid, <span class="literal">NULL</span>, thread, connfdp);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Thread routine */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> connfd = *((<span class="keyword">int</span> *)vargp);</span><br><span class="line">    Pthread_detach(pthread_self());</span><br><span class="line">    Free(vargp);</span><br><span class="line">    echo(connfd);</span><br><span class="line">    Close(connfd);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>还可以使用线程池的方法，通过复用线程进一步减少线程创建和销毁的开销，代码如下。这是一个典型的生产者 - 消费者模型，主线程作为生产者，通过 <code>Accept</code> 获取新连接，工作线程为消费者，处理新连接的读写逻辑。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 线程安全的阻塞队列</span></span><br><span class="line"><span class="keyword">sbuf_t</span> sbuf; <span class="comment">/* Shared buffer of connected descriptors */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> i, listenfd, connfd;</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line">    <span class="keyword">pthread_t</span> tid;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    }</span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">    sbuf_init(&amp;sbuf, SBUFSIZE);</span><br><span class="line">    <span class="comment">// 创建工作线程</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; NTHREADS; i++)</span><br><span class="line">        Pthread_create(&amp;tid, <span class="literal">NULL</span>, thread, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        clientlen = <span class="keyword">sizeof</span>(struct sockaddr_storage);</span><br><span class="line">        connfd = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen);</span><br><span class="line">        <span class="comment">// 将客户端连接存放在阻塞队列中</span></span><br><span class="line">        sbuf_insert(&amp;sbuf, connfd); <span class="comment">/* Insert connfd in buffer */</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    Pthread_detach(pthread_self());</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 阻塞等到获取客户端fd</span></span><br><span class="line">        <span class="keyword">int</span> connfd = sbuf_remove(&amp;sbuf);</span><br><span class="line">        <span class="comment">// 为客户端服务</span></span><br><span class="line">        echo_cnt(connfd);</span><br><span class="line">        Close(connfd);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>线程的方法有如下优点：</p>
+<ul>
+<li>方便共享状态：线程间共享地址空间</li>
+<li>开销小：创建、销毁、切换的开销更小，且可以通过线程池进一步减少开销</li>
+</ul>
+<p>缺点在于：</p>
+<ul>
+<li>并发问题：无意识的共享可能会使得线程状态被污染，进而出错。还可能出现竞态条件、死锁等问题。</li>
+</ul>
+<h2 id="part-1">Part 1</h2>
+<p>实现基础的 http 代理功能，需要做的事情很清晰：</p>
+<ol type="1">
+<li>接受客户端连接，解析 http 请求行（端口与 uri）与请求头</li>
+<li>与目标服务器建立连接，初始化 http 请求行，设置代理请求头，转发额外请求头</li>
+<li>将目标服务器的响应转发给客户端</li>
+</ol>
+<h2 id="part-2">Part 2</h2>
+<p>实现代理服务器的并发。这里可以使用上面提到的线程池的方法，通过生产者 - 消费者的模式交互。先实现一个阻塞队列，<code>sbuf.h</code> 代码如下，队列中包含三个信号量，用于同步。<code>mutex</code> 控制了循环队列 <code>buf</code> 的互斥读写，<code>slots,items</code> 记录了队列中的空槽和物品的数量，控制生产者与消费者的等待逻辑。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;semaphore.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">{</span></span><br><span class="line">    <span class="keyword">int</span> *buf;    <span class="comment">/* Buffer array */</span></span><br><span class="line">    <span class="keyword">int</span> n;       <span class="comment">/* Maximum number of slots */</span></span><br><span class="line">    <span class="keyword">int</span> front;   <span class="comment">/* buf[(front+1)%n] is first item */</span></span><br><span class="line">    <span class="keyword">int</span> rear;    <span class="comment">/* buf[rear%n] is last item */</span></span><br><span class="line">    <span class="keyword">sem_t</span> mutex; <span class="comment">/* Protects accesses to buf */</span></span><br><span class="line">    <span class="keyword">sem_t</span> slots; <span class="comment">/* Counts available slots */</span></span><br><span class="line">    <span class="keyword">sem_t</span> items; <span class="comment">/* Counts available items */</span></span><br><span class="line">} <span class="keyword">sbuf_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_init</span><span class="params">(<span class="keyword">sbuf_t</span> *sp, <span class="keyword">int</span> n)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_deinit</span><span class="params">(<span class="keyword">sbuf_t</span> *sp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_insert</span><span class="params">(<span class="keyword">sbuf_t</span> *sp, <span class="keyword">int</span> item)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbuf_remove</span><span class="params">(<span class="keyword">sbuf_t</span> *sp)</span></span>;</span><br></pre></td></tr></tbody></table></figure>
+<p><code>sbuf.c</code> 代码如下。初始化时，队列为空，<code>slots</code> 为 <code>n</code>，物品数量为 0。在插入新元素时，需要先阻塞等到有空槽 <code>P(slots)</code>，再获取队列的互斥锁 <code>P(mutex)</code> 进行插入。在读取新元素时，需要先阻塞等到有元素 <code>P(items)</code>，再获取队列的互斥锁 <code>P(mutex)</code> 进行读取并删除。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"sbuf.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"csapp.h"</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_init</span><span class="params">(<span class="keyword">sbuf_t</span> *sp, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    sp-&gt;buf = Calloc(n, <span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">    sp-&gt;n = n;                  <span class="comment">/* Buffer holds max of n items */</span></span><br><span class="line">    sp-&gt;front = sp-&gt;rear = <span class="number">0</span>;   <span class="comment">/* Empty buffer iff front == rear */</span></span><br><span class="line">    Sem_init(&amp;sp-&gt;mutex, <span class="number">0</span>, <span class="number">1</span>); <span class="comment">/* Binary semaphore for locking */</span></span><br><span class="line">    Sem_init(&amp;sp-&gt;slots, <span class="number">0</span>, n); <span class="comment">/* Initially, buf has n empty slots */</span></span><br><span class="line">    Sem_init(&amp;sp-&gt;items, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">/* Initially, buf has zero data items */</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Clean up buffer sp */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_deinit</span><span class="params">(<span class="keyword">sbuf_t</span> *sp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    Free(sp-&gt;buf);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Insert item onto the rear of shared buffer sp */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">sbuf_insert</span><span class="params">(<span class="keyword">sbuf_t</span> *sp, <span class="keyword">int</span> item)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    P(&amp;sp-&gt;slots);                          <span class="comment">/* Wait for available slot */</span></span><br><span class="line">    P(&amp;sp-&gt;mutex);                          <span class="comment">/* Lock the buffer */</span></span><br><span class="line">    sp-&gt;buf[(++sp-&gt;rear) % (sp-&gt;n)] = item; <span class="comment">/* Insert the item */</span></span><br><span class="line">    V(&amp;sp-&gt;mutex);                          <span class="comment">/* Unlock the buffer */</span></span><br><span class="line">    V(&amp;sp-&gt;items);                          <span class="comment">/* Announce available item */</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Remove and return the first item from buffer sp */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbuf_remove</span><span class="params">(<span class="keyword">sbuf_t</span> *sp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    P(&amp;sp-&gt;items);                           <span class="comment">/* Wait for available item */</span></span><br><span class="line">    P(&amp;sp-&gt;mutex);                           <span class="comment">/* Lock the buffer */</span></span><br><span class="line">    item = sp-&gt;buf[(++sp-&gt;front) % (sp-&gt;n)]; <span class="comment">/* Remove the item */</span></span><br><span class="line">    V(&amp;sp-&gt;mutex);                           <span class="comment">/* Unlock the buffer */</span></span><br><span class="line">    V(&amp;sp-&gt;slots);                           <span class="comment">/* Announce available slot */</span></span><br><span class="line">    <span class="keyword">return</span> item;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在 <code>Java</code> 中的阻塞队列，也是类似的实现逻辑。区别在于，只使用了一个可重入锁，搭配两个条件变量 <code>notempty,
+notfull</code> 标识队列是否非满与非空。</p>
+<h2 id="part-3">Part 3</h2>
+<p>实现缓存功能，缓存客户端请求的资源，减少与服务端交互。在服务端并行的设置下，<code>cache</code> 的读写显然必须有锁保护。然而，一把大锁会使得所有请求变为串行执行，是不可行的，可以从两个角度改进：</p>
+<ul>
+<li>分段锁。划分多个 <code>cache</code>，根据 hash 路由，每次读写只在段内加锁，jdk
+1.7 之前的 <code>ConcurrentHashMap</code> 就是这种思想。</li>
+<li>优先读。考虑到 <code>cache</code> 的读多于写，而读取时可以不需要加锁，写入时才需要加锁。因此，可以优先保证读取，来提高性能。可以通过读者写者问题的解决方法实现。</li>
+</ul>
+<p>读者写者问题（Readers-Writes
+Problem）是互斥问题的通用描述，，具体为：</p>
+<ul>
+<li>读者线程只读取对象</li>
+<li>写者线程修改对象</li>
+<li>写者对于对象的访问是互斥的</li>
+<li>多个读者可以同时读取对象</li>
+</ul>
+<p>常见的应用场景是：</p>
+<ul>
+<li>在线订票系统：所有顾客都在查看座位，正在订票的顾客必须对数据库有互斥访问权限。</li>
+<li>多线程缓存 web
+代理：多个线程可以读取缓存，但要写入的线程必须有互斥访问权限。</li>
+</ul>
+<p>根据不同的读写策略，可以分为两类读者写者问题，需要注意的是，这两种情况都可能出现
+starvation（饥饿）。</p>
+<blockquote>
+<p>第一类读者写者问题（读者优先）</p>
+</blockquote>
+<ul>
+<li>如果写者没有获取到使用对象的权限，不应该让读者等待</li>
+<li>在等待的写者之后到来的读者应该在写者之前处理</li>
+<li>也就是说，只有没有读者的情况下，写者才能工作</li>
+</ul>
+<blockquote>
+<p>第二类读者写者问题（写者优先）</p>
+</blockquote>
+<ul>
+<li>一旦写者可以处理的时候，就不应该进行等待</li>
+<li>在等待的写者之后到来的读者应该在写者之后处理</li>
+</ul>
+<p>读者优先的代码如下。第一个读者到来时，获取写锁 <code>P(w)</code> 来阻塞后续写入，最后一个读取完毕的读者释放写锁 <code>V(w)</code> 允许后续写入。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Global variables */</span></span><br><span class="line"><span class="keyword">int</span> readcnt;    <span class="comment">/* Initially = 0 */</span></span><br><span class="line"><span class="keyword">sem_t</span> mutex, w; <span class="comment">/* Both initially = 1 */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">reader</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        P(&amp;mutex);</span><br><span class="line">        readcnt++;</span><br><span class="line">        <span class="keyword">if</span> (readcnt == <span class="number">1</span>) <span class="comment">/* First in */</span></span><br><span class="line">            P(&amp;w);</span><br><span class="line">        V(&amp;mutex);</span><br><span class="line">        <span class="comment">/* Critical section */</span></span><br><span class="line">        <span class="comment">/* Reading happens */</span></span><br><span class="line">        P(&amp;mutex);</span><br><span class="line">        readcnt--;</span><br><span class="line">        <span class="keyword">if</span> (readcnt == <span class="number">0</span>) <span class="comment">/* Last out */</span></span><br><span class="line">            V(&amp;w);</span><br><span class="line">        V(&amp;mutex);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">writer</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        P(&amp;w);</span><br><span class="line">        <span class="comment">/* Critical section */</span></span><br><span class="line">        <span class="comment">/* Writing happens */</span></span><br><span class="line">        V(&amp;w);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="代码与结果">代码与结果</h2>
+<p><code>cache</code> 部分我复用了之前 <code>cachelab</code> 的代码，修改成了分段锁的版本。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"csapp.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"sbuf.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"cache.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">doit</span><span class="params">(<span class="keyword">int</span> fd)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">parse_porturi</span><span class="params">(<span class="keyword">char</span> *url, <span class="keyword">char</span> *dest, <span class="keyword">char</span> **uri)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread_once</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Recommended max cache and object sizes */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX_CACHE_SIZE 1049000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX_OBJECT_SIZE 102400</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NTHREADS 3</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SBUFSIZE 16</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N_CACHE_SETS 10</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* You won't lose style points for including this long line in your code */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *user_agent_hdr = <span class="string">"User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n"</span>;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *(kept_headers[<span class="number">5</span>]) = {<span class="string">"Host"</span>, <span class="string">"User-Agent"</span>, <span class="string">"Connection"</span>, <span class="string">"Proxy-Connection"</span>, <span class="literal">NULL</span>};</span><br><span class="line"><span class="keyword">sbuf_t</span> sbuf; <span class="comment">/* Shared buffer of connected descriptors */</span></span><br><span class="line"><span class="keyword">static</span> Cache *cache;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%s"</span>, user_agent_hdr);</span><br><span class="line">    <span class="keyword">int</span> listenfd, connfd;</span><br><span class="line">    <span class="keyword">char</span> hostname[MAXLINE], port[MAXLINE];</span><br><span class="line">    <span class="keyword">socklen_t</span> clientlen;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_storage</span> <span class="title">clientaddr</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Check command line args */</span></span><br><span class="line">    <span class="keyword">if</span> (argc != <span class="number">2</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"usage: %s &lt;port&gt;\n"</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">pthread_t</span> tid;</span><br><span class="line">    <span class="comment">// 初始化阻塞队列</span></span><br><span class="line">    sbuf_init(&amp;sbuf, SBUFSIZE);</span><br><span class="line">    <span class="comment">// 屏蔽SIGPIPE信号</span></span><br><span class="line">    Signal(SIGPIPE, SIG_IGN);</span><br><span class="line">    cache = newCache(N_CACHE_SETS, MAX_CACHE_SIZE, MAX_OBJECT_SIZE);</span><br><span class="line">    <span class="comment">// 线程池</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; NTHREADS; i++)</span><br><span class="line">    {</span><br><span class="line">        Pthread_create(&amp;tid, <span class="literal">NULL</span>, thread, <span class="literal">NULL</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    listenfd = Open_listenfd(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        clientlen = <span class="keyword">sizeof</span>(clientaddr);</span><br><span class="line">        connfd = Accept(listenfd, (SA *)&amp;clientaddr, &amp;clientlen); </span><br><span class="line">        Getnameinfo((SA *)&amp;clientaddr, clientlen, hostname, MAXLINE,</span><br><span class="line">                    port, MAXLINE, <span class="number">0</span>);</span><br><span class="line">        sbuf_insert(&amp;sbuf, connfd);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"Accepted connection from (%s, %s) at fd %d\n"</span>, hostname, port, connfd);</span><br><span class="line">        <span class="comment">// int *vargp = malloc(sizeof(int));</span></span><br><span class="line">        <span class="comment">// *vargp = connfd;</span></span><br><span class="line">        <span class="comment">// Pthread_create(&amp;tid, NULL, thread_once, vargp);</span></span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">doit</span><span class="params">(<span class="keyword">int</span> client_fd)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> server_fd;</span><br><span class="line">    <span class="keyword">char</span> buf[MAXLINE], method[MAXLINE], url[MAXLINE], version[MAXLINE];</span><br><span class="line">    <span class="keyword">rio_t</span> client_rio, server_rio;</span><br><span class="line">    <span class="keyword">int</span> n;</span><br><span class="line"></span><br><span class="line">    Rio_readinitb(&amp;client_rio, client_fd);</span><br><span class="line">    <span class="keyword">if</span> (!Rio_readlineb(&amp;client_rio, buf, MAXLINE)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="comment">// 读取请求行</span></span><br><span class="line">    <span class="built_in">sscanf</span>(buf, <span class="string">"%s %s %s"</span>, method, url, version); </span><br><span class="line"></span><br><span class="line">    <span class="keyword">char</span> server_port[<span class="number">10</span>];</span><br><span class="line">    <span class="keyword">char</span> *uri = <span class="string">""</span>;</span><br><span class="line">    <span class="comment">// 解析uri与端口</span></span><br><span class="line">    parse_porturi(url, server_port, &amp;uri);</span><br><span class="line">    CacheVisit visit;</span><br><span class="line">    visit.key = uri;</span><br><span class="line">    CacheData *cacheData = fetch(cache, &amp;visit);</span><br><span class="line">    <span class="comment">// cache命中</span></span><br><span class="line">    <span class="keyword">if</span> (cacheData != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"uri %s hit cache, address %p, size %d\n"</span>, uri, cacheData-&gt;data, cacheData-&gt;size);</span><br><span class="line">        Rio_writen(client_fd, cacheData-&gt;data, cacheData-&gt;size);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"uri %s miss cache\n"</span>, uri);</span><br><span class="line">    <span class="comment">// 与服务端建立连接</span></span><br><span class="line">    server_fd = Open_clientfd(<span class="string">"localhost"</span>, server_port);</span><br><span class="line">    <span class="built_in">sprintf</span>(buf, <span class="string">"GET %s HTTP/1.0\r\n"</span>, uri);</span><br><span class="line">    Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line">    <span class="comment">// 设置代理header</span></span><br><span class="line">    <span class="built_in">sprintf</span>(buf, <span class="string">"Host: www.cmu.edu\r\n"</span>);</span><br><span class="line">    Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line">    <span class="built_in">sprintf</span>(buf, <span class="string">"User-Agent: %s\r\n"</span>, user_agent_hdr);</span><br><span class="line">    Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line">    <span class="built_in">sprintf</span>(buf, <span class="string">"Connection: close\r\n"</span>);</span><br><span class="line">    Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line">    <span class="built_in">sprintf</span>(buf, <span class="string">"Proxy-Connection: close\r\n"</span>);</span><br><span class="line">    Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 转发其他header</span></span><br><span class="line">    <span class="keyword">char</span> key_buf[MAXLINE], value_buf[MAXLINE];</span><br><span class="line">    Rio_readlineb(&amp;client_rio, buf, MAXLINE);</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">strcmp</span>(buf, <span class="string">"\r\n"</span>))</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">sscanf</span>(buf, <span class="string">"%s: %s"</span>, key_buf, value_buf);</span><br><span class="line">        <span class="keyword">int</span> skip = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; kept_headers[i] != <span class="literal">NULL</span>; i++)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">if</span> (strcasecmp(key_buf, kept_headers[i]) == <span class="number">0</span>)</span><br><span class="line">            {</span><br><span class="line">                skip = <span class="number">1</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">if</span> (!skip)</span><br><span class="line">        {</span><br><span class="line">            Rio_writen(server_fd, buf, <span class="built_in">strlen</span>(buf));</span><br><span class="line">        }</span><br><span class="line">        Rio_readlineb(&amp;client_rio, buf, MAXLINE);</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">// 缓存结果</span></span><br><span class="line">    <span class="keyword">char</span> *data = <span class="built_in">malloc</span>(MAX_OBJECT_SIZE);</span><br><span class="line">    <span class="keyword">int</span> size = <span class="number">0</span>;</span><br><span class="line">    Rio_readinitb(&amp;server_rio, server_fd);</span><br><span class="line">    <span class="keyword">while</span> ((n = Rio_readnb(&amp;server_rio, buf, MAXLINE)) &gt; <span class="number">0</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (size + n &lt; MAX_OBJECT_SIZE)</span><br><span class="line">        {</span><br><span class="line">            <span class="built_in">memcpy</span>(data + size, buf, n);</span><br><span class="line">            size += n;</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        {</span><br><span class="line">            size = MAX_OBJECT_SIZE + <span class="number">1</span>;</span><br><span class="line">        }</span><br><span class="line">        Rio_writen(client_fd, buf, n);</span><br><span class="line">    }</span><br><span class="line">    cacheData = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(CacheData));</span><br><span class="line">    cacheData-&gt;data = data;</span><br><span class="line">    cacheData-&gt;size = size;</span><br><span class="line">    <span class="keyword">if</span> (size &lt;= MAX_OBJECT_SIZE)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"uri %s is stored into cache\n"</span>, uri);</span><br><span class="line">        store(cache, uri, cacheData);</span><br><span class="line">    }</span><br><span class="line">    Close(server_fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">parse_porturi</span><span class="params">(<span class="keyword">char</span> *url, <span class="keyword">char</span> *dest, <span class="keyword">char</span> **uri)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// 默认端口号</span></span><br><span class="line">    <span class="keyword">char</span> *default_port = <span class="string">"80"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 在URL中查找协议部分的冒号</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *protocol_end = <span class="built_in">strstr</span>(url, <span class="string">"://"</span>);</span><br><span class="line">    <span class="keyword">if</span> (protocol_end != <span class="literal">NULL</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 找到协议部分的冒号</span></span><br><span class="line">        protocol_end += <span class="number">3</span>; <span class="comment">// 移动到协议部分的末尾</span></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *port_start = <span class="built_in">strchr</span>(protocol_end, <span class="string">':'</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (port_start != <span class="literal">NULL</span>)</span><br><span class="line">        {</span><br><span class="line">            <span class="comment">// 找到冒号，表示有端口号</span></span><br><span class="line">            <span class="keyword">int</span> port;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">sscanf</span>(port_start + <span class="number">1</span>, <span class="string">"%d"</span>, &amp;port) == <span class="number">1</span>)</span><br><span class="line">            {</span><br><span class="line">                <span class="built_in">sprintf</span>(dest, <span class="string">"%d"</span>, port);</span><br><span class="line">                *uri = <span class="built_in">strchr</span>(protocol_end, <span class="string">'/'</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    *uri = <span class="built_in">strchr</span>(protocol_end, <span class="string">'/'</span>);</span><br><span class="line">    <span class="built_in">sprintf</span>(dest, <span class="string">"%s"</span>, default_port);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread_once</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">int</span> connfd = *(<span class="keyword">int</span> *)vargp;</span><br><span class="line">    doit(connfd); <span class="comment">/* Service client */</span></span><br><span class="line">    Close(connfd);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">thread</span><span class="params">(<span class="keyword">void</span> *vargp)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    Pthread_detach(pthread_self());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">int</span> connfd = sbuf_remove(&amp;sbuf); <span class="comment">/* Remove connfd from buffer */</span></span><br><span class="line">        doit(connfd);                    <span class="comment">/* Service client */</span></span><br><span class="line">        Close(connfd);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>结果如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">*** Basic ***</span><br><span class="line">Starting tiny on 15325</span><br><span class="line">Starting proxy on 20457</span><br><span class="line">1: home.html</span><br><span class="line">   Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/home.html into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">2: csapp.c</span><br><span class="line">   Fetching ./tiny/csapp.c into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/csapp.c into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">3: tiny.c</span><br><span class="line">   Fetching ./tiny/tiny.c into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/tiny.c into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">4: godzilla.jpg</span><br><span class="line">   Fetching ./tiny/godzilla.jpg into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/godzilla.jpg into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">5: tiny</span><br><span class="line">   Fetching ./tiny/tiny into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/tiny into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">Killing tiny and proxy</span><br><span class="line">basicScore: 40/40</span><br><span class="line"></span><br><span class="line">*** Concurrency ***</span><br><span class="line">Starting tiny on port 12414</span><br><span class="line">Starting proxy on port 22796</span><br><span class="line">Starting the blocking NOP server on port 32913</span><br><span class="line">Trying to fetch a file from the blocking nop-server</span><br><span class="line">Fetching ./tiny/home.html into ./.noproxy directly from Tiny</span><br><span class="line">Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">Checking whether the proxy fetch succeeded</span><br><span class="line">Success: Was able to fetch tiny/home.html from the proxy.</span><br><span class="line">Killing tiny, proxy, and nop-server</span><br><span class="line">concurrencyScore: 15/15</span><br><span class="line"></span><br><span class="line">*** Cache ***</span><br><span class="line">Starting tiny on port 23752</span><br><span class="line">Starting proxy on port 26743</span><br><span class="line">Fetching ./tiny/tiny.c into ./.proxy using the proxy</span><br><span class="line">Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">Fetching ./tiny/csapp.c into ./.proxy using the proxy</span><br><span class="line">Killing tiny</span><br><span class="line">Fetching a cached copy of ./tiny/home.html into ./.noproxy</span><br><span class="line">Success: Was able to fetch tiny/home.html from the cache.</span><br><span class="line">Killing proxy</span><br><span class="line">cacheScore: 15/15</span><br><span class="line"></span><br><span class="line">totalScore: 70/70</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="总结">总结</h2>
+<p>完结撒花！终于在 2023 年完成了 CSAPP 这门课的学习！在这门课的学习与实践里，收获还是非常多的。一方面复习了本科学习的专业知识，还从教授的旁征博引中领悟了新的理解；另一方面，在这么多课程学完之后，对计算机系统的认识也有了更清晰的轮廓，有一种计算机大厦落地简称的感觉。细分方向的专业课是计算机系统里小而独立的模块，像计算机组成、操作系统、编译原理等，CSAPP 可以把相关的知识串起来，以程序员的角度，建立起对计算机系统的顶层认识。这也是我觉得这门课的魅力所在。</p>
+<p>祝看到这篇博客的朋友们，新年快乐，万事顺意！</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wdxtub.com/csapp/thin-csapp-9/2016/04/16/">【读薄
+CSAPP】玖 并行与同步 | 小土刀 2.0 (wdxtub.com)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/" title="CSAPP-Lab-7 实验报告: proxylab">https://tqnwhz.github.io/blog/2023/12/30/CSAPP-Lab-7/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="tag"><i class="fa fa-tag"></i> 体系结构</a>
+              <a href="/blog/tags/csapp/" rel="tag"><i class="fa fa-tag"></i> csapp</a>
+              <a href="/blog/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" rel="tag"><i class="fa fa-tag"></i> 实验报告</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/29/CSAPP-Lab-6/" rel="prev" title="CSAPP-Lab-6 实验报告: malloclab">
+                  <i class="fa fa-chevron-left"></i> CSAPP-Lab-6 实验报告: malloclab
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2024/01/16/Kitex-1/" rel="next" title="Kitex 入门（一）">
+                  Kitex 入门（一） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">291k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">8:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
