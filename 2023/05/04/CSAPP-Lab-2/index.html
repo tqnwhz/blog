@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本文介绍了笔者在做 bomblab 一节的实验报告。该 lab 要求通过 gdb 等工具，调试二进制执行文件，阅读理解汇编指令，并找到避免炸弹的正确口令，阻止炸弹爆炸。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSAPP-Lab-2 实验报告: bomblab">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本文介绍了笔者在做 bomblab 一节的实验报告。该 lab 要求通过 gdb 等工具，调试二进制执行文件，阅读理解汇编指令，并找到避免炸弹的正确口令，阻止炸弹爆炸。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-05-04T08:37:07.000Z">
+<meta property="article:modified_time" content="2023-09-28T09:52:18.674Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="体系结构">
+<meta property="article:tag" content="csapp">
+<meta property="article:tag" content="实验报告">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/","path":"2023/05/04/CSAPP-Lab-2/","title":"CSAPP-Lab-2 实验报告: bomblab"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CSAPP-Lab-2 实验报告: bomblab | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-1"><span class="nav-number">2.</span> <span class="nav-text">phase 1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-2"><span class="nav-number">3.</span> <span class="nav-text">phase 2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-3"><span class="nav-number">4.</span> <span class="nav-text">phase 3</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-4"><span class="nav-number">5.</span> <span class="nav-text">phase 4</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-5"><span class="nav-number">6.</span> <span class="nav-text">phase 5</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phase-6"><span class="nav-number">7.</span> <span class="nav-text">phase 6</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%94%E6%A1%88"><span class="nav-number">8.</span> <span class="nav-text">答案</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CSAPP-Lab-2 实验报告: bomblab
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-05-04 16:37:07" itemprop="dateCreated datePublished" datetime="2023-05-04T16:37:07+08:00">2023-05-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" itemprop="url" rel="index"><span itemprop="name">实验报告</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>17k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>31 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本文介绍了笔者在做 bomblab 一节的实验报告。该 lab 要求通过 gdb 等工具，调试二进制执行文件，阅读理解汇编指令，并找到避免炸弹的正确口令，阻止炸弹爆炸。</p>
+<span id="more"></span>
+<h2 id="phase-1">phase 1</h2>
+<p>首先，通过阅读代码，可以发现 <code>phase_1</code> 这个函数内对读取的口令进行检查，如果函数正确退出，则拆弹完成。使用 <code>gdb</code> 对该函数反汇编可以得到如下</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_1:</span><br><span class="line">   0x0000000000400ee0 &lt;+0&gt;:     sub    $0x8,%rsp</span><br><span class="line">   0x0000000000400ee4 &lt;+4&gt;:     mov    $0x402400,%esi</span><br><span class="line">   0x0000000000400ee9 &lt;+9&gt;:     callq  0x401338 &lt;strings_not_equal&gt;</span><br><span class="line">   0x0000000000400eee &lt;+14&gt;:    test   %eax,%eax</span><br><span class="line">   0x0000000000400ef0 &lt;+16&gt;:    je     0x400ef7 &lt;phase_1+23&gt;</span><br><span class="line">   0x0000000000400ef2 &lt;+18&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400ef7 &lt;+23&gt;:    add    $0x8,%rsp</span><br><span class="line">   0x0000000000400efb &lt;+27&gt;:    retq</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以发现，核心是通过 <code>strings_not_equal</code> 比较口令与 0x402400 地址的字符串是否相同，若不同则引发爆炸。虽然直觉上可以这么理解，但验证正确需要更谨慎一点，需要确认：</p>
+<ul>
+<li><code>strings_not_equal</code> 是不是如其名，判断字符串相同</li>
+<li><code>strings_not_equal</code> 的返回值，是否 0 代表相同</li>
+</ul>
+<p>详细的确认需要逐句读汇编，也可以简单确认一下，直接在 <code>0x0000000000400eee</code> 处打断点。输入时输入 0x402400 地址对应的字符串，观察<span class="math inline"> \(eax\)</span> 的值即可。测试发现即可直接通过，可以节省阅读汇编的时间。</p>
+<h2 id="phase-2">phase 2</h2>
+<p>难度略微加大。同样地，首先反汇编 <code>phase_2</code>，结果如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_2:</span><br><span class="line">   0x0000000000400efc &lt;+0&gt;:     push   %rbp</span><br><span class="line">   0x0000000000400efd &lt;+1&gt;:     push   %rbx</span><br><span class="line">   0x0000000000400efe &lt;+2&gt;:     sub    $0x28,%rsp</span><br><span class="line">   0x0000000000400f02 &lt;+6&gt;:     mov    %rsp,%rsi</span><br><span class="line">   0x0000000000400f05 &lt;+9&gt;:     callq  0x40145c &lt;read_six_numbers&gt;</span><br><span class="line">   0x0000000000400f0a &lt;+14&gt;:    cmpl   $0x1,(%rsp)</span><br><span class="line">   0x0000000000400f0e &lt;+18&gt;:    je     0x400f30 &lt;phase_2+52&gt;</span><br><span class="line">   0x0000000000400f10 &lt;+20&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400f15 &lt;+25&gt;:    jmp    0x400f30 &lt;phase_2+52&gt;</span><br><span class="line">   0x0000000000400f17 &lt;+27&gt;:    mov    -0x4(%rbx),%eax</span><br><span class="line">   0x0000000000400f1a &lt;+30&gt;:    add    %eax,%eax</span><br><span class="line">   0x0000000000400f1c &lt;+32&gt;:    cmp    %eax,(%rbx)</span><br><span class="line">   0x0000000000400f1e &lt;+34&gt;:    je     0x400f25 &lt;phase_2+41&gt;</span><br><span class="line">   0x0000000000400f20 &lt;+36&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400f25 &lt;+41&gt;:    add    $0x4,%rbx</span><br><span class="line">   0x0000000000400f29 &lt;+45&gt;:    cmp    %rbp,%rbx</span><br><span class="line">   0x0000000000400f2c &lt;+48&gt;:    jne    0x400f17 &lt;phase_2+27&gt;</span><br><span class="line">   0x0000000000400f2e &lt;+50&gt;:    jmp    0x400f3c &lt;phase_2+64&gt;</span><br><span class="line">   0x0000000000400f30 &lt;+52&gt;:    lea    0x4(%rsp),%rbx</span><br><span class="line">   0x0000000000400f35 &lt;+57&gt;:    lea    0x18(%rsp),%rbp</span><br><span class="line">   0x0000000000400f3a &lt;+62&gt;:    jmp    0x400f17 &lt;phase_2+27&gt;</span><br><span class="line">   0x0000000000400f3c &lt;+64&gt;:    add    $0x28,%rsp</span><br><span class="line">   0x0000000000400f40 &lt;+68&gt;:    pop    %rbx</span><br><span class="line">   0x0000000000400f41 &lt;+69&gt;:    pop    %rbp</span><br><span class="line">   0x0000000000400f42 &lt;+70&gt;:    retq</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到，核心是调用了 <code>read_six_numbers</code> 函数，这个函数需要两个参数，第一个是 <code>read_line</code> 得到的字符串，存储在 <code>rdi</code> 中没有被修改，第二个是 <code>rsi</code>，在栈 <code>rsp</code> 上开辟了 0x28 的空间，猜测应该是一个大小为 10 的 int 数组。同时观察到后续没有使用 <code>eax</code> 的逻辑，这个函数应该是无返回值的。接着反汇编 <code>read_six_numbers</code>，结果如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function read_six_numbers:</span><br><span class="line">   0x000000000040145c &lt;+0&gt;:     sub    $0x18,%rsp</span><br><span class="line">   0x0000000000401460 &lt;+4&gt;:     mov    %rsi,%rdx</span><br><span class="line">   0x0000000000401463 &lt;+7&gt;:     lea    0x4(%rsi),%rcx</span><br><span class="line">   0x0000000000401467 &lt;+11&gt;:    lea    0x14(%rsi),%rax</span><br><span class="line">   0x000000000040146b &lt;+15&gt;:    mov    %rax,0x8(%rsp)</span><br><span class="line">   0x0000000000401470 &lt;+20&gt;:    lea    0x10(%rsi),%rax</span><br><span class="line">   0x0000000000401474 &lt;+24&gt;:    mov    %rax,(%rsp)</span><br><span class="line">   0x0000000000401478 &lt;+28&gt;:    lea    0xc(%rsi),%r9</span><br><span class="line">   0x000000000040147c &lt;+32&gt;:    lea    0x8(%rsi),%r8</span><br><span class="line">   0x0000000000401480 &lt;+36&gt;:    mov    $0x4025c3,%esi</span><br><span class="line">   0x0000000000401485 &lt;+41&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x000000000040148a &lt;+46&gt;:    callq  0x400bf0 &lt;__isoc99_sscanf@plt&gt;</span><br><span class="line">   0x000000000040148f &lt;+51&gt;:    cmp    $0x5,%eax</span><br><span class="line">   0x0000000000401492 &lt;+54&gt;:    jg     0x401499 &lt;read_six_numbers+61&gt;</span><br><span class="line">   0x0000000000401494 &lt;+56&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000401499 &lt;+61&gt;:    add    $0x18,%rsp</span><br><span class="line">   0x000000000040149d &lt;+65&gt;:    retq   </span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到核心逻辑在 + 54 附近，对<code>__isoc99_sscanf@plt</code> 的返回值进行校验，如果不满足 <code>&gt;5</code>，则引爆炸弹。sscanf 的函数签名如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sscanf</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *str, <span class="keyword">const</span> <span class="keyword">char</span> *format, ...)</span></span></span><br></pre></td></tr></tbody></table></figure>
+<p>即从 str 读取格式化输入，返回成功匹配和赋值的个数。打印 0x4025c3 处的模板字符串可知，格式为 "% d
+% d % d % d % d
+% d"，符合这个函数的命名。因此第一步，口令需要按这个格式以六个整数开头。</p>
+<p>回到 <code>phase_2</code>，发现还有两个导致炸弹引爆的因素：</p>
+<ul>
+<li>+18：第一个元素值不为 1</li>
+<li>+34：两个值不相等</li>
+</ul>
+<p>阅读 + 52 到 + 62，再到 + 34 可知，第二个约束时要求数组的下一个元素需要是这一个的两倍大，进而可以得到正确的口令。</p>
+<h2 id="phase-3">phase 3</h2>
+<p>与 Phase
+2 类似，也是考察 <code>sscanf</code>。反汇编 <code>phase_3</code> 得到：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_3:</span><br><span class="line">   0x0000000000400f43 &lt;+0&gt;:     sub    $0x18,%rsp</span><br><span class="line">   0x0000000000400f47 &lt;+4&gt;:     lea    0xc(%rsp),%rcx</span><br><span class="line">   0x0000000000400f4c &lt;+9&gt;:     lea    0x8(%rsp),%rdx</span><br><span class="line">   0x0000000000400f51 &lt;+14&gt;:    mov    $0x4025cf,%esi</span><br><span class="line">   0x0000000000400f56 &lt;+19&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x0000000000400f5b &lt;+24&gt;:    callq  0x400bf0 &lt;__isoc99_sscanf@plt&gt;  // 读入两个整数，存储于rdx(rsp+8), rcx(rsp+12)</span><br><span class="line">   0x0000000000400f60 &lt;+29&gt;:    cmp    $0x1,%eax</span><br><span class="line">   0x0000000000400f63 &lt;+32&gt;:    jg     0x400f6a &lt;phase_3+39&gt;</span><br><span class="line">   0x0000000000400f65 &lt;+34&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400f6a &lt;+39&gt;:    cmpl   $0x7,0x8(%rsp) </span><br><span class="line">   0x0000000000400f6f &lt;+44&gt;:    ja     0x400fad &lt;phase_3+106&gt; // 第一个数如果&gt;7, 则爆炸</span><br><span class="line">   0x0000000000400f71 &lt;+46&gt;:    mov    0x8(%rsp),%eax</span><br><span class="line">   0x0000000000400f75 &lt;+50&gt;:    jmpq   *0x402470(,%rax,8) // 第一个数用于计算跳转偏移，基础位置是 0x400f7c</span><br><span class="line">   0x0000000000400f7c &lt;+57&gt;:    mov    $0xcf,%eax</span><br><span class="line">   0x0000000000400f81 &lt;+62&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400f83 &lt;+64&gt;:    mov    $0x2c3,%eax</span><br><span class="line">   0x0000000000400f88 &lt;+69&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400f8a &lt;+71&gt;:    mov    $0x100,%eax</span><br><span class="line">   0x0000000000400f8f &lt;+76&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400f91 &lt;+78&gt;:    mov    $0x185,%eax</span><br><span class="line">   0x0000000000400f96 &lt;+83&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400f98 &lt;+85&gt;:    mov    $0xce,%eax</span><br><span class="line">   0x0000000000400f9d &lt;+90&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400f9f &lt;+92&gt;:    mov    $0x2aa,%eax</span><br><span class="line">   0x0000000000400fa4 &lt;+97&gt;:    jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400fa6 &lt;+99&gt;:    mov    $0x147,%eax</span><br><span class="line">   0x0000000000400fab &lt;+104&gt;:   jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400fad &lt;+106&gt;:   callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400fb2 &lt;+111&gt;:   mov    $0x0,%eax</span><br><span class="line">   0x0000000000400fb7 &lt;+116&gt;:   jmp    0x400fbe &lt;phase_3+123&gt;</span><br><span class="line">   0x0000000000400fb9 &lt;+118&gt;:   mov    $0x137,%eax</span><br><span class="line">   0x0000000000400fbe &lt;+123&gt;:   cmp    0xc(%rsp),%eax</span><br><span class="line">   0x0000000000400fc2 &lt;+127&gt;:   je     0x400fc9 &lt;phase_3+134&gt; // 第二个数与eax不同，则爆炸</span><br><span class="line">   0x0000000000400fc4 &lt;+129&gt;:   callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000400fc9 &lt;+134&gt;:   add    $0x18,%rsp</span><br><span class="line">   0x0000000000400fcd &lt;+138&gt;:   retq   </span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以发现，只需要根据第一个数确定 eax 取值，也就是第二个数，就可以通过这个 phase。根据 <code>jmpq</code> 猜测源码中有 <code>switch</code>，<code>jmpq</code> 下面的部分就是跳转表。</p>
+<h2 id="phase-4">phase 4</h2>
+<p>首先反汇编 <code>phase4</code>：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_4:</span><br><span class="line">=&gt; 0x000000000040100c &lt;+0&gt;:     sub    $0x18,%rsp</span><br><span class="line">   0x0000000000401010 &lt;+4&gt;:     lea    0xc(%rsp),%rcx // num2 </span><br><span class="line">   0x0000000000401015 &lt;+9&gt;:     lea    0x8(%rsp),%rdx // num1 </span><br><span class="line">   0x000000000040101a &lt;+14&gt;:    mov    $0x4025cf,%esi // "%d %d"</span><br><span class="line">   0x000000000040101f &lt;+19&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x0000000000401024 &lt;+24&gt;:    callq  0x400bf0 &lt;__isoc99_sscanf@plt&gt;</span><br><span class="line">   0x0000000000401029 &lt;+29&gt;:    cmp    $0x2,%eax</span><br><span class="line">   0x000000000040102c &lt;+32&gt;:    jne    0x401035 &lt;phase_4+41&gt; // 读不到两个数，爆炸</span><br><span class="line">   0x000000000040102e &lt;+34&gt;:    cmpl   $0xe,0x8(%rsp)</span><br><span class="line">   0x0000000000401033 &lt;+39&gt;:    jbe    0x40103a &lt;phase_4+46&gt; // num1&lt;=0xe, 避免爆炸</span><br><span class="line">   0x0000000000401035 &lt;+41&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x000000000040103a &lt;+46&gt;:    mov    $0xe,%edx</span><br><span class="line">   0x000000000040103f &lt;+51&gt;:    mov    $0x0,%esi</span><br><span class="line">   0x0000000000401044 &lt;+56&gt;:    mov    0x8(%rsp),%edi</span><br><span class="line">   0x0000000000401048 &lt;+60&gt;:    callq  0x400fce &lt;func4&gt;</span><br><span class="line">   0x000000000040104d &lt;+65&gt;:    test   %eax,%eax</span><br><span class="line">   0x000000000040104f &lt;+67&gt;:    jne    0x401058 &lt;phase_4+76&gt; // 若func4结果不为0, 爆炸</span><br><span class="line">   0x0000000000401051 &lt;+69&gt;:    cmpl   $0x0,0xc(%rsp) </span><br><span class="line">   0x0000000000401056 &lt;+74&gt;:    je     0x40105d &lt;phase_4+81&gt; // num2==0, 避免爆炸</span><br><span class="line">   0x0000000000401058 &lt;+76&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x000000000040105d &lt;+81&gt;:    add    $0x18,%rsp</span><br><span class="line">   0x0000000000401061 &lt;+85&gt;:    retq   </span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>调用 <code>func4</code> 之前的代码很好理解，依然是读数 + 校验。<code>func4</code> 接收三个参数，分别是 num1、0、0xe，返回值若不为 0 则会爆炸。<code>func4</code> 反汇编如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function func4:</span><br><span class="line">   0x0000000000400fce &lt;+0&gt;:     sub    $0x8,%rsp</span><br><span class="line">   0x0000000000400fd2 &lt;+4&gt;:     mov    %edx,%eax // </span><br><span class="line">   0x0000000000400fd4 &lt;+6&gt;:     sub    %esi,%eax // eax=para3-para2</span><br><span class="line">   0x0000000000400fd6 &lt;+8&gt;:     mov    %eax,%ecx // ecx=para3-para2</span><br><span class="line">   0x0000000000400fd8 &lt;+10&gt;:    shr    $0x1f,%ecx // ecx&gt;&gt;=31 &lt;=&gt; ecx=sign(ecx) = 0 or 1</span><br><span class="line">   0x0000000000400fdb &lt;+13&gt;:    add    %ecx,%eax // eax+=ecx</span><br><span class="line">   0x0000000000400fdd &lt;+15&gt;:    sar    %eax // eax 算数右移 1 位</span><br><span class="line">   0x0000000000400fdf &lt;+17&gt;:    lea    (%rax,%rsi,1),%ecx // ecx=rax+rsi</span><br><span class="line">   0x0000000000400fe2 &lt;+20&gt;:    cmp    %edi,%ecx</span><br><span class="line">   0x0000000000400fe4 &lt;+22&gt;:    jle    0x400ff2 &lt;func4+36&gt; // ecx&lt;=edi=num1</span><br><span class="line">   0x0000000000400fe6 &lt;+24&gt;:    lea    -0x1(%rcx),%edx // edx=rcx-1</span><br><span class="line">   0x0000000000400fe9 &lt;+27&gt;:    callq  0x400fce &lt;func4&gt;</span><br><span class="line">   0x0000000000400fee &lt;+32&gt;:    add    %eax,%eax</span><br><span class="line">   0x0000000000400ff0 &lt;+34&gt;:    jmp    0x401007 &lt;func4+57&gt;</span><br><span class="line">   0x0000000000400ff2 &lt;+36&gt;:    mov    $0x0,%eax</span><br><span class="line">   0x0000000000400ff7 &lt;+41&gt;:    cmp    %edi,%ecx</span><br><span class="line">   0x0000000000400ff9 &lt;+43&gt;:    jge    0x401007 &lt;func4+57&gt; // ecx&gt;=edi</span><br><span class="line">   0x0000000000400ffb &lt;+45&gt;:    lea    0x1(%rcx),%esi</span><br><span class="line">   0x0000000000400ffe &lt;+48&gt;:    callq  0x400fce &lt;func4&gt;</span><br><span class="line">   0x0000000000401003 &lt;+53&gt;:    lea    0x1(%rax,%rax,1),%eax</span><br><span class="line">   0x0000000000401007 &lt;+57&gt;:    add    $0x8,%rsp</span><br><span class="line">   0x000000000040100b &lt;+61&gt;:    retq   </span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看出，<code>func4</code> 会递归调用本身。首先要思考，func4 在什么情况下不会调用自己，可以发现：</p>
+<ul>
+<li>+22-&gt;+36：ecx&lt;=edi=num1</li>
+<li>+43-&gt;+57：ecx&gt;=edi</li>
+</ul>
+<p>两个均成立时，ecx=edi，返回值 eax=0，那么只需要根据 ecx 确定 num1 即可。</p>
+<h2 id="phase-5">phase 5</h2>
+<p>首先反汇编：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_5:</span><br><span class="line">   0x0000000000401062 &lt;+0&gt;:     push   %rbx</span><br><span class="line">   0x0000000000401063 &lt;+1&gt;:     sub    $0x20,%rsp</span><br><span class="line">   0x0000000000401067 &lt;+5&gt;:     mov    %rdi,%rbx</span><br><span class="line">   0x000000000040106a &lt;+8&gt;:     mov    %fs:0x28,%rax</span><br><span class="line">   0x0000000000401073 &lt;+17&gt;:    mov    %rax,0x18(%rsp)</span><br><span class="line">   0x0000000000401078 &lt;+22&gt;:    xor    %eax,%eax</span><br><span class="line">   0x000000000040107a &lt;+24&gt;:    callq  0x40131b &lt;string_length&gt;</span><br><span class="line">   0x000000000040107f &lt;+29&gt;:    cmp    $0x6,%eax</span><br><span class="line">   0x0000000000401082 &lt;+32&gt;:    je     0x4010d2 &lt;phase_5+112&gt; // 字符串长度不为0，则爆炸</span><br><span class="line">   0x0000000000401084 &lt;+34&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000401089 &lt;+39&gt;:    jmp    0x4010d2 &lt;phase_5+112&gt;</span><br><span class="line">   0x000000000040108b &lt;+41&gt;:    movzbl (%rbx,%rax,1),%ecx // ecx=input[i]</span><br><span class="line">   0x000000000040108f &lt;+45&gt;:    mov    %cl,(%rsp)</span><br><span class="line">   0x0000000000401092 &lt;+48&gt;:    mov    (%rsp),%rdx // rdx=input[i]</span><br><span class="line">   0x0000000000401096 &lt;+52&gt;:    and    $0xf,%edx // edx %=16</span><br><span class="line">   0x0000000000401099 &lt;+55&gt;:    movzbl 0x4024b0(%rdx),%edx // maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?</span><br><span class="line">   0x00000000004010a0 &lt;+62&gt;:    mov    %dl,0x10(%rsp,%rax,1) // input[i]=s[edx]</span><br><span class="line">   0x00000000004010a4 &lt;+66&gt;:    add    $0x1,%rax // rax+=1</span><br><span class="line">   0x00000000004010a8 &lt;+70&gt;:    cmp    $0x6,%rax</span><br><span class="line">   0x00000000004010ac &lt;+74&gt;:    jne    0x40108b &lt;phase_5+41&gt; // !=6循环</span><br><span class="line">   0x00000000004010ae &lt;+76&gt;:    movb   $0x0,0x16(%rsp)</span><br><span class="line">   0x00000000004010b3 &lt;+81&gt;:    mov    $0x40245e,%esi // 秘钥 flyers</span><br><span class="line">   0x00000000004010b8 &lt;+86&gt;:    lea    0x10(%rsp),%rdi // 修改后的输入</span><br><span class="line">   0x00000000004010bd &lt;+91&gt;:    callq  0x401338 &lt;strings_not_equal&gt;</span><br><span class="line">   0x00000000004010c2 &lt;+96&gt;:    test   %eax,%eax</span><br><span class="line">   0x00000000004010c4 &lt;+98&gt;:    je     0x4010d9 &lt;phase_5+119&gt; // eax!=0，爆炸</span><br><span class="line">   0x00000000004010c6 &lt;+100&gt;:   callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x00000000004010cb &lt;+105&gt;:   nopl   0x0(%rax,%rax,1)</span><br><span class="line">   0x00000000004010d0 &lt;+110&gt;:   jmp    0x4010d9 &lt;phase_5+119&gt;</span><br><span class="line">   0x00000000004010d2 &lt;+112&gt;:   mov    $0x0,%eax // 循环变量 eax=0</span><br><span class="line">   0x00000000004010d7 &lt;+117&gt;:   jmp    0x40108b &lt;phase_5+41&gt;</span><br><span class="line">   0x00000000004010d9 &lt;+119&gt;:   mov    0x18(%rsp),%rax</span><br><span class="line">   0x00000000004010de &lt;+124&gt;:   xor    %fs:0x28,%rax</span><br><span class="line">   0x00000000004010e7 &lt;+133&gt;:   je     0x4010ee &lt;phase_5+140&gt;</span><br><span class="line">   0x00000000004010e9 &lt;+135&gt;:   callq  0x400b30 &lt;__stack_chk_fail@plt&gt;</span><br><span class="line">   0x00000000004010ee &lt;+140&gt;:   add    $0x20,%rsp</span><br><span class="line">   0x00000000004010f2 &lt;+144&gt;:   pop    %rbx</span><br><span class="line">   0x00000000004010f3 &lt;+145&gt;:   retq   </span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看出，输入的口令需要是一个长度为 6 的字符串，在循环内部对字符串每一位进行了修改，具体是取 ascii%16 的值，作为另一个字符串的下标索引，映射得到新字符串。反过来，就可以得到原始口令。%16 的结果应该为 9,15,14,5,6,7，对应到 ASCII 即可。</p>
+<h2 id="phase-6">phase 6</h2>
+<p>老规矩，先反汇编：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function phase_6:</span><br><span class="line">   0x00000000004010f4 &lt;+0&gt;:     push   %r14</span><br><span class="line">   0x00000000004010f6 &lt;+2&gt;:     push   %r13</span><br><span class="line">   0x00000000004010f8 &lt;+4&gt;:     push   %r12</span><br><span class="line">   0x00000000004010fa &lt;+6&gt;:     push   %rbp</span><br><span class="line">   0x00000000004010fb &lt;+7&gt;:     push   %rbx</span><br><span class="line">   0x00000000004010fc &lt;+8&gt;:     sub    $0x50,%rsp</span><br><span class="line">   0x0000000000401100 &lt;+12&gt;:    mov    %rsp,%r13</span><br><span class="line">   0x0000000000401103 &lt;+15&gt;:    mov    %rsp,%rsi // int[6]</span><br><span class="line">   0x0000000000401106 &lt;+18&gt;:    callq  0x40145c &lt;read_six_numbers&gt;</span><br><span class="line">   0x000000000040110b &lt;+23&gt;:    mov    %rsp,%r14</span><br><span class="line">   0x000000000040110e &lt;+26&gt;:    mov    $0x0,%r12d // 循环变量i</span><br><span class="line">   0x0000000000401114 &lt;+32&gt;:    mov    %r13,%rbp // </span><br><span class="line">   0x0000000000401117 &lt;+35&gt;:    mov    0x0(%r13),%eax </span><br><span class="line">   0x000000000040111b &lt;+39&gt;:    sub    $0x1,%eax // eax=a[i]-1</span><br><span class="line">   0x000000000040111e &lt;+42&gt;:    cmp    $0x5,%eax</span><br><span class="line">   0x0000000000401121 &lt;+45&gt;:    jbe    0x401128 &lt;phase_6+52&gt; // 1&lt;=a[i]&lt;=6, 避免爆炸, jbe是无符号比较</span><br><span class="line">   0x0000000000401123 &lt;+47&gt;:    callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x0000000000401128 &lt;+52&gt;:    add    $0x1,%r12d // i+=1</span><br><span class="line">   0x000000000040112c &lt;+56&gt;:    cmp    $0x6,%r12d</span><br><span class="line">   0x0000000000401130 &lt;+60&gt;:    je     0x401153 &lt;phase_6+95&gt; // 循环结束</span><br><span class="line">   0x0000000000401132 &lt;+62&gt;:    mov    %r12d,%ebx // 内层循环，j=i</span><br><span class="line">   0x0000000000401135 &lt;+65&gt;:    movslq %ebx,%rax</span><br><span class="line">   0x0000000000401138 &lt;+68&gt;:    mov    (%rsp,%rax,4),%eax </span><br><span class="line">   0x000000000040113b &lt;+71&gt;:    cmp    %eax,0x0(%rbp)</span><br><span class="line">   0x000000000040113e &lt;+74&gt;:    jne    0x401145 &lt;phase_6+81&gt; // a[j]!=a[i], j&gt;i, 否则爆炸</span><br><span class="line">   0x0000000000401140 &lt;+76&gt;:    callq  0x40143a &lt;explode_bomb&gt; //</span><br><span class="line">   0x0000000000401145 &lt;+81&gt;:    add    $0x1,%ebx // j=j+1</span><br><span class="line">   0x0000000000401148 &lt;+84&gt;:    cmp    $0x5,%ebx</span><br><span class="line">   0x000000000040114b &lt;+87&gt;:    jle    0x401135 &lt;phase_6+65&gt; // j&lt;=5, 跳转至65</span><br><span class="line">   0x000000000040114d &lt;+89&gt;:    add    $0x4,%r13 // a[i] 地址自增4</span><br><span class="line">   0x0000000000401151 &lt;+93&gt;:    jmp    0x401114 &lt;phase_6+32&gt;</span><br><span class="line">   0x0000000000401153 &lt;+95&gt;:    lea    0x18(%rsp),%rsi // 循环结束，新循环开始，数组边界</span><br><span class="line">   0x0000000000401158 &lt;+100&gt;:   mov    %r14,%rax</span><br><span class="line">   0x000000000040115b &lt;+103&gt;:   mov    $0x7,%ecx</span><br><span class="line">   0x0000000000401160 &lt;+108&gt;:   mov    %ecx,%edx</span><br><span class="line">   0x0000000000401162 &lt;+110&gt;:   sub    (%rax),%edx  </span><br><span class="line">   0x0000000000401164 &lt;+112&gt;:   mov    %edx,(%rax) // a[i]=7-a[i]</span><br><span class="line">   0x0000000000401166 &lt;+114&gt;:   add    $0x4,%rax // i+=1</span><br><span class="line">   0x000000000040116a &lt;+118&gt;:   cmp    %rsi,%rax</span><br><span class="line">   0x000000000040116d &lt;+121&gt;:   jne    0x401160 &lt;phase_6+108&gt; // i&lt;6</span><br><span class="line">   0x000000000040116f &lt;+123&gt;:   mov    $0x0,%esi // 循环变量</span><br><span class="line">   0x0000000000401174 &lt;+128&gt;:   jmp    0x401197 &lt;phase_6+163&gt;</span><br><span class="line">   0x0000000000401176 &lt;+130&gt;:   mov    0x8(%rdx),%rdx</span><br><span class="line">   0x000000000040117a &lt;+134&gt;:   add    $0x1,%eax</span><br><span class="line">   0x000000000040117d &lt;+137&gt;:   cmp    %ecx,%eax</span><br><span class="line">   0x000000000040117f &lt;+139&gt;:   jne    0x401176 &lt;phase_6+130&gt; // 重复a[i]次</span><br><span class="line">   0x0000000000401181 &lt;+141&gt;:   jmp    0x401188 &lt;phase_6+148&gt;</span><br><span class="line">   0x0000000000401183 &lt;+143&gt;:   mov    $0x6032d0,%edx</span><br><span class="line">   0x0000000000401188 &lt;+148&gt;:   mov    %rdx,0x20(%rsp,%rsi,2) // (void*)[6] B B[i]=0x6032d0</span><br><span class="line">   0x000000000040118d &lt;+153&gt;:   add    $0x4,%rsi // i+=1</span><br><span class="line">   0x0000000000401191 &lt;+157&gt;:   cmp    $0x18,%rsi</span><br><span class="line">   0x0000000000401195 &lt;+161&gt;:   je     0x4011ab &lt;phase_6+183&gt; // 循环结束</span><br><span class="line">   0x0000000000401197 &lt;+163&gt;:   mov    (%rsp,%rsi,1),%ecx // 循环开始, ecx=a[i]</span><br><span class="line">   0x000000000040119a &lt;+166&gt;:   cmp    $0x1,%ecx</span><br><span class="line">   0x000000000040119d &lt;+169&gt;:   jle    0x401183 &lt;phase_6+143&gt; // a[i]&lt;=1</span><br><span class="line">   0x000000000040119f &lt;+171&gt;:   mov    $0x1,%eax</span><br><span class="line">   0x00000000004011a4 &lt;+176&gt;:   mov    $0x6032d0,%edx</span><br><span class="line">   0x00000000004011a9 &lt;+181&gt;:   jmp    0x401176 &lt;phase_6+130&gt;</span><br><span class="line">   0x00000000004011ab &lt;+183&gt;:   mov    0x20(%rsp),%rbx // 循环结束, B[0]</span><br><span class="line">   0x00000000004011b0 &lt;+188&gt;:   lea    0x28(%rsp),%rax // &amp;B[1]</span><br><span class="line">   0x00000000004011b5 &lt;+193&gt;:   lea    0x50(%rsp),%rsi // 循环边界</span><br><span class="line">   0x00000000004011ba &lt;+198&gt;:   mov    %rbx,%rcx // B[i]</span><br><span class="line">   0x00000000004011bd &lt;+201&gt;:   mov    (%rax),%rdx // B[i+1]</span><br><span class="line">   0x00000000004011c0 &lt;+204&gt;:   mov    %rdx,0x8(%rcx) // *(B[i]+8)=B[i+1] &lt;=&gt; B[i].next=B[i+1]</span><br><span class="line">   0x00000000004011c4 &lt;+208&gt;:   add    $0x8,%rax // i+=1</span><br><span class="line">   0x00000000004011c8 &lt;+212&gt;:   cmp    %rsi,%rax</span><br><span class="line">   0x00000000004011cb &lt;+215&gt;:   je     0x4011d2 &lt;phase_6+222&gt; // 循环结束</span><br><span class="line">   0x00000000004011cd &lt;+217&gt;:   mov    %rdx,%rcx // </span><br><span class="line">   0x00000000004011d0 &lt;+220&gt;:   jmp    0x4011bd &lt;phase_6+201&gt;</span><br><span class="line">   0x00000000004011d2 &lt;+222&gt;:   movq   $0x0,0x8(%rdx) // 循环结束</span><br><span class="line">   0x00000000004011da &lt;+230&gt;:   mov    $0x5,%ebp // 循环变量 i=5</span><br><span class="line">   0x00000000004011df &lt;+235&gt;:   mov    0x8(%rbx),%rax // </span><br><span class="line">   0x00000000004011e3 &lt;+239&gt;:   mov    (%rax),%eax</span><br><span class="line">   0x00000000004011e5 &lt;+241&gt;:   cmp    %eax,(%rbx)</span><br><span class="line">   0x00000000004011e7 &lt;+243&gt;:   jge    0x4011ee &lt;phase_6+250&gt; *(B[0])&gt;=*(*B[0]+8) &lt;=&gt; B[i].val&gt;=B[i].next.val</span><br><span class="line">   0x00000000004011e9 &lt;+245&gt;:   callq  0x40143a &lt;explode_bomb&gt;</span><br><span class="line">   0x00000000004011ee &lt;+250&gt;:   mov    0x8(%rbx),%rbx // rbx=*(*rbx+8)</span><br><span class="line">   0x00000000004011f2 &lt;+254&gt;:   sub    $0x1,%ebp</span><br><span class="line">   0x00000000004011f5 &lt;+257&gt;:   jne    0x4011df &lt;phase_6+235&gt; // i!=1</span><br><span class="line">   0x00000000004011f7 &lt;+259&gt;:   add    $0x50,%rsp</span><br><span class="line">   0x00000000004011fb &lt;+263&gt;:   pop    %rbx</span><br><span class="line">   0x00000000004011fc &lt;+264&gt;:   pop    %rbp</span><br><span class="line">   0x00000000004011fd &lt;+265&gt;:   pop    %r12</span><br><span class="line">   0x00000000004011ff &lt;+267&gt;:   pop    %r13</span><br><span class="line">   0x0000000000401201 &lt;+269&gt;:   pop    %r14</span><br><span class="line">   0x0000000000401203 &lt;+271&gt;:   retq</span><br></pre></td></tr></tbody></table></figure>
+<p>前面的部分很好理解，要求输入数组 <code>int
+a[6]</code> 内部不能有重复元素，且 <code>a[i] &lt;=
+6</code>，然后再做变换 <code>a[i]=7-a[i]</code>。</p>
+<p>从 + 123 开始的循环，可以看出是要根据 <code>a[i]</code> 初始化一个位于 <code>0x20</code> 的 void
+* 数组
+B，此时还不知道 B 的每个元素指向的是什么。当 <code>a[i]&gt;1</code> 时，+130 处的循环涉及多次寻址，比较复杂，而且难以理解，
+可以通过观察打表看 B 的取值。</p>
+<p>首先输入 "6 5 4 3 2 1"，转换为 "1 2 3 4 5 6"，然后打印 B 的值依次为：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(gdb) print *(int **) ($sp+0x20)</span><br><span class="line">$16 = (int *) 0x6032d0 &lt;node1&gt;</span><br><span class="line">(gdb) print *(int **) ($sp+0x28)</span><br><span class="line">$17 = (int *) 0x6032e0 &lt;node2&gt;</span><br><span class="line">(gdb) print *(int **) ($sp+0x30)</span><br><span class="line">$18 = (int *) 0x6032f0 &lt;node3&gt;</span><br><span class="line">(gdb) print *(int **) ($sp+0x38)</span><br><span class="line">$19 = (int *) 0x603300 &lt;node4&gt;</span><br><span class="line">(gdb) print *(int **) ($sp+0x40)</span><br><span class="line">$20 = (int *) 0x603310 &lt;node5&gt;</span><br><span class="line">(gdb) print *(int **) ($sp+0x48)</span><br><span class="line">$21 = (int *) 0x603320 &lt;node6&gt;</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看出，随着 <code>a[i]+=1</code>，<code>b[i]+=0x10</code>。而且联想到 + 130 处的循环，<code>0x8(%rdx),%rdx</code>，可以猜测到 <code>*B[i]</code> 应该是一个结构体（大小超过了 8
+Bytes），且内部含有指针（可以自更新），进而可以猜测 0x6032d0 这个地址就是链表头部。猜到这一点，后面理解起来就很容易了。</p>
+<p>链表节点指向的值依次为</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(gdb) print **(int **) ($sp+0x20)</span><br><span class="line">$23 = 332</span><br><span class="line">(gdb) print **(int **) ($sp+0x28)</span><br><span class="line">$24 = 168</span><br><span class="line">(gdb) print **(int **) ($sp+0x30)</span><br><span class="line">$25 = 924</span><br><span class="line">(gdb) print **(int **) ($sp+0x38)</span><br><span class="line">$26 = 691</span><br><span class="line">(gdb) print **(int **) ($sp+0x40)</span><br><span class="line">$27 = 477</span><br><span class="line">(gdb) print **(int **) ($sp+0x48)</span><br><span class="line">$28 = 443</span><br></pre></td></tr></tbody></table></figure>
+<p>注意，上面的 int 替换为 long，结果相同，说明有可能结构体里存储的是 int 并发生了对齐填充。</p>
+<p>在 + 204 处的循环里，对链表进行了重排，使得 <code>B[i].next=B[i+1]</code>。+243 处判断重排后的链表需要满足 <code>B[i].val&gt;=B[i].next.val</code>，否则会爆炸。只需根据上面的节点值，调整输入的值顺序，使得重排后的链表降序排列即可。</p>
+<h2 id="答案">答案</h2>
+<p>分别是每个 phase 的答案，供参考，部分答案不唯一。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Border relations with Canada have never been better.</span><br><span class="line">1 2 4 8 16 32</span><br><span class="line">0 207</span><br><span class="line">7 0</span><br><span class="line">)/.%&amp;'</span><br><span class="line">4 3 2 1 6 5</span><br></pre></td></tr></tbody></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/" title="CSAPP-Lab-2 实验报告: bomblab">https://tqnwhz.github.io/blog/2023/05/04/CSAPP-Lab-2/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="tag"><i class="fa fa-tag"></i> 体系结构</a>
+              <a href="/blog/tags/csapp/" rel="tag"><i class="fa fa-tag"></i> csapp</a>
+              <a href="/blog/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" rel="tag"><i class="fa fa-tag"></i> 实验报告</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/04/28/CSAPP-Lab-1/" rel="prev" title="CSAPP-Lab-1 实验报告: datalab">
+                  <i class="fa fa-chevron-left"></i> CSAPP-Lab-1 实验报告: datalab
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/05/14/XV6-Lab-1/" rel="next" title="XV6-Lab-1 实验报告: Xv6 and Unix utilities">
+                  XV6-Lab-1 实验报告: Xv6 and Unix utilities <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">241k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:17</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

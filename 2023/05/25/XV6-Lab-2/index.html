@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本篇是 xv6 的第 2 个 lab，通过增加自定义的系统调用，了解系统调用的链路及原理。就实验内容本身来说，难度不高，也只包含两个 exercise。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XV6-Lab-2 实验报告: Lab: system calls">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本篇是 xv6 的第 2 个 lab，通过增加自定义的系统调用，了解系统调用的链路及原理。就实验内容本身来说，难度不高，也只包含两个 exercise。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-05-25T14:10:39.000Z">
+<meta property="article:modified_time" content="2023-09-28T09:52:18.682Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="实验报告">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="MIT6.S081">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/","path":"2023/05/25/XV6-Lab-2/","title":"XV6-Lab-2 实验报告: Lab: system calls"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>XV6-Lab-2 实验报告: Lab: system calls | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86%E5%8F%8A%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">原理及分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exercises"><span class="nav-number">3.</span> <span class="nav-text">Exercises</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#trace"><span class="nav-number">3.1.</span> <span class="nav-text">trace</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sysinfo"><span class="nav-number">3.2.</span> <span class="nav-text">sysinfo</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C"><span class="nav-number">4.</span> <span class="nav-text">结果</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          XV6-Lab-2 实验报告: Lab: system calls
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-05-25 22:10:39" itemprop="dateCreated datePublished" datetime="2023-05-25T22:10:39+08:00">2023-05-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/MIT6-S081/" itemprop="url" rel="index"><span itemprop="name">MIT6.S081</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/MIT6-S081/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" itemprop="url" rel="index"><span itemprop="name">实验报告</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本篇是 xv6 的第 2 个 lab，通过增加自定义的系统调用，了解系统调用的链路及原理。就实验内容本身来说，难度不高，也只包含两个 exercise。</p>
+<span id="more"></span>
+<h2 id="原理及分析">原理及分析</h2>
+<p>我们知道，系统调用是操作系统内核提供的接口，提供封装好的底层功能。然而，<strong>系统调用的函数或者地址不是直接暴露给用户的</strong>。内核只是提供了一个统一的系统调用入口，称为 <code>ECALL</code>。ECALL 接收一个数字参数，当一个用户程序想要将程序执行的控制权转移到内核，它只需要执行 <code>ECALL</code> 指令，并传入一个数字。这里的数字参数代表了应用程序想要调用的系统调用。这样的设计有很多优点，最直观的是，可以在 <code>ECALL</code> 内调用系统调用前，进行参数检查或者权限检查，避免非法的调用。</p>
+<p>在 xv6 中，这些 “系统调用号” 声明于 <code>kernel/syscall.h</code>，例子如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// System call numbers</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SYS_fork    1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SYS_exit    2</span></span><br><span class="line"><span class="comment">// ...</span></span><br></pre></td></tr></tbody></table></figure>
+<p>在 <code>kernel/syscall.c</code> 中，<code>syscall</code> 根据调用号执行对应的系统调用，代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span></span></span><br><span class="line"><span class="function"><span class="title">syscall</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="keyword">int</span> num;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line"></span><br><span class="line">  num = p-&gt;trapframe-&gt;a7;</span><br><span class="line">  <span class="keyword">if</span>(num &gt; <span class="number">0</span> &amp;&amp; num &lt; NELEM(syscalls) &amp;&amp; syscalls[num]) {</span><br><span class="line">    p-&gt;trapframe-&gt;a0 = syscalls[num]();</span><br><span class="line">  } <span class="keyword">else</span> {</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d %s: unknown sys call %d\n"</span>,</span><br><span class="line">            p-&gt;pid, p-&gt;name, num);</span><br><span class="line">    p-&gt;trapframe-&gt;a0 = <span class="number">-1</span>;</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><code>trapframe</code> 保存了程序陷入内核前的寄存器信息，系统调用是一种主动的陷入内核的做法。在上述 <code>syscall</code> 函数中，读取了调用号，若合法则跳转并设置返回值。<code>syscalls</code> 是一个数组，将系统调用号和具体的函数进行对应。这些函数实现在不同的文件中：进程相关的调用（如 <code>fork</code>），实现在 <code>kernel/sysproc.c</code> 中，文件相关的调用（如 <code>fstat,
+read, write</code>），实现在 <code>kernel/file.c</code> 中。</p>
+<p>在 C 语言中，函数参数里的 void，表明函数不接收任何参数。如果没有 void 的话，<code>void
+syscall()</code> 表明函数可以接收任意参数。</p>
+<p>在用户态，系统调用在 <code>user/user.h</code> 中声明，用于链接。<code>user/usys.pl</code> 是所谓的系统调用桩（stub），通过 <code>kernel/syscall.h</code>，将系统调用转化为对应调用号的 <code>ECALL</code> 的调用。该文件会被编译为 <code>user/usys.S</code>，片段如下。能够看出是声明的系统调用代码，通过 RISC-V 的 <code>ecall</code> 指令陷入内核。<code>ecall</code> 会跳转到异常处理的地址，这个地址是通过硬件编程写入的。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># generated by usys.pl - do not edit</span><br><span class="line">#include "kernel/syscall.h"</span><br><span class="line">.global fork</span><br><span class="line">fork:</span><br><span class="line"> li a7, SYS_fork # 设置系统调用号</span><br><span class="line"> ecall</span><br><span class="line"> ret</span><br><span class="line">.global exit</span><br><span class="line">exit:</span><br><span class="line"> li a7, SYS_exit</span><br><span class="line"> ecall</span><br><span class="line"> ret</span><br></pre></td></tr></tbody></table></figure>
+<p>如此一来，整个系统调用的流程就串起来了：</p>
+<ol type="1">
+<li><code>user/user.h</code> 中的声明</li>
+<li><code>user/usys.pl</code> 的系统调用桩，设置系统调用号</li>
+<li>中断处理逻辑</li>
+<li><code>kernel/syscall.c</code> 的 <code>syscall</code> 函数</li>
+<li>对应的系统调用函数</li>
+</ol>
+<p>相应地，如果需要新加系统调用，也得按这个流程来。os 处理中断的逻辑与系统调用不直接相关，可以后面再理解。</p>
+<h2 id="exercises">Exercises</h2>
+<h3 id="trace">trace</h3>
+<p>要求实现一个系统调用，能够根据一个 mask，监控某个进程对应系统调用执行结果，并打印。对于该进程创建的子进程，监控同样生效。</p>
+<p>简单思考之后，不难想到这个调用需要更新一个<strong>进程级别的状态</strong>，在系统调用结束时，根据这个状态决定是否打印相关信息；在<strong>创建子进程时，需要传播这个状态</strong>。进程级的状态，最简单的是直接保存在进程结构体中，<code>kernel/proc.c</code> 中，<code>proc</code> 结构体维护了进程状态，包含锁、pid、页表等。可以在这个结构中新加一个字段，保存这个 mask。系统调用函数如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// trace system calls of given mask</span></span><br><span class="line"><span class="function">uint64</span></span><br><span class="line"><span class="function"><span class="title">sys_trace</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="keyword">int</span> mask;</span><br><span class="line">  <span class="keyword">if</span> (argint(<span class="number">0</span>, &amp;mask) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  myproc()-&gt;tracemask = mask;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>需要注意的是，内核里系统调用的传参机制比较特殊，不是声明在函数里，而是通过 <code>argint,
+argaddr</code> 这种函数读参，猜测与中断的机制有关。</p>
+<p>然后在 <code>syscall</code> 函数中的系统调用执行完毕后，根据 mask 判断是否打印信息即可。这里还需要维护一个系统调用号到系统调用名的数组 <code>sysname</code>，方便打印调用名。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span></span></span><br><span class="line"><span class="function"><span class="title">syscall</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="keyword">int</span> num;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span> =</span> myproc();</span><br><span class="line"></span><br><span class="line">  num = p-&gt;trapframe-&gt;a7;</span><br><span class="line">  <span class="keyword">if</span> (num &gt; <span class="number">0</span> &amp;&amp; num &lt; NELEM(syscalls) &amp;&amp; syscalls[num])</span><br><span class="line">  {</span><br><span class="line">    p-&gt;trapframe-&gt;a0 = syscalls[num]();</span><br><span class="line">  }</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">  {</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d %s: unknown sys call %d\n"</span>,</span><br><span class="line">           p-&gt;pid, p-&gt;name, num);</span><br><span class="line">    p-&gt;trapframe-&gt;a0 = <span class="number">-1</span>;</span><br><span class="line">  }</span><br><span class="line">  <span class="keyword">if</span> (p-&gt;tracemask &amp; (<span class="number">1</span> &lt;&lt; num))</span><br><span class="line">  {</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d: syscall %s -&gt; %d\n"</span>, p-&gt;pid, sysname[num], p-&gt;trapframe-&gt;a0);</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>不要忘记在 <code>fork</code> 调用中传播这个 mask。另外，用户态系统调用的声明和桩代码比较简单，这里就略去了。</p>
+<h3 id="sysinfo">sysinfo</h3>
+<p>要求实现一个系统调用，能够返回系统中的可用内存数量以及运行中的进程数量。难点有几处。</p>
+<p>首先，如何计算可用内存大小？参考 <code>kernel/kalloc.c</code>，发现有一个名为 <code>kmem</code> 的变量保存了空闲物理页信息。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">run</span> {</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">run</span> *<span class="title">next</span>;</span></span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> {</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> <span class="title">lock</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">run</span> *<span class="title">freelist</span>;</span></span><br><span class="line">} kmem;</span><br></pre></td></tr></tbody></table></figure>
+<p>通过计算这个 <code>freelist</code> 链表的长度，乘以单个页面的大小，即可得到可用内存的大小，代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">free_memory</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="keyword">int</span> amount = <span class="number">0</span>;</span><br><span class="line">  acquire(&amp;kmem.lock);</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">run</span> *<span class="title">r</span> =</span> kmem.freelist;</span><br><span class="line">  <span class="keyword">for</span> (; r; r = r-&gt;next)</span><br><span class="line">  {</span><br><span class="line">    amount += PGSIZE;</span><br><span class="line">  }</span><br><span class="line">  release(&amp;kmem.lock);</span><br><span class="line">  <span class="keyword">return</span> amount;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>其次，如何计算运行中的进程数量。参考 <code>kernel/proc.c</code>，发现其声明了一个大小为 64 的 <code>proc</code> 数组，猜测其应该是支持的最大进程数量。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc</span> <span class="title">proc</span>[<span class="title">NPROC</span>];</span> <span class="comment">// 64</span></span><br></pre></td></tr></tbody></table></figure>
+<p><code>allocproc</code> 函数印证了这一点，该函数申请一个新的进程，是通过遍历上述数组，找到 <code>p-&gt;state
+==
+UNUSED</code> 实现的。因此可以通过遍历数组，统计得到运行中的进程数量，代码如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// num of processes</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">num_proc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">p</span>;</span></span><br><span class="line">  <span class="keyword">int</span> cnt = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span> (p = proc; p &lt; &amp;proc[NPROC]; p++)</span><br><span class="line">  {</span><br><span class="line">    acquire(&amp;p-&gt;lock);</span><br><span class="line">    <span class="keyword">if</span> (p-&gt;state != UNUSED)</span><br><span class="line">    {</span><br><span class="line">      cnt++;</span><br><span class="line">    }</span><br><span class="line">    release(&amp;p-&gt;lock);</span><br><span class="line">  }</span><br><span class="line">  <span class="keyword">return</span> cnt;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>上面两个函数的声明需要加在 <code>kernel/defs.h</code> 中，方便调用。然后，可以在 <code>kernel/sysproc.c</code> 中新建系统调用。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">uint64</span></span><br><span class="line"><span class="function"><span class="title">sys_info</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">  uint64 addr;</span><br><span class="line">  <span class="keyword">if</span> (argaddr(<span class="number">0</span>, &amp;addr) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sysinfo</span> <span class="title">info</span>;</span></span><br><span class="line">  info.freemem = free_memory();</span><br><span class="line">  info.nproc = num_proc();</span><br><span class="line">  <span class="keyword">if</span> (copyout(myproc()-&gt;pagetable, addr, (<span class="keyword">char</span> *)&amp;info, <span class="keyword">sizeof</span>(info)) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><code>copyout</code> 用于将内核的数据拷贝到用户态，参考 <code>fstat</code> 调用可以了解它的用法。</p>
+<p>最后，完成用户态的相关代码即可。</p>
+<h2 id="结果">结果</h2>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">== Test trace 32 grep == </span><br><span class="line">$ make qemu-gdb</span><br><span class="line">trace 32 grep: OK (4.8s) </span><br><span class="line">== Test trace all grep == </span><br><span class="line">$ make qemu-gdb</span><br><span class="line">trace all grep: OK (0.8s) </span><br><span class="line">== Test trace nothing == </span><br><span class="line">$ make qemu-gdb</span><br><span class="line">trace nothing: OK (0.8s) </span><br><span class="line">== Test trace children == </span><br><span class="line">$ make qemu-gdb</span><br><span class="line">trace children: OK (9.9s) </span><br><span class="line">== Test sysinfotest == </span><br><span class="line">$ make qemu-gdb</span><br><span class="line">sysinfotest: OK (1.7s) </span><br><span class="line">== Test time == </span><br><span class="line">time: OK </span><br><span class="line">Score: 35/35</span><br></pre></td></tr></tbody></table></figure>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/" title="XV6-Lab-2 实验报告: Lab: system calls">https://tqnwhz.github.io/blog/2023/05/25/XV6-Lab-2/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" rel="tag"><i class="fa fa-tag"></i> 实验报告</a>
+              <a href="/blog/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+              <a href="/blog/tags/MIT6-S081/" rel="tag"><i class="fa fa-tag"></i> MIT6.S081</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/05/14/XV6-Lab-1/" rel="prev" title="XV6-Lab-1 实验报告: Xv6 and Unix utilities">
+                  <i class="fa fa-chevron-left"></i> XV6-Lab-1 实验报告: Xv6 and Unix utilities
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/07/05/MIT-6-824-1/" rel="next" title="MIT 6.824 Lab1 实验报告: MapReduce">
+                  MIT 6.824 Lab1 实验报告: MapReduce <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">241k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:17</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

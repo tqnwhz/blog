@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 最近开了个新坑，打算学习一下 CSAPP 和 Mit S6.081，会把一些学习笔记和实验报告更新在博客上。CSAPP（Computer Systems：A Programmer’s Perspective），即从程序员的角度学习计算机系统，是 CMU 的一门名课，配套同名黑书教材，译为《深入了解计算机系统》。 这一节是 CSAPP 的第一节，包含了整数表示、操作等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSAPP - 学习笔记 (1): 字节与整数">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 最近开了个新坑，打算学习一下 CSAPP 和 Mit S6.081，会把一些学习笔记和实验报告更新在博客上。CSAPP（Computer Systems：A Programmer’s Perspective），即从程序员的角度学习计算机系统，是 CMU 的一门名课，配套同名黑书教材，译为《深入了解计算机系统》。 这一节是 CSAPP 的第一节，包含了整数表示、操作等。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-04-28T07:45:11.000Z">
+<meta property="article:modified_time" content="2023-09-28T09:52:18.674Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="体系结构">
+<meta property="article:tag" content="csapp">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/","path":"2023/04/28/CSAPP-Notes-1/","title":"CSAPP - 学习笔记 (1): 字节与整数"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CSAPP - 学习笔记 (1): 字节与整数 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="nav-number">2.</span> <span class="nav-text">逻辑运算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A7%BB%E4%BD%8D"><span class="nav-number">3.</span> <span class="nav-text">移位</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A6%E7%A7%BB-xy"><span class="nav-number">3.1.</span> <span class="nav-text">左移: x&lt;&lt;y</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%B3%E7%A7%BB-xy"><span class="nav-number">3.2.</span> <span class="nav-text">右移: x&gt;&gt;y</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AA%E5%AE%9A%E4%B9%89%E8%A1%8C%E4%B8%BA"><span class="nav-number">3.3.</span> <span class="nav-text">未定义行为</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E6%95%B0%E8%A1%A8%E7%A4%BA"><span class="nav-number">4.</span> <span class="nav-text">整数表示</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A0%E7%AC%A6%E5%8F%B7%E6%95%B0"><span class="nav-number">4.1.</span> <span class="nav-text">无符号数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E7%AC%A6%E5%8F%B7%E6%95%B0"><span class="nav-number">4.2.</span> <span class="nav-text">有符号数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A1%A5%E7%A0%81"><span class="nav-number">4.2.1.</span> <span class="nav-text">补码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%8D%E7%A0%81"><span class="nav-number">4.2.2.</span> <span class="nav-text">反码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E7%A0%81"><span class="nav-number">4.2.3.</span> <span class="nav-text">原码</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AC%E6%8D%A2"><span class="nav-number">4.3.</span> <span class="nav-text">转换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">4.4.</span> <span class="nav-text">扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%89%E7%AC%A6%E5%8F%B7%E6%95%B0-1"><span class="nav-number">4.4.1.</span> <span class="nav-text">有符号数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A0%E7%AC%A6%E5%8F%B7%E6%95%B0-1"><span class="nav-number">4.4.2.</span> <span class="nav-text">无符号数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%AA%E6%96%AD"><span class="nav-number">4.5.</span> <span class="nav-text">截断</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E6%95%B0%E8%BF%90%E7%AE%97"><span class="nav-number">5.</span> <span class="nav-text">整数运算</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E6%B3%95"><span class="nav-number">5.1.</span> <span class="nav-text">加法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A0%E7%AC%A6%E5%8F%B7%E6%95%B0-2"><span class="nav-number">5.1.1.</span> <span class="nav-text">无符号数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A1%A5%E7%A0%81%E5%8A%A0%E6%B3%95"><span class="nav-number">5.1.2.</span> <span class="nav-text">补码加法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%98%E6%B3%95"><span class="nav-number">5.2.</span> <span class="nav-text">乘法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%A4%E6%B3%95"><span class="nav-number">5.3.</span> <span class="nav-text">除法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A0%E7%AC%A6%E5%8F%B7%E6%95%B0%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE"><span class="nav-number">6.</span> <span class="nav-text">无符号数使用建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E7%AB%AF%E4%B8%8E%E5%B0%8F%E7%AB%AF"><span class="nav-number">7.</span> <span class="nav-text">大端与小端</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CSAPP - 学习笔记 (1): 字节与整数
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-04-28 15:45:11" itemprop="dateCreated datePublished" datetime="2023-04-28T15:45:11+08:00">2023-04-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>最近开了个新坑，打算学习一下 CSAPP 和 Mit
+S6.081，会把一些学习笔记和实验报告更新在博客上。CSAPP（Computer
+Systems：A Programmer’s
+Perspective），即从程序员的角度学习计算机系统，是 CMU 的一门名课，配套同名黑书教材，译为《深入了解计算机系统》。</p>
+<p>这一节是 CSAPP 的第一节，包含了整数表示、操作等。</p>
+<span id="more"></span>
+<p>下面是一些有用的链接，供想学习的同学参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-s081/">简介
+- MIT6.S081 (gitbook.io)</a></li>
+<li><a target="_blank" rel="noopener" href="https://csdiy.wiki/体系结构/CSAPP/">CMU 15-213: CSAPP -
+CS 自学指南 (csdiy.wiki)</a></li>
+</ul>
+<h2 id="逻辑运算">逻辑运算</h2>
+<p>逻辑运算：&amp;&amp;, ||, ! 特点：</p>
+<ul>
+<li>0 被认为是 false</li>
+<li> 非 0 值被认为是 true</li>
+<li> 总是返回 true 或 false</li>
+<li> 短路求值
+<ul>
+<li>短路求值一种友好的特性，它的优点是：</li>
+</ul></li>
+<li>可以用于前置判断，避免非法操作
+<ul>
+<li>例如，<code>p&amp;&amp;*p</code>，会先判断指针 p
+地址合法，再去访问，避免错误</li>
+</ul></li>
+<li>可以减少无用操作
+<ul>
+<li>例如，<code>1||func()</code> 永远返回 true，无需调用
+<code>func</code> 函数，可以提高效率 当然，短路求值也有一定的缺点</li>
+</ul></li>
+<li>基于跳转法实现的，短路求值需要增加很多跳转指令，会把代码块拆分为更小的基本块，给优化带来挑战
+<ul>
+<li>短路求值的关键是：若结果已确定则直接跳出，否则继续计算结果。需要在每次求解后插入跳转指令。</li>
+<li>编译优化算法一般以跳转 / 分支拆分得到的基本块为单位，进行块内和块间优化，基本块越小、数量越多，越不利于优化
+如果逻辑操作无副作用，那么可以直接使用算术法，相当于不严格按照短路求值实现，但由于无副作用，所以结果是相同的。</li>
+</ul></li>
+</ul>
+<p>可参考 <a target="_blank" rel="noopener" href="https://www.zhihu.com/question/53273670">逻辑表达式的短路是如何实现的？
+- 知乎 (zhihu.com)</a></p>
+<h2 id="移位">移位</h2>
+<h3 id="左移-xy">左移: x&lt;&lt;y</h3>
+<p>左移总是相同的，例如二进制串 "011000010" 左移 3
+位后得到 "00010000"，低位用 0
+补充，溢出的高位消失不见，规则同时适用于正负数。</p>
+<h3 id="右移-xy">右移: x&gt;&gt;y</h3>
+<p>右边的多余低位被丢弃，左侧的填充规则有两种：</p>
+<ul>
+<li>逻辑右移：使用 0 填充高位</li>
+<li>算数右移：使用符号位填充高位 例如串 "10100010"，右移 3
+位的结果分别是：</li>
+<li>逻辑右移：00101000</li>
+<li> 算数右移：11101000 在
+C/C++ 语言中，右移均使用 "&gt;&gt;" 操作符，编译器对有符号数进行算数右移，对无符号数进行逻辑右移
+在 Java
+中，算数右移对应 "&gt;&gt;" 操作符，逻辑右移使用 “&gt;&gt;&gt;”。而且 Java
+中只存在有符号数。</li>
+</ul>
+<h3 id="未定义行为">未定义行为</h3>
+<p>如果把一个 8 位的数 x，左移 8 位，会发生什么？</p>
+<ul>
+<li>直觉来看应该是 0</li>
+<li> 在大多数机器上，会得到 x
+本身，因为移位的长度会对数长取模，8%8=0，即左移 0 位</li>
+<li>这是一种未定义行为，不应该依赖它的结果</li>
+</ul>
+<h2 id="整数表示">整数表示</h2>
+<h3 id="无符号数">无符号数</h3>
+<p>对于 w 位的无符号整数，最小值为 0，最大值为<span class="math inline"> \(2^w-1\)</span>，所有位都被解释为正数权重，从高到底依次为<span class="math inline"> \(2^{w-1},2^{w-2},...,2^0\)</span>，数字的值为 <span class="math display">\[
+B2U(X)=sum_{i=0}^{w-1}x_i\cdot 2^i
+\]</span> <span class="math inline">\(B2U(X)\)</span> 表示将比特串 X
+转换为无符号数的数值。</p>
+<h3 id="有符号数">有符号数</h3>
+<p>几乎所有的现代机器都使用补码表示。</p>
+<h4 id="补码">补码</h4>
+<p>补码（Two's Complement），使用最高位作为符号位，权重为<span class="math inline"> \(-2^{w-1}\)</span>，剩余位与无符号数的权重相同。
+<span class="math display">\[
+B2T(X)=-x_{w-1}\cdot 2^{w-1}+sum_{i=0}^{w-2}x_i\cdot 2^i
+\]</span> 在补码场景下，负数最小值的表示为<span class="math inline"> \(T_{min}=10\cdots
+0\)</span>，即只有负权重，负数最大值（-1）的表示为<span class="math inline"> \(11\cdots 1\)</span>，即全部为 1，正数最大值为<span class="math inline"> \(T_{max}=01\cdots 1\)</span>。 w
+位补码的表示范围为<span class="math inline"> \(-2^{w-1} \sim
+2^{w-1}-1\)</span>，正数比负数少一个，这可能会导致各种边界错误。
+补码标识下，正负数的转换，可以通过 <strong>取反 + 1</strong> 得到，例如 4
+位数下，2 的表示为 "0010"，按位取反得到 "1101"，再 + 1
+得到 “1110”，这就是 - 2.</p>
+<ul>
+<li>这是由于负数数量比正数多 1 个。</li>
+<li><span class="math inline">\(T_{min}\)</span> 的相反数还是<span class="math inline"> \(T_{min}\)</span></li>
+</ul>
+<p>除了补码，还有两种标准表示方法：</p>
+<h4 id="反码">反码</h4>
+<p>反码（One's Complement），除了最高位的权是<span class="math inline"> \(-(2^{w-1}-1)\)</span>，不是<span class="math inline"> \(-2^{w-1}\)</span>，剩下的跟补码是一样的， <span class="math display">\[
+B2O(X)=-x_{w-1}\cdot (2^{w-1}-1)+sum_{i=0}^{w-2}x_i\cdot 2^i
+\]</span></p>
+<h4 id="原码">原码</h4>
+<p>原码（Sign-Magnitude），最高有效位是符号位，用来确定剩下的位应该取负权还是正权：
+<span class="math display">\[
+B2S(X)=-(-1)^{x_{w-1}}\cdot sum_{i=0}^{w-2}x_i\cdot 2^i
+\]</span> 这两种方法都有一个奇怪的属性，对于数字 0 有两种表示，把<span class="math inline"> \([00\cdots 0]\)</span> 解释为 + 0，把<span class="math inline"> \([10\cdots
+0]\)</span> 解释为 - 0，虽然过去存在基于反码表示的机器，但几乎所有的现代机器都使用补码。浮点数中有使用原码。</p>
+<h3 id="转换">转换</h3>
+<p>无符号数和符号数的转换遵循以下规则：</p>
+<ul>
+<li>保留位特征，即数字的比特串存储不会改变</li>
+<li>重新解释，根据比特的权重重新计算</li>
+<li>可能会有未期望的效果，例如，加或减<span class="math inline"> \(2^w\)</span>，即转换出现问题</li>
+<li>同时包含有符号和无符号数的表达式，有符号数会转换为无符号数
+无符号数和有符号数进行比较 / 计算时，会将有符号数隐式转换为无符号数，例如<span class="math inline"> \(-1&gt;0u\)</span>，在使用时要注意。
+例如，下面的代码，无符号数<span class="math inline"> \(i\ge
+0\)</span> 恒成立，代码会数组越界或者死循环。</li>
+</ul>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> i;</span><br><span class="line"><span class="keyword">for</span> (i = cnt<span class="number">-1</span>; i &gt;= <span class="number">0</span>; i--) {</span><br><span class="line">    func(a[i]);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>另外，<code>sizeof</code> 的返回值也是无符号数。
+上面的倒数计数的场景，需要改写成如下形式才能正常工作，它利用了溢出的特性，第一眼看上去会很反直觉。</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> i;</span><br><span class="line"><span class="keyword">for</span> (i = cnt<span class="number">-1</span>; i &lt; cnt; i--) {</span><br><span class="line">    func(a[i]);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在 C 语言中，无符号数和有符号数的转换是隐式的，不会有任何的 warning
+或者 error。而在 Go
+语言中，需要显式对数值进行类型转换，避免了可能的问题。</p>
+<h3 id="扩展">扩展</h3>
+<p>如何把一个 w 位的数扩展为 w+k 位的数，数值不变？</p>
+<h4 id="有符号数-1">有符号数</h4>
+<p>做法是，新增的高位复制符号位，剩余位保持不变。 例如 "1100"，扩展增加 1
+位，结果是 "11100"。观察可知，<span class="math inline">\(-2^3=-2^4+2^3\)</span>，最高位及更高位的权重和不变，整个结果不变。</p>
+<h4 id="无符号数-1">无符号数</h4>
+<p>增加 0 即可。</p>
+<h3 id="截断">截断</h3>
+<p>当一个 w+k 位的数去掉高 k 位时，对</p>
+<ul>
+<li>无符号数，等价于对<span class="math inline"> \(2^w\)</span> 取模</li>
+<li>有符号数，可能正负会发生变化</li>
+</ul>
+<h2 id="整数运算">整数运算</h2>
+<h3 id="加法">加法</h3>
+<p>考虑 w 位的两个数 u,v 相加</p>
+<h4 id="无符号数-2">无符号数</h4>
+<p>等价于两数相加后截断只保留低 w 位（可能会有进位被丢弃） <span class="math display">\[
+s=UAdd_w(u,v)=(u+v)mod 2^w
+\]</span> 例如两个 4 位数，<span class="math inline">\(13+5=18\ mod\
+16=2\)</span></p>
+<h4 id="补码加法">补码加法</h4>
+<p>有符号的加法在比特特征上与无符号数相同，但是从表现上看，会出现两种情况：</p>
+<ul>
+<li>正数溢出：两个正数相加，超过<span class="math inline"> \(T_{max}\)</span>，变为负数</li>
+<li>负数溢出，两个负数相加，小于<span class="math inline"> \(T_{min}\)</span>，变为正数
+减法可以转换为加法求解。</li>
+</ul>
+<h3 id="乘法">乘法</h3>
+<p>两个 w 位数相乘，可能需要至多 2w 位存储结果（考虑不可达的上界，两个
+w+1 位的数相乘，最高位为 1，其余位时 0，结果为 2w+1 位）。
+同样，需要截断取低 w 位，对无符号数来说，等价于取模。
+对于有符号数，经过证明，其乘法与无符号数的乘法位级表示是等价的，同样可能会出现溢出现象。
+由于乘法会消耗更多时钟周期（现代计算机需要 3 个），移位只需要 1
+个时钟周期，编译器会对乘法进行优化。移位与无符号整数乘比特等价，进而与符号整数相乘等价。</p>
+<h3 id="除法">除法</h3>
+<p>同样的，除法也可以优化为右移操作，由于整数除法总是舍入到
+0，对于补码除法，需要引入偏置位进行修正。</p>
+<h2 id="无符号数使用建议">无符号数使用建议</h2>
+<p>从前面转换一节讲的例子，可以看到无符号整数的使用可能会引发奇怪的问题。下面是一些使用无符号数的场景</p>
+<ul>
+<li>加密运算</li>
+<li>表示集合，bitmap
+需要强调的是，“无符号数适用于非负值的场景” 是一种常见的误区，一个例子就是之前提到的倒排问题。在《Go
+程序设计语言》中，作者也建议了一般不要使用无符号数，除非像加密算法这种特殊的场景。</li>
+</ul>
+<h2 id="大端与小端">大端与小端</h2>
+<p>多个字节存储时，根据字节在内存中的地址顺序，有两种存储方式，例如
+0x01234567，</p>
+<ul>
+<li>大端，高位字节在先，01,23,45,67
+<ul>
+<li>网络传输</li>
+</ul></li>
+<li>小端，低位字节在先，67,45,23,01
+<ul>
+<li>x86，ARM 处理器
+大端优势是读取直观，但这对计算机来说无关紧要，计算机只需要一个统一的标准进行计算即可。</li>
+</ul></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/" title="CSAPP - 学习笔记 (1): 字节与整数">https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 学习笔记</a>
+              <a href="/blog/tags/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="tag"><i class="fa fa-tag"></i> 体系结构</a>
+              <a href="/blog/tags/csapp/" rel="tag"><i class="fa fa-tag"></i> csapp</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/03/05/golang-talk/" rel="prev" title="浅谈 Golang 的优缺点">
+                  <i class="fa fa-chevron-left"></i> 浅谈 Golang 的优缺点
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/04/28/CSAPP-Notes-2/" rel="next" title="CSAPP - 学习笔记 (2): 浮点数">
+                  CSAPP - 学习笔记 (2): 浮点数 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">241k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:17</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

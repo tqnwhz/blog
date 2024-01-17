@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本篇是 MIT 6.824 实验课程的最后一篇，实现一个高可用的、分片的 KV 数据库。分片能够有效解决单节点能承载的并发量问题，成倍地提升读写并发，但需要处理配置更新、切片迁移、删除等问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT-6.824 Lab4: 切片 KV 数据库">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本篇是 MIT 6.824 实验课程的最后一篇，实现一个高可用的、分片的 KV 数据库。分片能够有效解决单节点能承载的并发量问题，成倍地提升读写并发，但需要处理配置更新、切片迁移、删除等问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/architecture.webp">
+<meta property="article:published_time" content="2023-08-11T14:37:57.000Z">
+<meta property="article:modified_time" content="2023-09-28T09:52:18.678Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="MIT 6.824">
+<meta property="article:tag" content="分布式系统">
+<meta property="article:tag" content="Raft">
+<meta property="article:tag" content="KV">
+<meta property="article:tag" content="切片">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/architecture.webp">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/","path":"2023/08/11/MIT-6-824-4/","title":"MIT-6.824 Lab4: 切片 KV 数据库"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MIT-6.824 Lab4: 切片 KV 数据库 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">整体架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#shardctrler"><span class="nav-number">2.1.</span> <span class="nav-text">ShardCtrler</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv"><span class="nav-number">2.2.</span> <span class="nav-text">ShardKV</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%80%83"><span class="nav-number">3.</span> <span class="nav-text">思考</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#shardctrler-%E7%9A%84%E6%93%8D%E4%BD%9C%E5%90%AB%E4%B9%89"><span class="nav-number">3.1.</span> <span class="nav-text">ShardCtrler 的操作含义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E9%85%8D%E7%BD%AE%E6%9B%B4%E6%96%B0%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88"><span class="nav-number">3.2.</span> <span class="nav-text">ShardKV 配置更新意味着什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E7%94%B1%E8%B0%81%E8%B4%9F%E8%B4%A3%E9%85%8D%E7%BD%AE%E6%9B%B4%E6%96%B0"><span class="nav-number">3.3.</span> <span class="nav-text">ShardKV 由谁负责配置更新</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E6%A3%80%E6%B5%8B%E9%85%8D%E7%BD%AE%E6%9B%B4%E6%96%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">3.4.</span> <span class="nav-text">ShardKV 检测配置更新流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E6%80%8E%E4%B9%88%E8%BF%9B%E8%A1%8C%E5%88%87%E7%89%87%E8%BD%AC%E7%A7%BB"><span class="nav-number">3.5.</span> <span class="nav-text">ShardKV 怎么进行切片转移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E6%8B%89%E5%8F%96%E6%95%B0%E6%8D%AE"><span class="nav-number">3.6.</span> <span class="nav-text">ShardKV 拉取数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E4%BD%95%E6%97%B6%E5%88%A0%E9%99%A4%E5%88%87%E7%89%87%E6%95%B0%E6%8D%AE"><span class="nav-number">3.7.</span> <span class="nav-text">ShardKV 何时删除切片数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E6%96%B0%E5%A2%9E%E7%9A%84%E6%93%8D%E4%BD%9C%E7%B1%BB%E5%9E%8B"><span class="nav-number">3.8.</span> <span class="nav-text">ShardKV 新增的操作类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shardkv-%E9%85%8D%E7%BD%AE%E6%9B%B4%E6%96%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">3.9.</span> <span class="nav-text">ShardKV 配置更新流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E5%88%87%E7%89%87%E6%95%B0%E6%8D%AE%E6%98%AF%E5%90%8C%E6%AD%A5%E8%BF%98%E6%98%AF%E5%BC%82%E6%AD%A5"><span class="nav-number">3.10.</span> <span class="nav-text">删除切片数据是同步还是异步</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#operation"><span class="nav-number">4.</span> <span class="nav-text">Operation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#server"><span class="nav-number">5.</span> <span class="nav-text">server</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#challenge-2-%E4%B8%8D%E9%98%BB%E5%A1%9E%E5%85%B6%E4%BB%96%E5%88%87%E7%89%87%E6%95%B0%E6%8D%AE%E8%AF%B7%E6%B1%82"><span class="nav-number">5.1.</span> <span class="nav-text">challenge 2
+不阻塞其他切片数据请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#challenge-2-%E5%BF%AB%E9%80%9F%E5%93%8D%E5%BA%94"><span class="nav-number">5.2.</span> <span class="nav-text">challenge 2 快速响应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT-6.824 Lab4: 切片 KV 数据库
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-08-11 22:37:57" itemprop="dateCreated datePublished" datetime="2023-08-11T22:37:57+08:00">2023-08-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/MIT-6-824/" itemprop="url" rel="index"><span itemprop="name">MIT 6.824</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本篇是 MIT
+6.824 实验课程的最后一篇，实现一个高可用的、分片的 KV 数据库。分片能够有效解决单节点能承载的并发量问题，成倍地提升读写并发，但需要处理配置更新、切片迁移、删除等问题。</p>
+<span id="more"></span>
+<p>遵循课程规定，本文没有放出核心代码，只介绍了一些结构设计和流程思考，可放心食用。</p>
+<h2 id="整体架构">整体架构</h2>
+<p>下面是 ShardKV 的架构图，图片来源（<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/464097239">mit-6.824 2021
+Lab4：ShardKV - 知乎 (zhihu.com)</a>）。</p>
+<p><img src="architecture.webp"></p>
+<h3 id="shardctrler">ShardCtrler</h3>
+<p>基于 Raft 构建的切片配置服务，client 可以通过 Join/Leave/Move/Query 四个 rpc，增查配置。默认有 10 个切片，根据 hash 取模得到 key 对应的切片。每个 config 由两部分组成，切片映射和多个复制组。每个复制组存储了一个切片子集的数据（一个切片的数据只会存储在一个复制组内），内部使用 Raft 实现高可用。切片映射用于将切片映射到复制组。从代码角度看，<code>Config</code> 结构体内包含：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Config <span class="keyword">struct</span> {</span><br><span class="line">	Num    <span class="keyword">int</span>              <span class="comment">// config number</span></span><br><span class="line">	Shards [NShards]<span class="keyword">int</span>     <span class="comment">// shard -&gt; gid, shards[0]=1 表示 切片 0 的数据在 group 1 上</span></span><br><span class="line">	Groups <span class="keyword">map</span>[<span class="keyword">int</span>][]<span class="keyword">string</span> <span class="comment">// gid -&gt; servers[]</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li>Num：自增的配置编号</li>
+<li> Shards：shard 和 gid 的对应关系，将切片映射到复制组</li>
+<li> Groups：每个复制组拥有的 kv server</li>
+</ul>
+<h3 id="shardkv">ShardKV</h3>
+<p>KV 存储的服务端，存储若干个切片的 KV 数据。需要周期性检测配置更新，进行配置更新、分片数据迁移、清理等工作。</p>
+<p>客户端会依据最新的 shard 配置，发起 PUT/GET/APPEND 请求到 key 对应的服务端。</p>
+<h2 id="思考">思考</h2>
+<p>在盲目写代码之前，应该先理解背景和问题，思考需要做哪些事情、怎么做。</p>
+<h3 id="shardctrler-的操作含义">ShardCtrler 的操作含义</h3>
+<p><strong>复制组（Replica
+Group）是指一组用于 ShardKV 服务的，内部互为复制关系的服务器</strong>。刚开始看到这个词可能会觉得有点表意不清。一个复制组内可能会持有一个或多个切片的数据。ShardCtrler
+向 client 暴露 4 种 rpc：</p>
+<ul>
+<li>Join：增加一个复制组用于 ShardKV 服务，即我们常说的扩容，需要进行<strong>负载均衡</strong></li>
+<li> Leave：移除一个 ShardKV 复制组，即我们常说的缩容，需要进行<strong>负载均衡</strong></li>
+<li> Move：将一个切片的数据移动到另一个复制组，这个主要是方便测试用的</li>
+<li> Query：查询某个版本的配置状态</li>
+</ul>
+<p>前三种修改配置的操作，实际上是新增了一个配置。上面提到的负载均衡是指，<strong>将切片均匀地分散到复制组上，并尽可能少地转移数据</strong>。如何实现呢，其实也容易，每次让拥有最多分片的复制组，分一个给拥有最少分片的复制组，直到两者的分片数量差 &lt;=1 即可。</p>
+<p>这里需要处理一些边界情况。例如初始时，所有切片都是在默认的无效组 0 上，新来一个复制组，就应该把所有切片都分给它，而不该把 0 当成一个有效的组，给它分 5 个。</p>
+<h3 id="shardkv-配置更新意味着什么">ShardKV 配置更新意味着什么</h3>
+<p>每次配置变动后，一个复制组可能会失去某些切片，获得一些切片，进而需要：</p>
+<ul>
+<li>新获得的切片：获取对应的切片数据</li>
+<li>失去的切片：当新的复制组受理数据后，将切片数据删除</li>
+</ul>
+<h3 id="shardkv-由谁负责配置更新">ShardKV 由谁负责配置更新</h3>
+<p>在一个复制组内，多个节点要利用 Raft 保证线性一致性。如果配置更新各自独立完成，一致性就会被打破，出现问题。因此，还是要利用 Raft，由 leader 节点发起配置更新并逐步地完成，follower 只需要被动提交日志即可。</p>
+<h3 id="shardkv-检测配置更新流程">ShardKV 检测配置更新流程</h3>
+<p>在 leader 侧，有一个后台线程，隔一段时间，例如 50-100ms 检查配置更新，这一点是毋庸置疑的。问题是检查哪个配置，最新的配置吗？</p>
+<p>不不不，不可以。检查最新的配置可能会出现配置突变的情况，假设，目前的 config1，shard1 在 g100 上，发生了如下事情：</p>
+<ol type="1">
+<li>client 提交了 config2，shard1 被分给 g101</li>
+<li>g101 获取到了 config2，<strong>希望从 g100 获得 shard1</strong></li>
+<li>client 提交了 config3，shard1 又被分给了 g100</li>
+<li>g100 获取到了 config3，<strong>觉得自己什么都不用做</strong></li>
+</ol>
+<p>这就出现了不一致的问题。因此正确答案是，<strong>复制组需要保存当前的配置，每次检查是否存在下一个版本的配置，进行更新</strong>。这样可以保证所有的节点按同样的顺序更新配置。</p>
+<p>另一个问题是，leader 一次能够处理几个配置更新？这个也显然是 1 个，当 leader 处在配置更新中时，应该暂停检测更新。换而言之，检测到配置更新后，应该阻塞到配置更新完毕，再继续检测。</p>
+<h3 id="shardkv-怎么进行切片转移">ShardKV 怎么进行切片转移</h3>
+<p>常规来看，数据转移有两种模式：</p>
+<ul>
+<li>一种是拉（PULL），每个复制组去主动拉取自己需要的数组</li>
+<li>一种是推（PUSH），每个复制组将其他复制组需要的切片数据推送给它们</li>
+</ul>
+<p>我个人认为拉的模式更好。考虑扩容的场景，新的复制组没有任何数据和用户请求，由它来主导发起数据请求，其他复制组被动回应，再好不过了。</p>
+<h3 id="shardkv-拉取数据">ShardKV 拉取数据</h3>
+<p>需要拉取哪些数据？基础的 KV 映射是必须的，但是还不够，还需要把请求的去重表也进行同步，否则，在收到历史消息后，可能会有重复执行的问题。</p>
+<p>拉取数据时，配置不一致怎么办？不可以直接拉取，需要等到配置一致了才可以进行，否则会有问题。考虑下面的场景：</p>
+<ol type="1">
+<li>config1 时 x=1 在 g100</li>
+<li> 发布 config2，x 在 g101</li>
+<li>g101 检测到 config2，向 g100 拉取 x</li>
+<li>g100 返回 x=1</li>
+<li>g100 收到历史消息，<code>put x
+2</code>，发现自己不在配置更新中，处理</li>
+</ol>
+<p>究其原因，配置不一致时，不同复制组对切片数据的行为可能是冲突的，使得历史消息的执行出现问题。</p>
+<h3 id="shardkv-何时删除切片数据">ShardKV 何时删除切片数据</h3>
+<p>正如之前讨论的，当新的复制组受理数据后，原复制组可以将可以将多的一部分数据删除。受理需要等待新的复制组 commit 数据，原来的数据才是彻底没用了，否则，可能由于节点下线等，需要重新请求、</p>
+<p>因此，可以使用类似回调的模式，当新的复制组受理数据后，通知原复制组对原有数据进行删除。</p>
+<h3 id="shardkv-新增的操作类型">ShardKV 新增的操作类型</h3>
+<p>除了基础的 GET/PUT/APPEND，为了支持配置更新、切片迁移等的同步一致，需要设计新的操作，可以分为以下几类：</p>
+<ul>
+<li>配置更新开始的操作，通知整个复制组开始进行配置更新。复制组内必须对配置更新达成共识，这样 leader 下线后，其他节点才能继续更新工作。</li>
+<li>切片数据的增删操作，当 leader 收到增删切片数据后，通知整个复制组。</li>
+<li>配置更新的结束操作，通知复制组配置更新完成。</li>
+</ul>
+<p>这几步基本都是必须的，要考虑 leader 下线 / 其他节点成为 leader 的变动下，配置更新的状态不会丢失，必须把相关的操作使用 Raft 同步。</p>
+<h3 id="shardkv-配置更新流程">ShardKV 配置更新流程</h3>
+<ol type="1">
+<li>后台线程检测到新配置，提交到 Raft，等待更新完成</li>
+<li> server apply
+新配置，<strong>将 server 标识为配置更新中</strong>，开启新的异步线程 t1 用以处理</li>
+<li> t1 计算需要 pull 的切片，并发获取</li>
+<li> t1 获取到的切片数据，提交给 Raft</li>
+<li>t1 等到某个切片数据新增的操作 apply 后，发起删除数据的 rpc</li>
+<li>t1 等到所有数据删除成功后</li>
+<li> t1 将配置更新结束提交到 raft，等待执行</li>
+<li> server apply
+结束操作，<strong>将 server 标识为配置更新结束</strong></li>
+</ol>
+<p>在上述过程中，新的配置从 2 开始生效，server 开始根据最新的配置拒绝 <code>ErrWrongGroup</code> 的请求，对于 group 正确，但处在迁移中的数据，需要等到 8 之后才能受理，这时候可以返回给 client 一个等待信号，例如 <code>ErrWait</code>，让客户端等一会儿再重试，避免大量线程阻塞在 server 端。</p>
+<p>在 challenge 里面，需要我们在 5 之后就开始处理对应切片的请求，达到快速响应的效果。</p>
+<h3 id="删除切片数据是同步还是异步">删除切片数据是同步还是异步</h3>
+<p>当然，同步是最好写的。但是同步会阻塞后续请求，不优雅。异步的话，<strong>需要重新设计</strong>，否则只有一个 <code>map[string]string</code> 作为数据库的情况下，异步也得加锁、找到切片对应的 <code>key</code>，删除，解锁，跟同步没有什么区别。</p>
+<p>如果要异步的话，建议搞一个 <code>[]map[string]string</code>，slice 位置存对应 shard 的数据，要删除的时候，直接锁对应的 shard，删除即可。甚至也可以直接把 slice 对应位置设成 <code>nil</code>，等 go 的垃圾回收线程去回收，更优雅（笑</p>
+<h2 id="operation">Operation</h2>
+<p>GET/PUT/APPEND 就不说了</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ConfigureOp <span class="keyword">struct</span> {</span><br><span class="line">	Config shardctrler.Config</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	INSERT = <span class="number">1</span></span><br><span class="line">	DELETE = <span class="number">2</span></span><br><span class="line">	END    = <span class="number">3</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ShardOp <span class="keyword">struct</span> {</span><br><span class="line">	Type      <span class="keyword">int8</span></span><br><span class="line">	Shard     <span class="keyword">int</span></span><br><span class="line">	ConfigNum <span class="keyword">int</span></span><br><span class="line">	Data      <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">	Seen      <span class="keyword">map</span>[<span class="keyword">int64</span>]<span class="keyword">int64</span></span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li><code>ConfigureOp</code>：开始配置更新</li>
+<li><code>ShardOp</code>：切片数据的 Insert、Delete 操作，简便起见把标识更新结束的 End 也加进来了</li>
+</ul>
+<h2 id="server">server</h2>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ShardKV <span class="keyword">struct</span> {</span><br><span class="line">	deadlock.Mutex</span><br><span class="line">	me           <span class="keyword">int</span></span><br><span class="line">	rf           *raft.Raft</span><br><span class="line">	applyCh      <span class="keyword">chan</span> raft.ApplyMsg</span><br><span class="line">	make_end     <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">string</span>)</span> *<span class="title">labrpc</span>.<span class="title">ClientEnd</span></span></span><br><span class="line">	gid          <span class="keyword">int</span></span><br><span class="line">	ctrlers      []*labrpc.ClientEnd</span><br><span class="line">	maxraftstate <span class="keyword">int</span> <span class="comment">// snapshot if log grows this big</span></span><br><span class="line"></span><br><span class="line">	dead <span class="keyword">int32</span> <span class="comment">// set by Kill()</span></span><br><span class="line">	<span class="comment">// Your definitions here.</span></span><br><span class="line">	id <span class="keyword">string</span></span><br><span class="line">	<span class="comment">// 切片</span></span><br><span class="line">	mck           *shardctrler.Clerk</span><br><span class="line">	prevConfig    shardctrler.Config</span><br><span class="line">	currentConfig shardctrler.Config</span><br><span class="line">	deleteCond    *deadlock.Cond</span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	db   <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">	seen <span class="keyword">map</span>[<span class="keyword">int64</span>]<span class="keyword">int64</span></span><br><span class="line">	<span class="comment">// 维护提交状态</span></span><br><span class="line">	lastApplied <span class="keyword">int</span></span><br><span class="line">	applyCond   *deadlock.Cond</span><br><span class="line">	<span class="comment">// persistence</span></span><br><span class="line">	persister   *raft.Persister</span><br><span class="line">	maxRaftSize <span class="keyword">int</span></span><br><span class="line">	<span class="comment">// lab 4b 挑战, 准确地记录正在迁移中的切片, 即本该有的, 但还没获取到</span></span><br><span class="line">	inMigration <span class="keyword">map</span>[<span class="keyword">int</span>]<span class="keyword">bool</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>基于之前的讨论，可以设计出这样的结构体。server 需要记录最新的 config 和上一个 config，并持久化到快照里，用于重启后知晓自己是否处在配置更新中。这里用指针其实更合适一点，配置更新中等价于 <code>prevConfig!=nil</code>，但是 gob 不能处理空指针的序列化，就很坏。</p>
+<p>有了两个 config 之后，要怎么使用呢：</p>
+<ul>
+<li>配置更新开始时，设置 <code>prevConfig=currentConfig ;
+currentConfig=op.Config</code></li>
+<li>更新完毕后，设置 <code>prevConfig.Num=0</code>，配置更新中 &lt;=&gt;<code>prevConfig.Num!=0</code></li>
+<li>根据 <code>prevConfig.Shards</code> 和 <code>currentConfig.Shards</code>，计算需要拉取、删除的 shard</li>
+<li> 拉取删除数据时，要依赖 <code>prevConfig.Groups</code> 找到对应的 <code>endname</code> 发起请求</li>
+<li>当成功删除某个 shard 后，更新 <code>prevConfig.Shards[shard]=currentConfig.Shards[shard]</code>，唤醒更新线程，再次检查是否存在需要等待删除的 shard</li>
+</ul>
+<p>注意，<strong>在插入 shard 数据后，不能更新 config</strong>！！！不然会有重启后，切片数据删除不掉的问题，假设存在下面的配置更新：</p>
+<ul>
+<li>[100,100]-&gt;[101,101]</li>
+<li>101 拿到并 apply 切片 0,1 之后，发起删除切片之前，宕机了</li>
+<li> 101 新选举出 leader 后，发现自己没有需要拉取的数据了（因为 config 已经更新过了），也没有需要删除的数据，直接更新结束了</li>
+<li> 100 一直干巴巴地等着数据删除的请求，但那永远不会到来了...</li>
+</ul>
+<h3 id="challenge-2-不阻塞其他切片数据请求">challenge 2
+不阻塞其他切片数据请求</h3>
+<p>要求即使在配置更新中，如果请求的数据不处于切片迁移中，应该正常处理，不能阻塞。</p>
+<p>这就需要我们检查单个切片的迁移状态，且 apply 配置更新时不能阻塞 applier 线程。我这里使用了一个 <code>inMigration
+map[int]bool</code>，记录哪些切片是还没有拉取到的，该字段同样需要存储在快照中。</p>
+<ol type="1">
+<li>在配置更新开始的时候，根据 <code>prevConfig,cuurentConfig</code> 计算 <code>inMigration</code></li>
+<li>apply 一条 Insert
+ShardOp，<strong>如果在 <code>inMigration</code> 中，应用 op 且从 <code>inMigration</code> 中删除</strong></li>
+<li>用户请求到来时，根据 <code>inMigration</code> 判断是否阻塞</li>
+</ol>
+<p>究其原因是，不能在 Insert
+ShardOp 更新 <code>prevConfig</code> 后，就缺少了实时反映数据同步进度的状态，就有了 <code>inMigration</code>。</p>
+<h3 id="challenge-2-快速响应">challenge 2 快速响应</h3>
+<p>要求在配置更新中，在收到部分 shard 数据后，应该立刻开始处理请求，不能等到配置更新结束再处理。在测试代码中，可以看到，持有旧切片的复制组直接下线了，这种情况下配置更新永远无法完成，没有快速响应，系统就永远无法处理用户请求。</p>
+<p>这里需要注意的就是上面高亮的步骤 2，需要加幂等性校验。因为可能 server 执行了一些这个切片的数据更新后，在配置更新中下线了，之后重启，由重新拉取了一份旧数据，如果直接覆盖，就会导致更新丢失。</p>
+<h2 id="总结">总结</h2>
+<p>这门分布式系统的课程，一路学来、做实验，让我收获很多。在不可靠的网络中（分区、丢失、乱序），能够实现一个分区容错、强一致的分布式系统，还是很有成功感的。</p>
+<p>由于时间限制，这篇博客没有写的很详细，但还是希望这篇博客能帮到你，有问题也可以评论交流～</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/" title="MIT-6.824 Lab4: 切片 KV 数据库">https://tqnwhz.github.io/blog/2023/08/11/MIT-6-824-4/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/MIT-6-824/" rel="tag"><i class="fa fa-tag"></i> MIT 6.824</a>
+              <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 分布式系统</a>
+              <a href="/blog/tags/Raft/" rel="tag"><i class="fa fa-tag"></i> Raft</a>
+              <a href="/blog/tags/KV/" rel="tag"><i class="fa fa-tag"></i> KV</a>
+              <a href="/blog/tags/%E5%88%87%E7%89%87/" rel="tag"><i class="fa fa-tag"></i> 切片</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/07/29/MIT-6-824-3/" rel="prev" title="MIT-6.824 Lab3: 基于 Raft 的 KV 数据库">
+                  <i class="fa fa-chevron-left"></i> MIT-6.824 Lab3: 基于 Raft 的 KV 数据库
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/04/CSAPP-Lab-3/" rel="next" title="CSAPP-Lab-3">
+                  CSAPP-Lab-3 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">241k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:17</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

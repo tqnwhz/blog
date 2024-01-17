@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 本篇是 MIT 6.824 的 lab3，基于之前构建的 Raft 层的容错、线性一致性的能力，实现一个 KV 数据库。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT-6.824 Lab3: 基于 Raft 的 KV 数据库">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本篇是 MIT 6.824 的 lab3，基于之前构建的 Raft 层的容错、线性一致性的能力，实现一个 KV 数据库。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/kvraft_diagram.png">
+<meta property="article:published_time" content="2023-07-29T01:46:48.000Z">
+<meta property="article:modified_time" content="2023-09-28T09:52:18.678Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="MIT 6.824">
+<meta property="article:tag" content="分布式系统">
+<meta property="article:tag" content="Raft">
+<meta property="article:tag" content="KV">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/kvraft_diagram.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/","path":"2023/07/29/MIT-6-824-3/","title":"MIT-6.824 Lab3: 基于 Raft 的 KV 数据库"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MIT-6.824 Lab3: 基于 Raft 的 KV 数据库 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">整体架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9C%80%E8%A6%81%E8%80%83%E8%99%91%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">2.1.</span> <span class="nav-text">需要考虑的问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="nav-number">3.</span> <span class="nav-text">客户端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="nav-number">4.</span> <span class="nav-text">服务端</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">4.1.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86raft-leader%E5%8F%98%E5%8C%96"><span class="nav-number">4.2.</span> <span class="nav-text">处理 raft leader 变化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%82%E7%AD%89%E6%80%A7"><span class="nav-number">4.3.</span> <span class="nav-text">幂等性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7"><span class="nav-number">4.4.</span> <span class="nav-text">快照</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">一些问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#operations-completed-too-slowly"><span class="nav-number">5.1.</span> <span class="nav-text">Operations completed too
+slowly</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%83%E8%B7%B3%E5%8F%AF%E4%BB%A5%E4%B8%8D%E4%BC%A0%E6%95%B0%E6%8D%AE%E5%90%97"><span class="nav-number">5.2.</span> <span class="nav-text">心跳可以不传数据吗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#start%E6%80%8E%E4%B9%88%E5%90%8C%E6%AD%A5%E6%97%A5%E5%BF%97"><span class="nav-number">5.3.</span> <span class="nav-text">Start 怎么同步日志</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT-6.824 Lab3: 基于 Raft 的 KV 数据库
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-07-29 09:46:48" itemprop="dateCreated datePublished" datetime="2023-07-29T09:46:48+08:00">2023-07-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/MIT-6-824/" itemprop="url" rel="index"><span itemprop="name">MIT 6.824</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>本篇是 MIT
+6.824 的 lab3，基于之前构建的 Raft 层的容错、线性一致性的能力，实现一个 KV 数据库。</p>
+<span id="more"></span>
+<p>遵循课程规定，本文没有放出核心代码，只介绍了一些结构设计和流程思考，可放心食用。</p>
+<h2 id="整体架构">整体架构</h2>
+<p>KV 数据库是典型的客户端 - 服务端架构，结构图如下（来自官网）：</p>
+<p><img src="kvraft_diagram.png"></p>
+<ul>
+<li>客户端：GET/PUT/APPEND
+请求的发起者，期望得到一个<strong>线性一致的结果</strong></li>
+<li>服务端：基于 Raft 的分布式存储，屏蔽了内部细节，对外表现的像是一个<strong>可靠的单机存储</strong></li>
+</ul>
+<p>这里的线性一致是指，多个客户端发起请求时，某个客户端得到的结果，对其他客户端是立刻可见的。比如客户端 A 发起了
+<code>put x
+1</code>，只要它得到了正确处理的结果，任何其他客户端发起 <code>get
+x</code> 得到的一定是 1。这是通俗一点的解释方法。来自维基百科的，更学术一点的定义：</p>
+<blockquote>
+<p>In <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Concurrent_programming">concurrent
+programming</a>, an operation (or set of operations) is
+<strong>linearizable</strong> if it consists of an ordered list of <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Execution_(computing)">invocation</a>
+and response <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Event_(computing)">events</a>, that
+may be extended by adding response events such that:</p>
+<ol type="1">
+<li>The extended list can be re-expressed as a sequential history (is <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Serializability">serializable</a>).</li>
+<li>That sequential history is a subset of the original unextended
+list.</li>
+</ol>
+</blockquote>
+<p>也可以参考<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000022248118">分布式 -
+共识、线性一致性与顺序一致性 - 叽叽喳喳 - SegmentFault 思否</a>。</p>
+<p>二者之前的通信基于 RPC：</p>
+<ul>
+<li>客户端 API：GET/PUT/APPEND
+方法，反复重试<strong>直到找到对应的服务端 leader 节点</strong>，发起请求</li>
+<li>服务端逻辑：如果不是 leader，返回报错，否则<strong>阻塞到请求成功执行，返回执行结果</strong></li>
+</ul>
+<h3 id="需要考虑的问题">需要考虑的问题</h3>
+<p><strong>重复请求的幂等性</strong>：由于网络不稳定，可能会有应用层的重发，客户端需要给请求带唯一 id，服务端需要做幂等处理</p>
+<ul>
+<li>注意，这个要和 TCP 的 “不重不漏” 区分开。假设传输层使用 TCP 协议，也只能保证应用层的报文被正常接收（应答方返回 ACK），并不能对应用层的逻辑作任何保证，必须得收到应用层的响应才能认为请求得到处理，收不到就需要重发。</li>
+</ul>
+<h2 id="客户端">客户端</h2>
+<p>客户端的逻辑比较清晰，需要缓存一个 <code>leaderId</code> 记录上次成功处理请求的 server，避免每次都要轮询所有 server。为了支持幂等性，需要有客户端 id、序列号 id 两个字段，唯一标识一个客户端请求。对应地、服务端需要保存<strong>每个客户端处理过的最大请求 id</strong>，在处理前先确认没有处理过，进而实现幂等性。</p>
+<p>在这种场景下，要求每个客户端只能<strong>以单线程地阻塞发起请求</strong>，才可以保证幂等性。反之，如果客户端 0 同时发起了 1、2 两个请求，2 被正确处理了，1 丢失没有到达 server。等 1 的重传报文到达 server，server 发现处理完的最大请求 id 是 2&gt;1，进而拒绝处理，就出问题了。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Clerk <span class="keyword">struct</span> {</span><br><span class="line"> servers []*labrpc.ClientEnd</span><br><span class="line"> <span class="comment">// You will have to modify this struct.</span></span><br><span class="line"> leaderId <span class="keyword">int</span>   <span class="comment">// leader id (client 的角度)</span></span><br><span class="line"> id       <span class="keyword">int64</span> <span class="comment">// clerk uuid</span></span><br><span class="line"> seqId    <span class="keyword">int64</span> <span class="comment">// 从 1 开始自增的请求Id</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这里需要注意的一点是，客户端和服务端的角度来看<strong>，<code>servers</code> 的顺序是不一致的</strong>。我最开始想做的一个优化是，server 在收到请求，发现自己不是 leader 之后，把正确 server 的 id 发给客户端，客户端直接向对应的 id 发请求，不必轮询所有 server，实际运行的时候却出现了问题。观察代码可以发现，测试中新建客户端时，做了乱序处理：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ck := MakeClerk(random_handles(ends))</span><br></pre></td></tr></tbody></table></figure>
+<p>这样的设计进一步解耦了 client 和 server，在真实系统里，client 和 server 的访问策略和机制可能是不一致的，两者间不应该产生依赖。</p>
+<p>这里有个坑点是，key 不存在的时候，client 应该返回空字符串，我最开始返回了 <code>ErrNoKey</code>，报了奇怪的线性不一致问题，对着 procupine 的图反复研究，有点乐。</p>
+<h2 id="服务端">服务端</h2>
+<h3 id="结构">结构</h3>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> KVServer <span class="keyword">struct</span> {</span><br><span class="line"> deadlock.Mutex</span><br><span class="line"> me      <span class="keyword">int</span></span><br><span class="line"> rf      *raft.Raft</span><br><span class="line"> applyCh <span class="keyword">chan</span> raft.ApplyMsg</span><br><span class="line"> dead    <span class="keyword">int32</span> <span class="comment">// set by Kill()</span></span><br><span class="line"></span><br><span class="line"> maxraftstate <span class="keyword">int</span> <span class="comment">// snapshot if log grows this big</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">// Your definitions here.</span></span><br><span class="line"> <span class="comment">// kv</span></span><br><span class="line"> maxRaftSize <span class="keyword">int</span>               <span class="comment">// Raft 最大状态</span></span><br><span class="line"> db          <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span> <span class="comment">// 数据存储</span></span><br><span class="line"> seen        <span class="keyword">map</span>[<span class="keyword">int64</span>]<span class="keyword">int64</span>   <span class="comment">// client对应的max Seq</span></span><br><span class="line"> <span class="comment">// 维护提交状态</span></span><br><span class="line"> lastApplied <span class="keyword">int</span>            <span class="comment">// 最后提交的 log id</span></span><br><span class="line"> applyCond   *deadlock.Cond <span class="comment">// apply 条件</span></span><br><span class="line"> <span class="comment">// persistence</span></span><br><span class="line"> persister *raft.Persister</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>服务端的逻辑如下，当接收到一个 PUT/GET/APPEND 请求：</p>
+<ol type="1">
+<li>判断自己是否是 leader，若否，返回错误</li>
+<li>将请求提交给 raft</li>
+<li> 等待 raft 将请求提交至应用层，执行完毕 /
+<strong>raft 的 leader 情况发生变化</strong></li>
+<li>返回结果</li>
+</ol>
+<h3 id="处理raft-leader变化">处理 raft leader 变化</h3>
+<p>需要注意的是，在等待 raft 提交请求的过程中，可能会 leader 情况发生变化，这种情况要返回错误。处理不当可能会有问题。例如，我最初是这样等待请求处理完毕的：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">index, _, isLeader := kv.rf.Start(op)</span><br><span class="line"><span class="keyword">for</span> isLeader &amp;&amp; kv.lastApplied &lt; index {</span><br><span class="line">    kv.applyCond.Wait()</span><br><span class="line">}</span><br><span class="line"><span class="comment">// ...</span></span><br></pre></td></tr></tbody></table></figure>
+<p>这样没有处理 leader 变化的情况，指导书里提到可以这样处理，当节点检查到一个不同的请求已经出现在 Start 返回的 <code>index</code> 位置，即比较两个的请求内容是否相同，若不同，则说明其他节点成为了 leader，同步了不一样的日志过来。</p>
+<p>我觉得这种做法可以改进，这种做法需要等待：</p>
+<ol type="1">
+<li>当前节点收到更大的 term，变为 follower</li>
+<li> 当前节点收到 leader 的 index 日志</li>
+<li>当前节点提交 index 日志至应用层</li>
+</ol>
+<p>之后，才会意识到自己不是 leader 了。但实际上，早在第一步就可以发现错误了。可以当 Raft 的 leader 状态发生变化时，提交一条特殊的日志到应用层，触发检查，即可及早返回错误。</p>
+<h3 id="幂等性">幂等性</h3>
+<p>当 server 处理请求之前，需要先判断 seqId 是否大于已处理同一 client 的最大 seqId：</p>
+<ul>
+<li>若是，则处理请求，更新最大 id</li>
+<li> 若否，丢弃请求</li>
+</ul>
+<h3 id="快照">快照</h3>
+<p>在 lab
+2 中，raft 层实现了快照功能，本次需要在应用层对 raft 的状态进行判断，即将到达要求时，在应用层生成快照，并提交给 raft 处理。需要考虑是快照里要包含哪些信息：</p>
+<ul>
+<li>数据库的键值对，这个是毋庸置疑的</li>
+<li>每个 client 已处理的最大请求 Id，避免重启后处理重复消息</li>
+</ul>
+<h2 id="一些问题">一些问题</h2>
+<h3 id="operations-completed-too-slowly">Operations completed too
+slowly</h3>
+<p>lab3 测试中可能会出现这个错，一般原因是，在 Start 中没有立刻同步日志，只有被动地依赖 Raft 心跳进行传输，使得操作处理速率受限于心跳频率。解决方法当然是，在 Start 后立刻<strong>异步</strong>同步日志。</p>
+<p>细心的你会发现，Start 和心跳可能会同时同步日志，那么会不会有什么问题呢？当然是有的！问题表现的<strong>像是收到了乱序的网络回复</strong>。我们知道，<code>AppendEntries</code> 调用可能会有以下两种结果：</p>
+<ul>
+<li>失败，<code>leader</code> 降低 <code>nextIndex</code> 重试，可能发起 <code>InstallSnapshot</code></li>
+<li>成功，<code>leader</code> 调高 <code>nextIndex, matchIndex</code></li>
+</ul>
+<p>假设出现了这样的执行顺序：</p>
+<ol type="1">
+<li>心跳线程，发起 <code>AppendEntries</code></li>
+<li>Start 发起 <code>AppendEntries</code></li>
+<li>心跳线程，失败，降低 <code>nextIndex</code></li>
+<li>心跳线程，<code>InstallSnapshot</code> 成功，增大 <code>nextIndex &gt;
+lastIncludedIndex</code></li>
+<li>Start 收到结果，失败，降低 <code>nextIndex</code></li>
+<li>心跳线程，<code>InstallSnapshot</code> 成功后尝试同步快照后的日志，期望 <code>nextIndex
+&gt; lastIncludedIndex</code>，<strong>发现不符合，出错</strong></li>
+</ol>
+<p>当然，这个问题跟具体实现有关，我的实现中，失败后会依次完成 <code>InstallSnapshot</code>，成功后继续 <code>AppendEntries</code>，由于发起 RPC 过程中释放了锁，导致其他线程修改了 <code>nextIndex</code>，进而出错。</p>
+<p>解决方法是，进行兼容处理，所有的，由于 RPC 中途释放的过程，形如：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">rf.Lock()</span><br><span class="line">v:=rf.nextIndex</span><br><span class="line">rf.Unlock()</span><br><span class="line">server.Call()</span><br><span class="line">rf.Lock()</span><br><span class="line"><span class="comment">// should use v rather than rf.nextIndex</span></span><br><span class="line"><span class="comment">// should check v==rf.nextIndex</span></span><br><span class="line">rf.Unlock()</span><br></pre></td></tr></tbody></table></figure>
+<p>在第一次加锁中，需要读取共享变量的值，第二次加锁时，需要选择：</p>
+<ul>
+<li>使用第一次读到的值，不要读新值，更新时要兼容更新（例如取 max）</li>
+<li>检查新值旧值是否相同，再决定要不要进行剩下的逻辑</li>
+</ul>
+<p>具体选哪种要看操作类型，比如我上面举的例子，当应该判断新的 <code>nextIndex</code> 是否合法，不合法就退出执行。</p>
+<p>此外，在接收端，即处理 <code>AppendEntries</code>，<code>InstallSnapshot</code> 时，也需要做乱序请求的兼容，不过由于处理时基本一直加锁，只需在处理前判断即可。</p>
+<h3 id="心跳可以不传数据吗">心跳可以不传数据吗</h3>
+<p>我不建议这样做。Start 只有在应用层新增请求的时候会使用。如果心跳不传数据，可能会导致日志同步过慢。例如 leader 收到新日志 1 后，还没同步到过半节点，宕机了。新 leader 上线后，由于应用层迟迟没有新请求到来，日志 1 迟迟得不到同步，也不好。如果心跳也可以同步日志，就可以保证了一个最低同步时延。</p>
+<h3 id="start怎么同步日志">Start 怎么同步日志</h3>
+<p>我建议不要每次都起 goroutine，而是为每个 peer 维护一个后台同步线程，Start 只是唤醒这个线程执行。虽然 goroutine 创建和销毁的开销不大，但是，频繁 Start 场景下，每次 Start 都会开启 n 个 goroutine，这：</p>
+<ul>
+<li>不必要：如果前一个日志同步没有得到响应（可能节点下线），发起新的同步意义不大</li>
+<li>存在重复传输：前一个日志同步没有得到响应，每次新的同步都会带有 <code>nextIndex</code> 之后的全量日志，有很多是重复的</li>
+<li>存在锁的争用和潜在的并发问题</li>
+</ul>
+<h2 id="总结">总结</h2>
+<p>本次 lab 整体不难，就是可能 Raft 有些问题，需要再返回去排查改错。如果 Raft 模块设计的不好，再回过头改动会很痛苦。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/" title="MIT-6.824 Lab3: 基于 Raft 的 KV 数据库">https://tqnwhz.github.io/blog/2023/07/29/MIT-6-824-3/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/MIT-6-824/" rel="tag"><i class="fa fa-tag"></i> MIT 6.824</a>
+              <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 分布式系统</a>
+              <a href="/blog/tags/Raft/" rel="tag"><i class="fa fa-tag"></i> Raft</a>
+              <a href="/blog/tags/KV/" rel="tag"><i class="fa fa-tag"></i> KV</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/07/17/MIT-6-824-2/" rel="prev" title="MIT 6.824 Lab2 实验报告: Raft">
+                  <i class="fa fa-chevron-left"></i> MIT 6.824 Lab2 实验报告: Raft
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/blog/2023/08/11/MIT-6-824-4/" rel="next" title="MIT-6.824 Lab4: 切片 KV 数据库">
+                  MIT-6.824 Lab4: 切片 KV 数据库 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">241k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:17</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>

@@ -158,18 +158,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-count">55</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/blog/categories/">
-        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">59</span>
+        <span class="site-state-item-count">75</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -218,7 +218,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/08/11/pytorch-lightning/">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.jpg">
@@ -231,7 +231,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/2022/08/11/pytorch-lightning/" class="post-title-link" itemprop="url">PyTorch Lightning: 让 PyTorch 更为易用</a>
+          <a href="/blog/2023/04/28/CSAPP-Notes-2/" class="post-title-link" itemprop="url">CSAPP - 学习笔记 (2): 浮点数</a>
         </h2>
 
         <div class="post-meta-container">
@@ -242,14 +242,14 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-08-11 10:44:19" itemprop="dateCreated datePublished" datetime="2022-08-11T10:44:19+08:00">2022-08-11</time>
+      <time title="创建时间：2023-04-28 16:09:31" itemprop="dateCreated datePublished" datetime="2023-04-28T16:09:31+08:00">2023-04-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-08-27 12:54:42" itemprop="dateModified" datetime="2022-08-27T12:54:42+08:00">2022-08-27</time>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -257,7 +257,15 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E4%BB%A3%E7%A0%81/" itemprop="url" rel="index"><span itemprop="name">代码</span></a>
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
         </span>
     </span>
 
@@ -268,14 +276,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3.6k</span>
+      <span>3k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>7 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -287,12 +295,10 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="摘要">摘要</h2>
-<p>今天来介绍一个很好用的深度学习框架，PyTorch
-Lightning。从名字就可以看出，它是基于 PyTorch 的框架。它的核心思想是，将学术代码（模型定义、前向 / 反向、优化器、验证等）与工程代码（for-loop，保存、tensorboard 日志、训练策略等）解耦开来，使得代码更为简洁清晰。工程代码经常会出现在深度学习代码中，PyTorch
-Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单设置即可调用，无需重复造轮子。</p>
+<p>本文介绍了 CSAPP 的第二节，浮点数，介绍了如何用二进制表示小数以及 IEEE 的浮点数标准。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/blog/2022/08/11/pytorch-lightning/#more" rel="contents">
+              <a class="btn" href="/blog/2023/04/28/CSAPP-Notes-2/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -323,7 +329,7 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/07/03/MoE-Summary/">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/04/28/CSAPP-Notes-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.jpg">
@@ -336,7 +342,7 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/2022/07/03/MoE-Summary/" class="post-title-link" itemprop="url">MoE 相关工作、研究进展总结</a>
+          <a href="/blog/2023/04/28/CSAPP-Notes-1/" class="post-title-link" itemprop="url">CSAPP - 学习笔记 (1): 字节与整数</a>
         </h2>
 
         <div class="post-meta-container">
@@ -347,14 +353,14 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-07-03 09:33:00" itemprop="dateCreated datePublished" datetime="2022-07-03T09:33:00+08:00">2022-07-03</time>
+      <time title="创建时间：2023-04-28 15:45:11" itemprop="dateCreated datePublished" datetime="2023-04-28T15:45:11+08:00">2023-04-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-12-01 13:10:09" itemprop="dateModified" datetime="2022-12-01T13:10:09+08:00">2022-12-01</time>
+      <time title="修改时间：2023-09-28 17:52:18" itemprop="dateModified" datetime="2023-09-28T17:52:18+08:00">2023-09-28</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -362,11 +368,15 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
         </span>
           ，
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E6%9D%A1%E4%BB%B6%E8%AE%A1%E7%AE%97/" itemprop="url" rel="index"><span itemprop="name">条件计算</span></a>
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">体系结构</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/csapp/" itemprop="url" rel="index"><span itemprop="name">csapp</span></a>
         </span>
     </span>
 
@@ -377,14 +387,14 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.1k</span>
+      <span>3.5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>7 分钟</span>
+      <span>6 分钟</span>
     </span>
 </div>
 
@@ -395,13 +405,15 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="moe">MoE</h1>
-<p>今天总结一下最近读过的 MoE 相关的论文、研究进展。</p>
-<h2 id="简介">简介</h2>
-<p>混合专家网络（<strong>Mixture-of-Experts，MoE</strong>），旨在通过条件计算增加模型容量。具体来说，是对不同的输入激活网络中的不同部分，在控制运算量，即 FLOPs 不变的前提，显著增加模型参数，以达到增加容量的效果。这是一种稀疏网络架构，网络中只有部分参数被激活，与之对应的是传统的密集网络，每个输入都会激活所有参数。</p>
+          <h2 id="摘要">摘要</h2>
+<p>最近开了个新坑，打算学习一下 CSAPP 和 Mit
+S6.081，会把一些学习笔记和实验报告更新在博客上。CSAPP（Computer
+Systems：A Programmer’s
+Perspective），即从程序员的角度学习计算机系统，是 CMU 的一门名课，配套同名黑书教材，译为《深入了解计算机系统》。</p>
+<p>这一节是 CSAPP 的第一节，包含了整数表示、操作等。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/blog/2022/07/03/MoE-Summary/#more" rel="contents">
+              <a class="btn" href="/blog/2023/04/28/CSAPP-Notes-1/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -432,7 +444,7 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/06/12/ST-MoE/">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/03/05/golang-talk/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.jpg">
@@ -445,7 +457,7 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/2022/06/12/ST-MoE/" class="post-title-link" itemprop="url">ST-MoE: 高效稀疏专家网络</a>
+          <a href="/blog/2023/03/05/golang-talk/" class="post-title-link" itemprop="url">浅谈 Golang 的优缺点</a>
         </h2>
 
         <div class="post-meta-container">
@@ -455,9 +467,15 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2022-06-12 09:44:56 / 修改时间：22:25:30" itemprop="dateCreated datePublished" datetime="2022-06-12T09:44:56+08:00">2022-06-12</time>
+      <time title="创建时间：2023-03-05 11:18:07" itemprop="dateCreated datePublished" datetime="2023-03-05T11:18:07+08:00">2023-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-12 16:25:30" itemprop="dateModified" datetime="2023-03-12T16:25:30+08:00">2023-03-12</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -465,11 +483,7 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E6%9D%A1%E4%BB%B6%E8%AE%A1%E7%AE%97/" itemprop="url" rel="index"><span itemprop="name">条件计算</span></a>
+          <a href="/blog/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
     </span>
 
@@ -499,12 +513,10 @@ Lightning 对这部分逻辑进行了封装，只需要在 Trainer 类中简单�
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="摘要">摘要</h2>
-<p>上篇回顾了经典论文专家混合网络 MoE，今天读一篇 Google 团队在 22 年 2 月出炉的大作《ST-MoE:
-Designing Stable and Transferable Sparse Expert
-Models》，旨在解决训练过程中的不稳定性以及微调过程中的质量不确定性。论文提出的 269B 的稀疏模型，计算成本与 32B 的密集模型相当。稀疏模型第一次在迁移学习中实现了 SOTA。</p>
+<p>最近学习完了《Go 程序设计语言》一书，感觉 Golang 作为一门现代语言，优缺点都非常的明显，也在网上看了很多吐槽或者赞扬 Golang 的说法，也是各有各的理。本文从个人的主观视角，聊一下我认为 Golang 设计及使用上的一些优缺点。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/blog/2022/06/12/ST-MoE/#more" rel="contents">
+              <a class="btn" href="/blog/2023/03/05/golang-talk/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -535,7 +547,7 @@ Models》，旨在解决训练过程中的不稳定性以及微调过程中的�
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/06/05/MoE/">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2023/02/15/redis-cluster/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.jpg">
@@ -548,7 +560,7 @@ Models》，旨在解决训练过程中的不稳定性以及微调过程中的�
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/2022/06/05/MoE/" class="post-title-link" itemprop="url">MoE：通过条件计算增加模型容量</a>
+          <a href="/blog/2023/02/15/redis-cluster/" class="post-title-link" itemprop="url">Redis 集群模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -559,14 +571,14 @@ Models》，旨在解决训练过程中的不稳定性以及微调过程中的�
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-06-05 20:13:08" itemprop="dateCreated datePublished" datetime="2022-06-05T20:13:08+08:00">2022-06-05</time>
+      <time title="创建时间：2023-02-15 16:41:45" itemprop="dateCreated datePublished" datetime="2023-02-15T16:41:45+08:00">2023-02-15</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-06-12 09:50:34" itemprop="dateModified" datetime="2022-06-12T09:50:34+08:00">2022-06-12</time>
+      <time title="修改时间：2023-03-12 18:08:20" itemprop="dateModified" datetime="2023-03-12T18:08:20+08:00">2023-03-12</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -574,11 +586,11 @@ Models》，旨在解决训练过程中的不稳定性以及微调过程中的�
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
+          <a href="/blog/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
         </span>
           ，
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E6%9D%A1%E4%BB%B6%E8%AE%A1%E7%AE%97/" itemprop="url" rel="index"><span itemprop="name">条件计算</span></a>
+          <a href="/blog/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
         </span>
     </span>
 
@@ -589,121 +601,7 @@ Models》，旨在解决训练过程中的不稳定性以及微调过程中的�
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.9k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>9 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="摘要">摘要</h2>
-<p>今天来读一篇关于条件计算的论文，《<strong>Outrageously Large Neural
-Networks: The Sparsely-Gated Mixture-of-Experts
-Layer</strong>》，收录于 2017 年 ICLR。神经网络模型的容量（
-capacity），例如模型从语料中学习的知识，受限于模型的参数规模。通常，每个样本都要经历到模型所有参数的计算中。增加模型容量意味着成比例的计算性能下降。本文提出了一种条件计算的方法，对每个样本只激活部分参数，可以在不成比例地增加计算量的情况下显着增加模型容量，实现了超过 1000 倍的容量提升，在大型语言建模和机器翻译基准上，这些模型以更低的计算成本实现了新的 SOTA。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/blog/2022/06/05/MoE/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/05/03/KnowledGPT/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.jpg">
-      <meta itemprop="name" content="Tqnwhz">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="一隅">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/2022/05/03/KnowledGPT/" class="post-title-link" itemprop="url">KnowledGPT: 基于预训练语言模型的知识对话</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-05-03 11:26:22" itemprop="dateCreated datePublished" datetime="2022-05-03T11:26:22+08:00">2022-05-03</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-05-04 16:19:42" itemprop="dateModified" datetime="2022-05-04T16:19:42+08:00">2022-05-04</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">自然语言处理</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90/" itemprop="url" rel="index"><span itemprop="name">对话生成</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86/%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90/%E7%9F%A5%E8%AF%86%E5%AF%B9%E8%AF%9D/" itemprop="url" rel="index"><span itemprop="name">知识对话</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>6.2k</span>
+      <span>5.9k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -722,14 +620,118 @@ capacity），例如模型从语料中学习的知识，受限于模型的参数
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="摘要">摘要</h2>
-<p>《Knowledge-Grounded Dialogue Generation with Pre-trained Language
-Models》是由北大发表的论文，旨在通过预训练的语言模型进行知识对话，论文收录于 EMNLP
-2020 主会。代码公开在 <a target="_blank" rel="noopener" href="https://github.com/zhaoxlpku/KnowledGPT">zhaoxlpku/KnowledGPT
-(github.com)</a>。论文通过在预训练语言模型（如 GPT）外配置知识选择模块，从非结构化的知识文本中选择知识，并通过一种无监督的方法联合优化知识选择和知识对话生成。论文提出的 KnowLEDGPT 在 Wizard 和 CMU
-DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
+<p>本篇文章主要梳理一下 Redis 的集群模式，明白它是如何做到高可用、支持高并发的。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/blog/2022/05/03/KnowledGPT/#more" rel="contents">
+              <a class="btn" href="/blog/2023/02/15/redis-cluster/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2022/12/02/MIT-6-830-6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/blog/2022/12/02/MIT-6-830-6/" class="post-title-link" itemprop="url">MIT 6.830 数据库实验 Lab 6 实验报告</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-12-02 22:35:01" itemprop="dateCreated datePublished" datetime="2022-12-02T22:35:01+08:00">2022-12-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-12-03 13:27:17" itemprop="dateModified" datetime="2022-12-03T13:27:17+08:00">2022-12-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="摘要">摘要</h2>
+<p>Lab
+6 要求实现数据库的恢复功能。在真实场景下，数据库可能因为种种原因宕机崩溃，需要保证此时的数据不会丢失，保证数据库事务的 ACID 性质。这往往要通过日志来实现。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/blog/2022/12/02/MIT-6-830-6/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -753,7 +755,7 @@ DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
 
 
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/blog/">1</a><a class="page-number" href="/blog/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/blog/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><a class="extend next" rel="next" href="/blog/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/blog/">1</a><a class="page-number" href="/blog/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/blog/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 </div>
@@ -765,7 +767,7 @@ DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
 
 <div class="copyright">
   &copy; 
-  <span itemprop="copyrightYear">2023</span>
+  <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -776,13 +778,13 @@ DoG 两个数据集上的自动 &amp; 人工评估实现了 SOTA。</p>
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">159k</span>
+    <span title="站点总字数">241k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">4:48</span>
+    <span title="站点阅读时长">7:17</span>
   </span>
 </div>
 <div class="busuanzi-count">
