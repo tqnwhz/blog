@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 Hertz 是一个 Golang 微服务 HTTP 框架，由字节跳动开源，具有高易用性、高性能、高扩展性等特点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP 微服务框架 Hertz 的入门实践">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2024/01/18/Hertz/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 Hertz 是一个 Golang 微服务 HTTP 框架，由字节跳动开源，具有高易用性、高性能、高扩展性等特点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/01/18/Hertz/hertz.png">
+<meta property="article:published_time" content="2024-01-18T02:48:37.000Z">
+<meta property="article:modified_time" content="2024-01-18T07:48:25.245Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="微服务">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="Hertz">
+<meta property="article:tag" content="字节跳动">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2024/01/18/Hertz/hertz.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2024/01/18/Hertz/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2024/01/18/Hertz/","path":"2024/01/18/Hertz/","title":"HTTP 微服务框架 Hertz 的入门实践"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HTTP 微服务框架 Hertz 的入门实践 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B"><span class="nav-number">3.</span> <span class="nav-text">快速上手</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">3.1.</span> <span class="nav-text">环境准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pingpong"><span class="nav-number">3.2.</span> <span class="nav-text">pingpong</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%86%8C"><span class="nav-number">3.3.</span> <span class="nav-text">路由注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%93%8D%E5%BA%94%E6%B8%B2%E6%9F%93"><span class="nav-number">3.4.</span> <span class="nav-text">响应渲染</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E8%8E%B7%E5%8F%96"><span class="nav-number">3.5.</span> <span class="nav-text">参数获取</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#query"><span class="nav-number">3.5.1.</span> <span class="nav-text">query</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#form"><span class="nav-number">3.5.2.</span> <span class="nav-text">form</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cookie"><span class="nav-number">3.5.3.</span> <span class="nav-text">cookie</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E7%BB%91%E5%AE%9A"><span class="nav-number">3.6.</span> <span class="nav-text">参数绑定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hz"><span class="nav-number">4.</span> <span class="nav-text">hz</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#field-%E6%B3%A8%E8%A7%A3"><span class="nav-number">4.1.</span> <span class="nav-text">Field 注解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#method%E6%B3%A8%E8%A7%A3"><span class="nav-number">4.2.</span> <span class="nav-text">Method 注解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B"><span class="nav-number">4.3.</span> <span class="nav-text">案例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#main.go"><span class="nav-number">4.4.</span> <span class="nav-text">main.go</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#router.go"><span class="nav-number">4.5.</span> <span class="nav-text">router.go</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#router_gen.go"><span class="nav-number">4.6.</span> <span class="nav-text">router_gen.go</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hz-1"><span class="nav-number">4.7.</span> <span class="nav-text">.hz</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#biz"><span class="nav-number">4.8.</span> <span class="nav-text">biz&#x2F;</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#handler"><span class="nav-number">4.8.1.</span> <span class="nav-text">handler&#x2F;</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#hello"><span class="nav-number">4.8.1.1.</span> <span class="nav-text">hello&#x2F;</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#model"><span class="nav-number">4.8.2.</span> <span class="nav-text">model&#x2F;</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#hellohello.go"><span class="nav-number">4.8.2.1.</span> <span class="nav-text">hello&#x2F;hello.go</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#router"><span class="nav-number">4.8.3.</span> <span class="nav-text">router&#x2F;</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0"><span class="nav-number">4.9.</span> <span class="nav-text">更新</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">77</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2024/01/18/Hertz/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP 微服务框架 Hertz 的入门实践
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2024-01-18 10:48:37 / 修改时间：15:48:25" itemprop="dateCreated datePublished" datetime="2024-01-18T10:48:37+08:00">2024-01-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">微服务</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E5%90%8E%E7%AB%AF/%E5%BE%AE%E6%9C%8D%E5%8A%A1/HTTP/" itemprop="url" rel="index"><span itemprop="name">HTTP</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>14k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>25 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>Hertz 是一个 Golang 微服务 HTTP
+框架，由字节跳动开源，具有高易用性、高性能、高扩展性等特点。</p>
+<span id="more"></span>
+<h2 id="架构">架构</h2>
+<p>Hertz 的架构图如下所示，从上到下分为：</p>
+<ul>
+<li>应用层：提供前台的 Server、Client API
+<ul>
+<li>Server：参数绑定、<code>HandlerFunc</code> 注册、响应渲染</li>
+<li> Client：DNS、服务发现</li>
+<li>通用：Context、中间件</li>
+</ul></li>
+<li>路由层：在 httprouter 的基础上做了功能改进，同时支持静态路由、参数路由，支持优先级匹配、路由回溯等，为用户提供更高的自由度</li>
+<li>协议层：支持多种网络协议，HTTP1、HTTP2、Websocket、QUIC 等，并支持自定义扩展</li>
+<li>传输层：支持底层网络库扩展，原生适配 <code>Netpoll</code></li>
+</ul>
+<p>在整体架构之外，Hertz 还提供了：</p>
+<ul>
+<li>命令行工具 <code>hz</code>：根据 IDL 生成 / 更新项目脚手架，提供开箱即用的能力</li>
+<li>公共组件 <code>common</code>：提供通用能力，包含错误处理、单元测试能力、可观测性（Log、Trace、Metrics
+等）</li>
+</ul>
+<p><img src="hertz.png"></p>
+<h2 id="快速上手">快速上手</h2>
+<h3 id="环境准备">环境准备</h3>
+<p>可以按照<a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/docs/hertz/getting-started/#安装命令行工具-hz">快速开始
+| CloudWeGo</a> 教程，安装 Golang 环境、Hertz 框架与 hz 工具。</p>
+<h3 id="pingpong">pingpong</h3>
+<p>新建 hertz_demo 项目，创建 main.go，代码如下</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app/server"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/common/utils"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/protocol/consts"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">    <span class="comment">// 创建默认服务器，可以传入选项更改行为</span></span><br><span class="line">	h := server.Default()</span><br><span class="line">	<span class="comment">// 注册路由和HandlerFunc</span></span><br><span class="line">	h.GET(<span class="string">"/ping"</span>, <span class="function"><span class="keyword">func</span><span class="params">(c context.Context, ctx *app.RequestContext)</span></span> {</span><br><span class="line">		ctx.JSON(consts.StatusOK, utils.H{<span class="string">"message"</span>: <span class="string">"pong"</span>})</span><br><span class="line">	})</span><br><span class="line">	<span class="comment">// 启动服务器</span></span><br><span class="line">	h.Spin()</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>运行以下命令，安装依赖并启动服务。</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go mod tidy</span><br><span class="line">go run .</span><br></pre></td></tr></tbody></table></figure>
+<p>可以观察到以下输出：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">2024/01/18 12:22:22.235809 engine.go:668: [Debug] HERTZ: Method=GET    absolutePath=/ping                     --&gt; handlerName=main.main.func1 (num=2 handlers)</span><br><span class="line">2024/01/18 12:22:22.235951 engine.go:396: [Info] HERTZ: Using network library=netpoll</span><br><span class="line">2024/01/18 12:22:22.237303 transport.go:115: [Info] HERTZ: HTTP server listening on address=[::]:8888</span><br></pre></td></tr></tbody></table></figure>
+<p>日志中可以看到绑定的路由 <code>/ping</code> 与 HandlerFunc
+<code>main.main.func1</code>（匿名函数），以及使用的网络库 <code>netpoll</code>，服务默认启动在 8888 端口。在另一个 shell 中进行测试，验证成功。</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">❯ curl http://localhost:8888/ping</span><br><span class="line">{<span class="string">"message"</span>:<span class="string">"pong"</span>}% </span><br></pre></td></tr></tbody></table></figure>
+<h3 id="路由注册">路由注册</h3>
+<p>点进 <code>h.Get</code> 函数，签名如下，允许为一个路由绑定多个 Handler（不能超过 63 个），进行链式处理，<code>Get</code> 的返回值同样为 <code>IRoutes</code> 接口，可以链式完成路由注册。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(group *RouterGroup)</span> <span class="title">GET</span><span class="params">(relativePath <span class="keyword">string</span>, handlers ...app.HandlerFunc)</span> <span class="title">IRoutes</span></span> </span><br><span class="line"><span class="comment">// app.HandlerFunc</span></span><br><span class="line"><span class="keyword">type</span> HandlerFunc <span class="function"><span class="keyword">func</span><span class="params">(c context.Context, ctx *RequestContext)</span></span></span><br></pre></td></tr></tbody></table></figure>
+<p>HandlerFunc 是一个无参函数，接收两个参数：</p>
+<ul>
+<li>Context：标准长周期上下文，用于在 RPC Client 或者日志、Tracing
+等组件间传递</li>
+<li> RequestContext：短周期请求上下文，生命周期仅限于一次 HTTP 请求内</li>
+</ul>
+<p>设置两种上下文的原因在于，RPC、日志中的 context 可能需要异步传递和处理，短周期的 RequestContext 可能会出现数据不一致问题。</p>
+<h3 id="响应渲染">响应渲染</h3>
+<p>Hertz 支持渲染 html、json、xml 等格式作为响应，最常用的就是 json。在上面的例子中，使用以下函数完成渲染，接受 Http 响应码和任意的对象，在 <code>Render</code> 函数中完成响应码的设置、Content-type 的设置，并把 json 序列化后写入 Response
+body。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// JSON serializes the given struct as JSON into the response body.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// It also sets the Content-Type as "application/json".</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ctx *RequestContext)</span> <span class="title">JSON</span><span class="params">(code <span class="keyword">int</span>, obj <span class="keyword">interface</span>{})</span></span> {</span><br><span class="line">	ctx.Render(code, render.JSONRender{Data: obj})</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>其他格式的渲染与之类似，这里就不赘述了。</p>
+<h3 id="参数获取">参数获取</h3>
+<p>上面的例子没有提到参数如何获取，补充如下</p>
+<h4 id="query">query</h4>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Query string parameters are parsed using the existing underlying request object.</span></span><br><span class="line"><span class="comment">// The request responds to url matching: /welcome?firstname=Jane&amp;lastname=Doe&amp;food=apple&amp;food=fish</span></span><br><span class="line">h.GET(<span class="string">"/welcome"</span>, <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">    <span class="comment">// 获取单个Query参数，提供默认值</span></span><br><span class="line">    firstname := c.DefaultQuery(<span class="string">"firstname"</span>, <span class="string">"Guest"</span>)</span><br><span class="line">    <span class="comment">// shortcut for c.Request.URL.Query().Get("lastname")</span></span><br><span class="line">    <span class="comment">// 默认空值</span></span><br><span class="line">    lastname := c.Query(<span class="string">"lastname"</span>)</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 迭代Query参数</span></span><br><span class="line">    <span class="comment">// Iterate all queries and store the one with meeting the conditions in favoriteFood</span></span><br><span class="line">    <span class="keyword">var</span> favoriteFood []<span class="keyword">string</span></span><br><span class="line">    c.QueryArgs().VisitAll(<span class="function"><span class="keyword">func</span><span class="params">(key, value []<span class="keyword">byte</span>)</span></span> {</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">string</span>(key) == <span class="string">"food"</span> {</span><br><span class="line">            favoriteFood = <span class="built_in">append</span>(favoriteFood, <span class="keyword">string</span>(value))</span><br><span class="line">        }</span><br><span class="line">    })</span><br><span class="line"></span><br><span class="line">    c.String(consts.StatusOK, <span class="string">"Hello %s %s, favorite food: %s"</span>, firstname, lastname, favoriteFood)</span><br><span class="line">})</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="form">form</h4>
+<p>form 有两种 content-type，需要选择对应的方法。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// content-type : application/x-www-form-urlencoded</span></span><br><span class="line">h.POST(<span class="string">"/urlencoded"</span>, <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">    <span class="comment">// 单个参数，返回类型 string</span></span><br><span class="line">    name := c.PostForm(<span class="string">"name"</span>)</span><br><span class="line">    message := c.PostForm(<span class="string">"message"</span>)</span><br><span class="line">	<span class="comment">// 迭代所有参数</span></span><br><span class="line">    c.PostArgs().VisitAll(<span class="function"><span class="keyword">func</span><span class="params">(key, value []<span class="keyword">byte</span>)</span></span> {</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">string</span>(key) == <span class="string">"name"</span> {</span><br><span class="line">            fmt.Printf(<span class="string">"This is %s!"</span>, <span class="keyword">string</span>(value))</span><br><span class="line">        }</span><br><span class="line">    })</span><br><span class="line"></span><br><span class="line">    c.String(consts.StatusOK, <span class="string">"name: %s; message: %s"</span>, name, message)</span><br><span class="line">})</span><br><span class="line"></span><br><span class="line"><span class="comment">// content-type : multipart/form-data</span></span><br><span class="line">h.POST(<span class="string">"/formdata"</span>, <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">    <span class="comment">// 单个参数，返回类型 []byte</span></span><br><span class="line">    id := c.FormValue(<span class="string">"id"</span>)</span><br><span class="line">    name := c.FormValue(<span class="string">"name"</span>)</span><br><span class="line">    message := c.FormValue(<span class="string">"message"</span>)</span><br><span class="line">	<span class="comment">// 迭代所有参数</span></span><br><span class="line">    c.String(consts.StatusOK, <span class="string">"id: %s; name: %s; message: %s\n"</span>, id, name, message)</span><br><span class="line">})</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="cookie">cookie</h4>
+<p>注意 cookie 是单条获取、单个写入的，如果要写入多个 cookie，需要重复多次。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">h.GET(<span class="string">"/cookie"</span>, <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">    mc := <span class="string">"myCookie"</span></span><br><span class="line">    <span class="comment">// get specific key</span></span><br><span class="line">    <span class="comment">// 获取cookie值</span></span><br><span class="line">    val := c.Cookie(mc)</span><br><span class="line">    <span class="comment">// 新建cookie</span></span><br><span class="line">    <span class="keyword">if</span> val == <span class="literal">nil</span> {</span><br><span class="line">        <span class="comment">// set a cookie</span></span><br><span class="line">        fmt.Printf(<span class="string">"There is no cookie named: %s, and make one...\n"</span>, mc)</span><br><span class="line">        cookie := protocol.AcquireCookie()</span><br><span class="line">        <span class="comment">// 只能设置一个key、一个value</span></span><br><span class="line">        cookie.SetKey(<span class="string">"myCookie"</span>)</span><br><span class="line">        cookie.SetValue(<span class="string">"a nice cookie!"</span>)</span><br><span class="line">        <span class="comment">// 有效时间</span></span><br><span class="line">        cookie.SetExpire(time.Now().Add(<span class="number">3600</span> * time.Second))</span><br><span class="line">        cookie.SetPath(<span class="string">"/"</span>)</span><br><span class="line">        cookie.SetHTTPOnly(<span class="literal">true</span>)</span><br><span class="line">        cookie.SetSecure(<span class="literal">false</span>)</span><br><span class="line">        <span class="comment">// 写入响应头</span></span><br><span class="line">        c.Response.Header.SetCookie(cookie)</span><br><span class="line">        <span class="comment">// 将cookie对象放回cookie池中</span></span><br><span class="line">        protocol.ReleaseCookie(cookie)</span><br><span class="line">        c.WriteString(<span class="string">"A cookie is ready."</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    fmt.Printf(<span class="string">"Got a cookie: %s\nAnd eat it!"</span>, val)</span><br><span class="line">    <span class="comment">// instruct upload_file to delete a cookie</span></span><br><span class="line">    <span class="comment">// DelClientCookie instructs the upload_file to remove the given cookie.</span></span><br><span class="line">    <span class="comment">// This doesn't work for a cookie with specific domain or path,</span></span><br><span class="line">    <span class="comment">// you should delete it manually like:</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">//      c := AcquireCookie()</span></span><br><span class="line">    <span class="comment">//      c.SetKey(mc)</span></span><br><span class="line">    <span class="comment">//      c.SetDomain("example.com")</span></span><br><span class="line">    <span class="comment">//      c.SetPath("/path")</span></span><br><span class="line">    <span class="comment">//      c.SetExpire(CookieExpireDelete)</span></span><br><span class="line">    <span class="comment">//      h.SetCookie(c)</span></span><br><span class="line">    <span class="comment">//      ReleaseCookie(c)</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// 删除 Response 中的 cookie</span></span><br><span class="line">    c.Response.Header.DelClientCookie(mc)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构造新的 cookie</span></span><br><span class="line">    <span class="comment">// construct the full struct of a cookie in response's header</span></span><br><span class="line">    respCookie := protocol.AcquireCookie()</span><br><span class="line">    respCookie.SetKey(mc)</span><br><span class="line">    c.Response.Header.Cookie(respCookie)</span><br><span class="line">    fmt.Printf(<span class="string">"(The expire time of cookie is set to: %s)\n"</span>, respCookie.Expire())</span><br><span class="line">    protocol.ReleaseCookie(respCookie)</span><br><span class="line">    c.WriteString(<span class="string">"The cookie has been eaten."</span>)</span><br><span class="line">})</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="参数绑定">参数绑定</h3>
+<p>参数绑定包含以下 API：</p>
+<table>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 74%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">API</th>
+<th style="text-align: left;"> 说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"> ctx.BindAndValidate</td>
+<td style="text-align: left;"> 利用下述的 go-tag
+进行参数绑定，并在绑定成功后做一次参数校验 (如果有校验 tag 的话)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ctx.Bind</td>
+<td style="text-align: left;"> 同 <code>BindAndValidate</code>
+但是不做参数校验</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"> ctx.BindQuery</td>
+<td style="text-align: left;"> 绑定所有 Query 参数，相当于给每一个 field
+声明一个 <code>query</code> tag，适用于没写 tag 的场景</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"> ctx.BindHeader</td>
+<td style="text-align: left;"> 绑定所有 Header 参数，相当于给每一个 field
+声明一个 <code>header</code> tag，适用于没写 tag 的场景</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"> ctx.BindPath</td>
+<td style="text-align: left;"> 绑定所有 Path 参数，相当于给每一个 field
+声明一个 <code>path</code> tag，适用于没写 tag 的场景</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"> ctx.BindForm</td>
+<td style="text-align: left;"> 绑定所有 Form 参数，相当于给每一个 field
+声明一个 <code>form</code> tag，需要 Content-Type
+为：<code>application/x-www-form-urlencoded</code>/<code>multipart/form-data</code>,
+适用于没写 tag 的场景</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"> ctx.BindJSON</td>
+<td style="text-align: left;"> 绑定 JSON Body，调用
+<code>json.Unmarshal()</code> 进行反序列化，需要 Body 为
+<code>application/json</code> 格式</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"> ctx.BindProtobuf</td>
+<td style="text-align: left;"> 绑定 Protobuf Body，调用
+<code>proto.Unmarshal()</code> 进行反序列化，需要 Body 为
+<code>application/x-protobuf</code> 格式</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"> ctx.BindByContentType</td>
+<td style="text-align: left;"> 根据 Content-Type
+来自动选择绑定的方法，其中 GET 请求会调用 <code>BindQuery</code>, 带有
+Body 的请求会根据 Content-Type 自动选择</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"> ctx.Validate</td>
+<td style="text-align: left;"> 进行参数校验，需要校验 tag 配合使用
+(默认使用 vd tag 校验)</td>
+</tr>
+</tbody>
+</table>
+<p>自定义函数校验的例子如下。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app/client"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app/server"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/app/server/binding"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/protocol"</span></span><br><span class="line">	<span class="string">"github.com/cloudwego/hertz/pkg/protocol/consts"</span></span><br><span class="line">)</span><br><span class="line"><span class="comment">// 使用test函数进行校验</span></span><br><span class="line"><span class="keyword">type</span> ValidateStruct <span class="keyword">struct</span> {</span><br><span class="line">	A <span class="keyword">string</span> <span class="string">`query:"a" vd:"test($)"`</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	validateConfig := binding.NewValidateConfig()</span><br><span class="line">    <span class="comment">// 注册校验函数</span></span><br><span class="line">	validateConfig.MustRegValidateFunc(<span class="string">"test"</span>, <span class="function"><span class="keyword">func</span><span class="params">(args ...<span class="keyword">interface</span>{})</span> <span class="title">error</span></span> {</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(args) != <span class="number">1</span> {</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"the args must be one"</span>)</span><br><span class="line">		}</span><br><span class="line">		s, _ := args[<span class="number">0</span>].(<span class="keyword">string</span>)</span><br><span class="line">		<span class="keyword">if</span> s == <span class="string">"123"</span> {</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"the args can not be 123"</span>)</span><br><span class="line">		}</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	})</span><br><span class="line">	h := server.Default(server.WithHostPorts(<span class="string">"127.0.0.1:8080"</span>))</span><br><span class="line"></span><br><span class="line">	h.GET(<span class="string">"customValidate"</span>, <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">		<span class="keyword">var</span> req ValidateStruct</span><br><span class="line">        <span class="comment">// 绑定参数</span></span><br><span class="line">		err := c.Bind(&amp;req)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> {</span><br><span class="line">			fmt.Printf(<span class="string">"error: %v\n"</span>, err)</span><br><span class="line">		}</span><br><span class="line">        <span class="comment">// 校验</span></span><br><span class="line">		err = c.Validate(&amp;req)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> {</span><br><span class="line">			fmt.Printf(<span class="string">"error: %v\n"</span>, err)</span><br><span class="line">		}</span><br><span class="line">	})</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> h.Spin()</span><br><span class="line"></span><br><span class="line">	time.Sleep(<span class="number">1000</span> * time.Millisecond)</span><br><span class="line">	c, _ := client.NewClient()</span><br><span class="line">	req := protocol.Request{}</span><br><span class="line">	resp := protocol.Response{}</span><br><span class="line">	req.SetMethod(consts.MethodGet)</span><br><span class="line">	req.SetRequestURI(<span class="string">"http://127.0.0.1:8080/customValidate?a=123"</span>)</span><br><span class="line">	c.Do(context.Background(), &amp;req, &amp;resp)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="hz">hz</h2>
+<p>Hertz 的一大优势就在于，可以通过 hz 工具，根据 IDL 生成项目脚手架，非常便捷易用。hz 支持 Thrift 与 Protobuf 两种 IDL，在基础的 IDL 的基础上，hz 提供了<a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/docs/hertz/tutorials/toolkit/annotation/">注解</a>能力满足 HTTP 框架所需的参数绑定、校验、路由注册功能。</p>
+<h3 id="field-注解">Field 注解</h3>
+<table>
+<colgroup>
+<col style="width: 38%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>注解</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td> api.raw_body</td>
+<td> 生成 “raw_body” tag，绑定 body bytes，优先级最低</td>
+</tr>
+<tr class="even">
+<td> api.query</td>
+<td> 生成 “query” tag，绑定 query 中参数，例如 “?query=hertz&amp;…”</td>
+</tr>
+<tr class="odd">
+<td>api.header</td>
+<td> 生成 “header” tag，绑定 header</td>
+</tr>
+<tr class="even">
+<td>api.cookie</td>
+<td> 生成 “cookie” tag，绑定 cookie</td>
+</tr>
+<tr class="odd">
+<td>api.body</td>
+<td> 生成 “json” tag，绑定 body
+form 中的 "key-value"，“content-type” 需为 "application/json"</td>
+</tr>
+<tr class="even">
+<td>api.path</td>
+<td> 生成 “path” tag，绑定路由中的参数</td>
+</tr>
+<tr class="odd">
+<td> api.form</td>
+<td> 生成 “form” tag，绑定 body
+form 中的 "key-value"<br>“content-type” 需为 "multipart/form-data" 或 "application/x-www-form-urlencoded"</td>
+</tr>
+<tr class="even">
+<td>api.go_tag (protobuf) go.tag (thrift)</td>
+<td> 透传 go_tag，会生成 go_tag 里定义的内容</td>
+</tr>
+<tr class="odd">
+<td> api.vd</td>
+<td> 生成 “vd” tag，用于参数校验</td>
+</tr>
+<tr class="even">
+<td> api.none</td>
+<td> 生成 “-” tag，不参与参数绑定与序列化，详情参考 <a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/docs/hertz/tutorials/toolkit/more-feature/api_none/">api.none
+注解说明</a></td>
+</tr>
+</tbody>
+</table>
+<p>参数绑定优先级如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">path &gt; form &gt; query &gt; cookie &gt; header &gt; json &gt; raw_body</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="method注解">Method 注解</h3>
+<table>
+<thead>
+<tr class="header">
+<th>注解</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td> api.get</td>
+<td> 定义 GET 方法及路由</td>
+</tr>
+<tr class="even">
+<td> api.post</td>
+<td> 定义 POST 方法及路由</td>
+</tr>
+<tr class="odd">
+<td> api.put</td>
+<td> 定义 PUT 方法及路由</td>
+</tr>
+<tr class="even">
+<td> api.delete</td>
+<td> 定义 DELETE 方法及路由</td>
+</tr>
+<tr class="odd">
+<td> api.patch</td>
+<td> 定义 PATCH 方法及路由</td>
+</tr>
+<tr class="even">
+<td> api.options</td>
+<td> 定义 OPTIONS 方法及路由</td>
+</tr>
+<tr class="odd">
+<td> api.head</td>
+<td> 定义 HEAD 方法及路由</td>
+</tr>
+<tr class="even">
+<td> api.any</td>
+<td> 定义 ANY 方法及路由</td>
+</tr>
+</tbody>
+</table>
+<p>绑定 HTTP 方法及路由，很直观。</p>
+<h3 id="案例">案例</h3>
+<p>idl，hello.thrift 如下，使用了很多的 hz 注解。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">struct MultiTagRequest {</span><br><span class="line">    1: required string QueryTag (api.query = "query"),</span><br><span class="line">    2: required string RawBodyTag (api.raw_body = "raw_body"),</span><br><span class="line">    3: required string PathTag (api.path = "path"),</span><br><span class="line">    4: required string FormTag (api.form = "form"),</span><br><span class="line">    5: required string HeaderTag (api.header = "header"),</span><br><span class="line">    6: required string BodyTag (api.body = "body"),</span><br><span class="line">    7: required string GoTag (go.tag = "json:\"go\" goTag:\"tag\""),</span><br><span class="line">    8: required string VdTag (api.vd = "$!='?'"),</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">struct Request {</span><br><span class="line">    1: required string id,</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">struct Response {</span><br><span class="line">    1: required string id,</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">service Hertz {</span><br><span class="line">    Response Method(1: MultiTagRequest request) (api.get = "/company/:path/hello"),</span><br><span class="line">    Response Method1(1: Request request) (api.get = "/company/department/group/user:id/name"),</span><br><span class="line">    Response Method2(1: Request request) (api.post = "/company/department/group/user:id/sex"),</span><br><span class="line">    Response Method3(1: Request request) (api.put = "/company/department/group/user:id/number"),</span><br><span class="line">    Response Method4(1: Request request) (api.delete = "/company/department/group/user:id/age"),</span><br><span class="line">    Response Method5(1: Request request) (api.options = "/school/class/student/name"),</span><br><span class="line">    Response Method6(1: Request request) (api.head = "/school/class/student/number"),</span><br><span class="line">    Response Method7(1: Request request) (api.patch = "/school/class/student/sex"),</span><br><span class="line">    Response Method8(1: Request request) (api.any = "/school/class/student/grade/ubjects"),</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后，运行 <code>hz new -idl
+hello.thrfit</code>，生成脚手架，并 <code>go mod
+tidy</code> 安装依赖，目录结构如下。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">❯ tree -r .                                                                                                        </span><br><span class="line">.</span><br><span class="line">├── script</span><br><span class="line">│&nbsp;&nbsp; └── bootstrap.sh</span><br><span class="line">├── router_gen.go</span><br><span class="line">├── router.go</span><br><span class="line">├── main.go</span><br><span class="line">├── hello.thrift</span><br><span class="line">├── go.sum</span><br><span class="line">├── go.mod</span><br><span class="line">├── build.sh</span><br><span class="line">└── biz</span><br><span class="line">    ├── router</span><br><span class="line">    │&nbsp;&nbsp; ├── register.go</span><br><span class="line">    │&nbsp;&nbsp; └── hello</span><br><span class="line">    │&nbsp;&nbsp;     ├── middleware.go</span><br><span class="line">    │&nbsp;&nbsp;     └── hello.go</span><br><span class="line">    ├── model</span><br><span class="line">    │&nbsp;&nbsp; └── hello</span><br><span class="line">    │&nbsp;&nbsp;     └── hello.go</span><br><span class="line">    └── handler</span><br><span class="line">        ├── ping.go</span><br><span class="line">        └── hello</span><br><span class="line">            └── hertz.go</span><br></pre></td></tr></tbody></table></figure>
+<p>下面我们逐个分析。</p>
+<h3 id="main.go">main.go</h3>
+<p>项目的入口文件，创建 server、注册路由并运行。如果要修改服务选项，可以在 <code>server.Default()</code> 中传入 options。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	h := server.Default()</span><br><span class="line"></span><br><span class="line">	register(h)</span><br><span class="line">	h.Spin()</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="router.go">router.go</h3>
+<p>自定义路由，默认会注册 <code>/ping</code> 用于调试。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// customizeRegister registers customize routers.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">customizedRegister</span><span class="params">(r *server.Hertz)</span></span> {</span><br><span class="line">	r.GET(<span class="string">"/ping"</span>, handler.Ping)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// your code ...</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="router_gen.go">router_gen.go</h3>
+<p>由 <code>main</code> 函数调用，注册所有路由，即 idl 中定义的与用户自定义的。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// register registers all routers.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">register</span><span class="params">(r *server.Hertz)</span></span> {</span><br><span class="line"></span><br><span class="line">	router.GeneratedRegister(r)</span><br><span class="line"></span><br><span class="line">	customizedRegister(r)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="hz-1">.hz</h3>
+<p>标识项目由 <code>hz</code> 工具搭建。</p>
+<h3 id="biz">biz/</h3>
+<p>业务逻辑目录。</p>
+<h4 id="handler">handler/</h4>
+<p>HandlerFunc 的逻辑。</p>
+<h5 id="hello">hello/</h5>
+<p>对应 <code>hello.thrift</code>，<code>hertz.go</code> 来源于定义的 <code>service
+Hertz</code>。一个 HandlerFunc 例子如下，帮我们完成了参数的绑定校验以及响应的渲染。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Method .</span></span><br><span class="line"><span class="comment">// @router /company/:path/hello [GET]</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Method</span><span class="params">(ctx context.Context, c *app.RequestContext)</span></span> {</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> req hello.MultiTagRequest</span><br><span class="line">	err = c.BindAndValidate(&amp;req)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> {</span><br><span class="line">		c.String(consts.StatusBadRequest, err.Error())</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	}</span><br><span class="line"></span><br><span class="line">	resp := <span class="built_in">new</span>(hello.Response)</span><br><span class="line"></span><br><span class="line">	c.JSON(consts.StatusOK, resp)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="model">model/</h4>
+<p>idl 中的结构体，也就是 model 层。</p>
+<h5 id="hellohello.go">hello/hello.go</h5>
+<p>同样，名字对应 <code>hello.thrift</code>。一个 Request 代码如下，thrift
+tag 用于 thrift 序列化和反序列化，json
+tag 用于 json 序列化与反序列化，query/path/form 等 tag 用于参数绑定。这些都是 hz 工具根据 idl 与注解生成的。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> MultiTagRequest <span class="keyword">struct</span> {</span><br><span class="line">	QueryTag   <span class="keyword">string</span> <span class="string">`thrift:"QueryTag,1,required" json:"QueryTag,required" query:"query,required"`</span></span><br><span class="line">	RawBodyTag <span class="keyword">string</span> <span class="string">`thrift:"RawBodyTag,2,required" json:"RawBodyTag,required" raw_body:"raw_body,required"`</span></span><br><span class="line">	PathTag    <span class="keyword">string</span> <span class="string">`thrift:"PathTag,3,required" json:"PathTag,required" path:"path,required"`</span></span><br><span class="line">	FormTag    <span class="keyword">string</span> <span class="string">`thrift:"FormTag,4,required" form:"form,required" json:"FormTag,required"`</span></span><br><span class="line">	HeaderTag  <span class="keyword">string</span> <span class="string">`thrift:"HeaderTag,5,required" header:"header,required" json:"HeaderTag,required"`</span></span><br><span class="line">	BodyTag    <span class="keyword">string</span> <span class="string">`thrift:"BodyTag,6,required" form:"body,required" json:"body,required"`</span></span><br><span class="line">	GoTag      <span class="keyword">string</span> <span class="string">`thrift:"GoTag,7,required" json:"go" goTag:"tag" form:"GoTag,required" query:"GoTag,required"`</span></span><br><span class="line">	VdTag      <span class="keyword">string</span> <span class="string">`thrift:"VdTag,8,required" form:"VdTag,required" json:"VdTag,required" query:"VdTag,required" vd:"$!='?'"`</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="router">router/</h4>
+<p>路由注册逻辑。在 <code>middlerware.go</code> 可以为每个路由使用单独的中间件。</p>
+<h3 id="更新">更新</h3>
+<p>如果 idl 发生了变更，或者新加了服务，可以通过 <code>hz
+update</code> 来对项目进行更新。</p>
+<p>新建一个 <code>bye.thrift</code>，代码如下：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> Request {</span><br><span class="line">    <span class="number">1</span>: required <span class="keyword">string</span> id,</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> Response {</span><br><span class="line">    <span class="number">1</span>: required <span class="keyword">string</span> id,</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">service ByeBye {</span><br><span class="line">    Response bye(<span class="number">1</span>: Request req) (api.get = <span class="string">"/bye"</span>),</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>输入 <code>hz update -idl
+bye.thrift</code>，可以发现 <code>biz</code> 目录下的目录都新增了 <code>bye/</code> 文件夹，存放相关的 Handler、model。</p>
+<h2 id="总结">总结</h2>
+<p>本篇博客介绍了 Hertz 框架的基本使用，通过 hz 工具构建项目并进行分析。相信读完本篇博客，读者可以基本掌握 Hertz 的用法，更深的用法（例如中间件等）可以参考官方文档。按原本的计划，我本该去读 Hertz 源码，了解背后原理。但我后来发现，作为初学者，能够掌握框架用法就已经够了，更深入的读源码并不会给日常开发带来多大帮助。而 Redis、消息队列这些中间件，则是需要深入了解原理，它们构建了后端服务的核心缓存和业务流转逻辑，稍有不慎就会危害线上服务，造成重大事故。因此，我后面会花更多时间在这些知识的学习上，框架会用即可。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/blog/2022/06/21/字节跳动开源-go-http-框架-hertz-设计实践/">字节跳动开源
+Go HTTP 框架 Hertz 设计实践 | CloudWeGo</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/docs/hertz/">Hertz |
+CloudWeGo</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cloudwego.io/zh/docs/hertz/tutorials/basic-feature/binding-and-validate/">绑定与校验
+| CloudWeGo</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2024/01/18/Hertz/" title="HTTP 微服务框架 Hertz 的入门实践">https://tqnwhz.github.io/blog/2024/01/18/Hertz/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/Golang/" rel="tag"><i class="fa fa-tag"></i> Golang</a>
+              <a href="/blog/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag"><i class="fa fa-tag"></i> 微服务</a>
+              <a href="/blog/tags/HTTP/" rel="tag"><i class="fa fa-tag"></i> HTTP</a>
+              <a href="/blog/tags/Hertz/" rel="tag"><i class="fa fa-tag"></i> Hertz</a>
+              <a href="/blog/tags/%E5%AD%97%E8%8A%82%E8%B7%B3%E5%8A%A8/" rel="tag"><i class="fa fa-tag"></i> 字节跳动</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2024/01/16/Kitex-1/" rel="prev" title="RPC 微服务框架 Kitex 的入门实践">
+                  <i class="fa fa-chevron-left"></i> RPC 微服务框架 Kitex 的入门实践
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">305k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">9:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
