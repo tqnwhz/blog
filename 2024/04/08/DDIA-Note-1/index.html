@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 最近开始读设计数据密集型应用（《Designing Data-Intensive Applications》，DDIA），记录一下自己的阅读笔记，过程中的思考，本文是第一章。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDIA 阅读笔记第一章：可靠性、可扩展性和可维护性">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 最近开始读设计数据密集型应用（《Designing Data-Intensive Applications》，DDIA），记录一下自己的阅读笔记，过程中的思考，本文是第一章。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/fig1-1.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/fig-1.4.png">
+<meta property="article:published_time" content="2024-04-08T14:07:56.000Z">
+<meta property="article:modified_time" content="2024-04-09T14:16:39.271Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="DDIA">
+<meta property="article:tag" content="设计数据密集型应用">
+<meta property="article:tag" content="可靠性">
+<meta property="article:tag" content="可扩展性">
+<meta property="article:tag" content="可维护性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/fig1-1.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/","path":"2024/04/08/DDIA-Note-1/","title":"DDIA 阅读笔记第一章：可靠性、可扩展性和可维护性"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DDIA 阅读笔记第一章：可靠性、可扩展性和可维护性 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.</span> <span class="nav-text">数据系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%94%A8%E7%9A%84%E6%A0%87%E5%87%86%E7%BB%84%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">通用的标准组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">分类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E9%9D%A0%E6%80%A7"><span class="nav-number">3.</span> <span class="nav-text">可靠性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B8%E5%9E%8B%E6%9C%9F%E6%9C%9B"><span class="nav-number">3.1.</span> <span class="nav-text">典型期望</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E6%95%85%E9%9A%9C"><span class="nav-number">3.2.</span> <span class="nav-text">硬件故障</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E9%94%99%E8%AF%AF"><span class="nav-number">3.3.</span> <span class="nav-text">软件错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%BA%E4%B8%BA%E9%94%99%E8%AF%AF"><span class="nav-number">3.4.</span> <span class="nav-text">人为错误</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7"><span class="nav-number">4.</span> <span class="nav-text">可扩展性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%8F%E8%BF%B0%E8%B4%9F%E8%BD%BD"><span class="nav-number">4.1.</span> <span class="nav-text">描述负载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%8F%E8%BF%B0%E6%80%A7%E8%83%BD"><span class="nav-number">4.2.</span> <span class="nav-text">描述性能</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%BA%A7%E5%88%AB"><span class="nav-number">4.2.1.</span> <span class="nav-text">服务级别</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E5%AF%B9%E8%B4%9F%E8%BD%BD%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">4.3.</span> <span class="nav-text">应对负载的方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F"><span class="nav-number">4.3.1.</span> <span class="nav-text">分布式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E7%BB%B4%E6%8A%A4%E6%80%A7"><span class="nav-number">5.</span> <span class="nav-text">可维护性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E6%93%8D%E4%BD%9C%E6%80%A7"><span class="nav-number">5.1.</span> <span class="nav-text">可操作性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E6%80%A7"><span class="nav-number">5.2.</span> <span class="nav-text">简单性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E6%BC%94%E5%8C%96%E6%80%A7"><span class="nav-number">5.3.</span> <span class="nav-text">可演化性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DDIA 阅读笔记第一章：可靠性、可扩展性和可维护性
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-08 22:07:56" itemprop="dateCreated datePublished" datetime="2024-04-08T22:07:56+08:00">2024-04-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-09 22:16:39" itemprop="dateModified" datetime="2024-04-09T22:16:39+08:00">2024-04-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/DDIA/" itemprop="url" rel="index"><span itemprop="name">DDIA</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>14 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>最近开始读设计数据密集型应用（<a target="_blank" rel="noopener" href="http://shop.oreilly.com/product/0636920032175.do">《Designing Data-Intensive Applications》</a>，DDIA），记录一下自己的阅读笔记，过程中的思考，本文是第一章。</p>
+<span id="more"></span>
+<p>根据负载特点，应用可以简单分为：</p>
+<ul>
+<li>计算密集型（Compute-Intensive）：需要高算力来执行任务，例如仿真、渲染、大模型训练 &amp; 推理、高性能计算（HPC）等。
+<ul>
+<li>任务的瓶颈在于算力，即计算资源（cpu、gpu 等）。</li>
+</ul></li>
+<li>数据密集型（Data-Intensive）：以海量数据的存储、检索、分析为重点，例如数据库、其他存储组件（缓存、消息队列等）。
+<ul>
+<li>任务的瓶颈在于海量和 IO。</li>
+</ul></li>
+</ul>
+<p>互联网应用，大部分都是数据密集型的。例如淘宝包含了海量商品、商家、订单、评论数据，用户的操作大部分是对这些数据的增删改查。这样的系统不仅需要能够处理亿万量级的数据，还要支持高并发、高可用、高性能，这是很有挑战的。</p>
+<h2 id="数据系统">数据系统</h2>
+<h3 id="通用的标准组件">通用的标准组件</h3>
+<p>数据密集型应用通常由标准组件构建而成，标准组件提供了很多通用的功能；例如，许多应用程序都需要：</p>
+<ul>
+<li>存储数据，以便自己或其他应用程序之后能再次找到 （<em>数据库，即 databases</em>）</li>
+<li>记住开销昂贵操作的结果，加快读取速度（<em>缓存，即 caches</em>）</li>
+<li>允许用户按关键字搜索数据，或以各种方式对数据进行过滤（<em>搜索索引，即 search indexes</em>）</li>
+<li>向其他进程发送消息，进行异步处理（<em>流处理，即 stream processing</em>）</li>
+<li>定期处理累积的大批量数据（<em>批处理，即 batch processing</em>）</li>
+</ul>
+<p><strong>数据系统（data system）</strong> 是非常成功的抽象，为我们提供了这些通用的能力。例如 MySQL：</p>
+<ul>
+<li>存储数据：这是最基本的</li>
+<li>缓存：8.0 之前的查询缓存，以及 Buffer Pool 中的页缓存</li>
+<li>索引：B + 树索引、前缀索引</li>
+</ul>
+<h3 id="分类">分类</h3>
+<p>通常认为，<strong>数据库、消息队列、缓存</strong>等工具分属于几个差异显著的类别。虽然数据库和消息队列表面上有一些相似性 —— 它们都会存储一段时间的数据 —— 但它们有迥然不同的<strong>访问模式</strong>，这意味着迥异的<strong>性能特征和实现手段</strong>。</p>
+<p>使用数据系统这样的总称，是因为近些年来，出现了许多新的数据存储工具与数据处理工具。它们针对不同应用场景进行优化，因此不再适合生硬地归入传统类别。类别之间的界限变得越来越模糊。例如：</p>
+<ul>
+<li>数据存储可以被当成消息队列用（Redis）</li>
+<li>消息队列则带有类似数据库的持久保证（Apache Kafka）</li>
+</ul>
+<p>一个典型的应用，会将总体任务拆分为一系列能被单个工具高效完成的任务，通过应用代码将他们缝合起来。例如，一个典型的架构如下：</p>
+<p><img src="fig1-1.png"></p>
+<h2 id="可靠性">可靠性</h2>
+<h3 id="典型期望">典型期望</h3>
+<p>人们对可靠软件的典型期望包括：</p>
+<ul>
+<li><strong>功能</strong>：应用程序表现出用户所期望的功能。</li>
+<li><strong>容错</strong>：允许用户犯错，允许用户以出乎意料的方式使用软件。</li>
+<li><strong>性能</strong>：在预期的负载和数据量下，性能满足要求。</li>
+<li><strong>安全</strong>：系统能防止未经授权的访问和滥用。</li>
+</ul>
+<p>所有这些在一起意味着 “正确工作”，可以把可靠性粗略理解为 “<strong>即使出现问题，也能继续正确工作</strong>”。这里的问题是指 <strong>故障（fault）</strong>，能预料并应对故障的系统特性可称为 <strong>容错（fault-tolerant）</strong> 或 <strong>韧性（resilient）</strong>。</p>
+<ul>
+<li><strong>容错只对特定类型的错误才有意义，系统不可能容忍所有的错误</strong>。比如说，如果整个地球（及其上的所有服务器）都被黑洞吞噬了，想要容忍这种错误，需要把网络托管到太空中，这是显然不现实的。</li>
+<li><strong>故障（fault）</strong> 不同于 <strong>失效（failure）</strong>。<strong>故障</strong> 通常定义为系统的一部分状态偏离其标准，而 <strong>失效</strong> 则是系统作为一个整体停止向用户提供服务。容错机制的目的，就是以防因 <strong>故障</strong> 而导致 <strong>失效</strong>。</li>
+</ul>
+<p>在容错实践中，故意 <strong>提高</strong> 故障率是有意义的，这可以确保容错机制不断运行并接受考验，从而提高故障自然发生时系统能正确处理的信心，例如 Netflix 公司的 <em>Chaos Monkey</em>。</p>
+<h3 id="硬件故障">硬件故障</h3>
+<p>一旦拥有很多机器，<strong>硬件故障（hardware faults）</strong>总会发生，包含：硬盘崩溃、内存出错、机房断电、有人拔错网线……</p>
+<p>据报道称，硬盘的 <strong>平均无故障时间（MTTF, mean time to failure）</strong> 约为 10 到 50 年【5】【6】。因此从数学期望上讲，在拥有 10000 个磁盘的存储集群上，平均每天会有 1 个磁盘出故障。</p>
+<p>硬件故障通常是随机的、相互独立的，可能有微弱的相关性：</p>
+<ul>
+<li>例如同一个机架上的不同机器，可能因为机架温度同时失效</li>
+<li>同一个机房里的机器，可能会因为机房断电、天灾同时失效</li>
+</ul>
+<p>但整体还是很微弱的，同时发生故障也是极为罕见的。如果要做更高级别的可用，需要<strong>异地多副本</strong>存储，但成本也会多倍增加。</p>
+<p>处理硬件故障通常会增加冗余，虽然不能根治，但简单易懂：</p>
+<ul>
+<li>磁盘可以组建 RAID</li>
+<li> 服务器可能有双路电源和热插拔 CPU</li>
+<li> 数据中心可能有电池和柴油发电机作为后备电源</li>
+<li>...</li>
+</ul>
+<p>对大多数应用，硬件冗余完全够了。如果是高可用要求的应用，可能需要多套硬件冗余，并进一步引入完善的软件容错机制。</p>
+<h3 id="软件错误">软件错误</h3>
+<p>软件系统内部的 <strong>系统性错误（systematic error）</strong>。这类错误难以预料，而且因为是<strong>跨节点相关</strong>的（<strong>不同节点都运行着同样的系统</strong>），所以比起不相关的硬件故障往往可能造成更多的 <strong>系统失效</strong>【5】。例子包括：</p>
+<ul>
+<li>特定的错误输入，例如 2012 年 6 月 30 日的闰秒，由于 Linux 内核中的一个错误【9】，许多应用同时挂掉了。</li>
+<li><strong>用尽共享资源</strong>，包括 CPU 时间、内存、磁盘空间或网络带宽。</li>
+<li>系统<strong>依赖的服务变慢</strong>，没有响应，或者开始返回错误的响应。</li>
+<li>级联故障，一个组件中的小故障触发另一个组件中的故障，进而触发更多的故障【10】。</li>
+</ul>
+<p>导致这类软件故障的 BUG 通常会潜伏很长时间，直到被异常情况触发为止。这种情况意味着<strong>软件对其环境做出了某种假设 —— 虽然这种假设通常来说是正确的，但由于某种原因最后不再成立了</strong>【11】。</p>
+<p>虽然软件中的系统性故障没有速效药，但我们还是有很多小办法，例如：<strong>仔细考虑系统中的假设和交互；彻底的测试；进程隔离；允许进程崩溃并重启；测量、监控并分析生产环境中的系统行为</strong>。如果系统能够提供一些保证（例如在一个消息队列中，进入与发出的消息数量相等），那么系统就可以在运行时不断自检，并在出现 <strong>差异（discrepancy）</strong> 时报警【12】。</p>
+<h3 id="人为错误">人为错误</h3>
+<p>研发工程师和运维都是人类，人类是不可靠的。一项关于大型互联网服务的研究发现，<strong>运维配置错误是导致服务中断的首要原因</strong>，而硬件故障（服务器或网络）仅导致了 10-25% 的服务中断。</p>
+<p>尽管人类不可靠，但怎么做才能让系统变得可靠？最好的系统会组合使用以下几种办法：</p>
+<ul>
+<li>以最小化犯错机会的方式<strong>设计系统</strong>。例如，精心设计的抽象、API 和管理后台使做对事情更容易，搞砸事情更困难。但如果接口限制太多，人们就会忽略它们的好处而想办法绕开。很难正确把握这种微妙的平衡。</li>
+<li>将人们最容易犯错的地方与可能导致失效的地方 <strong>解耦（decouple）</strong>。特别是提供一个功能齐全的非生产环境 <strong>沙箱（sandbox）</strong>，使人们可以在不影响真实用户的情况下，使用真实数据安全地探索和实验。</li>
+<li>在各个层次进行彻底的<strong>测试</strong>【3】，从单元测试、全系统集成测试到手动测试。自动化测试易于理解，已经被广泛使用，特别适合用来覆盖正常情况中少见的 <strong>边缘场景（corner case）</strong>。</li>
+<li>允许从人为错误中<strong>简单快速地恢复</strong>，以最大限度地减少失效情况带来的影响。 例如，快速回滚配置变更，分批发布新代码（以便任何意外错误只影响一小部分用户），并提供数据重算工具（以备旧的计算出错）。</li>
+<li><strong>配置详细和明确的监控</strong>，比如性能指标和错误率。 在其他工程学科中这指的是 <strong>遥测（telemetry）</strong>（一旦火箭离开了地面，遥测技术对于跟踪发生的事情和理解失败是至关重要的）。监控可以向我们发出预警信号，并允许我们检查是否有任何地方违反了假设和约束。当出现问题时，指标数据对于问题诊断是非常宝贵的。</li>
+<li><strong>良好的管理实践与充分的培训</strong> —— 一个复杂而重要的方面，但超出了本书的范围。</li>
+</ul>
+<h2 id="可扩展性">可扩展性</h2>
+<p>系统今天能可靠运行，并不意味未来也能可靠运行。服务 <strong>降级（degradation）</strong> 的一个常见原因是负载增加，<strong>可扩展性（Scalability）</strong> 是用来描述系统应对负载增长能力的术语。讨论可伸缩性意味着考虑诸如 “<strong>如果系统以特定方式增长，有什么选项可以应对增长？</strong>” 和 “如何增加计算资源来处理额外的负载？” 等问题。</p>
+<h3 id="描述负载">描述负载</h3>
+<p>负载可以用一些称为 <strong>负载参数（load parameters）</strong> 的数字来描述。参数的最佳选择取决于系统架构，它可能是：</p>
+<ul>
+<li>每秒向 Web 服务器发出的请求</li>
+<li>数据库中的读写比率</li>
+<li>聊天室中同时活跃的用户数量</li>
+<li>缓存命中率</li>
+<li>其他东西</li>
+</ul>
+<p>除此之外，也许平均值对你很重要，也许瓶颈是少数极端场景。</p>
+<h3 id="描述性能">描述性能</h3>
+<p>对于 Hadoop 这样的批处理系统，通常关心的是 <strong>吞吐量（throughput）</strong>，即每秒可以处理的记录数量，或者在特定规模数据集上运行作业的总时间 。对于在线系统，通常更重要的是服务的 <strong>响应时间（response time）</strong>，即客户端发送请求到接收响应之间的时间。</p>
+<blockquote>
+<p><strong>延迟（latency）</strong> 和 <strong>响应时间（response time）</strong> 经常用作同义词，但实际上它们并不一样。</p>
+<ul>
+<li><strong>响应时间</strong>是客户所看到的，除了实际处理请求的时间（ <strong>服务时间（service time）</strong> ）之外，还包括网络延迟和排队延迟。</li>
+<li><strong>延迟</strong>是某个请求等待处理的 <strong>持续时长</strong>，在此期间它处于 <strong>休眠（latent）</strong> 状态，并等待服务【17】。</li>
+</ul>
+</blockquote>
+<p>由于网络传输、系统运行的各种随机性，即使不断重复发送同样的请求，每次得到的响应时间也都会略有不同。这些随机性包括不限于：</p>
+<ul>
+<li>上下文切换到后台</li>
+<li>网络数据包丢失与 TCP 重传</li>
+<li>垃圾收集暂停</li>
+<li>从磁盘读取的页面错误</li>
+<li>服务器机架中的震动</li>
+</ul>
+<p>因此，响应时间应该被视为分布，并考察这个分布的统计值，例如：平均数、中位数、高百分位点（p95，p99）等。</p>
+<p><img src="fig-1.4.png"></p>
+<p>响应时间的高百分位点（也称为 <strong>尾部延迟</strong>，即 <strong>tail latencies</strong>）非常重要，因为它们直接影响用户的服务体验。例如亚马逊在描述内部服务的响应时间要求时是以 99.9 百分位点为准，即使它只影响一千个请求中的一个。这是因为请求响应最慢的客户往往也是数据最多的客户，也可以说是最有价值的客户。另一方面，优化第 99.99 百分位点（一万个请求中最慢的一个）被认为太昂贵了，不能为亚马逊的目标带来足够好处。减小高百分位点处的响应时间相当困难，因为它很容易受到随机事件的影响，这超出了控制范围，而且效益也很小。</p>
+<h4 id="服务级别"><strong>服务级别</strong></h4>
+<p>百分位点通常用于 <strong>服务级别目标（SLO, service level objectives）</strong> 和 <strong>服务级别协议（SLA, service level agreements）</strong>，即定义服务预期性能和可用性的合同。 SLA 可能会声明，如果服务响应时间的中位数小于 200 毫秒，且 99.9 百分位点低于 1 秒，则认为服务工作正常（如果响应时间更长，就认为服务不达标）。这些指标为客户设定了期望值，并允许客户在 SLA 未达标的情况下要求退款。SLI、SLO、SLA 具体介绍如下：</p>
+<ul>
+<li><strong>服务级别指标</strong>（SLI，service level indicators）：服务真实实时的指标数据，可能包括不限于：性能、响应时间、吞吐量、支持 qps、错误率等，这些指标需要能够被服务的客户认可。</li>
+<li><strong>服务级别目标</strong>（SLO，service level objectives）：服务所提供功能的一种<strong>期望状态</strong>，使用 SLI 来描述，例如：99% 访问延迟 &lt; 500ms</li>
+<li><strong> 服务级别协议</strong>（SLA, service level agreements）：涉及 2 方的合约，双方必须都要同意并遵守这个合约。SLA 用一个简单的公式来描述就是： SLA = SLO + 后果。需要一个通用的货币来奖励 / 惩罚，比如：钱。</li>
+</ul>
+<h3 id="应对负载的方法">应对负载的方法</h3>
+<p>适应某个级别负载的架构不太可能应付 10 倍于此的负载。如果你正在开发一个快速增长的服务，那么每次负载发生数量级的增长时，你可能都需要重新考虑架构 —— 或者更频繁。</p>
+<p>人们经常讨论和使用的方法：</p>
+<ul>
+<li><strong>纵向伸缩</strong>（scaling up，也称为垂直伸缩，即 vertical scaling）：转向更强大的机器</li>
+<li><strong>横向伸缩</strong>（scaling out，也称为水平伸缩，即 horizontal scaling）：将负载分布到多台小机器上</li>
+</ul>
+<p>跨多台机器分配负载也称为 “<strong>无共享（shared-nothing）</strong>” 架构。可以在单台机器上运行的系统通常更简单，但高端机器可能非常贵，所以非常密集的负载通常无法避免地需要横向伸缩。现实世界中的优秀架构需要将这两种方法务实地结合，因为使用几台足够强大的机器可能比使用大量的小型虚拟机更简单也更便宜。</p>
+<p>有些系统是 <strong>弹性（elastic）</strong> 的，这意味着可以在检测到负载增加时自动增加计算资源，而其他系统则是手动伸缩（人工分析容量并决定向系统添加更多的机器）。如果负载 <strong>极难预测（highly unpredictable）</strong>，则弹性系统可能很有用，但手动伸缩系统更简单，并且意外操作可能会更少。</p>
+<h4 id="分布式">分布式</h4>
+<p>跨多台机器部署 <strong>无状态服务（stateless services）</strong> 非常简单，但将带状态的数据系统从单节点变为分布式配置则可能引入许多额外复杂度。出于这个原因，常识告诉我们应该将数据库放在单个节点上（纵向伸缩），直到伸缩成本或可用性需求迫使其改为分布式。</p>
+<p>随着分布式系统的工具和抽象越来越好，至少对于某些类型的应用而言，这种常识可能会改变。可以预见<strong>分布式数据系统将成为未来的默认设置</strong>，即使对不处理大量数据或流量的场景也如此。</p>
+<p>没有一招鲜吃遍天的通用可伸缩架构（不正式的叫法：<strong>万金油（magic scaling sauce）</strong> ）。应用的问题可能是读取量、写入量、要存储的数据量、数据的复杂度、响应时间要求、访问模式或者所有问题的大杂烩。举个例子，用于处理每秒十万个请求（每个大小为 1 kB）的系统与用于处理每分钟 3 个请求（每个大小为 2GB）的系统看上去会非常不一样，尽管两个系统有同样的数据吞吐量。</p>
+<p>一个良好适配应用的可伸缩架构，是围绕着 <strong>假设（assumption）</strong> 建立的：哪些操作是常见的？哪些操作是罕见的？这就是所谓负载参数。如果假设最终是错误的，那么为伸缩所做的工程投入就白费了，最糟糕的是适得其反。在早期创业公司或非正式产品中，通常支持产品快速迭代的能力，要比可伸缩至未来的假想负载要重要的多。</p>
+<h2 id="可维护性">可维护性</h2>
+<p>软件的大部分开销并不在最初的开发阶段，而是在持续的维护阶段，包括修复漏洞、保持系统正常运行、调查失效、适配新的平台、为新的场景进行修改、偿还技术债、添加新的功能等等。</p>
+<p>为了使系统易于维护，考虑软件系统的三个设计原则：</p>
+<ul>
+<li><p>可操作性（Operability）</p>
+<p>便于运维团队保持系统平稳运行。</p></li>
+<li><p>简单性（Simplicity）</p>
+<p>从系统中消除尽可能多的 <strong>复杂度（complexity）</strong>，使新工程师也能轻松理解系统（注意这和用户接口的简单性不一样）。</p></li>
+<li><p>可演化性（evolvability）</p>
+<p>使工程师在未来能轻松地对系统进行更改，当需求变化时为新应用场景做适配。也称为 <strong>可扩展性（extensibility）</strong>、<strong>可修改性（modifiability）</strong> 或 <strong>可塑性（plasticity）</strong>。</p></li>
+</ul>
+<h3 id="可操作性">可操作性</h3>
+<p>良好的可操作性意味着更轻松的日常工作，进而运维团队能专注于高价值的事情。数据系统可以通过各种方式使日常任务更轻松：</p>
+<ul>
+<li>通过<strong>良好的监控</strong>，提供对系统内部状态和运行时行为的 <strong>可见性（visibility）</strong>。</li>
+<li>为<strong>自动化</strong>提供良好支持，将系统与标准化工具相集成。</li>
+<li><strong>避免依赖单台机器</strong>（在整个系统继续不间断运行的情况下允许机器停机维护）。</li>
+<li>提供<strong>良好的文档和易于理解的操作模型</strong>（“如果做 X，会发生 Y”）。</li>
+<li>提供<strong>良好的默认行为</strong>，但需要时也允许管理员自由覆盖默认值。</li>
+<li>有条件时进行<strong>自我修复</strong>，但需要时也允许管理员手动控制系统状态。</li>
+<li><strong>行为可预测</strong>，最大限度减少意外。</li>
+</ul>
+<h3 id="简单性">简单性</h3>
+<p>复杂的大型项目会显著拖慢相关人员，增大维护成本。一个陷入复杂泥潭的软件项目有时被描述为 <strong>烂泥潭（a big ball of mud）</strong> 。<strong>复杂度（complexity）</strong> 有各种可能的症状，例如：状态空间激增、模块间紧密耦合、纠结的依赖关系、不一致的命名和术语、解决性能问题的 Hack、需要绕开的特例等等。</p>
+<p>因为复杂度导致维护困难时，预算和时间安排通常会超支。<strong>在复杂的软件中进行变更，引入错误的风险也更大</strong>：当开发人员难以理解系统时，隐藏的假设、无意的后果和意外的交互就更容易被忽略。相反，降低复杂度能极大地提高软件的可维护性，因此简单性应该是构建系统的一个关键目标。</p>
+<p>因为复杂度导致维护困难时，预算和时间安排通常会超支。在复杂的软件中进行变更，引入错误的风险也更大：当开发人员难以理解系统时，隐藏的假设、无意的后果和意外的交互就更容易被忽略。相反，降低复杂度能极大地提高软件的可维护性，因此简单性应该是构建系统的一个关键目标。</p>
+<p><strong>简化系统并不一定意味着减少功能</strong>；它也可以意味着消除 <strong>额外的（accidental）</strong> 的复杂度。 Moseley 和 Marks【32】把 <strong>额外复杂度</strong> 定义为：由具体实现中涌现，而非（从用户视角看，系统所解决的）问题本身固有的复杂度。</p>
+<p>用于消除 <strong>额外复杂度</strong> 的最好工具之一是 <strong>抽象（abstraction）</strong>。一个好的抽象可以将大量实现细节隐藏在一个干净，简单易懂的外观下面。一个好的抽象也可以广泛用于各类不同应用。比起重复造很多轮子，重用抽象不仅更有效率，而且有助于开发高质量的软件。抽象组件的质量改进将使所有使用它的应用受益。</p>
+<p>例如，高级编程语言是一种抽象，隐藏了机器码、CPU 寄存器和系统调用。 SQL 也是一种抽象，隐藏了复杂的磁盘 / 内存数据结构、来自其他客户端的并发请求、崩溃后的不一致性。当然在用高级语言编程时，我们仍然用到了机器码；只不过没有 <strong>直接（directly）</strong> 使用罢了，正是因为编程语言的抽象，我们才不必去考虑这些实现细节。</p>
+<p>抽象可以帮助我们将系统的复杂度控制在可管理的水平，不过，找到好的抽象是非常困难的。在分布式系统领域虽然有许多好的算法，但我们并不清楚它们应该打包成什么样抽象。</p>
+<h3 id="可演化性">可演化性</h3>
+<p>系统的需求永远不变，基本是不可能的。更可能的情况是，它们处于常态的变化中，例如：你了解了新的事实、出现意想不到的应用场景、业务优先级发生变化、用户要求新功能、新平台取代旧平台、法律或监管要求发生变化、系统增长迫使架构变化等。</p>
+<p>在组织流程方面， <strong>敏捷（agile）</strong> 工作模式为适应变化提供了一个框架。敏捷社区还开发了对在频繁变化的环境中开发软件很有帮助的技术工具和模式，如 <strong>测试驱动开发（TDD, test-driven development）</strong> 和 <strong>重构（refactoring）</strong> 。</p>
+<p>修改数据系统并使其适应不断变化需求的容易程度，是与 <strong>简单性</strong> 和 <strong>抽象性</strong> 密切相关的：简单易懂的系统通常比复杂系统更容易修改。但由于这是一个非常重要的概念，我们将用一个不同的词来指代数据系统层面的敏捷性： <strong>可演化性（evolvability）</strong> 【34】。</p>
+<h2 id="总结">总结</h2>
+<p>第一章简要介绍了数据系统，并详细讨论了可靠性、可扩展性、可维护性。读完之后，对于三大特性的含义和相关概念有了清晰的了解。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xie.infoq.cn/article/eda3b32806bc800173793118e">SLO（服务等级目标）与 SLA（服务等级协议）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/" title="DDIA 阅读笔记第一章：可靠性、可扩展性和可维护性">https://tqnwhz.github.io/blog/2024/04/08/DDIA-Note-1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/DDIA/" rel="tag"><i class="fa fa-tag"></i> DDIA</a>
+              <a href="/blog/tags/%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E5%AF%86%E9%9B%86%E5%9E%8B%E5%BA%94%E7%94%A8/" rel="tag"><i class="fa fa-tag"></i> 设计数据密集型应用</a>
+              <a href="/blog/tags/%E5%8F%AF%E9%9D%A0%E6%80%A7/" rel="tag"><i class="fa fa-tag"></i> 可靠性</a>
+              <a href="/blog/tags/%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7/" rel="tag"><i class="fa fa-tag"></i> 可扩展性</a>
+              <a href="/blog/tags/%E5%8F%AF%E7%BB%B4%E6%8A%A4%E6%80%A7/" rel="tag"><i class="fa fa-tag"></i> 可维护性</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2023/12/30/CSAPP-Lab-7/" rel="prev" title="CSAPP-Lab-7 实验报告: proxylab">
+                  <i class="fa fa-chevron-left"></i> CSAPP-Lab-7 实验报告: proxylab
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">289k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">8:46</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
