@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js"></script>
+<meta name="description" content="摘要 第六章讨论了分片这一技术，通过将数据将大数据集拆分为多个小数据集，存储在多个节点上，来达到提高吞吐的效果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDIA 阅读笔记第六章：分片">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 第六章讨论了分片这一技术，通过将数据将大数据集拆分为多个小数据集，存储在多个节点上，来达到提高吞吐的效果。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-1.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-3.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-4.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-5.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/image-20240512112755797.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-6.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-7.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-8.png">
+<meta property="article:published_time" content="2024-05-11T14:06:39.000Z">
+<meta property="article:modified_time" content="2024-05-12T03:36:54.531Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="DDIA">
+<meta property="article:tag" content="设计数据密集型应用">
+<meta property="article:tag" content="分片">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/fig6-1.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/","path":"2024/05/11/DDIA-Note-6/","title":"DDIA 阅读笔记第六章：分片"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DDIA 阅读笔记第六章：分片 | 一隅</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%88%86%E7%89%87"><span class="nav-number">1.1.</span> <span class="nav-text">什么是分片</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%89%87%E4%B8%8E%E5%A4%8D%E5%88%B6%E7%BB%93%E5%90%88"><span class="nav-number">1.2.</span> <span class="nav-text">分片与复制结合</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#key-value-%E6%95%B0%E6%8D%AE%E7%9A%84%E5%88%86%E7%89%87"><span class="nav-number">2.</span> <span class="nav-text">key-value 数据的分片</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B9%E6%8D%AE%E9%94%AE%E8%8C%83%E5%9B%B4%E5%88%86%E7%89%87"><span class="nav-number">2.1.</span> <span class="nav-text">根据键范围分片</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B9%E6%8D%AE-hash-%E5%88%86%E7%89%87"><span class="nav-number">2.2.</span> <span class="nav-text">根据 hash 分片</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%81%8F%E6%96%9C%E5%92%8C%E7%83%AD%E7%82%B9%E6%B6%88%E9%99%A4"><span class="nav-number">2.3.</span> <span class="nav-text">负载偏斜和热点消除</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E7%89%87%E4%B8%8E%E4%BA%8C%E7%BA%A7%E7%B4%A2%E5%BC%95"><span class="nav-number">3.</span> <span class="nav-text">分片与二级索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E7%B4%A2%E5%BC%95"><span class="nav-number">3.1.</span> <span class="nav-text">本地索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E7%B4%A2%E5%BC%95"><span class="nav-number">3.2.</span> <span class="nav-text">全局索引</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E5%B9%B3%E8%A1%A1rebalancing"><span class="nav-number">4.</span> <span class="nav-text">重平衡（Rebalancing）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%B9%B3%E8%A1%A1%E7%AD%96%E7%95%A5"><span class="nav-number">4.1.</span> <span class="nav-text">重平衡策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%8D%E9%9D%A2%E6%95%99%E6%9D%90hash-mod-n"><span class="nav-number">4.1.1.</span> <span class="nav-text">反面教材：hash mod N</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C"><span class="nav-number">4.1.2.</span> <span class="nav-text">一致性哈希</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%95%B0%E9%87%8F%E7%9A%84%E5%88%86%E7%89%87"><span class="nav-number">4.1.3.</span> <span class="nav-text">固定数量的分片</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%88%86%E7%89%87"><span class="nav-number">4.1.4.</span> <span class="nav-text">动态分片</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8A%82%E7%82%B9%E6%8B%A5%E6%9C%89%E7%9A%84%E5%88%86%E7%89%87%E6%95%B0%E9%87%8F%E5%9B%BA%E5%AE%9A"><span class="nav-number">4.1.5.</span> <span class="nav-text">节点拥有的分片数量固定</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E7%BB%B4%E6%89%8B%E5%8A%A8%E8%BF%98%E6%98%AF%E8%87%AA%E5%8A%A8%E9%87%8D%E5%B9%B3%E8%A1%A1"><span class="nav-number">4.2.</span> <span class="nav-text">运维：手动还是自动重平衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%B7%AF%E7%94%B1"><span class="nav-number">5.</span> <span class="nav-text">请求路由</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E5%B9%B6%E8%A1%8C%E6%9F%A5%E8%AF%A2"><span class="nav-number">5.1.</span> <span class="nav-text">执行并行查询</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E5%B0%8F%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">本章小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">67</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">88</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DDIA 阅读笔记第六章：分片
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-05-11 22:06:39" itemprop="dateCreated datePublished" datetime="2024-05-11T22:06:39+08:00">2024-05-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-05-12 11:36:54" itemprop="dateModified" datetime="2024-05-12T11:36:54+08:00">2024-05-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/DDIA/" itemprop="url" rel="index"><span itemprop="name">DDIA</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>20 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="摘要">摘要</h2>
+<p>第六章讨论了分片这一技术，通过将数据将大数据集拆分为多个小数据集，存储在多个节点上，来达到提高吞吐的效果。</p>
+<span id="more"></span>
+<h3 id="什么是分片">什么是分片</h3>
+<ol type="1">
+<li><strong>分片（Partition），也叫分片（sharding）</strong>：将大数据集拆分为多个小数据集（分片），存储在不共享集群的多个节点上，利用多机处理负载，提高吞吐、可扩展性。
+<ol type="1">
+<li>对于在单个分片上运行的查询，每个节点可以独立执行对自己的查询，因此可以通过添加更多的节点来扩大查询吞吐量。</li>
+<li>复杂的查询可能会跨越多个节点并行处理，这也带来了新的困难。</li>
+</ol></li>
+<li><strong>复制（Replication</strong>）：同一份数据使用多机存储多副本，避免单点故障、提高可扩展性和可用性。</li>
+</ol>
+<p>二者的区别：巨大数据集无法存储在单机上，复制技术就无效了，必须先分片。</p>
+<blockquote>
+<p>术语澄清 上文中的分片 (partition) 是约定俗成的叫法，但还有其他叫法：</p>
+<ul>
+<li>在 MongoDB,Elasticsearch 和 Solr Cloud 中被称为分片 (shard)，</li>
+<li>在 HBase 中称之为 ** 区域 (Region)</li>
+<li>Bigtable 中则是 表块（tablet）</li>
+<li>Cassandra 和 Riak 中是 ** 虚节点（vnode)</li>
+<li>Couchbase 中叫做虚桶 (vBucket)</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>这里的 partiton 有时也被译为分片，但这容易与网络分片（[Network partition]）混淆，因此个人建议用分片这个名字。</p>
+</blockquote>
+<p>通常情况下：</p>
+<ul>
+<li>每条记录属于且仅属于一个分片</li>
+<li>每个分片都是自己的小型数据库，尽管数据库可能支持同时进行多个分片的操作。</li>
+</ul>
+<p>分片主要是为了<strong>可扩展性</strong>。不同的分片可以放在中的不同节点上。因此，大数据集可以分布在多个磁盘上，并且查询负载可以分布在多个处理器上。</p>
+<p>在本章中，讨论：</p>
+<ul>
+<li>大型数据集切分的不同方法，并观察索引如何与分片配合</li>
+<li>分片重平衡（Rebalancing）：如果想要添加或删除群集中的节点，则必须进行重平衡</li>
+<li>请求路由：数据库如何将请求路由到正确的分片并执行查询</li>
+</ul>
+<h3 id="分片与复制结合"><strong>分片与复制结合</strong></h3>
+<p>分片通常与复制结合使用，使得每个分片的副本存储在多个节点上。 这意味着，即使每条记录属于一个分片，它仍然可以存储在多个不同的节点上以获得容错能力。</p>
+<p>一个节点可能存储多个分片。 如果使用主从复制模型，则分片和复制的组合如图 6-1 所示。</p>
+<ul>
+<li>每个分片中：存在一个节点为主副本，其他节点为从副本。</li>
+<li>每个节点中：既有主副本分片，又有从副本分片。</li>
+</ul>
+<p>数据库复制的所有内容同样适用于分片的复制。 大多数情况下，分片方案的选择与复制方案的选择是独立的，为简单起见，本章中将忽略复制。</p>
+<p><img src="fig6-1.png"></p>
+<p>图 6-1 组合使用复制和分片：每个节点充当某些分片的<strong>主副本</strong>，其他分片充当<strong>从副本</strong></p>
+<h2 id="key-value-数据的分片"><strong>key-value 数据的分</strong>片</h2>
+<p>分片目标是将数据和查询负载均匀分布在各个节点上，成倍提高吞吐：</p>
+<ul>
+<li>如果每个节点公平分享数据和负载，那么理论上 10 个节点应该能够处理 10 倍的数据量和 10 倍的单个节点的读写吞吐量（暂时忽略复制）。</li>
+</ul>
+<p>如果分片是不公平的，一些分片比其他分片有更多的数据或查询，称之为<strong><mark style="background: #FFF3A3A6;">偏斜（skew）</mark></strong>。</p>
+<ul>
+<li>数据偏斜会降低分片效率。在极端的情况下，所有的负载可能压在一个分片上，其余 9 个节点空闲的，瓶颈落在这一个繁忙的节点上。</li>
+<li>不均衡导致的高负载的分片被称为<strong>热点（hot spot）</strong>。</li>
+</ul>
+<h3 id="根据键范围分片">根据键范围分片</h3>
+<p>将键的范围（从最小值到最大值）拆成多个区间，每个区间对应一个分片。</p>
+<ul>
+<li>可以很快确定 key 在哪个分片上（查找包含它的区间）</li>
+<li>如果还知道分片所在的节点，那么可以直接向相应的节点发出请求</li>
+</ul>
+<p>为了使分片数据均匀分布，需要按照数据的分布，动态调整分片的边界（对键范围等分通常不能使分片数据均匀）</p>
+<ul>
+<li>可以由管理员手动完成</li>
+<li>也可以自动进行，参见重平衡</li>
+</ul>
+<p>在分片内部，键可以按序存储，这使得可以支持<strong>高效的范围查询（Rang Query）</strong>。例如某个应用是保存传感器数据，并将时间戳作为键进行分片，则可轻松获取一段时间内（起始到终止区间内）的数据。</p>
+<p>但坏处在于，数据访问模式容易造成热点。例如某段范围的数据读写频率远高于其他数据。</p>
+<ul>
+<li>仍以传感器数据存储为例，以时间戳为 Key，按天的粒度进行分片，所有最新写入都被路由到最后一个分片节点，造成严重的写入倾斜，不能充分利用所有机器的写入带宽。</li>
+<li>解决办法：根据访问模式，使用拼接主键<strong>将热点读写打散到多节点</strong>。例如使用传感器名称 + 时间戳作为主键，则可以将同时写入的多个传感器的数据分散到多机上去。</li>
+</ul>
+<h3 id="根据-hash-分片">根据 hash 分片</h3>
+<p>为了避免数据倾斜和读写热点，许多数据系统使用散列函数对键进行分片。</p>
+<p>好的散列函数：</p>
+<ul>
+<li>应该将偏斜的数据均匀分布：对于一个新的字符串输入，它将返回一个 <code>[0, 2^32-1)</code> 中的 “随机数”。 即使输入的字符串非常相似，它们的散列也会均匀分布在这个数字范围内。</li>
+<li>不需要具有健壮的加密算法。但编程语言内置的简单哈希函数（它们用于散列表）可能不适合分片：例如，在 Java 的 <code>Object.hashCode()</code> 和 Ruby 的 <code>Object#hash</code>，同一个键可能在不同的进程中有不同的哈希值。 <img src="fig6-3.png"> <strong>图 6-3 按哈希键分片</strong></li>
+</ul>
+<p>hash 分片：</p>
+<ul>
+<li>优点：好的 hash 函数能够均匀地将负载分摊到各节点，不会出现热点</li>
+<li>缺点：范围查询低效，需要发送到所有节点；对比之下，根据键范围的分片只需要发送到与范围相关的节点</li>
+</ul>
+<p>Cassandra 使用了<mark style="background: #FFF3A3A6;">组合主键（compound primary key）</mark>来达到折中：</p>
+<ul>
+<li>只有组合主键的第一列决定分片，剩下的列作为多列索引用于将分片数据在 SSTable 中排序</li>
+<li>单个 query 虽然不能高效地在主键第一列上执行范围查询，但是可以在固定第一列的情况下，对剩下的列执行高效的范围查询。这种多列索引很适合一对多关系。
+<ul>
+<li>例如，想要查询同一个用户的发帖历史，可以按 user_id 作为主键第一列，发帖时间作为第二列，就可以高效地执行范围查询。不同用户的数据存储在不同节点上，但同一用户的数据只会按发帖时间顺序存放在单一节点。</li>
+<li>这种<mark style="background: #FFF3A3A6;">相关数据局部化</mark>的思想，Redis 也有用到，参考 <a target="_blank" rel="noopener" href="https://redis.io/blog/redis-clustering-best-practices-with-keys/">Redis Clustering Best Practices With Multiple Keys - Redis</a>。Redis Hashtag 特性支持用大括号把 key 的一部分包起来，只使用这一部分计算 hash，决定分片，类似上面例子的主键第一列，这使得可以把相关的数据存储在同一个节点上，提高读写效率。</li>
+</ul></li>
+</ul>
+<h3 id="负载偏斜和热点消除"><strong>负载偏斜和热点消除</strong></h3>
+<p>如前所述，哈希分片可以帮助减少热点。但是，它不能完全避免它们：在极端情况下，<strong>所有的读写操作都是针对同一个键的，所有的请求都会被路由到同一个分片</strong>。</p>
+<p>这种场景也许并不常见，但并非闻所未闻：例如，在社交媒体网站上，一个拥有数百万追随者的名人用户在做某事时可能会引发一场风暴【14】。这个事件可能导致同一个键的大量写入（键可能是名人的用户 ID，或者人们正在评论的动作的 ID）。哈希策略不起作用，因为两个相同 ID 的哈希值仍然是相同的。</p>
+<p>如今，大多数数据系统无法自动补偿这种高度偏斜的负载，因此应用程序有责任减少偏斜。例如，如果一个主键被认为是非常火爆的，一个简单的方法是在主键的开始或结尾添加一个随机数。只要一个两位数的十进制随机数就可以将主键分散为 100 种不同的主键，从而存储在不同的分片中。</p>
+<p>然而，将主键进行分割之后，任何读取都必须要做额外的工作，因为他们必须从所有 100 个主键分布中读取数据并将其合并。此技术还需要额外的记录：只需要对少量热点附加随机数；对于写入吞吐量低的绝大多数主键来说是不必要的开销。因此，你还需要一些方法来跟踪哪些键需要被分割。</p>
+<p>也许在将来，数据系统将能够自动检测和补偿偏斜的工作负载；但现在，你需要自己来权衡。</p>
+<h2 id="分片与二级索引"><strong>分片与二级索引</strong></h2>
+<p>key-value 数据下，使用主键（即 key）分片，在已知 key 时可以唯一确定分片，将读写请求路由到负责该键的分片。</p>
+<ul>
+<li>各种唯一 id：user_id，item_id 都是这种场景</li>
+</ul>
+<p>如果想要构建二级索引呢？</p>
+<p>二级索引通常并不能唯一地标识记录，而是一种搜索记录中出现特定值的方式：</p>
+<ul>
+<li>查找包含词语 <code>hogwash</code> 的所有文章</li>
+<li>查找所有颜色为红色的车辆等等。</li>
+</ul>
+<p>二级索引是关系型数据库的基础，并且在文档数据库中也很普遍。许多键值存储（如 HBase 和 Volde-mort）为了减少实现的复杂度而放弃了二级索引，但是一些（如 Riak）已经开始添加它们，因为它们对于数据模型实在是太有用了。并且二级索引也是 Solr 和 Elasticsearch 等搜索服务器的基石。</p>
+<p>二级索引的问题是它们不能整齐地映射到分片。有两种用二级索引对数据库进行分片的方法：</p>
+<ul>
+<li><strong>本地索引：基于文档（document-based）</strong> <strong>的分片</strong></li>
+<li><strong>全局索引</strong>：<strong>基于关键词（term-based）的分片</strong></li>
+</ul>
+<blockquote>
+<p>注：书中给的 document-based、term-based 两个名词（包括 document 和 term）是从搜索中来的。由于搜索中都是 term→ document id list 的映射，document-based 是指按 document id 进行分片，每个分片存的索引都是本地的 document ids，而不管其他分片，因此是本地索引，查询时需要发到所有分片逐个查询。term-based 是指按 term 进行分片，则每个倒排索引都是存的全局的 document id list，因此查询的时候只需要去 term 所在分片查询即可。</p>
+</blockquote>
+<h3 id="本地索引">本地索引</h3>
+<p>假设你正在经营一个销售二手车的网站（如 图 6-4 所示），每辆车包含（id、color、make、location）四元组信息，按 id 分片存储。</p>
+<p>如果想让用户搜索汽车，允许他们通过颜色和厂商过滤，就需要一个在颜色（color）和厂商（make）上的次级索引。</p>
+<ul>
+<li>文档数据库中这些属性是 <strong>字段（field）</strong>，关系数据库中这些是 <strong>列（column）</strong></li>
+</ul>
+<p>如果声明了索引，则数据库可以自动执行索引。例如，无论何时将红色汽车添加到数据库，数据库分片都会自动将其添加到索引条目 <code>color:red</code> 的文档 ID 列表中。</p>
+<blockquote>
+<p>如果数据库仅支持键值模型，则你可能会尝试在应用程序代码中创建从属性值到主键 ID 的映射来实现次级索引。 如果沿着这条路线走下去，请万分小心，确保你的索引与底层数据保持一致。 竞争条件和间歇性写入失败（其中一些更改已保存，但其他更改未保存）很容易导致数据不同步 - 请参阅 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch7?id=%e5%a4%9a%e5%af%b9%e8%b1%a1%e4%ba%8b%e5%8a%a1%e7%9a%84%e9%9c%80%e6%b1%82">多对象事务的需求</a></strong>”。</p>
+</blockquote>
+<p><img src="fig6-4.png"></p>
+<p><strong>图 6-4 基于文档的次级索引进行分片</strong></p>
+<p>在这种索引方法中，每个分片是完全独立的：</p>
+<ul>
+<li>每个分片维护自己的次级索引，仅覆盖该分片中的文档。它不关心存储在其他分片的数据</li>
+<li>无论何时你需要写入数据库（添加，删除或更新文档），只需处理包含你正在编写的文档 ID 的分片即可。出于这个原因，这种索引被称为 <strong>本地索引（local index）</strong></li>
+</ul>
+<p>这种索引下，如果要搜索红色汽车，则<strong>需要将查询发送到所有分片，并合并所有返回的结果</strong>。</p>
+<p>这种查询分片数据库的方法有时被称为 <strong>分散 / 聚集（scatter/gather）</strong>，并且可能会使次级索引上的读取查询相当昂贵。</p>
+<ul>
+<li>即使并行查询分片，分散 / 聚集也容易导致尾部延迟放大（请参阅 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch1?id=%e5%ae%9e%e8%b7%b5%e4%b8%ad%e7%9a%84%e7%99%be%e5%88%86%e4%bd%8d%e7%82%b9">实践中的百分位点</a></strong>”）。</li>
+<li>被广泛使用：MongoDB，Riak ，Cassandra ，Elasticsearch，SolrCloud 和 VoltDB 都使用文档分片次级索引。</li>
+</ul>
+<p>大多数数据库供应商建议你构建一个能从单个分片提供次级索引查询的分片方案，但这并不总是可行，尤其是当在单个查询中使用多个次级索引时（例如同时需要按颜色和制造商查询）。</p>
+<h3 id="全局索引">全局索引</h3>
+<p>相较于本地索引，<strong>全局索引</strong> 覆盖所有分片数据 ，而不仅是当前分片的数据：</p>
+<ul>
+<li>全局索引也必须进行分片存储多个节点上，才能分摊负载</li>
+<li>全局索引可以采用与主键不同的分片方式</li>
+</ul>
+<p>图 6-5 中颜色、制造商为全局索引<strong>：</strong></p>
+<ul>
+<li>颜色：首字母从 <code>a</code> 到 <code>r</code> 的颜色在分片 0 中，<code>s</code> 到 <code>z</code> 的在分片 1。</li>
+<li>汽车制造商：索引也与之类似（分片边界在 <code>f</code> 和 <code>h</code> 之间）。 <img src="fig6-5.png"> <strong>图 6-5 基于关键词对二级索引进行分片</strong></li>
+</ul>
+<p>这种索引也被称为 <strong>关键词分片（term-partitioned）</strong>，因为我们寻找的关键词决定了索引的分片方式。例如，一个关键词可能是：<code>color:red</code>。<strong>关键词（Term）</strong> 这个名称来源于全文搜索索引（一种特殊的次级索引），指文档中出现的所有单词。</p>
+<p>和之前一样，可以通过 <strong>关键词</strong> 本身或者它的散列进行索引分片。</p>
+<ul>
+<li>根据关键词本身来分片对于范围扫描非常有用（例如对于数值类的属性，像汽车的报价）</li>
+<li>而对关键词的哈希分片提供了负载均衡的能力。</li>
+</ul>
+<p>相较于本地索引，全局索引：</p>
+<ul>
+<li>优点：读取更高效：不需要 <strong>分散 / 收集</strong> 所有分片，客户端只需要向包含关键词的分片发出请求。</li>
+<li>缺点：写入速度较慢且较为复杂，因为写入单个文档现在可能会影响索引的多个分片（文档中的每个关键词可能位于不同的分片或者不同的节点上） 。</li>
+</ul>
+<p>理想情况下，索引总是最新的，写入数据库的每个文档都会立即反映在索引中。但是，在关键词分片索引中，这需要跨分片的分布式事务，并不是所有数据库都支持。</p>
+<p>在实践中，对全局次级索引的更新通常是 <strong>异步</strong> 的（也就是说，如果在写入之后不久读取索引，刚才所做的更改可能尚未反映在索引中）。例如，Amazon DynamoDB 声称在正常情况下，其全局次级索引会在不到一秒的时间内更新，但在基础架构出现故障的情况下可能会有延迟。</p>
+<p>一些数据库，例如 Riak 的搜索功能和 Oracle 数据仓库，它允许你在本地和全局索引之间进行选择。</p>
+<h2 id="重平衡rebalancing"><strong>重平衡（Rebalancing）</strong></h2>
+<p>随着时间的推移，数据库会有各种变化：</p>
+<ul>
+<li>查询吞吐量增加：需要更多的 CPU 处理负载</li>
+<li>数据集大小增加：需要更多的磁盘和 RAM 存储</li>
+<li>机器出现故障：其他机器需要接管故障机器的职责</li>
+</ul>
+<p>所有这些更改都需要数据和请求从一个节点移动到另一个节点。 将负载从集群中的一个节点向另一个节点移动的过程称为 <strong>重平衡（rebalancing）</strong>。</p>
+<p>无论使用哪种分片方案，重平衡通常都要满足一些最低要求：</p>
+<ul>
+<li><strong><mark style="background: #FFF3A3A6;">负载均摊</mark></strong>：重平衡之后，负载（数据存储，读取和写入请求）应该均匀分散到集群中的节点</li>
+<li><strong><mark style="background: #FFF3A3A6;">可用性</mark></strong>：重平衡发生时，数据库应该继续接受读取和写入</li>
+<li><strong><mark style="background: #FFF3A3A6;">最小代价</mark></strong>：节点之间只移动必须的数据，以便快速重平衡，并减少网络和磁盘 I/O 负载</li>
+</ul>
+<h3 id="重平衡策略">重平衡策略</h3>
+<p>有多种重平衡策略，取决于一些因素，例如分片的数量、大小是否可变，如何变化。</p>
+<h4 id="反面教材hash-mod-n">反面教材：hash mod N</h4>
+<p>之前的做法是，将可能的散列分成不同的范围，并将每个范围分配给一个分片（例如，如果 0≤ℎ𝑎𝑠ℎ(𝑘𝑒𝑦)&lt;b0 ，则将键分配给分片 0，如果 b0≤hash (key)&lt;b1，则分配给分片 1）。</p>
+<p>取模法：如果有 10 个节点，编号为 0 到 9，根据 hash % 10 的结果划分分片。 这似乎是将每个键分配给一个节点的简单方法。</p>
+<p>模 N（𝑚𝑜𝑑 𝑁）方法的问题是，如果节点数量 N 发生变化，<mark style="background: #FFF3A3A6;">大多数键将需要从一个节点移动到另一个节点</mark>，同一个 hash 值 mod N 与 mod N+1 的结果通常是不同的。</p>
+<ul>
+<li>这违背了<mark style="background: #FFF3A3A6;">最小代价</mark>准则，即只移动必需的数据</li>
+</ul>
+<h4 id="一致性哈希">一致性哈希</h4>
+<p><strong>一致性哈希（<a href="%5BConsistent%20hashing%20-%20Wikipedia%5D(https://en.wikipedia.org/wiki/Consistent_hashing)">consistent hashing</a>）</strong>就是为了解决这个问题，构建一个 hash 圆环，节点分散到圆环上。</p>
+<ul>
+<li>每个请求根据在圆环中的位置，按顺序（如顺时针）关联到下一个节点。</li>
+<li>在增删节点时，只有少部分数据需要重新关联，而不像普通的取模法，几乎所有数据都需要重新映射。</li>
+</ul>
+<p><img src="image-20240512112755797.png"></p>
+<h4 id="固定数量的分片">固定数量的分片</h4>
+<p>在数据库第一次建立时确定固定数量的分片，之后不会改变。分片数量通常多于节点数量，进而并为每个节点分配多个分片。</p>
+<ul>
+<li>例如，运行在 10 个节点的集群上的数据库可能会从一开始就被拆分为 1,000 个分片，因此大约有 100 个分片被分配给每个节点。</li>
+<li>原则上可以分割和合并分片，但固定数量的分片在操作上更简单，因此许多固定分片数据库选择不实施分片分割。</li>
+</ul>
+<p>分片数的权衡：</p>
+<ul>
+<li>分片数是可拥有的最大节点数量，需要设置足够多的分片以适应未来的增长。</li>
+<li>每个分片也有管理开销，所以选择太大的数字会适得其反。</li>
+</ul>
+<p>当扩缩容时，发生如下的<mark style="background: #FFF3A3A6;">重平衡</mark>：</p>
+<ul>
+<li>如果一个节点被添加到集群中，新节点可以从当前每个节点中 <strong>窃取</strong> 一些分片，直到分片再次公平分配。这个过程如图 6-6 所示。</li>
+<li>如果从集群中删除一个节点，则会发生相反的情况。 注意，这种设置下，重平衡过程中：</li>
+<li>分片的数量不会改变</li>
+<li>键所对应的分片也不会改变</li>
+<li>唯一改变的是分片所在的节点。这种变更并不是即时的 — 在网络上传输大量的数据需要一些时间 — 所以在传输过程中，原有分片仍然会接受读写操作。 <img src="fig6-6.png"> <strong>图 6-6 将新节点添加到每个节点具有多个分片的数据库集群。</strong></li>
+</ul>
+<p>原则上，你甚至可以解决集群中的硬件不匹配问题：通过<mark style="background: #FFF3A3A6;">为更强大的节点分配更多的分片</mark>，可以强制这些节点承载更多的负载。在 Riak 、Elasticsearch 、Couchbase 和 Voldemort 中使用了这种重平衡的方法。</p>
+<p>如果数据集的总大小难以预估（例如，可能它开始很小，但随着时间的推移会变得更大），选择正确的分片数是困难的。由于每个分片包含了总数据量固定比率的数据，因此<mark style="background: #FFF3A3A6;">每个分片的大小与集群中的数据总量成比例增长</mark>。</p>
+<ul>
+<li>如果分片非常大，重平衡和从节点故障恢复变得昂贵。</li>
+<li>如果分片太小，则会产生太多管理开销，元信息存储开销、均衡调度开销。 当分片大小 “恰到好处” 的时候才能获得很好的性能，如果分片数量固定，但数据量变动很大，则难以达到最佳性能。</li>
+</ul>
+<h4 id="动态分片">动态分片</h4>
+<p>对于使用键范围分片的数据库，使用固定边界、固定数量的分片将非常不便：数据分布可能随时间变化，导致数据分配不均。</p>
+<ul>
+<li>每次手动重新配置分片边界将非常繁琐。</li>
+</ul>
+<p>出于这个原因，按键的范围进行分片的数据库（如 HBase 和 RethinkDB）会动态创建分片：</p>
+<ul>
+<li>当<mark style="background: #FFF3A3A6;">分片增长到超过配置的大小</mark>时（在 HBase 上，默认值是 10GB），会被分成两个分片，每个分片约占一半的数据。</li>
+<li>如果大量数据被删除并且分片缩小到某个阈值以下，则可以将其与相邻分片合并。此过程与 B 树 删除类似。</li>
+</ul>
+<p>每个分片分配给一个节点，每个节点可以处理多个分片，就像固定数量的分片一样。大型分片拆分后，可以将其中的一半转移到另一个节点，以平衡负载。在 HBase 中，分片文件的传输通过 HDFS（底层使用的分布式文件系统）来实现。</p>
+<p><mark style="background: #FFF3A3A6;">动态分片的优点：分片数量与总数据量成正比</mark>。如果只有少量的数据，少量的分片就足够了，所以开销很小；如果有大量的数据，每个分片的大小被限制在一个可配置的最大值。</p>
+<p>但同时，小数据量时，如果只有一个分片，会限制写入并发。因此，工程中有些数据库支持<strong>预分片</strong>（pre-splitting），如 HBase 和 MongoDB，即允许在空数据库中，配置初始分片数量下限，并确定每个分片的范围。</p>
+<p>动态分片不仅适用于数据的范围分片，而且也适用于散列分片。从版本 2.4 开始，MongoDB 同时支持范围和散列分片，并且都支持动态分割分片。</p>
+<h4 id="节点拥有的分片数量固定">节点拥有的分片数量固定</h4>
+<p>之前提到两种方法：</p>
+<ul>
+<li>固定数量的分片：每个分片的大小与数据集的大小成正比。</li>
+<li>动态分片：分片的数量与数据集的大小成正比，因为拆分和合并过程将每个分片的大小保持在固定的最小值和最大值之间</li>
+</ul>
+<p>在这两种情况下，分片的数量都与节点的数量无关。</p>
+<p>Cassandra 和 Ketama 使用的第三种方法是使分片数与节点数成正比 —— 换句话说，每个节点具有固定数量的分片。在这种情况下：</p>
+<ul>
+<li>数据增长时：分片的大小与数据集大小成比例地增长，而节点数量保持不变</li>
+<li>增加节点数时：总分片数增加，分片将变小。由于较大的数据量通常需要较大数量的节点进行存储，因此这种方法也<mark style="background: #FFF3A3A6;">使每个分片的大小较为稳定</mark>。</li>
+</ul>
+<p>当一个新节点加入集群时，它随机选择固定数量的现有分片进行拆分，然后占有这些拆分分片中每个分片的一半，同时将每个分片的另一半留在原地。</p>
+<ul>
+<li>随机化可能会产生不公平的分割，但是在更大数量的分片上平均时（在 Cassandra 中，默认情况下，每个节点有 256 个分片），新节点最终从现有节点获得公平的负载份额。</li>
+<li>Cassandra 3.0 引入了另一种重平衡的算法来避免不公平的分割【29】。</li>
+</ul>
+<p>随机选择分片边界要求使用基于散列的分片（可以从散列函数产生的数字范围中挑选边界）。实际上，这种方法最符合一致性哈希的原始定义。最新的哈希函数可以在较低元数据开销的情况下达到类似的效果【8】。</p>
+<h3 id="运维手动还是自动重平衡">运维：手动还是自动重平衡</h3>
+<p>关于重平衡有一个重要问题：自动还是手动进行？</p>
+<ul>
+<li>全自动重平衡：系统自动决定何时将分片从一个节点移动到另一个节点，无须人工干预</li>
+<li>完全手动：分片指派给节点由管理员明确配置，仅在管理员明确重新配置时才会更改</li>
+<li>折中：Couchbase、Riak 和 Voldemort 会自动生成建议的分片分配，但需要管理员提交才能生效</li>
+</ul>
+<p>全自动重平衡可以很方便，因为正常维护的操作工作较少。然而，它可能是<mark style="background: #FFF3A3A6;">不可预测的</mark>。重平衡是一个昂贵的操作，因为它需要重新路由请求并将大量数据从一个节点移动到另一个节点。如果没有做好，这个过程可能会使网络或节点负载过重，降低其他请求的性能。</p>
+<p>这种自动化与自动故障检测相结合可能十分危险。例如，假设一个节点过载，并且对请求的响应暂时很慢。其他节点得出结论：过载的节点已经死亡，并自动重新平衡集群，使负载离开它。这会对已经超负荷的节点，其他节点和网络造成额外的负载，从而使情况变得更糟，并可能导致级联失败。</p>
+<p>出于这个原因，<mark style="background: #FFF3A3A6;">重平衡的过程中有人参与是一件好事</mark>。这比全自动的过程慢，但可以帮助<mark style="background: #FFF3A3A6;">防止运维意外</mark>。</p>
+<h2 id="请求路由">请求路由</h2>
+<p>数据集分片到多个机器上的多个节点上时，当客户想要发出请求：如何知道要连接哪个节点（ IP 地址和端口号）？</p>
+<ul>
+<li>核心目标是维护路由配置信息（分片 - 节点），能随着重平衡更新</li>
+</ul>
+<p>这是 <strong><mark style="background: #FFF3A3A6;">服务发现（service discovery）</mark></strong> 问题，它不仅限于数据库。任何可通过网络访问的软件都有这个问题，特别是如果它的目标是高可用性（在多台机器上运行冗余配置）。</p>
+<ul>
+<li>如果不要求高可用，直接写死一个 ip 即可，出问题手动更新</li>
+</ul>
+<p>概括来说，这个问题有几种不同的方案（如图 6-7 所示）:</p>
+<ul>
+<li><mark style="background: #FFF3A3A6;">节点转发</mark>：允许客户联系任何节点（例如，通过 <strong>循环策略的负载均衡</strong>，即 Round-Robin Load Balancer），每个节点负责将客户端请求转发到正确节点。
+<ul>
+<li>如果该节点恰巧拥有请求的分片，则它可以直接处理该请求；</li>
+<li>否则，它将请求转发到适当的节点，接收回复并传递给客户端。</li>
+</ul></li>
+<li><mark style="background: #FFF3A3A6;">全局路由层</mark>：决定了应该处理客户端请求的节点，并转发。
+<ul>
+<li>路由层本身不处理任何请求；它仅负责分片的负载均衡。</li>
+</ul></li>
+<li><mark style="background: #FFF3A3A6;">客户端感知分片</mark>：要求客户端知道分片和节点的分配。在这种情况下，客户端可以直接连接到正确的节点，不需要任何中介。</li>
+</ul>
+<p><img src="fig6-7.png"></p>
+<p><strong>图 6-7 将请求路由到正确节点的三种不同方式。</strong></p>
+<p>以上所有情况中的关键问题是：作出路由决策的组件（可能是节点之一，还是路由层或客户端）如何了解分片 - 节点之间的分配关系变化？</p>
+<p>这是一个具有挑战性的问题，因为重要的是所有参与者都达成<mark style="background: #FFF3A3A6;">共识（consensus）</mark> - 否则请求将被发送到错误的节点，得不到正确的处理。 在分布式系统中有达成共识的协议，但很难正确地实现。</p>
+<p>许多分布式数据系统都依赖于一个<mark style="background: #FFF3A3A6;">独立的协调服务</mark>，比如 ZooKeeper 来跟踪集群元数据：</p>
+<ul>
+<li>每个节点在 ZooKeeper 中注册自身，ZooKeeper 维护分片到节点的可靠映射。</li>
+<li>其他参与者（如路由层或分片感知客户端）可以在 ZooKeeper 中订阅此信息。</li>
+<li>只要分片分配发生了改变，或者集群中添加或删除了一个节点，ZooKeeper 就会通知路由层使路由信息保持最新状态。</li>
+</ul>
+<p><img src="fig6-8.png"></p>
+<p><strong>图 6-8 使用 ZooKeeper 跟踪分片分配给节点。</strong></p>
+<p>例如，LinkedIn 的 Espresso 使用 Helix 进行集群管理（依靠 ZooKeeper），实现了如图 6-8 所示的路由层。 HBase、SolrCloud 和 Kafka 也使用 ZooKeeper 来跟踪分片分配。MongoDB 具有类似的体系结构，但它依赖于自己的<strong>配置服务器（config server）</strong> 实现和 mongos 守护进程作为路由层。</p>
+<p>Cassandra 和 Riak 采取不同的方法：他们在节点之间使用 <strong>流言协议（gossip protocol）</strong> 来传播集群状态的变化。</p>
+<ul>
+<li>请求可以发送到任意节点，该节点会转发到包含所请求的分片的适当节点（图 6-7 中的方法 1）。</li>
+<li>这个模型在数据库节点中增加了更多的复杂性，但是避免了对像 ZooKeeper 这样的外部协调服务的依赖。</li>
+<li>Redis Cluster 也使用的这种方法，参考 <a target="_blank" rel="noopener" href="https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/">Redis cluster specification | Docs</a></li>
+</ul>
+<p>Couchbase 不会自动进行再平衡，这简化了设计。通常情况下，它配置了一个名为 moxi 的路由层，它会从集群节点了解路由变化。</p>
+<p>当使用路由层或向随机节点发送请求时，客户端仍然需要找到要连接的 IP 地址。这些地址并不像分片的节点分布变化的那么快，所以使用 <mark style="background: #FFF3A3A6;">DNS</mark> 通常就足够了。</p>
+<h3 id="执行并行查询">执行并行查询</h3>
+<p>到目前为止，我们只关注简单的查询：</p>
+<ul>
+<li>读取或写入单个键</li>
+<li>基于文档分片的次级索引场景下的分散 / 聚集查询</li>
+</ul>
+<p>这也是大多数 NoSQL 分布式数据存储所支持的访问层级。</p>
+<p>然而，通常用于分析的 <strong>大规模并行处理（MPP, Massively parallel processing）</strong> 关系型数据库产品在其支持的查询类型方面要复杂得多。一个典型的数据仓库查询包含多个连接，过滤，分组和聚合操作。 MPP 查询优化器将复杂的查询分解成许多执行阶段和分片，其中许多可以在数据库集群的不同节点上并行执行。涉及扫描大规模数据集的查询特别受益于这种并行执行。</p>
+<h2 id="本章小结">本章小结</h2>
+<p>在本章中，探讨了将大数据集划分成更小的子集的不同方法。</p>
+<ul>
+<li>为什么要分片：数据量非常大的时候，在单台机器上存储和处理不再可行，而分片则十分必要。</li>
+<li>分片的目标：在多台机器上均匀分布数据和查询负载，避免出现热点（负载不成比例的节点）。
+<ul>
+<li>这需要选择适合于你的数据的分片方案，并在将节点添加到集群或从集群删除时重新平衡分片。</li>
+</ul></li>
+</ul>
+<p>讨论了两种主要的分片方法：</p>
+<ul>
+<li>键范围分片：其中键是有序的，并且分片拥有从某个最小值到某个最大值的所有键。
+<ul>
+<li>排序的优势在于可以进行<mark style="background: #FFF3A3A6;">有效的范围查询</mark>，但是如果应用程序经常访问相邻的键，则存在热点的风险。</li>
+<li>在这种方法中，当分片变得太大时，通常将分片分成两个子分片来<mark style="background: #FFF3A3A6;">动态</mark>地重新平衡分片。</li>
+</ul></li>
+<li>散列分片：散列函数应用于每个键，分片拥有一定范围的散列。
+<ul>
+<li>这种方法破坏了键的排序，使得范围查询效率低下，但可以<mark style="background: #FFF3A3A6;">更均匀</mark>地分配负载。</li>
+<li>通过散列进行分片时，通常先<mark style="background: #FFF3A3A6;">提前创建固定数量的分片</mark>，为每个节点分配多个分片，并在添加或删除节点时将整个分片从一个节点移动到另一个节点。也可以使用动态分片。</li>
+</ul></li>
+</ul>
+<p>两种方法搭配使用也是可行的，例如使用<mark style="background: #FFF3A3A6;">复合主键</mark>：使用键的一部分来标识分片，而使用另一部分作为排序顺序。</p>
+<p>我们还讨论了分片和次级索引之间的相互作用。次级索引也需要分片，有两种方法：</p>
+<ul>
+<li>基于文档分片（<mark style="background: #FFF3A3A6;">本地索引</mark>），其中次级索引存储在与主键和值相同的分片中。
+<ul>
+<li>写高效：只有一个分片需要在写入时更新</li>
+<li>读低效：读取次级索引需要在所有分片之间进行分散 / 收集。</li>
+</ul></li>
+<li>基于关键词分片（<mark style="background: #FFF3A3A6;">全局索引</mark>），其中次级索引存在不同的分片中。次级索引中的条目可以包括来自主键的所有分片的记录。
+<ul>
+<li>写低效：当文档写入时，需要更新多个分片中的次级索引</li>
+<li>读高效：可以从单个分片中进行读取</li>
+</ul></li>
+</ul>
+<p>最后，我们讨论了将查询路由到适当的分片的技术，从简单的分片负载平衡到复杂的并行查询执行引擎。</p>
+<p>按照设计，多数情况下每个分片是独立运行的 — 这就是分片数据库可以伸缩到多台机器的原因。但是，需要写入多个分片的操作结果可能难以预料：例如，如果写入一个分片成功，但另一个分片失败，会发生什么情况？我们将在事务的章节中讨论这个问题。</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch06?id=%e5%9d%87%e8%a1%a1%e7%ad%96%e7%95%a5">第六章：分片 (qtmuniao.com)</a></li>
+<li><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch6?id=%e5%86%8d%e5%b9%b3%e8%a1%a1%e7%ad%96%e7%95%a5">第六章：分片 (vonng.com)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/" title="DDIA 阅读笔记第六章：分片">https://tqnwhz.github.io/blog/2024/05/11/DDIA-Note-6/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/DDIA/" rel="tag"><i class="fa fa-tag"></i> DDIA</a>
+              <a href="/blog/tags/%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E5%AF%86%E9%9B%86%E5%9E%8B%E5%BA%94%E7%94%A8/" rel="tag"><i class="fa fa-tag"></i> 设计数据密集型应用</a>
+              <a href="/blog/tags/%E5%88%86%E7%89%87/" rel="tag"><i class="fa fa-tag"></i> 分片</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2024/05/08/DDIA-Note-5/" rel="prev" title="DDIA 阅读笔记第五章：复制">
+                  <i class="fa fa-chevron-left"></i> DDIA 阅读笔记第五章：复制
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">417k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">12:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
