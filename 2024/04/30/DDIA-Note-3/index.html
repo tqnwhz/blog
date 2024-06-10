@@ -39,7 +39,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2024/04/30/DDIA-Note-3/fig3-11.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2024/04/30/DDIA-Note-3/fig3-12.png">
 <meta property="article:published_time" content="2024-04-30T11:44:15.000Z">
-<meta property="article:modified_time" content="2024-05-05T14:22:32.122Z">
+<meta property="article:modified_time" content="2024-06-10T16:10:34.353Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="DDIA">
 <meta property="article:tag" content="设计数据密集型应用">
@@ -153,7 +153,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">驱动数据库的数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E7%B4%A2%E5%BC%95"><span class="nav-number">2.1.</span> <span class="nav-text">哈希索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E4%B8%8E%E5%90%88%E5%B9%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">压缩与合并</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%9F%E5%BE%85%E8%A7%A3%E5%86%B3%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">2.1.2.</span> <span class="nav-text">亟待解决的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">2.1.3.</span> <span class="nav-text">缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sstables%E4%B8%8Elsm-%E6%A0%91"><span class="nav-number">2.2.</span> <span class="nav-text">SSTables 与 LSM 树</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%92%8C%E7%BB%B4%E6%8A%A4sstables"><span class="nav-number">2.2.1.</span> <span class="nav-text">构建和维护 SSTables</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%84%E5%BB%BAlsm%E6%A0%91"><span class="nav-number">2.2.2.</span> <span class="nav-text">构建 LSM 树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">2.2.3.</span> <span class="nav-text">性能优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#b%E6%A0%91"><span class="nav-number">2.3.</span> <span class="nav-text">B 树</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%AD%E7%9A%84b%E6%A0%91"><span class="nav-number">2.3.1.</span> <span class="nav-text">数据结构中的 B 树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#b%E6%A0%91-1"><span class="nav-number">2.3.2.</span> <span class="nav-text">B + 树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%A6%E4%B8%AD%E7%9A%84b%E6%A0%91"><span class="nav-number">2.3.3.</span> <span class="nav-text">书中的 B 树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BFb%E6%A0%91%E5%8F%98%E5%BE%97%E5%8F%AF%E9%9D%A0"><span class="nav-number">2.3.4.</span> <span class="nav-text">使 B 树变得可靠</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E5%8C%96"><span class="nav-number">2.3.5.</span> <span class="nav-text">优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lsm%E6%A0%91-vs-b%E6%A0%91"><span class="nav-number">2.4.</span> <span class="nav-text">LSM 树 vs B 树</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#lsm%E6%A0%91%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">2.4.1.</span> <span class="nav-text">LSM 树的优点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lsm%E6%A0%91%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">2.4.2.</span> <span class="nav-text">LSM 树的缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.5.</span> <span class="nav-text">其他索引结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%86%E5%80%BC%E5%AD%98%E5%82%A8%E5%9C%A8%E7%B4%A2%E5%BC%95%E4%B8%AD"><span class="nav-number">2.5.1.</span> <span class="nav-text">将值存储在索引中</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E5%88%97%E7%B4%A2%E5%BC%95"><span class="nav-number">2.5.2.</span> <span class="nav-text">多列索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E6%96%87%E6%90%9C%E7%B4%A2%E5%92%8C%E6%A8%A1%E7%B3%8A%E7%B4%A2%E5%BC%95"><span class="nav-number">2.5.3.</span> <span class="nav-text">全文搜索和模糊索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8%E5%86%85%E5%AD%98%E4%B8%AD%E5%AD%98%E5%82%A8%E4%B8%80%E5%88%87"><span class="nav-number">2.5.4.</span> <span class="nav-text">在内存中存储一切</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86%E8%BF%98%E6%98%AF%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">事务处理还是分析？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A8-3-1-%E6%AF%94%E8%BE%83%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86%E5%92%8C%E5%88%86%E6%9E%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E7%89%B9%E7%82%B9"><span class="nav-number">3.1.</span> <span class="nav-text">表 3-1 比较事务处理和分析系统的特点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93"><span class="nav-number">3.2.</span> <span class="nav-text">数据仓库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#oltp%E6%95%B0%E6%8D%AE%E5%BA%93%E5%92%8C%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E4%B9%8B%E9%97%B4%E7%9A%84%E5%88%86%E6%AD%A7"><span class="nav-number">3.3.</span> <span class="nav-text">OLTP 数据库和数据仓库之间的分歧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%98%9F%E5%9E%8B%E5%92%8C%E9%9B%AA%E8%8A%B1%E5%9E%8B%E5%88%86%E6%9E%90%E7%9A%84%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.4.</span> <span class="nav-text">星型和雪花型：分析的模式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%97%E5%AD%98%E5%82%A8"><span class="nav-number">4.</span> <span class="nav-text">列存储</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%97%E5%8E%8B%E7%BC%A9"><span class="nav-number">4.1.</span> <span class="nav-text">列压缩</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%B8%A6%E5%AE%BD%E5%92%8C%E5%90%91%E9%87%8F%E5%A4%84%E7%90%86"><span class="nav-number">4.1.1.</span> <span class="nav-text">内存带宽和向量处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%97%E5%AD%98%E5%82%A8%E4%B8%AD%E7%9A%84%E6%8E%92%E5%BA%8F%E9%A1%BA%E5%BA%8F"><span class="nav-number">4.2.</span> <span class="nav-text">列存储中的排序顺序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E4%B8%8D%E5%90%8C%E7%9A%84%E6%8E%92%E5%BA%8F%E9%A1%BA%E5%BA%8F"><span class="nav-number">4.2.1.</span> <span class="nav-text">几个不同的排序顺序</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%85%A5%E5%88%97%E5%AD%98%E5%82%A8"><span class="nav-number">4.3.</span> <span class="nav-text">写入列存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%9A%E5%90%88%E6%95%B0%E6%8D%AE%E7%AB%8B%E6%96%B9%E4%BD%93%E5%92%8C%E7%89%A9%E5%8C%96%E8%A7%86%E5%9B%BE"><span class="nav-number">4.4.</span> <span class="nav-text">聚合：数据立方体和物化视图</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">5.1.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">驱动数据库的数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E7%B4%A2%E5%BC%95"><span class="nav-number">2.1.</span> <span class="nav-text">哈希索引</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E4%B8%8E%E5%90%88%E5%B9%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">压缩与合并</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%9F%E5%BE%85%E8%A7%A3%E5%86%B3%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">2.1.2.</span> <span class="nav-text">亟待解决的问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">2.1.3.</span> <span class="nav-text">缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sstables%E4%B8%8Elsm-%E6%A0%91"><span class="nav-number">2.2.</span> <span class="nav-text">SSTables 与 LSM 树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%92%8C%E7%BB%B4%E6%8A%A4sstables"><span class="nav-number">2.2.1.</span> <span class="nav-text">构建和维护 SSTables</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9E%84%E5%BB%BAlsm%E6%A0%91"><span class="nav-number">2.2.2.</span> <span class="nav-text">构建 LSM 树</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">2.2.3.</span> <span class="nav-text">性能优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#b%E6%A0%91"><span class="nav-number">2.3.</span> <span class="nav-text">B 树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%AD%E7%9A%84b%E6%A0%91"><span class="nav-number">2.3.1.</span> <span class="nav-text">数据结构中的 B 树</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#b%E6%A0%91-1"><span class="nav-number">2.3.2.</span> <span class="nav-text">B + 树</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B9%A6%E4%B8%AD%E7%9A%84b%E6%A0%91"><span class="nav-number">2.3.3.</span> <span class="nav-text">书中的 B 树</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BFb%E6%A0%91%E5%8F%98%E5%BE%97%E5%8F%AF%E9%9D%A0"><span class="nav-number">2.3.4.</span> <span class="nav-text">使 B 树变得可靠</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8C%96"><span class="nav-number">2.3.5.</span> <span class="nav-text">优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lsm%E6%A0%91-vs-b%E6%A0%91"><span class="nav-number">2.4.</span> <span class="nav-text">LSM 树 vs B 树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#lsm%E6%A0%91%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">2.4.1.</span> <span class="nav-text">LSM 树的优点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lsm%E6%A0%91%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">2.4.2.</span> <span class="nav-text">LSM 树的缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.5.</span> <span class="nav-text">其他索引结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%86%E5%80%BC%E5%AD%98%E5%82%A8%E5%9C%A8%E7%B4%A2%E5%BC%95%E4%B8%AD"><span class="nav-number">2.5.1.</span> <span class="nav-text">将值存储在索引中</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E5%88%97%E7%B4%A2%E5%BC%95"><span class="nav-number">2.5.2.</span> <span class="nav-text">多列索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%A8%E6%96%87%E6%90%9C%E7%B4%A2%E5%92%8C%E6%A8%A1%E7%B3%8A%E7%B4%A2%E5%BC%95"><span class="nav-number">2.5.3.</span> <span class="nav-text">全文搜索和模糊索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8%E5%86%85%E5%AD%98%E4%B8%AD%E5%AD%98%E5%82%A8%E4%B8%80%E5%88%87"><span class="nav-number">2.5.4.</span> <span class="nav-text">在内存中存储一切</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86%E8%BF%98%E6%98%AF%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">事务处理还是分析？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A8-3-1-%E6%AF%94%E8%BE%83%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86%E5%92%8C%E5%88%86%E6%9E%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E7%89%B9%E7%82%B9"><span class="nav-number">3.1.</span> <span class="nav-text">表 3-1 比较事务处理和分析系统的特点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93"><span class="nav-number">3.2.</span> <span class="nav-text">数据仓库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#oltp%E6%95%B0%E6%8D%AE%E5%BA%93%E5%92%8C%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E4%B9%8B%E9%97%B4%E7%9A%84%E5%88%86%E6%AD%A7"><span class="nav-number">3.3.</span> <span class="nav-text">OLTP 数据库和数据仓库之间的分歧</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%98%9F%E5%9E%8B%E5%92%8C%E9%9B%AA%E8%8A%B1%E5%9E%8B%E5%88%86%E6%9E%90%E7%9A%84%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.4.</span> <span class="nav-text">星型和雪花型：分析的模式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%97%E5%AD%98%E5%82%A8"><span class="nav-number">4.</span> <span class="nav-text">列存储</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%97%E5%8E%8B%E7%BC%A9"><span class="nav-number">4.1.</span> <span class="nav-text">列压缩</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%B8%A6%E5%AE%BD%E5%92%8C%E5%90%91%E9%87%8F%E5%A4%84%E7%90%86"><span class="nav-number">4.1.1.</span> <span class="nav-text">内存带宽和向量处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%97%E5%AD%98%E5%82%A8%E4%B8%AD%E7%9A%84%E6%8E%92%E5%BA%8F%E9%A1%BA%E5%BA%8F"><span class="nav-number">4.2.</span> <span class="nav-text">列存储中的排序顺序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E4%B8%8D%E5%90%8C%E7%9A%84%E6%8E%92%E5%BA%8F%E9%A1%BA%E5%BA%8F"><span class="nav-number">4.2.1.</span> <span class="nav-text">几个不同的排序顺序</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%99%E5%85%A5%E5%88%97%E5%AD%98%E5%82%A8"><span class="nav-number">4.3.</span> <span class="nav-text">写入列存储</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%81%9A%E5%90%88%E6%95%B0%E6%8D%AE%E7%AB%8B%E6%96%B9%E4%BD%93%E5%92%8C%E7%89%A9%E5%8C%96%E8%A7%86%E5%9B%BE"><span class="nav-number">4.4.</span> <span class="nav-text">聚合：数据立方体和物化视图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">5.1.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -168,7 +168,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">69</span>
+          <span class="site-state-item-count">70</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -179,7 +179,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">88</span>
+        <span class="site-state-item-count">89</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -253,7 +253,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2024-05-05 22:22:32" itemprop="dateModified" datetime="2024-05-05T22:22:32+08:00">2024-05-05</time>
+      <time title="修改时间：2024-06-11 00:10:34" itemprop="dateModified" datetime="2024-06-11T00:10:34+08:00">2024-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -304,7 +304,7 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="摘要">摘要</h1>
+    <div class="post-body" itemprop="articleBody"><h2 id="摘要">摘要</h2>
 <p>本章主要介绍了数据库的索引结构及原理，并讨论了 OLTP 和 OLAP 数据库的不同。前半部分是摘抄笔记的形式，后半部分的讨论比较宽泛，直接摘抄原文高亮重点了。</p>
 <span id="more"></span>
 <p>数据库的基础功能：</p>
@@ -314,9 +314,9 @@
 </ul>
 <p>应用开发者一般不需要过度关注数据库的底层原理，但当需要数据库选型时，只有了解数据引擎的特点及优劣，才能选择出对负载友好的数据引擎。例如事务型（transactional）和分析型（analystics）的负载，适合的数据引擎会有较大差异。</p>
 <p>本章研究两大类存储引擎：<strong>日志结构（log-structured）</strong> 的存储引擎，以及<strong>面向页面（page-oriented）</strong> 的存储引擎（例如 B 树）。</p>
-<h1 id="驱动数据库的数据结构"><strong>驱动数据库的数据结构</strong></h1>
+<h2 id="驱动数据库的数据结构"><strong>驱动数据库的数据结构</strong></h2>
 <p>一个简单的 kv 数据库可以用 bash 函数实现：</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="function"><span class="title">db_set</span></span> () {</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$1</span>,<span class="variable">$2</span>"</span> &gt;&gt; database</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">db_get</span></span> () {</span><br><span class="line">    grep <span class="string">"^<span class="variable">$1</span>,"</span> database | sed -e <span class="string">"s/^<span class="variable">$1</span>,//"</span> | tail -n 1</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">##!/bin/bash</span></span><br><span class="line"><span class="function"><span class="title">db_set</span></span> () {</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$1</span>,<span class="variable">$2</span>"</span> &gt;&gt; database</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">db_get</span></span> () {</span><br><span class="line">    grep <span class="string">"^<span class="variable">$1</span>,"</span> database | sed -e <span class="string">"s/^<span class="variable">$1</span>,//"</span> | tail -n 1</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
 <p>原理是维护一个只追加的日志文件。其中，db_set 追加新的 kv 对，db_get 从日志文件中检索 key 所对应的最新 value。该实现中：</p>
 <ul>
 <li>写是非常高效的。因为磁盘的顺序写入速度远超随机写入。</li>
@@ -333,7 +333,7 @@
 <li>增加索引会带来维护索引的写开销</li>
 <li>应用往往需要根据查询模式，建立合适的索引，达到成本 - 收益的 trade-of</li>
 </ul>
-<h2 id="哈希索引">哈希索引</h2>
+<h3 id="哈希索引">哈希索引</h3>
 <p>在内存中维护 key-value 磁盘偏移的映射关系，如下图所示。</p>
 <p><img src="fig3-1.png"></p>
 <p>读取时，先读取 key 对应的最新 value 的 offset，再在磁盘中读取 value。写入时，新建记录，更新 offset。</p>
@@ -342,7 +342,7 @@
 <li>适用于 key 少，值经常更新的场景</li>
 <li>读取时，如果页面在缓存中，不需要磁盘 io</li>
 </ul>
-<h3 id="压缩与合并">压缩与合并</h3>
+<h4 id="压缩与合并">压缩与合并</h4>
 <p>为了避免日志文件无限增长，做法把日志分为多个<strong>不可变的段</strong>，是当日志文件到达指定大小后，新建日志文件，并对已有的日志进行压缩与合并：</p>
 <ul>
 <li>压缩（compaction）：将一个日志内的重复 key-value 合并，只保留最新的 value</li>
@@ -353,7 +353,7 @@
 </ul>
 <p><img src="fig3-3.png"></p>
 <p>每个段需要维护一个 hash 表，当查找一个 key 时，从最新的段开始，逐个查询是否存在对应的 value offset。</p>
-<h3 id="亟待解决的问题">亟待解决的问题</h3>
+<h4 id="亟待解决的问题">亟待解决的问题</h4>
 <p>为了构建一个更实用的实现，还需要关心的问题：</p>
 <ul>
 <li>文件格式：CSV 存储日志低效，使用二进制存储会更加高效</li>
@@ -368,12 +368,12 @@
 <li>覆盖旧值可能出现部分新、部分旧值的棘手情况，追加写入则不会</li>
 <li>段旧的压缩和融合避免了段的数量和空间随着时间持续增加</li>
 </ul>
-<h3 id="缺点">缺点</h3>
+<h4 id="缺点">缺点</h4>
 <ul>
 <li>hash 表必须能够完全容纳在内存中。如果 hash 表存到磁盘里，随机读效率会非常低下。</li>
 <li>不支持顺序遍历，例如不能遍历 kitty00000 到 kitty99999 中间的所有 key。</li>
 </ul>
-<h2 id="sstables与lsm-树">SSTables 与 LSM 树</h2>
+<h3 id="sstables与lsm-树">SSTables 与 LSM 树</h3>
 <p>在上面的段中，段内 key 无序存储，这不仅限制了顺序遍历，也给 merge 带来了开销。</p>
 <p>排序字符串表（Sort String Tables，SSTables）是对上述格式的改进，要求：</p>
 <ul>
@@ -391,7 +391,7 @@
 <ul>
 <li>进一步，还可以将块进行压缩，来减少空间占用。</li>
 </ul>
-<h3 id="构建和维护sstables">构建和维护 SSTables</h3>
+<h4 id="构建和维护sstables">构建和维护 SSTables</h4>
 <p>在磁盘里维护有序性是可能的，例如 B + 树，是以页面为单位存储有序记录。但是，在内存中维护有序性更简单，可以直接复用有序结构，例如红黑树、AVL 树。</p>
 <p>可以基于平衡树设计以下的存储引擎：</p>
 <ul>
@@ -406,11 +406,11 @@
 <li>如果是写入 memtable 后再产生日志，还是可能出现中间宕机数据丢失的情况。</li>
 <li>如果想完全保证可靠性，需要 WAL 日志（write-ahead log），在更改 memtable 前，先将日志落盘，但这会阻塞写入。</li>
 </ul>
-<h3 id="构建lsm树">构建 LSM 树</h3>
+<h4 id="构建lsm树">构建 LSM 树</h4>
 <p>这里描述的算法本质上是 LevelDB 和 RocksDB 中使用的 kv 存储引擎库，它们被设计嵌入到其他应用程序中。</p>
 <p>这种索引结构最早被命名为日志结构合并树（Log-Structured Merge-Tree），建立在日志结构文件系统的基础上。这种基于压缩和合并有序文件的存储引擎通常被称为 LSM 树。</p>
 <p>Lucene，Elastic Search 使用的索引引擎，就是使用了类似 SSTable 的有序文件，保存 term 到文档 id 列表的映射关系。</p>
-<h3 id="性能优化">性能优化</h3>
+<h4 id="性能优化">性能优化</h4>
 <p>对于不存在 key，LSM 树需要遍历 memtable 和所有 SSTables 才能确定不存在，开销很大。</p>
 <p>可以使用额外的布隆过滤器（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter - Wikipedia</a>）保存存在的 key。</p>
 <ul>
@@ -431,14 +431,14 @@
 <li>水平压缩（<a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Leveled-Compaction">level compaction</a>）：key 的范围被拆分成更小的 SSTables，而较旧的数据被移动到单独的 level，这使得压缩能够更加递增地进行，并且使用更少的磁盘空间。</li>
 </ul>
 <p>即使有许多微妙的东西，LSM 树的基本思想 —— 保存一系列在后台合并的 SSTables —— 简单而有效。即使数据集比可用内存大得多，它仍能继续正常工作。由于数据按排序顺序存储，你可以高效地执行范围查询（扫描所有从某个最小值到某个最大值之间的所有键），并且因为硬盘写入是连续的，所以 LSM 树可以支持非常高的写入吞吐量。</p>
-<h2 id="b树">B 树</h2>
+<h3 id="b树">B 树</h3>
 <p>比 LSM 树更为常见的索引结构，与 LSM 树的相似点在于都是使用磁盘保存有序文件。不同的是：</p>
 <ul>
 <li>LSM 树使用可变大小的段存储，通常为几 MB</li>
 <li>B 树使用固定大小的块 / 页存储，通常 4KB（操作系统通常页面大小），以页的维度进行读写</li>
 </ul>
 <p>书中这节介绍的应该是 B + 树，更清楚一点，我先参考维基百科介绍下 B 树和 B + 树。</p>
-<h3 id="数据结构中的b树">数据结构中的 B 树</h3>
+<h4 id="数据结构中的b树">数据结构中的 B 树</h4>
 <blockquote>
 <p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/B-tree">B-tree - Wikipedia</a> 在计算机科学中，B 树是一种自平衡的树结构，存储了有序数据，允许单点查询、范围查询、插入和删除。B 树是二叉查找树的泛化版，允许节点有多于两个子节点。与其他的二叉查找树不同，B 树非常适合大块读写的存储系统，例如数据库和文件系统。</p>
 </blockquote>
@@ -471,13 +471,13 @@
 <ul>
 <li>个人理解，按纯粹多叉查找树定义，B 树的每个节点都会存放 key-value。过早地掺杂一些数据引擎实现的考量，会影响对数据结构本身的理解。</li>
 </ul>
-<h3 id="b树-1">B + 树</h3>
+<h4 id="b树-1">B + 树</h4>
 <p>为存储块类型的数据而设计，例如文件系统、数据库，与 B 树类似，不同的是：</p>
 <ul>
 <li>只有叶子结点上存放 value，这使得 B + 树的扇出（节点包含子节点的数量）非常高，通常可以达到 100 以上，进而提高检索效率</li>
 <li>这里的扇出是指固定页面大小情况下（例如典型页面 4KB），由于非叶节点减少了大块数据的存储，扇出就会显著提高</li>
 </ul>
-<h3 id="书中的b树">书中的 B 树</h3>
+<h4 id="书中的b树">书中的 B 树</h4>
 <p>这里的 B 树实际指的 B + 树。</p>
 <p>B 树中，每个页都对应一个唯一地址，可以互相引用，与指针类似，但是存储在磁盘上。形式上，B 树是一种多路查找树：</p>
 <ul>
@@ -501,7 +501,7 @@
 </ul>
 <p>B 树总是平衡的，包含 m 个 key 的 B 树的深度总是 O (logn)。大多数数据库的 B 树高为 3 或 4，一棵 4 层高的树，页面大小为 4KB，分支因子为 512，所能存储的数据大小为 256TB。</p>
 <p><span class="math display">\[ 4KB*512^4=2^{38}KB=2^8TB \]</span></p>
-<h3 id="使b树变得可靠">使 B 树变得可靠</h3>
+<h4 id="使b树变得可靠">使 B 树变得可靠</h4>
 <p>B 树在插入和更新时，是就地修改页面，而不是像 LSM 一样追加日志，这带来了不一致问题：</p>
 <ul>
 <li>如果插入新记录触发页面分裂，会导致多个页面的更新（叶子、父页面乃至更高祖先），如果过程中数据库宕机，就可能出现不一致问题，比如有个孤儿页面没有父指针。
@@ -514,7 +514,7 @@
 <li>对比之下 LSM 树更简单，段的融合在后台进行，不会干涉到到来的 query，并且原子化地用新段替换旧段</li>
 </ul></li>
 </ul>
-<h3 id="优化">优化</h3>
+<h4 id="优化">优化</h4>
 <p>B 树的一些优化：</p>
 <ul>
 <li>使用 copy-on-write 机制处理修改，不使用加锁和 WAL 日志，例如 LMDB，这也可以简化并发处理。</li>
@@ -526,14 +526,14 @@
 <li>树中添加额外的指针：例如叶子页面的左右兄弟节点间添加指针，允许不返回父节点的情况下顺序扫描。</li>
 <li>B 树的变体如分形树【22】借用一些日志结构的思想来减少磁盘寻道</li>
 </ul>
-<h2 id="lsm树-vs-b树">LSM 树 vs B 树</h2>
+<h3 id="lsm树-vs-b树">LSM 树 vs B 树</h3>
 <p>通常，B 树被认为读高效，LSM 树被认为写高效。</p>
 <ul>
 <li>LSM 树的读需要遍历 memtable、SSTables，写只需要更新内存、追加日志即可</li>
 <li> B 树读写都需 3-4 次 IO</li>
 </ul>
 <p>实际使用时，需要用真实负载测试系统，看看哪种结构更符合要求。</p>
-<h3 id="lsm树的优点">LSM 树的优点</h3>
+<h4 id="lsm树的优点">LSM 树的优点</h4>
 <p>一次写入中：</p>
 <ul>
 <li>B 树至少要更新两次，数据页 &amp; wal 日志。如果涉及到页的拆分，次数会更多。而且 B 树写入是整页覆盖，即使只改动了少数几个 bytes。</li>
@@ -551,7 +551,7 @@
 </ul>
 <p>此外，LSM 树可以被压缩以节省空间。B 树是以页为单位的，可能会存在页中有未使用的空间（例如刚刚拆分完的两个页，各空余一半）。而 LSM 树不是以页为单位，且周期性重写 SSTables，再搭配 leveled compaction 这样的压缩策略，可以高效地利用存储空间。</p>
 <p>在许多固态硬盘上，固件内部使用日志结构化算法，将随机写入转变为顺序写入底层存储芯片，因此存储引擎写入模式的影响不太明显。但是，较低的写入放大率和减少的碎片对 SSD 仍然有利：更紧凑地表示数据可在可用的 I/O 带宽内提供更多的读取和写入请求。</p>
-<h3 id="lsm树的缺点">LSM 树的缺点</h3>
+<h4 id="lsm树的缺点">LSM 树的缺点</h4>
 <p>后台的压缩与合并也会占据写磁盘带宽，进而可能影响到前台读写性能：</p>
 <ul>
 <li>虽然存储引擎尝试只对增量数据做压缩，并且努力不影响前台读写，但是磁盘的资源限制决定了，容易出现一个前台读写需要等待昂贵的压缩完成之后，才可以进行。</li>
@@ -566,28 +566,28 @@
 </ul>
 <p>对比之下，B 树中一个 key 只会存储一份，不像 LSM 树中可能存储多份，这契合事务型数据库系统：通过 key 范围加锁保证隔离性。</p>
 <p>B 树在数据库体系结构中是非常根深蒂固的，为许多工作负载提供始终如一的良好性能，所以它们不可能很快就会消失。在新的数据存储中，日志结构化索引变得越来越流行。没有快速和容易的规则来确定哪种类型的存储引擎对你的场景更好，所以值得进行一些经验上的测试。</p>
-<h2 id="其他索引结构">其他索引结构</h2>
+<h3 id="其他索引结构">其他索引结构</h3>
 <p>到目前为止，我们只讨论了关键值索引，它们就像关系模型中的<strong>主键（primary key）</strong> 索引。主键<strong>唯一标识</strong>关系表中的一行，或文档数据库中的一个文档或图形数据库中的一个顶点。数据库中的其他记录可以通过其主键（或 ID）引用该行 / 文档 / 顶点，并且索引用于解析这样的引用。</p>
 <p>有二级索引也很常见。在关系数据库中，您可以使用 <code>CREATE INDEX</code> 命令在同一个表上创建多个二级索引，而且这些索引通常对于有效地执行联接而言至关重要。</p>
 <p>一个二级索引可以很容易地从一个 kv 索引构建。主要的不同是<strong>键不是唯一的</strong>。即可能有许多行（文档，顶点）具有相同的键。这可以通过两种方式来解决：或者通过使索引中的每个值，成为匹配行标识符的列表（如全文索引中的发布列表），或者通过向每个索引添加行标识符来使每个关键字唯一。无论哪种方式，B 树和日志结构索引都可以用作辅助索引。</p>
-<h3 id="将值存储在索引中"><strong>将值存储在索引中</strong></h3>
+<h4 id="将值存储在索引中"><strong>将值存储在索引中</strong></h4>
 <p>索引中的关键字是查询搜索的内容，但是该值可以是以下两种情况之一：它可以是所讨论的实际行（文档，顶点），也可以是对存储在别处的行的引用。在后一种情况下，行被存储的地方被称为<strong>堆文件（heap file）</strong>，并且存储的数据没有特定的顺序（它可以是仅附加的，或者可以跟踪被删除的行以便用新数据覆盖它们后来）。堆文件方法很常见，因为它避免了在存在多个二级索引时复制数据：每个索引只引用堆文件中的一个位置，实际的数据保存在一个地方。 在不更改键的情况下更新值时，堆文件方法可以非常高效：只要新值不大于旧值，就可以覆盖该记录。如果新值更大，情况会更复杂，因为它可能需要移到堆中有足够空间的新位置。在这种情况下，要么所有的索引都需要更新，以指向记录的新堆位置，或者在旧堆位置留下一个转发指针【5】。</p>
 <p>在某些情况下，从索引到堆文件的额外跳跃对读取来说性能损失太大，因此可能希望将索引行直接存储在索引中。这被称为聚集索引。例如，在 MySQL 的 InnoDB 存储引擎中，表的主键总是一个聚簇索引，二级索引用主键（而不是堆文件中的位置）【31】。在 SQL Server 中，可以为每个表指定一个聚簇索引【32】。</p>
 <p>在 <strong>聚集索引（clustered index）</strong> （在索引中存储所有行数据）和 <strong>非聚集索引（nonclustered index）</strong> （仅在索引中存储对数据的引用）之间的折衷被称为 <strong>包含列的索引（index with included columns）</strong>或<strong>覆盖索引（covering index）</strong>，其存储表的一部分在索引内【33】。这允许通过单独使用索引来回答一些查询（这种情况叫做：索引 <strong>覆盖（cover）</strong> 了查询）【32】。</p>
 <p><font color="orange"><strong>与任何类型的数据重复一样，聚簇和覆盖索引可以加快读取速度，但是它们需要额外的存储空间，并且会增加写入开销。数据库还需要额外的努力来执行事务保证，因为应用程序不应该因为重复而导致不一致。</strong></font></p>
-<h3 id="多列索引"><strong>多列索引</strong></h3>
+<h4 id="多列索引"><strong>多列索引</strong></h4>
 <p>如果一次查询中涉及到多个列，但只能使用一个列的索引，检索效率显然不够理想。</p>
 <p>最常见的多列索引被称为 <strong>连接索引（concatenated index）</strong> ，它通过将一列的值追加到另一列后面，简单地将多个字段组合成一个键（索引定义中指定了字段的连接顺序）。但这太丑陋了。</p>
 <p><strong>多维索引（multi-dimensional index）</strong> 是一种查询多个列的更一般的方法，这对于地理空间数据尤为重要。例如，餐厅搜索网站可能有一个数据库，其中包含每个餐厅的经度和纬度。当用户在地图上查看餐馆时，网站需要搜索用户正在查看的矩形地图区域内的所有餐馆。这需要一个二维范围查询，如下所示：</p>
 <figure class="highlight sql"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> restaurants <span class="keyword">WHERE</span> latitude <span class="operator">&gt;</span> <span class="number">51.4946</span> <span class="keyword">AND</span> latitude <span class="operator">&lt;</span> <span class="number">51.5079</span></span><br><span class="line">                           <span class="keyword">AND</span> longitude <span class="operator">&gt;</span> <span class="number">-0.1162</span> <span class="keyword">AND</span> longitude <span class="operator">&lt;</span> <span class="number">-0.1004</span>;</span><br></pre></td></tr></tbody></table></figure>
 <p>一个标准的 B 树或者 LSM 树索引不能够高效地响应这种查询：它可以返回一个纬度范围内的所有餐馆（但经度可能是任意值），或者返回在同一个经度范围内的所有餐馆（但纬度可能是北极和南极之间的任意地方），但不能同时满足。</p>
 <p>多维索引不仅可以用于地理位置。例如，在电子商务网站上可以使用维度（红色，绿色，蓝色）上的三维索引来搜索特定颜色范围内的产品，也可以在天气观测数据库中搜索二维（日期，温度）的指数，以便有效地搜索 2013 年的温度在 25 至 30°C 之间的所有观测资料。使用一维索引，你将不得不扫描 2013 年的所有记录（不管温度如何），然后通过温度进行过滤，反之亦然。 二维索引可以同时通过时间戳和温度来收窄数据集。这个技术被 HyperDex 使用【36】。</p>
-<h3 id="全文搜索和模糊索引"><strong>全文搜索和模糊索引</strong></h3>
+<h4 id="全文搜索和模糊索引"><strong>全文搜索和模糊索引</strong></h4>
 <p>到目前为止所讨论的所有索引都假定你有确切的数据，并允许你查询键的确切值或具有排序顺序的键的值范围。他们不允许你做的是搜索<strong>类似</strong>的键，如拼写错误的单词。这种模糊的查询需要不同的技术。</p>
 <p>例如，全文搜索引擎通常允许搜索目标从一个单词扩展为包括该单词的同义词，忽略单词的语法变体，搜索在相同文档中的近义词，并且支持各种其他取决于文本的语言分析功能。为了处理文档或查询中的拼写错误，Lucene 能够在一定的编辑距离内搜索文本【37】（编辑距离 1 意味着单词内发生了 1 个字母的添加、删除或替换）。</p>
 <p>Lucene 为其词典使用了一个类似于 SSTable 的结构。这个结构需要一个小的内存索引，告诉查询需要在排序文件中哪个偏移量查找键。在 LevelDB 中，这个内存中的索引是一些键的稀疏集合，但在 Lucene 中，内存中的索引是键中字符的有限状态自动机，类似于 trie 【38】。这个自动机可以转换成 Levenshtein 自动机，它支持在给定的编辑距离内有效地搜索单词【39】。</p>
 <p>其他的模糊搜索技术正朝着文档分类和机器学习的方向发展。</p>
-<h3 id="在内存中存储一切"><strong>在内存中存储一切</strong></h3>
+<h4 id="在内存中存储一切"><strong>在内存中存储一切</strong></h4>
 <p>本章到目前为止讨论的数据结构都是对硬盘限制的应对。与主内存相比，硬盘处理起来很麻烦。对于磁性硬盘和固态硬盘，如果要在读取和写入时获得良好性能，则需要仔细地布置硬盘上的数据。但是，我们能容忍这种麻烦，因为硬盘有两个显著的优点：它们是持久的（它们的内容在电源关闭时不会丢失），并且每 GB 的成本比 RAM 低。</p>
 <p>随着 RAM 变得更便宜，每 GB 成本的论据被侵蚀了。许多数据集不是那么大，所以将它们全部保存在内存中是非常可行的，包括可能分布在多个机器上。这导致了内存数据库的发展。</p>
 <p>某些内存中的键值存储（如 Memcached）仅用于缓存，在重新启动计算机时丢失的数据是可以接受的。但其他内存数据库的目标是持久性，可以通过以下方式实现</p>
@@ -603,7 +603,7 @@
 <p>最近的研究表明，内存数据库体系结构可以扩展到支持比可用内存更大的数据集，而不必重新采用以硬盘为中心的体系结构【45】。所谓的 <strong>反缓存（anti-caching）</strong> 方法通过在内存不足的情况下将最近最少使用的数据从内存转移到硬盘，并在将来再次访问时将其重新加载到内存中。这与操作系统对虚拟内存和交换文件的操作类似，但数据库可以比操作系统更有效地管理内存，因为它可以按单个记录的粒度工作，而不是整个内存页面。尽管如此，这种方法仍然需要索引能完全放入内存中（就像本章开头的 Bitcask 例子）。</p>
 <p>如果 <strong>非易失性存储器（non-volatile memory, NVM）</strong> 技术得到更广泛的应用，可能还需要进一步改变存储引擎设计【46】。</p>
 <p>在早期的业务数据处理过程中，一次典型的数据库写入通常与一笔 <em>商业交易（commercial transaction）</em> 相对应：卖个货，向供应商下订单，支付员工工资等等。但随着数据库开始应用到那些不涉及到钱的领域，术语 <strong>交易 / 事务（transaction）</strong> 仍留了下来，用于指代一组读写操作构成的逻辑单元。目前这是一个新的研究领域，值得关注。</p>
-<h1 id="事务处理还是分析"><strong>事务处理还是分析？</strong></h1>
+<h2 id="事务处理还是分析"><strong>事务处理还是分析？</strong></h2>
 <p>在早期的业务数据处理过程中，一次典型的数据库写入通常与一笔 <em>商业交易（commercial transaction）</em> 相对应：卖个货，向供应商下订单，支付员工工资等等。但随着数据库开始应用到那些不涉及到钱的领域，术语 <strong>交易 / 事务（transaction）</strong> 仍留了下来，用于指代一组读写操作构成的逻辑单元。</p>
 <blockquote>
 <p>事务不一定具有 ACID（原子性，一致性，隔离性和持久性）属性。<strong>事务处理只是意味着允许客户端进行低延迟的读取和写入</strong> —— 而不是只能定期运行（例如每天一次）的批处理作业。</p>
@@ -616,7 +616,7 @@
 <li>哪个牌子的婴儿食品最常与 X 品牌的尿布同时购买？</li>
 </ul>
 <p>这些查询通常由业务分析师编写，并提供报告以帮助公司管理层做出更好的决策（business intelligence，商业智能）。为了将这种使用数据库的模式和事务处理区分开，它被称为 <strong>在线分析处理（OLAP, OnLine Analytice Processing）</strong>。OLTP 和 OLAP 之间的区别并不总是清晰的，但是一些典型的特征在 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/">表 3-1</a></strong> 中列出。</p>
-<h2 id="表-3-1-比较事务处理和分析系统的特点"><strong>表 3-1 比较事务处理和分析系统的特点</strong></h2>
+<h3 id="表-3-1-比较事务处理和分析系统的特点"><strong>表 3-1 比较事务处理和分析系统的特点</strong></h3>
 <table>
 <thead>
 <tr class="header">
@@ -655,19 +655,19 @@
 </table>
 <p>OLAP 中的首字母 O（online）的含义并不明确，它可能是指查询并不是用来生成预定义好的报告的事实，也可能是指分析师通常是交互式地使用 OLAP 系统来进行探索式的查询。</p>
 <p>起初，事务处理和分析查询使用了相同的数据库。 SQL 在这方面已证明是非常灵活的：对于 OLTP 类型的查询以及 OLAP 类型的查询来说效果都很好。尽管如此，在二十世纪八十年代末和九十年代初期，企业有停止使用 OLTP 系统进行分析的趋势，转而在单独的数据库上运行分析。这个单独的数据库被称为 <font color="orange"><strong>数据仓库（data warehouse）</strong></font>。</p>
-<h2 id="数据仓库">数据仓库</h2>
+<h3 id="数据仓库">数据仓库</h3>
 <p>一个企业可能有几十个不同的交易处理系统：面向终端客户的网站，控制实体商店的收银系统，跟踪仓库库存，规划车辆路线，供应链管理，员工管理等。这些系统中每一个都很复杂，需要专人维护，所以系统最终都是自动运行的。</p>
 <p><font color="orange">OLTP 系统往往对业务运作至关重要，因而通常会要求 <strong>高可用</strong> 与 <strong>低延迟</strong></font>。所以 DBA 会密切关注他们的 OLTP 数据库，他们通常不愿意让业务分析人员在 OLTP 数据库上运行临时分析查询，因为这些查询通常开销巨大，会扫描大部分数据集，这会损害同时执行的事务的性能。</p>
 <p>相比之下，<font color="orange">数据仓库是一个独立的数据库，分析人员可以查询他们想要的内容而不影响 OLTP 操作</font>【48】。数据仓库包含公司各种 OLTP 系统中所有的只读数据副本。从 OLTP 数据库中提取数据（使用定期的数据转储或连续的更新流），转换成适合分析的模式，清理并加载到数据仓库中。将数据存入仓库的过程称为 “<strong>抽取 - 转换 - 加载（ETL）</strong>”</p>
 <p><img src="fig3-8.png"></p>
 <p>几乎所有的大型企业都有数据仓库，但在小型企业中几乎闻所未闻。这可能是因为大多数小公司没有这么多不同的 OLTP 系统，大多数小公司只有少量的数据 —— 可以在传统的 SQL 数据库中查询，甚至可以在电子表格中分析。在一家大公司里，做一些在一家小公司很简单的事情，需要很多繁重的工作。</p>
 <p>使用单独的数据仓库，而不是直接查询 OLTP 系统进行分析的一大优势是<font color="orange"><strong>数据仓库可针对分析访问模式进行优化</strong></font>。事实证明，本章前半部分讨论的索引算法对于 OLTP 来说工作得很好，但对于回答分析查询并不是很好。在本章的其余部分中，我们将研究为分析而优化的存储引擎。</p>
-<h2 id="oltp数据库和数据仓库之间的分歧"><strong>OLTP 数据库和数据仓库之间的分歧</strong></h2>
+<h3 id="oltp数据库和数据仓库之间的分歧"><strong>OLTP 数据库和数据仓库之间的分歧</strong></h3>
 <p>数据仓库的数据模型通常是关系型的，因为 SQL 通常很适合分析查询。有许多图形数据分析工具可以生成 SQL 查询，可视化结果，并允许分析人员探索数据（通过下钻，切片和切块等操作）。</p>
 <p>表面上，一个数据仓库和一个关系 OLTP 数据库看起来很相似，因为它们都有一个 SQL 查询接口。然而，系统的内部看起来可能完全不同，因为它们针对非常不同的查询模式进行了优化。现在许多数据库供应商都将重点放在支持事务处理或分析工作负载上，而不是两者都支持。</p>
 <p>一些数据库（例如 Microsoft SQL Server 和 SAP HANA）支持在同一产品中进行事务处理和数据仓库。但是，它们正在日益成为两个独立的存储和查询引擎，这些引擎正好可以通过一个通用的 SQL 接口访问【49,50,51】。</p>
 <p>Teradata，Vertica，SAP HANA 和 ParAccel 等数据仓库供应商通常使用昂贵的商业许可证销售他们的系统。 Amazon RedShift 是 ParAccel 的托管版本。最近，大量的开源 SQL-on-Hadoop 项目已经出现，它们还很年轻，但是正在与商业数据仓库系统竞争。这些包括 Apache Hive，Spark SQL，Cloudera Impala，Facebook Presto，Apache Tajo 和 Apache Drill 【52,53】。其中一些是基于谷歌的 Dremel [54] 的想法。</p>
-<h2 id="星型和雪花型分析的模式"><strong>星型和雪花型：分析的模式</strong></h2>
+<h3 id="星型和雪花型分析的模式"><strong>星型和雪花型：分析的模式</strong></h3>
 <p>正如第 2 章所探讨的，根据应用程序的需要，在事务处理领域中使用了大量不同的数据模型。另一方面，在分析中，数据模型的多样性则少得多。许多数据仓库都以相当公式化的方式使用，被称为星型模式（也称为维度建模【55】）。</p>
 <p>图 3-9 中的示例模式显示了可能在食品零售商处找到的数据仓库。在模式的中心是一个所谓的事实表（fact tables，在这个例子中，它被称为 <code>fact_sales</code>）。事实表的每一行代表在特定时间发生的事件（这里，每一行代表客户购买的产品）。如果我们分析的是网站流量而不是零售量，则每行可能代表一个用户的页面浏览量或点击量。</p>
 <p><img src="fig3-9.png"></p>
@@ -679,7 +679,7 @@
 <p><font color="orange"><strong>“星型模式” 这个名字来源于这样一个事实，即当表关系可视化时，事实表在中间，由维表包围；与这些表的连接就像星星的光芒。</strong></font></p>
 <p>这个模板的变体被称为雪花模式，其中维度被进一步分解为子维度。例如，品牌和产品类别可能有单独的表格，并且 <code>dim_product</code> 表格中的每一行都可以将品牌和类别作为外键引用，而不是将它们作为字符串存储在 <code>dim_product</code> 表格中。雪花模式比星形模式更规范化，但是<strong>星形模式通常是首选，因为分析师使用它更简单【55】。</strong></p>
 <p><font color="orange"><strong>在典型的数据仓库中，表格通常非常宽：事实表格通常有 100 列以上，有时甚至有数百列</strong></font>【51】。维度表也可以是非常宽的，因为它们包括可能与分析相关的所有元数据 —— 例如，<code>dim_store</code> 表可以包括在每个商店提供哪些服务的细节，它是否具有店内面包房，方形镜头，商店第一次开幕的日期，最后一次改造的时间，离最近的高速公路的距离等等。</p>
-<h1 id="列存储"><strong>列存储</strong></h1>
+<h2 id="列存储"><strong>列存储</strong></h2>
 <p>如果事实表中有万亿行和数 PB 的数据，那么高效地存储和查询它们就成为一个具有挑战性的问题。维度表通常要小得多（数百万行），所以在本节中我们将主要关注事实的存储。</p>
 <p>尽管事实表通常超过 100 列，但典型的数据仓库查询一次只能访问 4 个或 5 个查询（ “ <code>SELECT *</code> ” 查询很少用于分析）【51】。以<a target="_blank" rel="noopener" href="https://vonng.gitbooks.io/ddia-cn/content/ch3.html">例 3-1</a> 中的查询为例：它访问了大量的行（在 2013 日历年中每次都有人购买水果或糖果），但只需访问 <code>fact_sales</code> 表的三列：<code>date_key, product_sk, quantity</code>。查询忽略所有其他列。</p>
 <p><strong>例 3-1 分析人们是否更倾向于购买新鲜水果或糖果，这取决于一周中的哪一天</strong></p>
@@ -690,7 +690,7 @@
 <p><img src="fig3-10.png"></p>
 <p>列存储在关系数据模型中是最容易理解的，但它同样适用于非关系数据。例如，Parquet 【57】是一种列式存储格式，支持基于 Google 的 Dremel 【54】的文档数据模型。</p>
 <p>面向列的存储布局依赖于包含相同顺序行的每个列文件。 因此，如果您需要重新组装整行，您可以从每个单独的列文件中获取第 23 项，并将它们放在一起形成表的第 23 行。</p>
-<h2 id="列压缩"><strong>列压缩</strong></h2>
+<h3 id="列压缩"><strong>列压缩</strong></h3>
 <p>除了仅从磁盘加载查询所需的列以外，我们还可以通过压缩数据来进一步降低对磁盘吞吐量的需求。幸运的是，面向列的存储通常很适合压缩。</p>
 <p>看看图 3-10 中每一列的值序列：它们通常看起来是相当重复的，这是压缩的好兆头。根据列中的数据，可以使用不同的压缩技术。在数据仓库中特别有效的一种技术是位图编码，如<a target="_blank" rel="noopener" href="https://vonng.gitbooks.io/ddia-cn/content/img/fig3-11.png">图 3-11</a> 所示。</p>
 <p><img src="fig3-11.png"></p>
@@ -702,25 +702,25 @@
 <p>加载 <code>product_sk = 30</code> , <code>product_sk = 68</code> , <code>product_sk = 69</code> 的三个位图，并计算三个位图的按位或，这可以非常有效地完成。</p>
 <figure class="highlight sql"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WHERE</span> product_sk <span class="operator">=</span> <span class="number">31</span> <span class="keyword">AND</span> store_sk <span class="operator">=</span> <span class="number">3</span></span><br></pre></td></tr></tbody></table></figure>
 <p>加载 <code>product_sk = 31</code> 和 <code>store_sk = 3</code> 的位图，并逐位计算 AND。 这是因为列按照相同的顺序包含行，因此一列的位图中的第 k 位对应于与另一列的位图中的第 k 位相同的行。</p>
-<h3 id="内存带宽和向量处理"><strong>内存带宽和向量处理</strong></h3>
+<h4 id="内存带宽和向量处理"><strong>内存带宽和向量处理</strong></h4>
 <p>对于需要扫描数百万行的数据仓库查询来说，一个巨大的瓶颈是从磁盘获取数据到内存的带宽。但是，这不是唯一的瓶颈。分析数据库的开发人员也担心有效利用主存储器带宽到 CPU 缓存中的带宽，避免 CPU 指令处理流水线中的分支错误预测和气泡，以及在现代中使用单指令多数据（SIMD）指令 CPU 【59,60】。</p>
 <p>除了减少需要从磁盘加载的数据量以外，面向列的存储布局也可以有效利用 CPU 周期。例如，查询引擎可以将大量压缩的列数据放在 CPU 的 L1 缓存中，然后在紧密的循环中循环（即没有函数调用）。一个 CPU 可以执行这样一个循环比代码要快得多，这个代码需要处理每个记录的大量函数调用和条件。列压缩允许列中的更多行适合相同数量的 L1 缓存。前面描述的按位 “与” 和 “或” 运算符可以被设计为直接在这样的压缩列数据块上操作。这种技术被称为矢量化处理【58,49】。</p>
-<h2 id="列存储中的排序顺序"><strong>列存储中的排序顺序</strong></h2>
+<h3 id="列存储中的排序顺序"><strong>列存储中的排序顺序</strong></h3>
 <p>在列存储中，存储行的顺序并不一定很重要。按插入顺序存储它们是最简单的，因为插入一个新行就意味着附加到每个列文件。但也可以选择强制执行一个排序，就像我们之前对 SSTables 所做的那样，并将其用作索引机制。</p>
 <p>只有我们知道一列中的第 k 项与另一列中的第 k 项属于同一行，才能重建一行。因此，即使按列存储数据，也需要一次对整行进行排序。</p>
 <p>数据库的管理员可以凭借他们对常见查询模式的了解来选择表中应该被排序的列。例如，如果查询通常以日期范围为目标，例如上个月，则可以将 <code>date_key</code> 作为第一个排序键。然后，查询优化器只能扫描上个月的行，这比扫描所有行要快得多。</p>
 <p>第二列可以确定第一列中具有相同值的任何行的排序顺序。例如，如果 <code>date_key</code> 是<a target="_blank" rel="noopener" href="https://vonng.gitbooks.io/ddia-cn/content/img/fig3-10.png">图 3-10</a> 中的第一个排序关键字，那么 <code>product_sk</code> 可能是第二个排序关键字，因此同一天的同一产品的所有销售都将在存储中组合在一起。这将有助于需要在特定日期范围内对交易按产品维度进行分组或过滤的查询。</p>
 <p>排序的另一个好处是它可以帮助压缩列。如果主要排序列没有多个不同的值，那么在排序之后，它将具有很长的序列，其中相同的值连续重复多次。一个简单的运行长度编码（就像我们用于<a target="_blank" rel="noopener" href="https://vonng.gitbooks.io/ddia-cn/content/img/fig3-11.png">图 3-11</a> 中的位图一样）可以将该列压缩到几千字节 —— 即使表中有数十亿行。</p>
 <p>第一个排序键的压缩效果最强。第二和第三个排序键会更混乱，因此不会有这么长时间的重复值。排序优先级下面的列以基本上随机的顺序出现，所以它们可能不会被压缩。但整体而言，将前几个列进行排序与压缩仍是一种胜利。</p>
-<h3 id="几个不同的排序顺序"><strong>几个不同的排序顺序</strong></h3>
+<h4 id="几个不同的排序顺序"><strong>几个不同的排序顺序</strong></h4>
 <p>这个想法的巧妙扩展在 C-Store 中引入，并在商业数据仓库 Vertica【61,62】中被采用。<font color="orange">不同的查询受益于不同的排序顺序，以不同同的顺序存储相同的数据，以便在处理查询时，可以使用最适合查询模式的版本。</font>无论如何，数据总需要复制到多台机器（replicas）以避免单点故障、数据丢失。</p>
 <p>在一个面向列的存储中，有多个排序顺序有点类似于在一个面向行的存储中有多个二级索引。但最大的区别在于面向行的存储将每一行保存在一个地方（在堆文件或聚簇索引中），二级索引只包含指向匹配行的指针。在列存储中，通常在其他地方没有任何指向数据的指针，只有包含值的列。</p>
-<h2 id="写入列存储"><strong>写入列存储</strong></h2>
+<h3 id="写入列存储"><strong>写入列存储</strong></h3>
 <p>OLAP 的大多数负载由分析人员运行的大型只读查询组成。面向列的存储，压缩和排序都有助于更快地读取这些查询。然而，他们都会使写更困难。</p>
 <p><font color="orange">B 树的就地更新方法不适用于压缩列</font>。如果你想在排序表的中间插入一行，你很可能不得不重写所有的列文件。由于行由列中的位置标识，因此插入必须始终更新所有列。</p>
 <p>LSM 树是很好的解决方案：所有的写操作首先进入一个内存中的存储，在这里它们被添加到一个已排序的结构中，并准备写入磁盘。内存中的存储是面向行还是列的，这并不重要。当已经积累了足够的写入数据时，它们将与磁盘上的列文件合并，并批量写入新文件。这基本上是 Vertica 所做的【62】。</p>
 <p>查询需要检查磁盘上的列数据和最近在内存中的写入，并将两者结合起来。但是，查询优化器隐藏了用户的这个区别。从分析师的角度来看，通过插入，更新或删除操作进行修改的数据会立即反映在后续查询中。</p>
-<h2 id="聚合数据立方体和物化视图"><strong>聚合：数据立方体和物化视图</strong></h2>
+<h3 id="聚合数据立方体和物化视图"><strong>聚合：数据立方体和物化视图</strong></h3>
 <p>并不是每个数据仓库都必定是一个列存储：传统的面向行的数据库和其他一些架构也被使用。然而，对于专门的分析查询，列式存储可以显著加快，所以它正在迅速普及【51,63】。</p>
 <p>数据仓库的另一个值得一提的是物化汇总。如前所述，数据仓库查询通常涉及一个聚合函数，如 SQL 中的 COUNT，SUM，AVG，MIN 或 MAX。如果相同的聚合被许多不同的查询使用，那么每次都可以通过原始数据来处理。为什么不缓存一些查询使用最频繁的计数或总和？</p>
 <p>创建这种缓存的一种方式是物化视图。在关系数据模型中，它通常被定义为一个标准（虚拟）视图：一个类似于表的对象，其内容是一些查询的结果。不同的是，物化视图是查询结果的实际副本，写入磁盘，而虚拟视图只是写入查询的捷径。从虚拟视图读取时，SQL 引擎会将其展开到视图的底层查询中，然后处理展开的查询。</p>
@@ -732,7 +732,7 @@
 <p>一般来说，事实往往有两个以上的维度。在图 3-9 中有五个维度：日期，产品，商店，促销和客户。要想象一个五维超立方体是什么样子是很困难的，但是原理是一样的：每个单元格都包含特定日期（产品 - 商店 - 促销 - 客户）组合的销售。这些值可以在每个维度上重复概括。</p>
 <p>物化数据立方体的优点是某些查询变得非常快，因为它们已经被有效地预先计算了。例如，如果您想知道每个商店的总销售额，则只需查看合适维度的总计，无需扫描数百万行。</p>
 <p>缺点是数据立方体不具有查询原始数据的灵活性。例如，没有办法计算哪个销售比例来自成本超过 100 美元的项目，因为价格不是其中的一个维度。<font color="orange">因此，大多数数据仓库试图保留尽可能多的原始数据，并将聚合数据（如数据立方体）仅用作某些查询的性能提升。</font></p>
-<h1 id="总结">总结</h1>
+<h2 id="总结">总结</h2>
 <p>在本章中，我们试图深入了解数据库是如何处理存储和检索的。将数据存储在数据库中会发生什么？稍后再次查询数据时数据库会做什么？</p>
 <p>在高层次上，我们看到存储引擎分为两大类：针对 <strong>事务处理（OLTP）</strong> 优化的存储引擎和针对 <strong>在线分析（OLAP）</strong> 优化的存储引擎。这两类使用场景的访问模式之间有很大的区别：</p>
 <ul>
@@ -747,7 +747,7 @@
 <p>日志结构的存储引擎是相对较新的技术。他们的主要想法是，通过系统性地将随机访问写入转换为硬盘上的顺序写入，由于硬盘驱动器和固态硬盘的性能特点，可以实现更高的写入吞吐量。</p>
 <p>关于 OLTP，我们最后还介绍了一些更复杂的索引结构，以及针对所有数据都放在内存里而优化的数据库。</p>
 <p>然后，我们暂时放下了存储引擎的内部细节，查看了典型数据仓库的高级架构，并说明了为什么分析工作负载与 OLTP 差别很大：当你的查询需要在大量行中顺序扫描时，索引的重要性就会降低很多。相反，非常紧凑地编码数据变得非常重要，以最大限度地减少查询需要从硬盘读取的数据量。我们讨论了列式存储如何帮助实现这一目标。</p>
-<h2 id="参考">参考</h2>
+<h3 id="参考">参考</h3>
 <p><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch3?id=事务处理还是分析？">第三章：存储与检索 (vonng.com)</a></p>
 
     </div>
@@ -822,13 +822,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">475k</span>
+    <span title="站点总字数">519k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">14:23</span>
+    <span title="站点阅读时长">15:43</span>
   </span>
 </div>
 <div class="busuanzi-count">

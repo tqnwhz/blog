@@ -35,7 +35,7 @@
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/05/DDIA-Note-4/fig4-5.png">
 <meta property="og:image" content="https://tqnwhz.github.io/blog/2024/05/05/DDIA-Note-4/fig4-6.png">
 <meta property="article:published_time" content="2024-05-05T14:21:29.000Z">
-<meta property="article:modified_time" content="2024-05-08T16:23:52.236Z">
+<meta property="article:modified_time" content="2024-06-10T16:10:31.746Z">
 <meta property="article:author" content="Tqnwhz">
 <meta property="article:tag" content="DDIA">
 <meta property="article:tag" content="设计数据密集型应用">
@@ -149,7 +149,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%8F%98%E6%9B%B4"><span class="nav-number">2.1.</span> <span class="nav-text">模式变更</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E5%90%91%E5%85%BC%E5%AE%B9"><span class="nav-number">2.2.</span> <span class="nav-text">双向兼容</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E7%A0%81%E6%95%B0%E6%8D%AE%E7%9A%84%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">编码数据的格式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E8%A8%80%E7%89%B9%E5%AE%9A%E7%9A%84%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">语言特定的格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#jsonxml%E5%92%8C%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%8F%98%E4%BD%93"><span class="nav-number">3.2.</span> <span class="nav-text">JSON、XML 和二进制变体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%BC%96%E7%A0%81"><span class="nav-number">3.3.</span> <span class="nav-text">二进制编码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#thrift%E4%B8%8Eprotocol-buffers"><span class="nav-number">3.4.</span> <span class="nav-text">Thrift 与 Protocol Buffers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%97%E6%AE%B5%E6%A0%87%E7%AD%BE%E5%92%8C%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98"><span class="nav-number">3.4.1.</span> <span class="nav-text">字段标签和模式演变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%92%8C%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98"><span class="nav-number">3.4.2.</span> <span class="nav-text">数据类型和模式演变</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#avro"><span class="nav-number">3.5.</span> <span class="nav-text">Avro</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#writer%E6%A8%A1%E5%BC%8F%E4%B8%8Ereader%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.1.</span> <span class="nav-text">Writer 模式与 Reader 模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98%E8%A7%84%E5%88%99"><span class="nav-number">3.5.2.</span> <span class="nav-text">模式演变规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#reader-%E5%A6%82%E4%BD%95%E7%9F%A5%E9%81%93%E5%85%B6-writer-%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.3.</span> <span class="nav-text">Reader 如何知道其 Writer 模式？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E7%94%9F%E6%88%90%E7%9A%84%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.4.</span> <span class="nav-text">动态生成的模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90%E5%92%8C%E5%8A%A8%E6%80%81%E7%B1%BB%E5%9E%8B%E7%9A%84%E8%AF%AD%E8%A8%80"><span class="nav-number">3.5.5.</span> <span class="nav-text">代码生成和动态类型的语言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">3.5.6.</span> <span class="nav-text">模式的优点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">数据流的类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-number">4.1.</span> <span class="nav-text">数据库中的数据流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8%E4%B8%8D%E5%90%8C%E7%9A%84%E6%97%B6%E9%97%B4%E5%86%99%E5%85%A5%E4%B8%8D%E5%90%8C%E7%9A%84%E5%80%BC"><span class="nav-number">4.1.1.</span> <span class="nav-text">在不同的时间写入不同的值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BD%92%E6%A1%A3%E5%AD%98%E5%82%A8"><span class="nav-number">4.1.2.</span> <span class="nav-text">归档存储</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81rest%E4%B8%8Erpc"><span class="nav-number">4.2.</span> <span class="nav-text">服务中的数据流：REST 与 RPC</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#web%E6%9C%8D%E5%8A%A1"><span class="nav-number">4.2.1.</span> <span class="nav-text">Web 服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E8%BF%87%E7%A8%8B%E8%B0%83%E7%94%A8rpc%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">4.2.2.</span> <span class="nav-text">远程过程调用（RPC）的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rpc%E7%9A%84%E5%BD%93%E5%89%8D%E6%96%B9%E5%90%91"><span class="nav-number">4.2.3.</span> <span class="nav-text">RPC 的当前方向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BC%96%E7%A0%81%E4%B8%8Erpc%E7%9A%84%E6%BC%94%E5%8C%96"><span class="nav-number">4.2.4.</span> <span class="nav-text">数据编码与 RPC 的演化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BC%A0%E9%80%92%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-number">4.3.</span> <span class="nav-text">消息传递中的数据流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BB%A3%E7%90%86"><span class="nav-number">4.3.1.</span> <span class="nav-text">消息代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84actor%E6%A1%86%E6%9E%B6"><span class="nav-number">4.3.2.</span> <span class="nav-text">分布式的 Actor 框架</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E5%B0%8F%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">本章小结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E5%8F%98%E6%9B%B4"><span class="nav-number">2.1.</span> <span class="nav-text">模式变更</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E5%90%91%E5%85%BC%E5%AE%B9"><span class="nav-number">2.2.</span> <span class="nav-text">双向兼容</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A0%81%E6%95%B0%E6%8D%AE%E7%9A%84%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">编码数据的格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E8%A8%80%E7%89%B9%E5%AE%9A%E7%9A%84%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">语言特定的格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jsonxml%E5%92%8C%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%8F%98%E4%BD%93"><span class="nav-number">3.2.</span> <span class="nav-text">JSON、XML 和二进制变体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%BC%96%E7%A0%81"><span class="nav-number">3.3.</span> <span class="nav-text">二进制编码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#thrift%E4%B8%8Eprotocol-buffers"><span class="nav-number">3.4.</span> <span class="nav-text">Thrift 与 Protocol Buffers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%97%E6%AE%B5%E6%A0%87%E7%AD%BE%E5%92%8C%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98"><span class="nav-number">3.4.1.</span> <span class="nav-text">字段标签和模式演变</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%92%8C%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98"><span class="nav-number">3.4.2.</span> <span class="nav-text">数据类型和模式演变</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#avro"><span class="nav-number">3.5.</span> <span class="nav-text">Avro</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#writer%E6%A8%A1%E5%BC%8F%E4%B8%8Ereader%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.1.</span> <span class="nav-text">Writer 模式与 Reader 模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E6%BC%94%E5%8F%98%E8%A7%84%E5%88%99"><span class="nav-number">3.5.2.</span> <span class="nav-text">模式演变规则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#reader-%E5%A6%82%E4%BD%95%E7%9F%A5%E9%81%93%E5%85%B6-writer-%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.3.</span> <span class="nav-text">Reader 如何知道其 Writer 模式？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E7%94%9F%E6%88%90%E7%9A%84%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.5.4.</span> <span class="nav-text">动态生成的模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90%E5%92%8C%E5%8A%A8%E6%80%81%E7%B1%BB%E5%9E%8B%E7%9A%84%E8%AF%AD%E8%A8%80"><span class="nav-number">3.5.5.</span> <span class="nav-text">代码生成和动态类型的语言</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%BC%8F%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">3.5.6.</span> <span class="nav-text">模式的优点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">数据流的类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-number">4.1.</span> <span class="nav-text">数据库中的数据流</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8%E4%B8%8D%E5%90%8C%E7%9A%84%E6%97%B6%E9%97%B4%E5%86%99%E5%85%A5%E4%B8%8D%E5%90%8C%E7%9A%84%E5%80%BC"><span class="nav-number">4.1.1.</span> <span class="nav-text">在不同的时间写入不同的值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BD%92%E6%A1%A3%E5%AD%98%E5%82%A8"><span class="nav-number">4.1.2.</span> <span class="nav-text">归档存储</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81rest%E4%B8%8Erpc"><span class="nav-number">4.2.</span> <span class="nav-text">服务中的数据流：REST 与 RPC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#web%E6%9C%8D%E5%8A%A1"><span class="nav-number">4.2.1.</span> <span class="nav-text">Web 服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E8%BF%87%E7%A8%8B%E8%B0%83%E7%94%A8rpc%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">4.2.2.</span> <span class="nav-text">远程过程调用（RPC）的问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rpc%E7%9A%84%E5%BD%93%E5%89%8D%E6%96%B9%E5%90%91"><span class="nav-number">4.2.3.</span> <span class="nav-text">RPC 的当前方向</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BC%96%E7%A0%81%E4%B8%8Erpc%E7%9A%84%E6%BC%94%E5%8C%96"><span class="nav-number">4.2.4.</span> <span class="nav-text">数据编码与 RPC 的演化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BC%A0%E9%80%92%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-number">4.3.</span> <span class="nav-text">消息传递中的数据流</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BB%A3%E7%90%86"><span class="nav-number">4.3.1.</span> <span class="nav-text">消息代理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84actor%E6%A1%86%E6%9E%B6"><span class="nav-number">4.3.2.</span> <span class="nav-text">分布式的 Actor 框架</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E5%B0%8F%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">本章小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -164,7 +164,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">69</span>
+          <span class="site-state-item-count">70</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -175,7 +175,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">88</span>
+        <span class="site-state-item-count">89</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -249,7 +249,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2024-05-09 00:23:52" itemprop="dateModified" datetime="2024-05-09T00:23:52+08:00">2024-05-09</time>
+      <time title="修改时间：2024-06-11 00:10:31" itemprop="dateModified" datetime="2024-06-11T00:10:31+08:00">2024-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -300,10 +300,10 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="摘要">摘要</h1>
+    <div class="post-body" itemprop="articleBody"><h2 id="摘要">摘要</h2>
 <p>本章介绍几种不同的编码格式，包括 JSON、XML、Protocol Buffers、Thrift 和 Avr，它们对兼容性的影响，如何应对模式变化；还讨论如何使用这些格式进行数据存储和通信。</p>
 <span id="more"></span>
-<h1 id="简介">简介</h1>
+<h2 id="简介">简介</h2>
 <p>应用程序不可避免地随时间而变化。新产品的推出，对需求的深入理解，或者商业环境的变化，总会伴随着 <strong>功能（feature）</strong> 的增增改改。</p>
 <ul>
 <li>可演化性（evolvability） ：应该尽力构建能灵活适应变化的系统。</li>
@@ -313,13 +313,13 @@
 <li>​ 关系数据库通常假定数据库中的所有数据都遵循一个模式：尽管可以更改该模式（通过模式迁移，migration，即 <code>ALTER</code> 语句），但是在任何时间点都有且仅有一个正确的模式。</li>
 <li><strong>读时模式</strong>（schema-on-read，或 <strong>无模式</strong>，即 schemaless）数据库不会强制一个模式，因此数据库可以包含在不同时间写入的新老数据格式的混合（ “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch2?id=文档模型中的模式灵活性">文档模型中的模式灵活性</a></strong>” ）。</li>
 </ul>
-<h2 id="模式变更">模式变更</h2>
+<h3 id="模式变更">模式变更</h3>
 <p>当数据 <strong>格式（format）</strong> 或 <strong>模式（schema）</strong> 发生变化时，通常需要对应用程序代码进行相应的更改（例如，为记录添加新字段，然后修改程序开始读写该字段）。但在大型应用程序中，代码变更通常不会立即完成：</p>
 <ul>
 <li>对于 <strong>服务端（server-side）</strong> 应用程序，可能需要执行 <strong>滚动升级 （rolling upgrade）</strong> （也称为 <strong>阶段发布（staged rollout）</strong> ），一次将新版本部署到少数几个节点，检查新版本是否运行正常，然后逐渐部完所有的节点。这样无需中断服务即可部署新版本，为频繁发布提供了可行性，从而带来更好的可演化性。</li>
 <li>对于 <strong>客户端（client-side）</strong> 应用程序，升不升级就要看用户的心情了。用户可能相当长一段时间里都不会去升级软件。</li>
 </ul>
-<h2 id="双向兼容">双向兼容</h2>
+<h3 id="双向兼容">双向兼容</h3>
 <p>这意味着，新旧版本的代码，以及新旧数据格式可能会在系统中同时共处。系统想要继续顺利运行，就需要保持 <strong>双向兼容性</strong>：</p>
 <ul>
 <li>向后兼容 (backward compatibility)：新的代码可以读取由旧的代码写入的数据。</li>
@@ -327,7 +327,7 @@
 </ul>
 <p>向后兼容性通常并不难实现：新代码的作者当然知道由旧代码使用的数据格式，因此可以显示地处理它（最简单的办法是，保留旧代码即可读取旧数据）。</p>
 <p>向前兼容性可能会更棘手，因为旧版的程序需要忽略新版数据格式中新增的部分。</p>
-<h1 id="编码数据的格式"><strong>编码数据的格式</strong></h1>
+<h2 id="编码数据的格式"><strong>编码数据的格式</strong></h2>
 <p>程序通常（至少）使用两种形式的数据：</p>
 <ol type="1">
 <li>在内存中，数据保存在对象、结构体、列表、数组、散列表、树等中。 这些数据结构针对 CPU 的高效访问和操作进行了优化（通常使用指针）。</li>
@@ -348,7 +348,7 @@
 <p><strong>不幸的是，在 <a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch7">第七章</a>： 事务（Transaction） 的上下文里，序列化（Serialization） 这个术语也出现了，而且具有完全不同的含义。尽管序列化可能是更常见的术语，为了避免术语重载，本书中坚持使用 编码（Encoding） 表达此含义。</strong></p>
 </blockquote>
 <p>这是一个常见的问题，因而有许多库和编码格式可供选择。</p>
-<h2 id="语言特定的格式"><strong>语言特定的格式</strong></h2>
+<h3 id="语言特定的格式"><strong>语言特定的格式</strong></h3>
 <p>许多编程语言都内建了将内存对象编码为字节序列的支持。例如，Java 有 <code>java.io.Serializable</code> 【1】，Ruby 有 <code>Marshal</code>【2】，Python 有 <code>pickle</code>【3】等等。许多第三方库也存在，例如 <code>Kryo for Java</code> 【4】。</p>
 <p>这些编码库非常方便，可以用很少的额外代码实现内存对象的保存与恢复。但是它们也有一些深层次的问题：</p>
 <ul>
@@ -358,7 +358,7 @@
 <li>效率（编码或解码所花费的 CPU 时间，以及编码结构的大小）往往也是事后才考虑的。 例如，Java 的内置序列化由于其糟糕的性能和臃肿的编码而臭名昭著【8】。</li>
 </ul>
 <p>因此，除非临时使用，采用语言内置编码通常是一个坏主意。</p>
-<h2 id="jsonxml和二进制变体"><strong>JSON、XML 和二进制变体</strong></h2>
+<h3 id="jsonxml和二进制变体"><strong>JSON、XML 和二进制变体</strong></h3>
 <p>JSON 和 XML 是最常用的可被多种编程语言读写的标准编码。它们广为人知，广受支持，也 “广受憎恶”。</p>
 <ul>
 <li>XML 经常收到批评：过于冗长且复杂</li>
@@ -377,7 +377,7 @@
 <li><p>CSV 没有任何模式，因此每行和每列的含义完全由应用程序自行定义。如果应用程序变更添加了新的行或列，那么这种变更必须通过手工处理。 CSV 也是一个相当模糊的格式（如果一个值包含逗号或换行符，会发生什么？）。尽管其转义规则已经被正式指定【13】，但并不是所有的解析器都正确的实现了标准。</p></li>
 </ul>
 <p>尽管存在这些缺陷，但 JSON、XML 和 CSV 对很多需求来说已经足够好了。它们很可能会继续流行下去，特别是作为数据交换格式来说（即将数据从一个组织发送到另一个组织）。在这种情况下，只要人们对格式是什么意见一致，格式有多美观或者效率有多高效就无所谓了。让不同的组织就这些东西达成一致的难度超过了绝大多数问题。</p>
-<h2 id="二进制编码"><strong>二进制编码</strong></h2>
+<h3 id="二进制编码"><strong>二进制编码</strong></h3>
 <p>对于仅在组织内部使用的数据，使用通用的编码格式压力较小。例如，可以选择更紧凑或更快的解析格式。虽然对小数据集来说，收益可以忽略不计；但一旦达到 TB 级别，数据格式的选型就会产生巨大的影响。</p>
 <p>JSON 比 XML 简洁，但与二进制格式相比还是太占空间。这一事实导致大量二进制编码版本 JSON（MessagePack、BSON、BJSON、UBJSON、BISON 和 Smile 等） 和 XML（例如 WBXML 和 Fast Infoset）的出现。这些格式已经在各种各样的领域中采用，但是没有一个能像文本版 JSON 和 XML 那样被广泛采用。</p>
 <p>这些格式中的一些扩展了一组数据类型（例如，区分整数和浮点数，或者增加对二进制字符串的支持），另一方面，它们没有改变 JSON / XML 的数据模型。特别是由于它们没有规定模式，所以它们需要在编码数据中包含所有的对象字段名称。也就是说，在 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/">例 4-1</a></strong> 中的 JSON 文档的二进制编码中，需要在某处包含字符串 <code>userName</code>，<code>favoriteNumber</code> 和 <code>interests</code>。</p>
@@ -393,7 +393,7 @@
 <p>二进制编码长度为 66 个字节，仅略小于文本 JSON 编码所取的 81 个字节（删除了空白）。所有的 JSON 的二进制编码在这方面是相似的。空间节省了一丁点（以及解析加速）是否能弥补可读性的损失，谁也说不准。</p>
 <p>在下面的章节中，能达到比这好得多的结果，只用 32 个字节对相同的记录进行编码。</p>
 <p><img src="fig4-1.png"></p>
-<h2 id="thrift与protocol-buffers"><strong>Thrift 与 Protocol Buffers</strong></h2>
+<h3 id="thrift与protocol-buffers"><strong>Thrift 与 Protocol Buffers</strong></h3>
 <p>Apache Thrift 【15】和 Protocol Buffers（protobuf）【16】是基于相同原理的二进制编码库。 Protocol Buffers 最初是在 Google 开发的，Thrift 最初是在 Facebook 开发的，并且都是在 2007~2008 开源的【17】。 Thrift 和 Protocol Buffers 都需要一个模式来编码任何数据。要在 Thrift 的 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/">例 4-1</a></strong> 中对数据进行编码，可以使用 Thrift <strong>接口定义语言（IDL）</strong> 来描述模式，如下所示：</p>
 <figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct Person {</span><br><span class="line">    1: required string       userName,</span><br><span class="line">    2: optional i64          favoriteNumber,</span><br><span class="line">    3: optional list&lt;string&gt; interests</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
 <p>Protocol Buffers 的等价模式定义看起来非常相似：</p>
@@ -448,7 +448,7 @@
 <p><img src="fig4-4.png"></p>
 <p><strong>图 4-4 使用 Protobuf 编码的记录</strong></p>
 <p>需要注意的一个细节：在前面所示的模式中，每个字段被标记为必需或可选，但是这对字段如何编码没有任何影响（二进制数据中没有任何字段指示某字段是否必须）。区别在于，如果字段设置为 <code>required</code>，但未设置该字段，则所需的运行时检查将失败，这对于捕获错误非常有用。</p>
-<h3 id="字段标签和模式演变"><strong>字段标签和模式演变</strong></h3>
+<h4 id="字段标签和模式演变"><strong>字段标签和模式演变</strong></h4>
 <p>模式演变：模式不可避免地需要随着时间而改变。 Thrift 和 Protocol Buffers 如何处理模式更改，同时保持向后兼容性？</p>
 <p>从示例中可以看出，编码的记录就是其编码字段的拼接。每个字段由其标签号码（样本模式中的数字 1,2,3）标识，并用数据类型（例如字符串或整数）注释。如果没有设置字段值，则简单地从编码记录中省略。从中可以看到，字段标记对编码数据的含义至关重要。你可以更改架构中字段的名称，因为编码的数据永远不会引用字段名称，但不能更改字段的标记，因为这会使所有现有的编码数据无效。</p>
 <p>添加新的字段到架构，只需给每个字段一个新的标签号码。</p>
@@ -465,11 +465,11 @@
 <li>只能删除一个可选的字段（必需字段永远不能删除）</li>
 <li>不能再次使用相同的标签号码（因为你可能仍然有数据写在包含旧标签号码的地方，而该字段必须被新代码忽略）。</li>
 </ul>
-<h3 id="数据类型和模式演变"><strong>数据类型和模式演变</strong></h3>
+<h4 id="数据类型和模式演变"><strong>数据类型和模式演变</strong></h4>
 <p>改变字段的数据类型，也许是可能的，但是有一个风险，值将失去精度或被截断。例如，假设你将一个 32 位的整数变成一个 64 位的整数。新代码可以轻松读取旧代码写入的数据，因为解析器可以用零填充任何缺失的位。但是，如果旧代码读取由新代码写入的数据，则旧代码仍使用 32 位变量来保存该值。如果解码的 64 位值不适合 32 位，则它将被截断。</p>
 <p>Protobuf 没有列表或数组数据类型，而是有一个字段的重复标记（<code>repeated</code>，这是除必需和可选之外的第三个选项）。如 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/img/fig4-4.png">图 4-4</a></strong> 所示，重复字段的编码正如它所说的那样：同一个字段标记只是简单地出现在记录中。这允许将可选（单值）字段更改为重复（多值）字段。读取旧数据的新代码会看到一个包含零个或一个元素的列表（取决于该字段是否存在）。读取新数据的旧代码只能看到列表的最后一个元素。</p>
 <p>Thrift 有一个专用的 list 数据类型，它使用列表元素的数据类型进行参数化。这不允许 Protocol Buffers 所做的从单值到多值的演变，但是它具有支持嵌套列表的优点。</p>
-<h2 id="avro">Avro</h2>
+<h3 id="avro">Avro</h3>
 <p>Apache Avro 【20】是另一种二进制编码格式，与 Protocol Buffers 和 Thrift 有着有趣的不同。 它是作为 Hadoop 的一个子项目在 2009 年开始的，因为 Thrift 不适合 Hadoop 的用例【21】。</p>
 <p>Avro 也使用模式来指定正在编码的数据的结构。 它有两种模式语言：一种（Avro IDL）用于人工编辑，一种（基于 JSON）更易于机器读取。</p>
 <p>我们用 Avro IDL 编写的示例模式可能如下所示， 模式中没有标签号码：</p>
@@ -482,7 +482,7 @@
 <p><strong>图 4-5 使用 Avro 编码的记录</strong></p>
 <p>为了解析二进制数据，你按照它们出现在模式中的顺序遍历这些字段，并使用模式来告诉你每个字段的数据类型。这意味着如果读取数据的代码使用与写入数据的代码完全相同的模式，才能正确解码二进制数据。Reader 和 Writer 之间的模式不匹配意味着错误地解码数据。</p>
 <p>那么，Avro 如何支持模式演变呢？</p>
-<h3 id="writer模式与reader模式"><strong>Writer 模式与 Reader 模式</strong></h3>
+<h4 id="writer模式与reader模式"><strong>Writer 模式与 Reader 模式</strong></h4>
 <p>有了 Avro，当应用程序想要编码一些数据（将其写入文件或数据库，通过网络发送等）时，它使用它知道的任何版本的模式编码数据，例如，模式可能被编译到应用程序中。这被称为 Writer 模式。</p>
 <p>当一个应用程序想要解码一些数据（从一个文件或数据库读取数据，从网络接收数据等）时，它希望数据在某个模式中，这就是 Reader 模式。这是应用程序代码所依赖的模式，在应用程序的构建过程中，代码可能已经从该模式生成。</p>
 <p>Avro 的关键思想是 Writer 模式和 Reader 模式不必是相同的 - 他们只需要兼容。当数据解码（读取）时，Avro 库通过并排查看 Writer 模式和 Reader 模式并将数据从 Writer 模式转换到 Reader 模式来解决差异。 Avro 规范【20】确切地定义了这种解析的工作原理，如 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/img/fig4-6.png">图 4-6</a></strong> 所示。</p>
@@ -493,7 +493,7 @@
 </ul>
 <p><img src="fig4-6.png"></p>
 <p><strong>图 4-6 一个 Avro Reader 解决读写模式的差异</strong></p>
-<h3 id="模式演变规则"><strong>模式演变规则</strong></h3>
+<h4 id="模式演变规则"><strong>模式演变规则</strong></h4>
 <p>Avro 下的兼容性：</p>
 <ul>
 <li>向前兼容：新版本的 Writer 模式搭配旧版本的 Reader 模式。</li>
@@ -519,7 +519,7 @@
 <li>新 reader 可以通过别名映射读取旧 writer 的数据，所以向后兼容</li>
 <li>新 writer 按新的 name 写，旧 reader 无法读取，所以不能向前兼容</li>
 </ul>
-<h3 id="reader-如何知道其-writer-模式">Reader 如何知道其 Writer 模式<strong>？</strong></h3>
+<h4 id="reader-如何知道其-writer-模式">Reader 如何知道其 Writer 模式？</h4>
 <p>对于一段特定的编码数据，Reader 如何知道其 Writer 模式？我们不能只将整个模式包括在每个记录中，因为模式可能比编码的数据大得多，从而使二进制编码节省的所有空间都是徒劳的。</p>
 <p>答案取决于 Avro 使用的上下文。举几个例子：</p>
 <ul>
@@ -531,17 +531,17 @@
 <p>当两个进程通过双向网络连接进行通信时，他们可以在连接设置上协商模式版本，然后在连接的生命周期中使用该模式。 Avro RPC 协议（请参阅 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch4?id=服务中的数据流：rest与rpc">服务中的数据流：REST 与 RPC</a></strong>”）就是这样工作的。</p></li>
 </ul>
 <p>具有模式版本的数据库在任何情况下都是非常有用的，因为它充当文档并为你提供了检查模式兼容性的机会【24】。作为版本号，你可以使用一个简单的递增整数，或者你可以使用模式的散列。</p>
-<h3 id="动态生成的模式"><strong>动态生成的模式</strong></h3>
+<h4 id="动态生成的模式"><strong>动态生成的模式</strong></h4>
 <p>与 Protocol Buffers 和 Thrift 相比，Avro 方法的一个优点是架构不包含任何标签号码。但为什么这很重要？在模式中保留一些数字有什么问题？</p>
 <p>不同之处在于 Avro 对动态生成的模式更友善。例如，假如你有一个关系数据库，你想要把它的内容转储到一个文件中，并且你想使用二进制格式来避免前面提到的文本格式（JSON，CSV，SQL）的问题。如果你使用 Avro，你可以很容易地从关系模式生成一个 Avro 模式（在我们之前看到的 JSON 表示中），并使用该模式对数据库内容进行编码，并将其全部转储到 Avro 对象容器文件【25】中。你为每个数据库表生成一个记录模式，每个列成为该记录中的一个字段。数据库中的列名称映射到 Avro 中的字段名称。</p>
 <p>现在，如果数据库模式发生变化（例如，一个表中添加了一列，删除了一列），则可以从更新的数据库模式生成新的 Avro 模式，并在新的 Avro 模式中导出数据。数据导出过程不需要注意模式的改变 - 每次运行时都可以简单地进行模式转换。任何读取新数据文件的人都会看到记录的字段已经改变，但是由于字段是通过名字来标识的，所以更新的 Writer 模式仍然可以与旧的 Reader 模式匹配。</p>
 <p>相比之下，如果你为此使用 Thrift 或 Protocol Buffers，则字段标签可能必须手动分配：每次数据库模式更改时，管理员都必须手动更新从数据库列名到字段标签的映射（这可能会自动化，但模式生成器必须非常小心，不要分配以前使用的字段标签）。这种动态生成的模式根本不是 Thrift 或 Protocol Buffers 的设计目标，而是 Avro 的。</p>
-<h3 id="代码生成和动态类型的语言"><strong>代码生成和动态类型的语言</strong></h3>
+<h4 id="代码生成和动态类型的语言"><strong>代码生成和动态类型的语言</strong></h4>
 <p>Thrift 和 Protobuf 依赖于代码生成：在定义了模式之后，可以使用你选择的编程语言生成实现此模式的代码。这在 Java、C++ 或 C# 等静态类型语言中很有用，因为它允许将高效的内存中结构用于解码的数据，并且在编写访问数据结构的程序时允许在 IDE 中进行类型检查和自动补全。</p>
 <p>在动态类型编程语言（如 JavaScript、Ruby 或 Python）中，生成代码没有太多意义，因为没有编译时类型检查器来满足。代码生成在这些语言中经常被忽视，因为它们避免了显式的编译步骤。而且，对于动态生成的模式（例如从数据库表生成的 Avro 模式），代码生成对获取数据是一个不必要的障碍。</p>
 <p>Avro 为静态类型编程语言提供了可选的代码生成功能，但是它也可以在不生成任何代码的情况下使用。如果你有一个对象容器文件（它嵌入了 Writer 模式），你可以简单地使用 Avro 库打开它，并以与查看 JSON 文件相同的方式查看数据。该文件是自描述的，因为它包含所有必要的元数据。</p>
 <p>这个属性特别适用于动态类型的数据处理语言如 Apache Pig 【26】。在 Pig 中，你可以打开一些 Avro 文件，开始分析它们，并编写派生数据集以 Avro 格式输出文件，而无需考虑模式。</p>
-<h3 id="模式的优点"><strong>模式的优点</strong></h3>
+<h4 id="模式的优点"><strong>模式的优点</strong></h4>
 <p>尽管 JSON、XML 和 CSV 等文本数据格式非常普遍，但基于模式的二进制编码也是一个可行的选择。</p>
 <ul>
 <li>它们可以比各种 “二进制 JSON” 变体更紧凑，因为它们可以省略编码数据中的字段名称。</li>
@@ -550,7 +550,7 @@
 <li>对于静态类型编程语言的用户来说，从模式生成代码的能力是有用的，因为它可以在编译时进行类型检查。</li>
 </ul>
 <p>总而言之，模式演化保持了与 JSON 数据库提供的无模式 / 读时模式相同的灵活性，同时还可以更好地保证你的数据并提供更好的工具。</p>
-<h1 id="数据流的类型"><strong>数据流的类型</strong></h1>
+<h2 id="数据流的类型"><strong>数据流的类型</strong></h2>
 <p>兼容性是编码数据的一个进程和解码它的另一个进程之间的一种关系。</p>
 <p>数据可以通过多种方式从一个进程流向另一个进程。谁编码数据，谁解码？数据在进程之间流动的一些最常见的方式：</p>
 <ul>
@@ -569,7 +569,7 @@
 <li>发送者编码，接受者解码</li>
 </ul></li>
 </ul>
-<h2 id="数据库中的数据流"><strong>数据库中的数据流</strong></h2>
+<h3 id="数据库中的数据流"><strong>数据库中的数据流</strong></h3>
 <p>一般来说，几个不同的进程同时访问数据库是很常见的。这些进程可能是几个不同的应用程序或服务，或者它们可能只是几个相同服务的实例（为了可伸缩性或容错性而并行运行）。无论哪种方式，在应用程序发生变化的环境中，访问数据库的某些进程可能会运行较新的代码，有些进程可能会运行较旧的代码，例如，新版本当前正在部署滚动升级，有些实例已经更新，而其他实例尚未更新。</p>
 <p>前后兼容性：</p>
 <ul>
@@ -578,15 +578,15 @@
 </ul>
 <p>还需要注意：新增字段并写入值，旧代码读取记录并更新写回时，需要保持新的字段不变，即使它不能被解释。</p>
 <p>前面讨论的编码格式支持未知字段的保存，但是有时候需要在应用程序层面保持谨慎了，避免未知字段在该翻译过程中丢失。</p>
-<h3 id="在不同的时间写入不同的值"><strong>在不同的时间写入不同的值</strong></h3>
+<h4 id="在不同的时间写入不同的值"><strong>在不同的时间写入不同的值</strong></h4>
 <p>数据库通常允许任何时候更新任何值。这意味着在一个单一的数据库中，可能有一些值是五毫秒前写的，而一些值是五年前写的。</p>
 <p>在部署应用程序的新版本时，也许用不了几分钟就可以将所有的旧版本替换为新版本（至少服务器端应用程序是这样的）。但数据库内容并非如此：对于五年前的数据来说，除非对其进行显式重写，否则它仍然会以原始编码形式存在。这种现象有时被概括为：数据的生命周期超出代码的生命周期。</p>
 <p>将数据重写（迁移）到一个新的模式当然是可能的，但是在一个大数据集上执行是一个昂贵的事情，所以大多数数据库如果可能的话就避免它。大多数关系数据库都允许简单的模式更改，例如添加一个默认值为空的新列，而不重写现有数据 (除了 MySQL，即使并非真的必要，它也经常会重写整个表，正如 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch2?id=文档模型中的模式灵活性">文档模型中的模式灵活性</a></strong>” 中所提到的。)。读取旧行时，对于磁盘上的编码数据缺少的任何列，数据库将填充空值。 LinkedIn 的文档数据库 Espresso 使用 Avro 存储，允许它使用 Avro 的模式演变规则【23】。</p>
 <p>因此，模式演变允许整个数据库看起来好像是用单个模式编码的，即使底层存储可能包含用各种历史版本的模式编码的记录。</p>
-<h3 id="归档存储"><strong>归档存储</strong></h3>
+<h4 id="归档存储"><strong>归档存储</strong></h4>
 <p>也许你不时为数据库创建一个快照，例如备份或加载到数据仓库。在这种情况下，即使源数据库中的原始编码包含来自不同时代的模式版本的混合，数据转储通常也将使用最新模式进行编码。既然你不管怎样都要拷贝数据，那么你可以对这个数据拷贝进行一致的编码。</p>
 <p>由于数据转储是一次写入的，而且以后是不可变的，所以 Avro 对象容器文件等格式非常适合。这也是一个很好的机会，可以将数据编码为面向分析的列式格式，例如 Parquet（请参阅 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch3?id=列压缩">列压缩</a></strong>”）。</p>
-<h2 id="服务中的数据流rest与rpc"><strong>服务中的数据流：REST 与 RPC</strong></h2>
+<h3 id="服务中的数据流rest与rpc"><strong>服务中的数据流：REST 与 RPC</strong></h3>
 <p>最常见的网络进程通信方式，有两个角色：客户端和服务器。服务器通过网络公开 API，客户端可以连接到服务器以向该 API 发出请求。服务器公开的 API 被称为服务（service）。</p>
 <ul>
 <li>客户端：Web 浏览器、移动设备的本地应用程序等。</li>
@@ -595,7 +595,7 @@
 <p>服务器本身可以是另一个服务的客户端（例如，典型的 Web 应用服务器充当数据库的客户端）。这种方法通常用于将大型应用程序按照功能区域分解为较小的服务，这样当一个服务需要来自另一个服务的某些功能或数据时，就会向另一个服务发出请求。这种构建应用程序的方式传统上被称为 <strong>面向服务的体系结构（service-oriented architecture，SOA）</strong>，最近被改进和更名为 <strong>微服务架构（*<em>microservices architecture*</em>）</strong>。</p>
 <p>在某些方面，服务类似于数据库：它们通常允许客户端提交和查询数据。但是，虽然数据库允许使用我们在 <strong>第二章</strong> 中讨论的查询语言进行任意查询，但是服务公开了一个特定于应用程序的 API，它只允许由服务的业务逻辑（应用程序代码）预定的输入和输出【33】。这种限制提供了一定程度的封装：服务能够对客户可以做什么和不可以做什么施加细粒度的限制。</p>
 <p>微服务架构的一个关键设计目标是，通过服务独立部署和演化来使应用程序更易于更改和维护。例如，每个服务应该由一个团队拥有，并且该团队应该能够经常发布新版本的服务，而不必与其他团队协调。换句话说，我们应该期望服务器和客户端的旧版本和新版本同时运行，因此服务器和客户端使用的数据编码必须在不同版本的服务 API 之间兼容。</p>
-<h3 id="web服务"><strong>Web 服务</strong></h3>
+<h4 id="web服务"><strong>Web 服务</strong></h4>
 <p><strong>当服务使用 HTTP 作为底层通信协议时，可称之为 Web 服务</strong>。这可能是一个小错误，因为 Web 服务不仅在 Web 上使用，而且在几个不同的环境中使用。例如：</p>
 <ol type="1">
 <li>运行在用户设备上的客户端应用程序通过 HTTP 向服务发出请求，通常通过公共互联网。</li>
@@ -605,7 +605,7 @@
 <p>有两种流行的 Web 服务方法：REST 和 SOAP。他们在设计哲学方面几乎是截然相反的。</p>
 <p>REST 不是一个协议，而是一个基于 HTTP 原则的设计哲学【34,35】。它强调简单的数据格式，使用 URL 来标识资源，并使用 HTTP 功能进行缓存控制，身份验证和内容类型协商。与 SOAP 相比，REST 已经越来越受欢迎。根据 REST 原则设计的 API 称为 RESTful</p>
 <p>REST 风格的 API 倾向于更简单的方法，通常涉及较少代码生成和自动化工具。定义格式（如 OpenAPI，也称为 Swagger 【40】）可用于描述 RESTful API 并生成文档。</p>
-<h3 id="远程过程调用rpc的问题"><strong>远程过程调用（RPC）的问题</strong></h3>
+<h4 id="远程过程调用rpc的问题"><strong>远程过程调用（RPC）的问题</strong></h4>
 <p>Web 服务仅仅是通过网络进行 API 请求的一系列技术的最新版本，其中许多技术受到了大量的炒作，但是存在严重的问题。 Enterprise JavaBeans（EJB）和 Java 的 <strong>远程方法调用（RMI）</strong> 仅限于 Java。<strong>分布式组件对象模型（DCOM）</strong> 仅限于 Microsoft 平台。<strong>公共对象请求代理体系结构（CORBA）</strong> 过于复杂，不提供前向或后向兼容性【41】。</p>
 <p>所有这些都是基于 <strong>远程过程调用（RPC）</strong> 的思想，该过程调用自 20 世纪 70 年代以来一直存在【42】。 RPC 模型试图向远程网络服务发出请求，看起来与在同一进程中调用编程语言中的函数或方法相同，这种抽象被称为位置透明（location transparency）。尽管 RPC 起初看起来很方便，但这种方法根本上是有缺陷的【43,44】。网络请求与本地函数调用非常不同：</p>
 <ul>
@@ -617,7 +617,7 @@
 <li>客户端和服务可以用不同的编程语言实现，所以 RPC 框架必须将数据类型从一种语言翻译成另一种语言。这可能会变得很丑陋，因为不是所有的语言都具有相同的类型 —— 例如 JavaScript 的数字大于 2^53 的问题。用单一语言编写的单个进程中不存在此问题。</li>
 </ul>
 <p>所有这些因素意味着尝试使远程服务看起来像编程语言中的本地对象一样毫无意义，因为这是一个根本不同的事情。 REST 的部分吸引力在于，它并不试图隐藏它是一个网络协议的事实（尽管这似乎并没有阻止人们在 REST 之上构建 RPC 库）。</p>
-<h3 id="rpc的当前方向"><strong>RPC 的当前方向</strong></h3>
+<h4 id="rpc的当前方向"><strong>RPC 的当前方向</strong></h4>
 <p>尽管有这样那样的问题，RPC 不会消失。在本章提到的所有编码的基础上构建了各种 RPC 框架：例如，Thrift 和 Avro 带有 RPC 支持，gRPC 是使用 Protocol Buffers 的 RPC 实现，Finagle 也使用 Thrift，<a target="_blank" rel="noopener" href="http://Rest.li">Rest.li</a> 使用 JSON over HTTP。</p>
 <p>这种新一代的 RPC 框架更加明确的是，远程请求与本地函数调用不同。例如：</p>
 <ul>
@@ -627,7 +627,7 @@
 <p>其中一些框架还提供服务发现，即允许客户端找出在哪个 IP 地址和端口号上可以找到特定的服务。我们将在 “<strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch6?id=请求路由">请求路由</a></strong>” 中回到这个主题。</p>
 <p>使用二进制编码格式的自定义 RPC 协议可以实现比通用的 JSON over REST 更好的性能。但是，RESTful API 还有其他一些显著的优点：方便实验和调试（只需使用 Web 浏览器或命令行工具 curl，无需任何代码生成或软件安装即可向其请求），能被所有主流的编程语言和平台所支持，还有大量可用的工具（服务器，缓存，负载平衡器，代理，防火墙，监控，调试工具，测试工具等）的生态系统。</p>
 <p>由于这些原因，REST 似乎是公共 API 的主要风格。 RPC 框架的主要重点在于同一组织拥有的服务之间的请求，通常在同一数据中心内。</p>
-<h3 id="数据编码与rpc的演化"><strong>数据编码与 RPC 的演化</strong></h3>
+<h4 id="数据编码与rpc的演化"><strong>数据编码与 RPC 的演化</strong></h4>
 <p>对于可演化性，重要的是可以独立更改和部署 RPC 客户端和服务器。与通过数据库流动的数据相比（如上一节所述），我们可以在通过服务进行数据流的情况下做一个简化的假设：假定所有的服务器都会先更新，其次是所有的客户端。因此，你只需要在请求上具有向后兼容性，并且对响应具有前向兼容性。</p>
 <p>RPC 方案的前后向兼容性属性从它使用的编码方式中继承：</p>
 <ul>
@@ -637,7 +637,7 @@
 </ul>
 <p>由于 RPC 经常被用于跨越组织边界的通信，所以服务的兼容性变得更加困难，因此服务的提供者经常无法控制其客户，也不能强迫他们升级。因此，需要长期保持兼容性，也许是无限期的。如果需要进行兼容性更改，则服务提供商通常会并排维护多个版本的服务 API。</p>
 <p>关于 API 版本化应该如何工作（即，客户端如何指示它想要使用哪个版本的 API）没有一致意见【48】）。对于 RESTful API，常用的方法是在 URL 或 HTTP Accept 头中使用版本号。对于使用 API 密钥来标识特定客户端的服务，另一种选择是将客户端请求的 API 版本存储在服务器上，并允许通过单独的管理界面更新该版本选项【49】。</p>
-<h2 id="消息传递中的数据流"><strong>消息传递中的数据流</strong></h2>
+<h3 id="消息传递中的数据流"><strong>消息传递中的数据流</strong></h3>
 <p>异步消息传递系统 RPC 类似，客户端的请求（通常称为消息）以低延迟传送到另一个进程。它们也与数据库类似，但不是通过直接的网络连接发送消息，而是通过称为消息代理（message broker），也称为消息队列（message queue）或面向消息的中间件（message-oriented middleware）的中介来临时存储消息。</p>
 <p>与直接 RPC 相比，使用消息代理有几个优点：</p>
 <ul>
@@ -648,13 +648,13 @@
 <li>将发件人与收件人逻辑分离（发件人只是发布邮件，不关心使用者）。</li>
 </ul>
 <p>然而，与 RPC 相比，消息传递通信通常是单向的：发送者通常不期望收到其消息的回复。虽然也可以构建另一个通道来发送接收响应，但这种通信模式是异步的：发送者不会等待消息被传递，而只是发送它，然后忘记它。</p>
-<h3 id="消息代理"><strong>消息代理</strong></h3>
+<h4 id="消息代理"><strong>消息代理</strong></h4>
 <p>过去，<strong>消息代理（Message Broker）</strong> 主要是 TIBCO、IBM WebSphere 和 webMethods 等公司的商业软件的秀场。最近像 RabbitMQ、ActiveMQ、HornetQ、NATS 和 Apache Kafka 这样的开源实现已经流行起来。</p>
 <p>详细的交付语义因实现和配置而异，但通常情况下，消息代理的使用方式如下：一个进程将消息发送到指定的队列或主题（topic），代理确保将消息传递给那个队列或主题的一个或多个消费者或订阅者。在同一主题上可以有许多生产者和许多消费者。</p>
 <p>一个主题只提供单向数据流。但是，消费者本身可能会将消息发布到另一个主题上（因此，可以将它们链接在一起，就像我们将在 <strong><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch11">第十一章</a></strong> 中看到的那样），或者发送给原始消息的发送者使用的回复队列（允许请求 / 响应数据流，类似于 RPC）。</p>
 <p>消息代理通常不会执行任何特定的数据模型 —— 消息只是包含一些元数据的字节序列，因此你可以使用任何编码格式。如果编码是向后和向前兼容的，你可以灵活地对发布者和消费者的编码进行独立的修改，并以任意顺序进行部署。</p>
 <p>如果消费者重新发布消息到另一个主题，则可能需要小心保留未知字段，以防止前面在数据库环境中描述的问题</p>
-<h3 id="分布式的actor框架"><strong>分布式的 Actor 框架</strong></h3>
+<h4 id="分布式的actor框架"><strong>分布式的 Actor 框架</strong></h4>
 <p>Actor 模型是单个进程中并发的编程模型。逻辑被封装在 actor 中，而不是直接处理线程（以及竞争条件、锁定和死锁的相关问题）。每个 actor 通常代表一个客户或实体，它可能有一些本地状态（不与其他任何角色共享），它通过发送和接收异步消息与其他角色通信。不保证消息传送：在某些错误情况下，消息将丢失。由于每个角色一次只能处理一条消息，因此不需要担心线程，每个角色可以由框架独立调度。</p>
 <p>在分布式 Actor 框架中，此编程模型用于跨多个节点伸缩应用程序。不管发送方和接收方是在同一个节点上还是在不同的节点上，都使用相同的消息传递机制。如果它们在不同的节点上，则该消息被透明地编码成字节序列，通过网络发送，并在另一侧解码。</p>
 <p>位置透明在 actor 模型中比在 RPC 中效果更好，因为 actor 模型已经假定消息可能会丢失，即使在单个进程中也是如此。尽管网络上的延迟可能比同一个进程中的延迟更高，但是在使用 actor 模型时，本地和远程通信之间的基本不匹配是较少的。</p>
@@ -665,7 +665,7 @@
 <li>Orleans 默认使用不支持滚动升级部署的自定义数据编码格式；要部署新版本的应用程序，你需要设置一个新的集群，将流量从旧集群迁移到新集群，然后关闭旧集群【51,52】。 像 Akka 一样，可以使用自定义序列化插件。</li>
 <li>在 Erlang OTP 中，对记录模式进行更改是非常困难的（尽管系统具有许多为高可用性设计的功能）。 滚动升级是可能的，但需要仔细计划【53】。 一个新的实验性的 <code>maps</code> 数据类型（2014 年在 Erlang R17 中引入的类似于 JSON 的结构）可能使得这个数据类型在未来更容易【54】。</li>
 </ul>
-<h1 id="本章小结"><strong>本章小结</strong></h1>
+<h2 id="本章小结"><strong>本章小结</strong></h2>
 <p>本章研究了将数据结构转换为网络中的字节或磁盘上的字节的几种方法，这些编码的细节不仅影响其效率，更重要的是也影响了应用程序的体系结构和部署它们的选项。</p>
 <p>特别是，许多服务需要支持滚动升级，其中新版本的服务逐步部署到少数节点，而不是同时部署到所有节点。滚动升级允许在不停机的情况下发布新版本的服务（从而鼓励在罕见的大型版本上频繁发布小型版本），并使部署风险降低（允许在影响大量用户之前检测并回滚有故障的版本）。这些属性对于可演化性，以及对应用程序进行更改的容易性都是非常有利的。</p>
 <p>在滚动升级期间，或出于各种其他原因，我们必须假设不同的节点正在运行我们的应用程序代码的不同版本。因此，在系统周围流动的所有数据都是以提供向后兼容性（新代码可以读取旧数据）和向前兼容性（旧代码可以读取新数据）的方式进行编码是重要的。</p>
@@ -682,7 +682,7 @@
 <li>异步消息传递（使用消息代理或参与者），其中节点之间通过发送消息进行通信，消息由发送者编码并由接收者解码</li>
 </ul>
 <p>我们可以小心地得出这样的结论：前向兼容性和滚动升级在某种程度上是可以实现的。愿你的应用程序的演变迅速、敏捷部署。</p>
-<h1 id="参考">参考</h1>
+<h2 id="参考">参考</h2>
 <ul>
 <li><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch4">第四章：编码与演化 (vonng.com)</a></li>
 </ul>
@@ -759,13 +759,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">475k</span>
+    <span title="站点总字数">519k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">14:23</span>
+    <span title="站点阅读时长">15:43</span>
   </span>
 </div>
 <div class="busuanzi-count">
