@@ -8744,8 +8744,8 @@ h_{z_t}^{(m)}\leftarrow Attention(Q=h_{z_t}^{(m-1)},KV=[\tilde h^{(m-1)},h_{z_{\
         <category>预训练模型</category>
       </categories>
       <tags>
-        <tag>BERT</tag>
         <tag>迁移学习</tag>
+        <tag>BERT</tag>
         <tag>生物医学</tag>
       </tags>
   </entry>
@@ -9512,9 +9512,9 @@ e_{ij}=a(s_{i-1},h_j)\\
         <category>综述</category>
       </categories>
       <tags>
+        <tag>BERT</tag>
         <tag>BART</tag>
         <tag>预训练模型</tag>
-        <tag>BERT</tag>
         <tag>自然语言处理</tag>
         <tag>综述</tag>
         <tag>GPT</tag>
@@ -9837,8 +9837,8 @@ E_{x\sim p(x)}\int q(z|x)logp(x)dz&amp;=E_{x\sim p(x)}logp(x)\int q(z|x)dz\\
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
         <tag>RoBERTa</tag>
       </tags>
   </entry>
@@ -10113,8 +10113,8 @@ P_{l2r}(x_1,x_2,\dots,x_n)=\prod_{t=1}^nP(x_t|x_{&lt;t})
         <category>BERT</category>
       </categories>
       <tags>
-        <tag>预训练模型</tag>
         <tag>BERT</tag>
+        <tag>预训练模型</tag>
       </tags>
   </entry>
   <entry>
