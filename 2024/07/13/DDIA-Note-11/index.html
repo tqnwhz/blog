@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300italic,400,400italic,700,700italic%7CLXGW+WenKai:300,300italic,400,400italic,700,700italic%7CLXGW+WenKai+Mono:300,300italic,400,400italic,700,700italic%7CSource+Code+Pro:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" integrity="sha256-XOqroi11tY4EFQMR9ZYwZWKj5ZXiftSx36RRuC3anlA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.20.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/blog/js/config.js"></script>
+
+    <meta name="description" content="摘要 本章讨论了流处理，是介于在线系统和离线批处理间的系统，通常基于消息代理实现。流处理可以用于捕获数据变更（Change Data Capture，CDC），例如消费数据库的变更日志，达成近似实时地数据同步的效果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDIA 阅读笔记第 11 章：流处理">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本章讨论了流处理，是介于在线系统和离线批处理间的系统，通常基于消息代理实现。流处理可以用于捕获数据变更（Change Data Capture，CDC），例如消费数据库的变更日志，达成近似实时地数据同步的效果。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig01.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig02.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig03.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig04.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig05.png">
+<meta property="og:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig06.png">
+<meta property="article:published_time" content="2024-07-13T14:42:37.000Z">
+<meta property="article:modified_time" content="2024-07-15T15:14:37.917Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="DDIA">
+<meta property="article:tag" content="设计数据密集型应用">
+<meta property="article:tag" content="流处理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/ch11-fig01.png">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/","path":"2024/07/13/DDIA-Note-11/","title":"DDIA 阅读笔记第 11 章：流处理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DDIA 阅读笔记第 11 章：流处理 | 一隅</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%E6%B5%81%E7%9A%84%E4%BC%A0%E8%BE%93"><span class="nav-number">3.</span> <span class="nav-text">事件流的传输</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E7%B3%BB%E7%BB%9F"><span class="nav-number">3.1.</span> <span class="nav-text">消息系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E4%BA%A7%E8%80%85%E5%88%B0%E6%B6%88%E8%B4%B9%E8%80%85%E7%9A%84%E7%9B%B4%E6%8E%A5%E6%B6%88%E6%81%AF"><span class="nav-number">3.1.1.</span> <span class="nav-text">生产者到消费者的直接消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BB%A3%E7%90%86"><span class="nav-number">3.1.2.</span> <span class="nav-text">消息代理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94%E6%B6%88%E6%81%AF%E4%BB%A3%E7%90%86%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">3.1.3.</span> <span class="nav-text">对比消息代理和数据库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E6%B6%88%E8%B4%B9%E8%80%85"><span class="nav-number">3.1.4.</span> <span class="nav-text">多消费者</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AE%E8%AE%A4%E5%92%8C%E9%87%8D%E4%BC%A0"><span class="nav-number">3.1.5.</span> <span class="nav-text">确认和重传</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%8C%BA%E6%97%A5%E5%BF%97"><span class="nav-number">3.2.</span> <span class="nav-text">分区日志</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%97%A5%E5%BF%97%E4%BD%9C%E4%B8%BA%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8"><span class="nav-number">3.2.1.</span> <span class="nav-text">使用日志作为消息存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94%E6%97%A5%E5%BF%97%E5%92%8C%E4%BC%A0%E7%BB%9F%E6%B6%88%E6%81%AF"><span class="nav-number">3.2.2.</span> <span class="nav-text">对比日志和传统消息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E5%81%8F%E7%A7%BB%E9%87%8F"><span class="nav-number">3.2.3.</span> <span class="nav-text">消费者偏移量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98%E7%A9%BA%E9%97%B4%E7%94%A8%E9%87%8F"><span class="nav-number">3.2.4.</span> <span class="nav-text">硬盘空间用量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E8%90%BD%E5%90%8E%E7%94%9F%E4%BA%A7%E8%80%85%E6%97%B6"><span class="nav-number">3.2.5.</span> <span class="nav-text">消费者落后生产者时</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9E%E6%94%BE%E6%97%A7%E6%B6%88%E6%81%AF"><span class="nav-number">3.2.6.</span> <span class="nav-text">回放旧消息</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%92%8C%E6%B5%81"><span class="nav-number">4.</span> <span class="nav-text">数据库和流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%A8%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5"><span class="nav-number">4.1.</span> <span class="nav-text">跨系统数据同步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8F%98%E6%9B%B4%E6%8D%95%E8%8E%B7"><span class="nav-number">4.2.</span> <span class="nav-text">数据变更捕获</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cdc-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.2.1.</span> <span class="nav-text">CDC 的实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%BF%AB%E7%85%A7"><span class="nav-number">4.2.2.</span> <span class="nav-text">初始快照</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%8E%8B%E7%BC%A9"><span class="nav-number">4.2.3.</span> <span class="nav-text">日志压缩</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%98%E6%9B%B4%E6%B5%81%E7%9A%84-api-%E6%94%AF%E6%8C%81"><span class="nav-number">4.2.4.</span> <span class="nav-text">变更流的 API 支持</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%E6%BA%AF%E6%BA%90"><span class="nav-number">4.3.</span> <span class="nav-text">事件溯源</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E%E4%BA%8B%E4%BB%B6%E6%97%A5%E5%BF%97%E4%B8%AD%E7%AE%97%E5%87%BA%E5%BD%93%E5%89%8D%E7%8A%B6%E6%80%81"><span class="nav-number">4.3.1.</span> <span class="nav-text">从事件日志中算出当前状态</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E5%92%8C%E4%BA%8B%E4%BB%B6"><span class="nav-number">4.3.2.</span> <span class="nav-text">命令和事件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E6%B5%81%E5%92%8C%E4%B8%8D%E5%8F%AF%E5%8F%98%E6%80%A7"><span class="nav-number">4.4.</span> <span class="nav-text">状态、流和不可变性</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E5%8F%AF%E5%8F%98%E4%BA%8B%E4%BB%B6%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">4.4.1.</span> <span class="nav-text">不可变事件的优点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E8%A1%8D%E7%94%9F%E5%A4%9A%E8%A7%86%E5%9B%BE"><span class="nav-number">4.4.2.</span> <span class="nav-text">日志衍生多视图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6"><span class="nav-number">4.4.3.</span> <span class="nav-text">并发控制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E5%8F%AF%E5%8F%98%E6%80%A7%E7%9A%84%E4%B8%80%E4%BA%9B%E5%B1%80%E9%99%90"><span class="nav-number">4.4.4.</span> <span class="nav-text">不可变性的一些局限</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%84%E7%90%86%E6%B5%81"><span class="nav-number">5.</span> <span class="nav-text">处理流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E5%A4%84%E7%90%86%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">5.1.</span> <span class="nav-text">流处理使用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%8D%E6%9D%82%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86"><span class="nav-number">5.1.1.</span> <span class="nav-text">复杂事件处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E5%88%86%E6%9E%90"><span class="nav-number">5.1.2.</span> <span class="nav-text">流分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BB%B4%E6%8A%A4%E7%89%A9%E5%8C%96%E8%A7%86%E5%9B%BE"><span class="nav-number">5.1.3.</span> <span class="nav-text">维护物化视图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8%E6%B5%81%E4%B8%8A%E6%90%9C%E7%B4%A2"><span class="nav-number">5.1.4.</span> <span class="nav-text">在流上搜索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%BC%A0%E9%80%92%E5%92%8C-rpc"><span class="nav-number">5.1.5.</span> <span class="nav-text">消息传递和 RPC</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E6%97%B6%E9%97%B4%E7%9A%84%E6%8E%A8%E6%96%AD"><span class="nav-number">5.2.</span> <span class="nav-text">对时间的推断</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%E6%97%B6%E9%97%B4%E7%82%B9-vs-%E5%A4%84%E7%90%86%E6%97%B6%E9%97%B4%E7%82%B9"><span class="nav-number">5.2.1.</span> <span class="nav-text">事件时间点 vs 处理时间点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AE%E5%AE%9A%E4%BD%95%E6%97%B6%E5%87%86%E5%A4%87%E5%AE%8C%E6%88%90"><span class="nav-number">5.2.2.</span> <span class="nav-text">确定何时准备完成</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E8%B0%81%E7%9A%84%E6%97%B6%E9%92%9F"><span class="nav-number">5.2.3.</span> <span class="nav-text">用谁的时钟？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E7%AA%97%E5%8F%A3%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.2.4.</span> <span class="nav-text">时间窗口的类型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E6%B5%81-join"><span class="nav-number">5.3.</span> <span class="nav-text">多流 Join</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E6%B5%81%E8%BF%9E%E6%8E%A5%E7%AA%97%E5%8F%A3%E8%BF%9E%E6%8E%A5"><span class="nav-number">5.3.1.</span> <span class="nav-text">流流连接（窗口连接）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E8%A1%A8%E8%BF%9E%E6%8E%A5%E6%B5%81%E6%89%A9%E5%85%85"><span class="nav-number">5.3.2.</span> <span class="nav-text">流表连接（流扩充）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A1%A8%E8%A1%A8%E8%BF%9E%E6%8E%A5%E7%BB%B4%E6%8C%81%E7%89%A9%E5%8C%96%E8%A7%86%E5%9B%BE"><span class="nav-number">5.3.3.</span> <span class="nav-text">表表连接（维持物化视图）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#join-%E7%9A%84%E6%97%B6%E9%97%B4%E4%BE%9D%E8%B5%96"><span class="nav-number">5.3.4.</span> <span class="nav-text">join 的时间依赖</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E9%94%99"><span class="nav-number">5.4.</span> <span class="nav-text">容错</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BE%AE%E6%89%B9%E5%92%8C%E6%A3%80%E6%9F%A5%E7%82%B9"><span class="nav-number">5.4.1.</span> <span class="nav-text">微批和检查点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%8F%90%E4%BA%A4%E5%9B%9E%E9%A1%BE"><span class="nav-number">5.4.2.</span> <span class="nav-text">原子提交回顾</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B9%82%E7%AD%89%E6%80%A7"><span class="nav-number">5.4.3.</span> <span class="nav-text">幂等性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%85%E9%9A%9C%E5%90%8E%E7%8A%B6%E6%80%81%E9%87%8D%E5%BB%BA"><span class="nav-number">5.4.4.</span> <span class="nav-text">故障后状态重建</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">91</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="DDIA 阅读笔记第 11 章：流处理 | 一隅">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DDIA 阅读笔记第 11 章：流处理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-07-13 22:42:37" itemprop="dateCreated datePublished" datetime="2024-07-13T22:42:37+08:00">2024-07-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-07-15 23:14:37" itemprop="dateModified" datetime="2024-07-15T23:14:37+08:00">2024-07-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E9%98%85%E8%AF%BB/%E5%90%8E%E7%AB%AF/DDIA/" itemprop="url" rel="index"><span itemprop="name">DDIA</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>35k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1:04</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="摘要">摘要</h2>
+<p>本章讨论了流处理，是介于在线系统和离线批处理间的系统，通常基于消息代理实现。流处理可以用于<mark style="background: #BBFABBA6;">捕获数据变更</mark>（Change Data Capture，CDC），例如消费数据库的变更日志，达成近似实时地数据同步的效果。</p>
+<span id="more"></span>
+<h2 id="简介">简介</h2>
+<blockquote>
+<p>有效的复杂系统总是从简单的系统演化而来。 反之亦然：从零设计的复杂系统没一个能有效工作的。</p>
+<p>—— 约翰・加尔，Systemantics（1975）</p>
+</blockquote>
+<p><strong>批处理</strong>总是读取一些文件作为输入，产生一些新文件作为输出。</p>
+<ul>
+<li><mark style="background: #FFF3A3A6;">输出是一种衍生数据</mark>：即，如果有需要，可以通过再跑一遍批处理任务获取相同的结果集。</li>
+<li>这种思想简单却强大：像搜索引擎、推荐系统、分析系统等很多现代常见的数据系统都是基于这种思想构建的。</li>
+<li><mark style="background: #FF5582A6;">只能处理有界的输入数据</mark>：批处理的程序知道输入何时结束。例如，MapReduce 中的排序操作，就必须读入所有待排序的输入数据后才能开始排序并输出。</li>
+</ul>
+<p>但在现实中，<mark style="background: #FFF3A3A6;">很多数据都是无界的且随着时间持续到来的</mark>：我们的（各种服务的）用户昨天会产生数据、今天会产生数据，明天也将以同样的方式继续产生数据。除非你关门大吉，否则这些程序将会永无休止地工作，因此<mark style="background: #FFF3A3A6;">数据库永远也不会到达一个 “终态”（complete state）</mark>。因此，如果使用批处理的思想来处理这种持续来到的数据流，就会引出一个数据集切分的问题：例如，在一天结束时处理这一整天的数据、在每小时结束时处理这一小时的数据等等。</p>
+<p>但上述切分 + 批处理的方式有个问题：太慢了，用户可能等不及。比如按天处理是，则其处理结果只有当这一天结束后，再花些时间去批处理，才能最终看到结果。为了降低这个延迟，我们确实可以用更小的粒度进行处理 —— 比如，每秒进行一次处理。甚而，干脆抛弃时间分片的概念，<mark style="background: #BBFABBA6;">任意数据到来的时候就触发数据处理逻辑</mark>。这就是<strong>流式处理</strong>（steam processing）背后的基本思想。</p>
+<p>通常来说，一个 “<strong>流</strong>”（steam）指的是<mark style="background: #BBFABBA6;">随时间推移而增量产生的数据</mark>。这个概念其实很多地方都有：Unix 中标准输入输出中（stdin、stdout），编程语言中（迭代器），文件系统相关的 API 中（如 Java 的 &nbsp;<code>FileInputStream</code>），TCP 连接中，网络中传输的音视频等等。</p>
+<p>在本章中，我们会将<strong>事件流</strong>（event stream）当做一种数据管理机制：即将我们上一章讨论的批量数据<strong>无界化、增量化</strong>。</p>
+<ol type="1">
+<li>我们首先会讨论如何表示、存储和传输数据流。</li>
+<li>在 “数据库和数据流” 一节中，我们会探索数据流和数据库的管理。</li>
+<li>最后，在 “处理数据流” 一节中，我们将会讨论对这些不间断的数据流进行处理的方法和工具，以及基于其构建应用的一些方法。</li>
+</ol>
+<h2 id="事件流的传输"><strong>事件流的传输</strong></h2>
+<p>在批处理系统中，任务的输入和输出都是文件（可能是单机文件系统中的、也可能是分布式文件系统中的），那么在流式系统中，承载输入和输出的是什么呢？</p>
+<p>在批处理系统中，虽然输入是文件，但第一步也通常是解析成一系列的<strong>数据记录</strong>（records）。在流式处理的上下中，对应数据记录的实体通常被称为<strong>事件</strong>（event）。但他们本质上都是一个东西：<mark style="background: #BBFABBA6;">一段小的、自包含的（self-contained）、不可变的某个时间点发生的信息数据</mark>。流式系统中的一个事件通常会包含一个时间戳，来标志该事件在某个时钟系统（time-of-day clock）中发生的时间点。</p>
+<p>下面举几个事件的例子。事件可以是由用户活动产生的，如浏览网页、网上购物；也可以由机器产生，如周期性的温度传感器、CPU 利用率指标；在<strong>使用 Unix 工具进行批处理</strong>一节的例子中，我们提到的 web 服务器中的每一行日志，也是一个事件。</p>
+<p>我们在第四章中讨论过数据编码的事情。事件本质上也是数据，因此可以被编码为字符串、JSON 或者二进制形式。只有编码之后，事件才能被存储，如：</p>
+<ol type="1">
+<li>追加到文件末尾</li>
+<li>插入到关系表中</li>
+<li>写到文档数据库里</li>
+</ol>
+<p>也只有在编码之后，事件才能够在网络中进行传输，以发送到其他工作节点进行处理。</p>
+<p>在批处理系统中，一个文件通常是一次写多次读的。类似的，在流式处理系统中，一个事件在被生产者（producer，在不同系统中，也可以称为 publisher 或者 sender）生成之后，<mark style="background: #FFF3A3A6;">可能会被多个感兴趣的消费者</mark>（consumer，对应的，也可以称为 subscribers 和 recipients）<mark style="background: #FFF3A3A6;">处理</mark>。在文件系统中，<strong>文件名</strong>可以标识一组数据记录；在流式系统中，相关的事件通常会聚拢到<strong>主题</strong>（topic）下或者<strong>流</strong>（stream）中。换句话说，命名后的流类似于文件，但不同的是，流中的是无界数据。</p>
+<p>原则上，使用文件或者数据库也足够用以沟通生产者和消费者：</p>
+<ol type="1">
+<li>生产者将每个产生的事件写入<strong>数据存储</strong>（date store）中（文件系统或者数据库）</li>
+<li>消费者定期的去从数据系统中拉取，并上次拉取比对，看是否有新事件到来</li>
+</ol>
+<p>批处理系统在以天为粒度处理数据时，正是用的这种办法。</p>
+<p>但是，在放到低延迟的持续数据流的上下文中时，如果存储系统不是专门为此定制的，定时去拉取（polling）数据的代价会变得很高。且，在数据量一定的情况下，你拉取的频次越高，单次拉到新数据的概率就越低，则无效负载也会随之升高。因此，在流式系统中，当有新事件产生时，<mark style="background: #BBFABBA6;">按需通知消费者会比频发拉取更高效（即推比拉高效）</mark>。</p>
+<p>传统上，数据库对于这种通知机制支持的并不是很好：虽然关系型数据中的确有<strong>触发器</strong>（triggers），且可以对数据表中的一些事件（如，新插入一行）做出响应，但响应逻辑中能做的很有限（比如做一致性检查），且通常局限在数据库内部（而不能通知到客户端）。为此，一些专用的工具被开发出来以进行专门的事件通知。</p>
+<h3 id="消息系统"><strong>消息系统</strong></h3>
+<p>通知消费者有新事件产生的一个常见方法是<strong>消息系统</strong>（messaging system）：生产者将事件以消息的形式发送到消息系统，消息系统将其推送给消费者。</p>
+<p>实现消息系统最简单的方式，就是使用 Unix 管道或者 TCP 连接来沟通生产者和消费者。但大部分消息系统不会如此简单。比如，Unix 管道和 TCP 连接都是一对一的发送者和接受者，但<mark style="background: #FFF3A3A6;">成熟的消息系统通常要支持多对多的生产消费</mark> —— 即多个生产者可以将数据发送到一个<strong>主题</strong>（ topic ）下，多个消费者可以共通消费这个 topic。</p>
+<p>但在这种<strong>发布 / 订阅</strong>（publish/subscribe）模式之下，不同具体的系统实现方式千差万别。没有一种方案能满足所有需求。为了理解不同系统的实现，我们可以带着两个问题去考察各个系统：</p>
+<ol type="1">
+<li><mark style="background: #FFF3A3A6;">消息积压：如果生产者的生产速度快于消费者的消费速度会发生什么</mark>？通常来说，有三种选择：<strong>丢掉部分消息、缓存多余消息、背压阻止新消息</strong>（backpressure，也被称为 &nbsp;<strong>流量控制</strong>，即在消费者处理完之前，阻止生产者产生更多数据）。具体来说，Unix 管道和 TCP 都使用背压的方式：他们都有一个很小的缓冲区（Buffer），如果缓冲区被填满，则发送方阻塞直到接收方消费掉缓冲区中一些消息，以空出新的位置。
+<ol type="1">
+<li>如果使用队列缓冲消息，则需要了解当数据量增大到一定地步之后该怎么办？当内存装不下数据之后是宕机还是刷到硬盘上？如果刷到硬盘上，硬盘的访问将如何影响消息系统的性能？</li>
+</ol></li>
+<li><mark style="background: #FFF3A3A6;">持久化：当系统中一些节点短时间下线会发生什么，会有消息因此而丢失吗</mark>？
+<ol type="1">
+<li>和数据库一样，要想保证持久性，是需要付出一些代价的：如将数据写到硬盘中、将数据冗余到其他节点上等等。</li>
+<li>如果你能够接受偶尔丢一些数据，那在同样的硬件配置下，你或许能获得更高的吞吐和更低的延迟。</li>
+</ol></li>
+</ol>
+<p><strong><mark style="background: #BBFABBA6;">是否能够接受消息丢失取决于应用层</mark></strong>。例如，对于一些周期性上报的传感器读数来说，偶尔的一两个采点的丢失影响不大， 因为后面的数据会很快的报上来。然而需要注意，如果消息大面积的丢失，可能也很难立即看出来。另外，<mark style="background: #FFF3A3A6;">如果你的目标是对所有到来的事件进行计数，则每条信息都要可靠的传输</mark>，因为任何一条信息的丢失都会导致计数错误。</p>
+<p>我们在上一章中讨论过批处理的一个非常友好的性质 —— <strong>提供很好的容错保证</strong>。即，所有失败的子任务会自动的进行重试、所有失败任务的部分输出会被丢弃。这种做法会让系统看起来像没有发生过任何故障一样，从而可以让应用层大大简化编程模型（这些分布式故障如果系统不处理，就要应用层自己来处理）。在本章稍后的部分，我们会探讨如何在流式处理的上下文中提供类似的保证。</p>
+<h4 id="生产者到消费者的直接消息"><strong>生产者到消费者的直接消息</strong></h4>
+<p>很多消息系统并不借助中间系统节点，<mark style="background: #FFF3A3A6;">直接使用网络来沟通生产者和消费者双方</mark>：</p>
+<ul>
+<li><strong>UDP 多播</strong>。UDP 多播广泛用在金融系统的数据流中，如对时延要求很高的股票市场中的大盘动态。尽管 UDP 本身是不可靠的，但是可以在应用层增加可靠性算法（类似在应用层实现 TCP 的一些算法），对丢失的信息进行恢复（生产者需要记住所有已发送的消息，才可以按需进行重传）。</li>
+<li><strong>无 broker 的消息队列</strong>。像 ZeroMQ 和 nanomsg 等不使用消息 broker 的以库形式提供的消息队列，依赖 TCP 或者 IP 多播等方式实现了支持发布订阅的消息队列。</li>
+<li><strong>StatsD 和 Brubeck</strong>。这两个系统底层依赖 UDP 协议进行传递消息，以监控所有机器、并收集相关数据指标。（在 &nbsp;<strong>StatsD</strong> 协议中，只有事件都收到，counter 相关指标才会正确；使用 UDP 就意味者使用一种<strong>尽可能正确</strong>的保证）。</li>
+<li><strong>Webhooks</strong>。如果消费者在网络上暴露出了一个服务，则生产者可以通过 HTTP 或者 RPC 请求（参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch04?id=%e7%bb%8f%e7%94%b1%e6%9c%8d%e5%8a%a1%e7%9a%84%e6%95%b0%e6%8d%ae%e6%b5%81%ef%bc%9arest-%e5%92%8c-rpc"><strong>经由服务的数据流：REST 和 RPC</strong></a>）来将数据打到消费者中。这就是 webhooks 背后的思想：一个服务会向另一个服务进行注册，并在有事件产生时向该服务发送一个请求。</li>
+</ul>
+<p>这种直接消息系统在其目标场景中通常能够工作的很好，但需要应用层代码自己承担、处理消息丢失的可能性。此外，这些系统能够进行的容错很有限：虽然这些系统在检测到丢包后会进行重传，但它们<mark style="background: #FFF3A3A6;">通常会假设生产者和消费者都一直在线</mark>（这是一个很强的假设）。</p>
+<p>如果消费者由于某种原因下线了，它可能会错过一些消息。有些协议会允许生产者重发失败的消息，但如果生产者也挂了，这种方法也无济于事 —— 生产者会丢掉保存有需要进行重试的消息缓存。</p>
+<blockquote>
+<p>这本质上是因为，这些<mark style="background: #FFF3A3A6;">没有 broker 的消息系统多表现为库的形式</mark>，本身是没有状态的。如果没有状态，就没有办法应对消息传输过程中生产者、消费者宕机重启的故障。这也是引入 broker 的初衷，但因此消息系统也会变的更加重。</p>
+</blockquote>
+<h4 id="消息代理"><strong>消息代理</strong></h4>
+<p>一种广泛使用的替代方案就是使用<strong>消息代理</strong>（message broker，也称为消息队列）来发送消息。<mark style="background: #BBFABBA6;">消息代理本质上是一种专门为消息数据优化过的数据库</mark>。它通常以进程的形式跑在服务器上，<mark style="background: #BBFABBA6;">生产者和消费者作为客户端与之通信</mark>。生产者将消息写入消息代理，消费者从其中读取以进行消费。</p>
+<p>通过引入一个消息数据存储代理，消息系统可以更加容易的对客户端（包括生产者和消费者）的来来去去（连接、失联和宕机）进行<strong>容错</strong>。这样，<mark style="background: #FFF3A3A6;">数据的持久化职责被转移到了消息代理上</mark>。有些系统中的消息代理将数据保存在内存中，那么宕机重启就仍然有问题；但另一些系统中的消息代理就会把消息持久化到硬盘（通常可配置）中，则就可以容忍宕机问题。如果遇到慢的消费者，就可以使用无限队列的方式（而不是丢消息或者背压）对没来得及消费的数据进行缓存，当然通常来说，能够存多少数据通常也会以配置的方式交给用户去选择。</p>
+<p>使用消息代理的另外一个原因是<mark style="background: #FFF3A3A6;">消费者通常是异步消费的</mark>：即当发送一条消息后，生产者等待消息代理确认收到（缓存或者持久化）就会结束，而不会去等待这条消息最终被消费者所消费。而消息最终被消费者所消费，会发生在将来的某个时间点 —— 大多数很快，比如几秒内，但如果出现大量消息积压时，这个时间也可能会很久。</p>
+<h4 id="对比消息代理和数据库"><strong>对比消息代理和数据库</strong></h4>
+<p>有一些消息代理甚至能够参与两阶段提交（使用 XA 或者 JTA，参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch09?id=%e5%ae%9e%e8%b7%b5%e4%b8%ad%e7%9a%84%e5%88%86%e5%b8%83%e5%bc%8f%e4%ba%8b%e5%8a%a1"><strong>实践中的分布式事务</strong></a>）。这种功能让消息代理看起来非常像数据库，尽管在实践中他们有一些非常重要的区别：</p>
+<ul>
+<li><strong>删除过程</strong>：数据库会一直保存数据，直到其被<strong>显式地</strong>删除。然而，<mark style="background: #FF5582A6;">大部分的消息代理会在消息被消费后，隐式的对其自动删除</mark>。这种类型的消息代理并不适合对数据的长时间存储。</li>
+<li><strong>尺寸假设</strong>：由于消息代理会在消息被消费后将其删除，因此<mark style="background: #FFF3A3A6;">大部分消息代理都会假设其所存数据并不是很多</mark> —— 所有队列都很短。在这样的假设下，如果由于消费者过慢而造成消息在消息代理中堆积（当内存中存不下后可能需要放到硬盘中），则可能造成消息代理的性能降级，所有消息都需要更长时间才能被处理。</li>
+<li><strong>数据过滤</strong>：数据库通常支持二级索引其他一些对数据进行查找的方法，而消息代理也通常会支持对某个 topic 下符合某种条件的数据进行订阅。虽然机制不同，但在本质上，<mark style="background: #BBFABBA6;">两者都支持客户端读取其所关心数据的方法</mark>。</li>
+<li><strong>数据隔离</strong>：当对数据库进行查询时，其结果通常是基于某个时间点的快照；换句话说，如果另外一个客户端在其发起查询之后插入了一些数据，第一个客户端通常是看不到这些更新的（这要 “归功于” 数据库事务的隔离级别），除非其进行再次查询。与之相对，<mark style="background: #FFF3A3A6;">消息代理虽然不支持任意条件的查询，但当数据发生变化时（新的事件到来），系统会将其立即告知消费者</mark>。</li>
+</ul>
+<p>以上都是传统视角下的消息代理，这些语义被抽象成了像 JMS 和 AMQP 之类的协议，并且为 RabbitMQ、ActiveMQ、HornetQ、Qpid、TIBCO 企业消息服务、IBM MQ、Azure Service Bus 和 Google Cloud Pub/Sub 等系统实现。</p>
+<h4 id="多消费者"><strong>多消费者</strong></h4>
+<p>当多个消费者同时消费一个 topic 下的数据时，有两种主要的消费方式，</p>
+<ul>
+<li><strong>负载均衡</strong>（Load Balancing，互斥）
+<ul>
+<li><mark style="background: #FFF3A3A6;">每个消息被投递给其中一个消费者进行消费</mark>。即所有的消费者会共同处理一个 topic 下的所有消息。消息代理可能以任意策略将消息分发给不同消费者。当每条消息消费代价很高，用户想通过增加消费者的数量来并行消费某个 topic 时，这种方式很有用。（在 AMQP 中，可以通过多个客户端消费同一个队列来实现负载均衡；在 JMS 中，这种方式被称为共享订阅）</li>
+</ul></li>
+<li><strong>扇出</strong>（Fan-out，独立）
+<ul>
+<li><mark style="background: #FFF3A3A6;">每个消息都被发送到所有消费者</mark>。扇出的方式会让每个消费者独立的对同样的数据进行消费，而不会互相影响。这种方式有点类似于批处理中对于同一份数据进行多次处理。（JMS 中称为 topic subcription；AMQP 中称为 exchange bindings）</li>
+</ul></li>
+</ul>
+<p><img src="ch11-fig01.png"></p>
+<p>两种消费模式也可以组合起来：<mark style="background: #BBFABBA6;">如有两组用户都订阅了某个 topic，组间进行独立消费（fan-out）、组内进行互斥消费（load balancing）</mark>。</p>
+<h4 id="确认和重传"><strong>确认和重传</strong></h4>
+<p>消费者可能会在任意时刻宕机，因此可能会出现：消息代理将消息发送给了消费者，但是消费者却没有对其进行消费或者仅进行了部分消费，就宕机了。为了保证该消息不丢，<mark style="background: #BBFABBA6;">消息代理使用了一种确认机制（类似 TCP 中的 ack）</mark>：<strong>每个消费者必须显式地告诉消息代理它消费完了消息，这样消息代理才能安全的将消息从队列中删除</strong>。</p>
+<p>如果消息代理和消费者之间的链接关闭或者超时了，消息代理仍然没有收到确认，则会假设消息没有被处理，并且重新给另一个消费者发送消息。但此时有可能出现，在重发之前消息实际已经被处理过了，只是确认消息由于网络的原因丢失了。在这种情况下，<mark style="background: #FFF3A3A6;">消费者需要进行幂等消费</mark>。</p>
+<p>在负载均衡模式下，<mark style="background: #FF5582A6;">重传可能会造成消费者处理消息的乱序</mark>。在下图中，在没有任何故障时，消费者大体是按照消息的生产顺序来消费的。然而，某一时刻，消费者 2 号在处理消息 m3 时宕机了，此时消费者 1 号正在处理消息 m4。由于迟迟没有等到 m3 的消费确认，消息代理将其重新发送给了消费者 1 号，从而导致消费者 1 号以 m4，m3，m5 的顺序来处理的消息。即，发生了乱序处理。</p>
+<p><img src="ch11-fig02.png"></p>
+<p>即使消息代理试图以顺序的方式给消费者发送消息（JMS 和 AMQP 都有此类规定），但由于负载均衡和重传机制的组合，乱序消费难以避免。为了避免这个问题，你可以让每个消费者使用单独的队列（即，不用负载均衡功能，也可以理解，毕竟并行总是有代价的）。<mark style="background: #FFF3A3A6;">在每条消息都是互相独立时，乱序消费不是问题；但如果消息间有前后因果依赖，则消息的保序消费非常重要</mark>。</p>
+<h3 id="分区日志"><strong>分区日志</strong></h3>
+<p>通过网络发送数据包或者给一个服务发送网络请求都是透明的操作，不会留下任何永久痕迹。尽管，我们可以将其永久的记下来（通过抓包工具或者日志工具），但通常不会这么做。即使消息代理会暂时地将消息写到外存中，但在其被消费后也通常会删除，这一切是因为，我们认为<mark style="background: #FFF3A3A6;">消息是一种暂态数据</mark>。</p>
+<p>与之相对，数据库和文件系统是另外一种思想：一旦数据被写入数据库或者文件中，就会被认为是<strong>持久数据</strong>，直到其他人将其<strong>显式地</strong>删除。</p>
+<p>这两种不同的思路，对我们如何生成衍生数据有很大的影响。我们在第十章中讨论过，批处理的一个核心特点是，你可以针对同一个输入，做不同实验、跑多次处理，而不用担心输入会发生变化（因为输入是只读的）。但在 AMQP/JMS 协议下，事件或者说消息，并不具有此类特性。<mark style="background: #FFF3A3A6;">因为一旦消息被确认消费后，就会被删除。因此，你不能再将消费者重新跑一遍，并期望相同结果。</mark></p>
+<p><strong>时间回溯</strong>。在某个时刻 t，如果你往消息系统中<mark style="background: #FFF3A3A6;">新加入一个消费者，则该消费者只能消费时刻 t 以后新到来的消息</mark>；所有之前的消息都已经不在了，且不能恢复。与之相对，对于文件系统和数据库，当你新加入一个客户端时，它可以读取之前任意时刻写入的数据（只要该数据没有被显式删除）。</p>
+<p>于是一个想法就出现了 —— 我们能不能取两者之长，造一个系统，兼有数据库的<strong>持久存储</strong>特性和消息系统的<strong>低时延通知</strong>特性？这就是<strong>基于日志的消息代理</strong>（log-based message brokers）的基本思想。</p>
+<h4 id="使用日志作为消息存储"><strong>使用日志作为消息存储</strong></h4>
+<p><strong>日志是一种基于硬盘的、只允许追加的记录序列</strong>。我们在第三章讨论基于日志结构的存储引擎时，讨论过写前日志（WAL），在第五章的讨论冗余时，也提过。</p>
+<p>这种结构也能够用于实现消息代理：</p>
+<ol type="1">
+<li>生产：生产者将消息追加到日志的末尾</li>
+<li>消费：消费者顺序读取日志序列，读到末尾时阻塞等待</li>
+</ol>
+<p>Unix 工具 &nbsp;<code>tail -f</code>&nbsp; 就是使用的类似的思想，以监视是否有新数据追加到文件末尾。</p>
+<p>为了对 IO 平滑扩容以突破单机硬盘限制，日志可以被<strong>切片</strong>（Partition）。进而，将不同的日志切片摊到不同的机器上去，从而让不同机器上的日志分片能够独立的应对读写负载。这样，<mark style="background: #FFF3A3A6;">一个逻辑上的 topic，在物理上可以表现为分散在多机上的，存有同样类型消息的多个日志分片的集合</mark>。如下图所示：</p>
+<p><img src="ch11-fig03.png"></p>
+<p>在每个日志分片内部，<mark style="background: #BBFABBA6;">消息代理会给每条消息安排一个全局递增的序列号</mark>（或称为偏移量，offset），由于每个分片都是只允许追加的，因此在分片内，其消息是按序号局部有序的。但在不同分片间，消息的顺序是没有办法保证的。</p>
+<p>Apache Kafka，Amazon Kinesis Streams 和 Twitter 的 DistributedLog 背后都是类似的原理。谷歌云的上的 Pub/Sub 在架构上更像 JMS 风格的 API，而不是日志的抽象。即使这些消息代理会将所有消息落盘，但由于<strong>多机、顺序写</strong>等特点，总体仍然能够达到每秒数百万条消息的吞吐，且能够通过多机冗余进行容错。</p>
+<h4 id="对比日志和传统消息"><strong>对比日志和传统消息</strong></h4>
+<p><mark style="background: #BBFABBA6;">日志和传统消息的一个很大不同是，不会在消费者消费完后立即删除</mark>。因此基于分区日志的消息系统可以很容易的支持并行消费（ fan-out）。由于有分区的存在，支持负载均衡（ load-balance） 也很方便，可以将每个分区直接给某个消费者进行消费。</p>
+<p>每个客户端会消费分配给他的所有分区的消息。通常来说，<mark style="background: #FFF3A3A6;">在一个分区内部，消费者会对所有消息进行单线程、顺序地消费</mark>。这种基于分区粒度的负载均衡有一些缺点：</p>
+<ol type="1">
+<li><strong>并发限制</strong>：由于一个分区最多安排给一个消费者，因此互斥消费一个 topic 的消费者数量不能多于分区数。</li>
+<li><strong>单条阻塞</strong>：如果某个消息处理过慢，则会阻塞其所在分区后续所有消息的消费。</li>
+</ol>
+<p>因此，总结来说：</p>
+<ol type="1">
+<li>如果每条消息的处理代价很高，你不关心消费的顺序，但想在消息粒度进行并行的处理以加快整体处理速度，则 &nbsp;<strong>JMS/AMQP 风格的消息代理</strong>更合适。</li>
+<li>如果你想要高吞吐，每条消息能够很快处理，且消息间顺序很重要，则<strong>基于日志的消息代理</strong>工作得更好。</li>
+</ol>
+<h4 id="消费者偏移量"><strong>消费者偏移量</strong></h4>
+<p>在分区内顺序消费使得<mark style="background: #FFF3A3A6;">追踪消费者的消费进度</mark>非常容易：只需要记住一个偏移量即可，<mark style="background: #BBFABBA6;">所有小于该偏移量的消息都被消费了，所有大于该偏移量的消息尚未被消费</mark>。因此，消息代理无需在消息粒度上追踪其是否被确认，只需要定期持久化<strong>消费偏移量</strong>即可。这种方法减少了元信息开销，但同时也降低了 batch 化（将一批消息一块发送出去，乱序确认）和<strong>流水线化</strong>（不等确认就给 Consumer 发送下一条）以提高系统吞吐的可能性。</p>
+<p>这种偏移量的记录方式，很像单主模型数据库中的<strong>序列号</strong>（log sequence number）。在多副本数据库中，使用序列号能让从副本在宕机重启后，从固定位置重新消费，以不错过任何写。同样的原则也适用于此，本质上，<strong><mark style="background: #FFF3A3A6;">消息代理就类似主节点，而消费者就类似从节点</mark></strong>。</p>
+<p>如果一个消费者节点挂掉之后，会从消费者组中另挑选消费者来分担其原负责分区，并且从上次记录的偏移量处继续消费。<mark style="background: #FF5582A6;">如果之前的消费者处理了某些消息，但还没来得及更新消费偏移量。则这些消息会被其他节点重复消费</mark>，本章稍后我们会讨论解决这个问题的一些方法。</p>
+<h4 id="硬盘空间用量"><strong>硬盘空间用量</strong></h4>
+<p>如果你无休止的在硬盘上追加日志，最终硬盘空间会被耗尽。为了回收硬盘空间，日志通常会被切分成多段（segments），旧的日志段会被定期删掉。</p>
+<p>这意味着，如果一个消费者过于慢，以至于日志段都要被删掉了还没消费完。这种情况下，消费者可能会丢失一些消息。通常来说，我们会<mark style="background: #BBFABBA6;">将日志组织成固定尺寸的消息序列，称为环形缓冲区</mark>（circular buffer 或者 ring buffer）。当然，我们的缓冲区是基于磁盘的，因此尺寸可以做到非常大。</p>
+<p>让我们来粗估一下。截至成书时（2017），一块用于存储的大磁盘通常为 6T 大小，并提供 150 M/s 的吞吐。如果我们的日志追加能够打满 IO 带宽，则大概需要 11 个小时能将硬盘全部写满。这意味着，硬盘可以存 11 小时的消息，之后旧的数据就会被新数据覆写。即使我们用多机、多盘，但是这个单盘的指标不会变。但实际上，我们通常不可能时刻都能<strong>打满磁盘带宽</strong>，因此<mark style="background: #BBFABBA6;">一块盘通常能够保存更长时间的消息，数天甚至数周</mark>。</p>
+<p>但在基于日志的消息代理中，<mark style="background: #FFF3A3A6;">日志保存的长短，并不会影响消息的吞吐</mark>。因为所有的消息都是要落盘的。但对于之前讨论的无代理的消息系统则不然，因为在那些系统中，会优先把消息缓存在内存中，只有内存装不下了才会往外存写。因此，缓存的数据一多，吞吐就会降下来。</p>
+<h4 id="消费者落后生产者时"><strong>消费者落后生产者时</strong></h4>
+<p>在消息系统小节一开始，我们讨论过如果消费者不能跟上生产者速率后的几种选择：丢消息、缓存或者使用背压。在基于日志的消息系统中，我们无疑采用了缓存的方式，使用固定但巨大的缓存（受限于磁盘空间）。</p>
+<p>如果某个消费者掉队太远，以至于消费进度调出本机所存日志范围，则该消费者就不能再消费这些已经被丢弃的消息 —— 因为消息代理已经把他们删掉了。一种解决办法是，你可以<mark style="background: #BBFABBA6;">监控每个消费者的进度，如果某个消费者落后太多，就及时进行报警</mark>，让运维人员介入来看下为啥这个消费者这么慢，能不能修复或者干脆重新分配。通常来说，硬盘能够容纳足够长时间的消息，因此运维人员通常有充足的时间来介入。</p>
+<p>即使一个消费者掉队太远，也只会影响他自己；而<mark style="background: #FFF3A3A6;">不会干扰其他消费者</mark>。这对运维同学来说是重大利好：你可以任意的针对线上日志进行消费、测试、调试，而不用担心影响线上服务。当一个消费者主动下线或者意外宕机时，它不会对线上系统造成任何影响 —— 除了留下一个专属于它的消费者偏移量外。</p>
+<p>这种设定与传统的消息代理形成鲜明对比。在那些不基于日志的消息代理中，你需要小心的回收每个已下线的消费者的相应队列缓存，否则即使他们下线了，他们所占的资源（每个消费者都会维护不少元信息）也会慢慢耗尽消息代理的内存。</p>
+<h4 id="回放旧消息"><strong>回放旧消息</strong></h4>
+<p>我们注意到，在之前的 AMQP 和 JMS 风格消息代理中，对消息的处理和确认是一个<strong>破坏性</strong>的操作 —— 会导致消息被删除。另一方面，在基于日志的消息代理中，消费消息更像读取一个文件：<mark style="background: #BBFABBA6;">消费是一个只读操作，并不会对日志本身造成任何改变</mark>。</p>
+<p>除了产生输出外，<mark style="background: #FFF3A3A6;">消费者进行消费的唯一副作用就是 —— 更新消费偏移量</mark>。但偏移量是受消费者本身控制的（不像 AMQP 的消息删除操作并不是受消费者直接控制），举个例子，如果想重新消费昨天的数据，你可以启动一个消费者，从昨天的偏移量开始消费，并将消费输出放到不同的地方，以重放昨天的消息处理。你可以修改调试代码，将这个过程重复任意多次。</p>
+<p>从这个方面看，基于日志的消息系统很像上一章讨论的批处理 —— 衍生数据和输入数据通过可重复的变换过程连接，但总体上来说是<strong>解耦的</strong>。这种特性可以让我们很容易的对相关消息数据做实验，并且很方便地从错误和 bug 中恢复过来，从而让这种类型日志系统很容易被整合到企业中其他的数据流里。</p>
+<h2 id="数据库和流"><strong>数据库和流</strong></h2>
+<p>我们已经对比了消息代理和数据库的诸多方面。在传统上，他们被认为是两个完全不同类别的系统，但在之前小节的分析我们看到，基于日志的消息系统中成功地从数据库中借鉴了许多经验。其实，我们也可以有另外一条路，从消息系统中借鉴一些思想，应用到数据库中。</p>
+<p>我们在之前提到过，事件（event）是对某个时间点发生的事情记录。事件可以是一个用户行为（如，一次搜索），可以是传感器数值，但其实也可以是<strong>写入数据库</strong>（write to a database）。<mark style="background: #BBFABBA6;">写入数据库这个事情本身也可以被当做一个事件被捕获、存储和处理</mark>。我们通过这个连接可以发现，硬盘上的日志只是数据库和流数据之间最基本的牵连，其更深层次的关联远不止于此。</p>
+<p>事实上，<mark style="background: #FFF3A3A6;">复制日志就是数据库主节点在处理事务时产生的一系列写入事件</mark>。从节点将这些写入事件按顺序应用到本地数据库副本上，就会得到一样的数据库副本。复制日志中的这些事件<strong>完整描述</strong>了数据库中的所有<strong>数据变更</strong>。</p>
+<p>我们在<strong>全序广播</strong>也提到过状态机的复制（state machine replication）原则：<mark style="background: #FFF3A3A6;">如果将所有数据库的更改都表达为事件，且每个数据库副本都按照同样的顺序处理这些事件，则所有的数据库副本最终会具有相同的状态。</mark>（当然这里的前提是，所有事件都是<strong>确定性</strong>的操作。）这里状态机的复制正是事件流的一种典型例子。</p>
+<p>在本节中，我们首先看下异构数据系统中的一些问题，然后探索下如何从消息系统中借鉴一些思想来解决数据库中的这些问题。</p>
+<h3 id="跨系统数据同步"><strong>跨系统数据同步</strong></h3>
+<p>从贯穿全书的思想可以看出，没有任何单一系统能够满足所有的数据存储、查询和处理需求。在实际中，<mark style="background: #BBFABBA6;">大部分的问题场景都是由不同的技术组合来解决的</mark>：如，使用 OLTP 数据库来服务用户请求，使用缓存来加速常见查询，使用全文索引来处理用户搜索，使用数据仓库来进行数据分析。所有这些系统都保有一份为其服务场景优化的<strong>专用形式</strong>的数据副本。</p>
+<p>当<strong>同一份数据</strong>以不同形式出现在多个数据系统中时，就需要某种手段来保持其同步：如数据库中数据条目更新后，也需要同时在缓存、搜索引擎和数据库仓库中进行同步更新。对于数据仓库来说，我们通常将该过程称之为：<strong>ETL</strong>。ETL 通常会拿到数据库中的所有数据、进行变换然后一次性载入数仓中。可以看出 ETL 通常是一个批处理的过程。类似的，在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch10?id=%e6%89%b9%e5%a4%84%e7%90%86%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%9a%84%e8%be%93%e5%87%ba"><strong>批处理工作流的输出</strong></a>一节中我们提到过，如何用批处理来构建搜索引擎、推荐系统和其他衍生数据系统的过程。</p>
+<p>如果你觉得定期全量同步数据太慢了，另一种替代方法是 “<strong>双写</strong>”（dual writes）：当有数据变动时，应用层代码会显示的更新所有系统，如写入数据的同时更新搜索引擎、让缓存失效等等。双写本质上是<strong>推</strong>的方式，“推” 的方式的一大特点就是<mark style="background: #FFF3A3A6;">及时性好，但容错性差</mark>。</p>
+<p>然而，<mark style="background: #FF5582A6;">双写的方式有一些严重的问题，其中之一就是竞态条件</mark>（race condition），如下图所示。在这个例子中，两个客户端想并发的更新数据条目 X：client 1 想将 X 设为 A，与此同时 client 2 想将其设为 B。两个客户端都会先写数据库、再写搜索引擎。但在通信时两者的请求不幸地交错到一块了：数据库先接到 client 1 请求将 X 设为 A，继而接到 client 2 请求将 X 设为 B，则最终数据库中 X 的值是 B。但对于搜索引擎来说，却是先看到了 client 2 的请求，再看到 client 1 的请求，则搜索引擎中 X 最终的值为 A。<mark style="background: #FF5582A6;">在这种并发且交错的情况下，即使没有发生任何出错，但这两个系统却出现了永久的数据不一致</mark>。</p>
+<p><img src="ch11-fig04.png"></p>
+<p>除非你使用了某些并发检测机制（参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05?id=%e5%b9%b6%e5%8f%91%e5%86%99%e5%85%a5%e6%a3%80%e6%b5%8b"><strong>并发写入检测</strong></a>），否则你可能根本注意不到并发写的发生 —— 一个值就这样悄悄的被其他值覆盖了。</p>
+<p>双写的另一个重要问题是：<mark style="background: #FF5582A6;">一个系统中的写入成功了而往另外一个系统中的写入却失败了</mark>。当然，这本质上是一个容错问题而非并发写问题，但仍然会导致两个数据系统处于不一致的状态。想要保证两个系统的写入 “要么都成功、要么都失败” 是一个原子提交问题（参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch09?id=%e5%8e%9f%e5%ad%90%e6%8f%90%e4%ba%a4%e5%92%8c%e4%b8%a4%e9%98%b6%e6%ae%b5%e6%8f%90%e4%ba%a4"><strong>原子提交和两阶段提交</strong></a>），解决这个问题的代价十分高昂（两阶段提交代价很大）。</p>
+<p>在使用单主模型的数据库中，主节点会决定写入的顺序，从节点会跟随主节点，最终数据库中所有节点的状态机都会收敛到相同的状态。但在上图中，<mark style="background: #FFF3A3A6;">并没有一个跨系统的、全局的主节点</mark>：数据库和搜索引擎都会<strong>独立地</strong>接受写入（主节点本质上就是一个对外的数据接收点，而如果有多个写入接收点，本质上是多主），而互不跟随，因此很容易发生冲突（参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05?id=%e5%a4%9a%e4%b8%bb%e6%a8%a1%e5%9e%8b"><strong>多主模型</strong></a>）。</p>
+<p>如果我们对于多个系统真正的只有一个主节点，让其他系统跟随这个主节点，这种情况才会被解决。比如，在上面的例子中，让数据库充当主节点，让存储引擎成为数据库的从节点跟，跟随其写入。但在实践中，这可能吗？</p>
+<h3 id="数据变更捕获"><strong>数据变更捕获</strong></h3>
+<p>其中一个主要问题是，<mark style="background: #FFF3A3A6;">充当主从复制机制中关键角色的复制日志（replication log），是数据库的一个内部实现模块，而非一个公共服务</mark>。客户端对数据库查询时，只能通过基于数据模型、使用相应的查询语言，走查询引擎。而不能直接读取复制日志，并从其中解析数据。</p>
+<p>数十年来，大多数的数据库实现都没有选择将相关日志作为服务开放出来，并用文档详细阐明日志记录数据库变更的机制。出于此，我们很难将数据库的日志模块拿出来，作为复制中介，同步给外部系统（如存储引擎、缓存和数仓）。</p>
+<p>近些年（本书出版于 2017），<strong>CDC</strong>（<strong>change data capture，数据变更捕获</strong>）受到越来越多的关注。<mark style="background: #BBFABBA6;">CDC 是一种捕获数据库中数据变更，并且以某种方式将其导出，供其他外部系统使用的技术</mark>。如果我们将 CDC 进行流式的导出，事情将会变得更有意思。</p>
+<p>例如，你可以跟踪数据库中的变更，将其持续导出，应用到搜索引擎中。如果对于所有的修改日志按同样的顺序进行应用，则你可以期望搜索引擎中的数据是和数据库中的一致的。从消息系统的角度看，<mark style="background: #FFF3A3A6;">搜索引擎和其他的衍生数据系统都是数据变更流的消费者</mark>。如下图所示：</p>
+<p><img src="ch11-fig05.png"></p>
+<h4 id="cdc-的实现"><strong>CDC 的实现</strong></h4>
+<p>如本书第三部分的标题，我们可以将 CDC 数据的消费者当做是<strong>衍生数据系统</strong>（derived data system）：存储引擎和数据仓库中的数据本质上是数据库中同一份数据的不同视图。<mark style="background: #BBFABBA6;">CDC 是一种将所有数据中变更精确同步给所有数据视图的手段</mark>。</p>
+<p>本质上，CDC 实现了我们上面提到的，让数据库成为领导者（事件捕获的源头），让其他系统成为跟随者。由于对消息的保序性，基于日志的消息代理非常适合将 CDC 的事件流导给其他数据系统。</p>
+<p>数据库的触发器可以用来实现 CDC（参考<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05?id=%e5%9f%ba%e4%ba%8e%e8%a7%a6%e5%8f%91%e5%99%a8%e7%9a%84%e5%a4%8d%e5%88%b6"><strong>基于触发器的复制</strong></a>）。具体来说，可以注册一些触发器来监听所有数据库表的变更，然后将变更统一写入 changelog 表。然而，<mark style="background: #FF5582A6;">这种方式容错性很低且有性能问题</mark>。需要用比较健壮的方式来解析复制日志，尽管可能会遇到一些问题，比如处理模式变更。</p>
+<p>在工业界中，LinkedIn 的 Databus，Facebook 的 Wormhole 和 Yahoo 的 Sherpa 就大规模的使用了这种思想。Bottled Water 依托解析 PostgreSQL 的 WAL 实现了 CDC，Maxwell 和 Debezium 通过解析 MySQL 的 binlog 实现的 CDC，Mongoriver 通过读取 MongoDB 的 oplog 实现 CDC，GoldenGate 也针对 Oracle 实现了类似的功能。</p>
+<p>和日志代理一样，<mark style="background: #FFF3A3A6;">CDC 通常是异步的</mark>：数据库在导出事件流时通常不会等待消费者应用完成后才提交。这种设计的优点是给 CDC 增加慢的消费者并不会对源系统造成影响；但缺点就是不同系统间可能会存在日志应用滞后。</p>
+<h4 id="初始快照"><strong>初始快照</strong></h4>
+<p>如果你有数据库从开始以来的所有日志，你可以通过重放来恢复数据库的整个状态机。但，在大多数情况下，保存所有变更日志非常占用硬盘空间，恢复的时候重放也非常耗时。为此，我们必须<mark style="background: #BBFABBA6;">定期对老日志进行截断</mark>。</p>
+<p>构建全文索引需要一份数据库中的全量数据，只使用包含最近变动的日志是不够的，因为丢失之前的一些数据。因此，如果你没有全量的日志记录，也可以从某个一致性的快照开始，应用该快照对应时间点之后的所有日志，也可以得到一份全量状态。我们在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05?id=%e6%96%b0%e5%a2%9e%e5%89%af%e6%9c%ac"><strong>新增副本</strong></a>一节中讨论过这个问题。</p>
+<p>要达到上述目的，就需要<mark style="background: #BBFABBA6;">数据库的快照能够和变更日志中的某个下标对应上</mark>，这样我们在从快照中恢复之后，才能知道从哪个变更日志开始回放。有些 CDC 工具直接集成了快照功能，但有的就需要自己手动做快照。</p>
+<h4 id="日志压缩"><strong>日志压缩</strong></h4>
+<p>如果我们只能保存很少的历史日志，则在每次添加新的衍生系统时，都需要加载快照。而，日志压缩提供了另一种可能性。</p>
+<p>我们在哈希索引一节中，在日志结构的存储引擎的上下文中讨论过日志压缩。其原理很简单：存储引擎定期扫描所有日志记录，找到具有相同 key 的数据，丢掉老的日志，只留下最新的。这个压缩、合并的过程会在后台一直默默执行。</p>
+<p>在日志结构的存储引擎中，会使用一个特殊空标记（一个墓碑标记，tombstone）来标识某个 key 被删掉了，最终在后台压缩的时候，会据此真正的去删除所有日志中的相关 key。从另一方面来说，只要一个 key 没有被覆写或者删除，他就会一直留在日志中。这样，只要压缩的足够快和彻底，一个压缩后的日志所占的硬盘空间就只与数据库中的内容（即 key 的数量）有关，而和数据库接收了多少个写入事件无关。如果某个 key 被频繁的覆写，该 key 之前的所有修改日志最终都会被压回收掉，只剩下最后该 key 相关的一个日志。</p>
+<p>同样的原理也可以应用到基于日志的消息代理和 CDC 中。如果我们<mark style="background: #BBFABBA6;">给每条变更日志关联一个主键（primary key）</mark>，且可以保证同一个 key 后面的变更会覆盖之前变更，则我们可以基于此对日志进行压缩，<mark style="background: #FFF3A3A6;">对于每个 primary key 只保存最后一个变更日志即可</mark>。</p>
+<p>在这种设定下，当我们想基于现有变更日志构建一个新的衍生系统时（如搜索引擎），就可以启动一个新的消费者从下标 0 开始对压缩后的日志进行顺序消费，直到扫描完所有的日志。<mark style="background: #BBFABBA6;">使用压缩日志，你就不再需要额外的快照了</mark>，因为这种日志包含你恢复数据库状态所需要的所有 key。</p>
+<p>Apache Kafka 就支持这种日志压缩的方式。我们在本章稍后会看到，这种特性让消息代理不仅可用于暂时的消息传递，而且可用于持久化的存储。</p>
+<h4 id="变更流的-api-支持"><strong>变更流的 API 支持</strong></h4>
+<p>越来越多的数据库支持<mark style="background: #BBFABBA6;">将数据变更流（change streams）接口作为一等公民，而不需要用户去修改底层代码以 hack 的方式支持 CDC</mark>。例如，RethinkDB 允许通过查询订阅结果集变更；Firebase 和 CouchDB 基于变更流进行数据同步，且将其开放给了应用层使用；Meteor 使用 MongoDB 的操作日志（oplog）来订阅数据变更，并更新用户接口。</p>
+<p>VoltDB 允许将表以流的形式导出（可参考其<a target="_blank" rel="noopener" href="https://docs.voltdb.com/UsingVoltDB/ChapExport.php"><strong>文档</strong></a>）。数据库将关系数据模型中的输出流表示为一个数据库表，可以通过事务向其中插入元组，但不能对该表进行查询。于是，该导出流中就会包含所有已提交事务的元组，外部消费者（以 connector 的形式）就可以异步的消费这些日志，并将更新应用到衍生数据系统中。</p>
+<p>Kafka Connect 是一个可以将数据库 CDC 导出的流接入 Kafka 的工具。一旦事件流导入进了 Kafka，下游衍生系统就可以按需进行消费，生成倒排索引、打入流式系统中等等。</p>
+<h3 id="事件溯源"><strong>事件溯源</strong></h3>
+<p>我们在这里讨论的<strong>事件溯源</strong>（event souring）和<strong>领域驱动设计</strong>（domain-driven design，DDD）社区中的相关概念有些相似之处。由于这个概念会牵扯出流式系统中的一些重要的思想，因此我们这里简单讨论一下。</p>
+<p>和 CDC 类似，<mark style="background: #BBFABBA6;">事件溯源也是将应用状态的所有变更存储为事件变更日志</mark>。最大的区别是事件溯源使用了不同层次的抽象：</p>
+<ul>
+<li><mark style="background: #FFF3A3A6;">在 CDC 中，应用层以可变的方式（mutable way）使用数据库，可以随意更新或者删除记录</mark>。变更日志是从数据库底层导出的（如解析复制日志），该变更日志可以保证日志导出的顺序和其真正的写入顺序一致，从而避免了图 11-4 中交错的情况出现。从另一个角度说，<mark style="background: #FFF3A3A6;">往数据库写数据的应用无需感知和关心 CDC 的存在</mark>。</li>
+<li>在事件溯源中，应用层的逻辑是显式地基于写入事件日志的不可变之上的。在这种情况下，事件存储是仅追加的，任何更新和删除都是禁止的。也就是说，<mark style="background: #BBFABBA6;">这里的事件是在应用层而非更底层来追踪状态变更的</mark>。</li>
+</ul>
+<p>事件溯源是一种非常强大的<strong>数据建模技术</strong>：从应用层的视角来说，与其记录用户行为对数据库造成的影响，不如直接<mark style="background: #BBFABBA6;">记录用户的行为本身更有意义</mark>。事件溯源使得追踪应用随着时间的演化过程非常容易，通过全景式展现每个步骤发生了什么、追踪应用层 bug 等等，让调试变得非常容易。</p>
+<p>例如，我们如果保存事件 “学生取消了选课”，就很清晰直观；但如果保存事件 “从选课表中删除一行，往学生反馈表中增加一个取消原因”，其实就隐含了对系统底层的很多假设。如果之后应用层产生一个新的事件，例如 “该课空缺将会被分配给等待列表中的下一个人”，则使用事件溯源的方式可以轻松将所有事件串联起来。但如果使用<strong>记录副作用</strong>的方式，一旦底层系统发生变更，就没办法将跨系统事件关联上了。</p>
+<p>数据溯源模型很像<strong>编年表数据模型</strong>（chronicle data model）；与此同时，<strong>事件日志</strong>（event log）又很像星型模型（参见 <a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch03?id=ap-%e5%bb%ba%e6%a8%a1%ef%bc%9a%e6%98%9f%e7%8a%b6%e5%9e%8b%e5%92%8c%e9%9b%aa%e8%8a%b1%e5%9e%8b"><strong>AP 建模：星状型和雪花型</strong></a>）中的事实表（fact table）。</p>
+<p>人们也开发了一些专用的数据库用来进行事件溯源，如 &nbsp;<a target="_blank" rel="noopener" href="https://www.eventstore.com/"><strong>Event Store</strong></a>。但一般来说，<mark style="background: #FFF3A3A6;">事件溯源并不和任何特定的底层存储绑定</mark>。也可以基于传统的数据库和消息代理来构建事件溯源的应用。</p>
+<h4 id="从事件日志中算出当前状态"><strong>从事件日志中算出当前状态</strong></h4>
+<p>当然，单纯事件日志本身用处并不是很大，因为通常来说用户需要的是当前最新的状态，而非变更记录。举个例子，在购物网站中，用户会想看到当前购物车中有什么商品，而非购物车中商品被添加的历史。</p>
+<p>因此，<mark style="background: #BBFABBA6;">使用事件溯源的应用需要将事件（写入系统的数据更改）日志转化成方便进行展示某时刻的状态（因此数据才能被读取）</mark>。可以使用任何逻辑完成这个转换，但要确保这个过程是<strong>确定性的</strong>，这样能够保证即使多次重放（replaying），仍然会得到相同的状态。</p>
+<p>和 CDC 一样，重放事件日志能够让你还原系统当前的状态。但在 CDC 和事件溯源对日志压缩的处理稍有不同：</p>
+<ul>
+<li>CDC 中对于日志的更新事件通常包含该记录的全量状态而非增量状态。因此，<mark style="background: #BBFABBA6;">某个主键对应的最新值通常可以由该主键的最新事件来确定</mark>，那么此时的日志压缩就很简单，直接丢弃相同键的所有较旧事件即可。</li>
+<li>但在事件溯源中，通常是站在应用层，即用户视角来记录的用户行为。在这种情况下，后续事件不会覆盖、而是依赖之前的事件，因此你需要全量的事件历史才能还原最终状态。因此，<mark style="background: #FF5582A6;">不能对事件溯源的日志进行压缩</mark>。</li>
+</ul>
+<p><mark style="background: #BBFABBA6;">使用事件溯源的应用通常会有一些快照机制，可以将从事件日志中物化而来的状态保存下来</mark>。则在重启时，就不需要每次都重复的处理全量日志了。不过这只是加快宕机恢复性能的一种手段，<mark style="background: #FFF3A3A6;">事件溯源系统本身的最终目的仍是要保存下所有原始的事件</mark>、在有需要时可以从任意时刻起来重新处理日志。之后我们还会在 “不可变的局限性” 中对此进行详细讨论。</p>
+<h4 id="命令和事件"><strong>命令和事件</strong></h4>
+<p>在事件溯源的哲学里，会仔细甄别<strong>事件</strong>（event）和<strong>命令</strong>（commands）。当用户的请求刚到达系统时，表现形式是一个命令：因为还有可能失败，比如不符合系统的一致性检查。应用层必须先要校验该命令可以执行，<mark style="background: #FFF3A3A6;">如果校验成功，命令被接受，就会转变为系统内部的一个持久化的、不可变的事件</mark>。</p>
+<p>举个例子，如果用户想用某个用户名进行注册、在剧院或者航班上预定一个座位时，相关系统首先检查用户名有没有被使用、相关座位还在不在。如果检查通过，系统就会产生一个事件，表明该用户名被该用户 ID 注册了，或者特定的座位给该用户预留了。</p>
+<p>在事件产生的那一刻，就变成了一个<strong>事实</strong>。即使客户之后打算更改或者取消预定，也只是会新产生一个新的事件，而不会修改或者删除之前的事件。</p>
+<p>所有事件流的消费者不能够拒绝执行任何一个事件：因为在消费者看到该事件的那一刻，该事件就已经是日志中不可变的一部分了，并且<strong>可能</strong>已经被其他消费者看到和消费了。因此，<mark style="background: #FFF3A3A6;">所有命令的校验都需要在其变成事件前同步的完成，如可以使用可串行事务自动地对命令校验并将其转化为事件</mark>。</p>
+<p>另一种方法是，用户也可以将预定座位的请求拆成两个事件：</p>
+<ol type="1">
+<li><strong>意向预定</strong>：系统会进行完整性校验。</li>
+<li><strong>确认预定</strong>：收到系统校验通过回复后，再发一个请求进行确认。</li>
+</ol>
+<p>我们在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch09?id=%e4%bd%bf%e7%94%a8%e5%85%a8%e5%ba%8f%e5%b9%bf%e6%92%ad%e5%ae%9e%e7%8e%b0%e7%ba%bf%e6%80%a7%e4%b8%80%e8%87%b4%e6%80%a7%e5%ad%98%e5%82%a8"><strong>使用全序广播实现线性一致性存储</strong></a>一节中讨论过。这种拆分使得校验环节可以异步的发生。</p>
+<h3 id="状态流和不可变性"><strong>状态、流和不可变性</strong></h3>
+<p>在第十章中，对于批处理来说，我们看到过输入文件不可变的优点：你可以做各种批处理的实验而不用担心影响到原输入文件。这种<mark style="background: #BBFABBA6;">不可变的原则也可以给事件溯源和 CDC 带来诸多益处。</mark></p>
+<p>通常我们可以认为，数据库保存了应用的当前状态 —— 这本质上是对读优化的，可以很方便、高效的处理读请求。但<strong>状态的本质在于变化</strong>，因此数据库允许对数据进行插入、更新和删除。那这种情况下，怎么保持不变性呢？</p>
+<ul>
+<li><p><mark style="background: #FFF3A3A6;">无论状态如何变化，都是事件序列按时间顺序依次施加的结果</mark>。</p>
+<ul>
+<li>例如，当前可用的座位列表是所有座位减去所有接收到的预定的结果、当前的账户余额是是该账户所有收支事件累加的结果、web 服务器的响应分布图是所有 web 请求的单个相应事件累加的结果。</li>
+</ul></li>
+<li><p><mark style="background: #BBFABBA6;">不管系统的状态如何变化，总是和一个固定的事件序列对应</mark>。</p>
+<ul>
+<li>无论事件内容是什么，是发生还是取消，但不变的是 —— 他们都作为事件发生了。其背后的关键点在于，<strong>可变化的状态和不可变的事件序列并不冲突：他们是一体两面的</strong>。所有变化的日志，<strong>变更日志</strong>（change log），正是状态随时间的演进过程。</li>
+</ul></li>
+</ul>
+<p>如果从数学角度来思考这个问题，可以认为：</p>
+<ol type="1">
+<li>应用当前的状态是所有历史事件流<strong>对时间的积分</strong>。</li>
+<li>变化流是应用状态函数<strong>对时间的微分</strong>。</li>
+</ol>
+<p>当然，这个类比会有一些局限，比如应用状态的二阶导并没有什么物理意义。但总的来说，这种类比能给我们一种看待状态和事件间关系的角度。</p>
+<p><img src="ch11-fig06.png"></p>
+<p>如果我们将变更日志持久化，本质上来说，就获得了状态回溯、重现的能力。如果我们将事件日志认为是系统的 “本源记录”，而其他可变的状态都是从其衍生而来，则系统中的数据流理解起来会容易得多。正如 Pat Helland 所说：</p>
+<blockquote>
+<p>事务日志记录下了所有施加于数据库之上的更改。高速的追加操作是记录这种变化的唯一途径。从这个角度来看，<mark style="background: #BBFABBA6;">数据库的内容其实是日志中最新状态的一个缓存</mark>，而日志才是真相本源。数据库只是日志序列子集的一个缓存，且该缓存中每个值恰好是日志中每个记录的最新值。</p>
+</blockquote>
+<p>日志压缩的过程，是沟通事件日志和数据库状态的桥梁：日志压缩会保存日志中出现过的所有记录的最新状态，而抛弃被覆盖的值。</p>
+<h4 id="不可变事件的优点"><strong>不可变事件的优点</strong></h4>
+<p>在数据库中，<strong>不可变性是一个相当古老的思想</strong>。例如，几个世纪以来，会计就一直在用 “不可变性” 来记账。当一个交易发生时，就会记到分类账簿里。这类账簿，本质上就是一串针对钱、商品和服务事件的日志。而各种账户，如利润、损失和资产负债表都是由上述分类账簿累加算出来的。</p>
+<p>如果某条记录出错了，会计通常不会直接更改账簿中的出错记录，而是通过追加一条修正该出错的交易。例如一条对客户多收了的钱的退款交易。由于审计需要等原因，这条错误交易会在账簿中一直存在下去。如果从错误账簿的计算出的报表已经对外发布，则需要在下一个记账周期中进行修正。这种不可变性在会计行业中很常见。</p>
+<p>这种保存所有不可变记录的<strong>可审计性</strong>不仅在财务系统中很重要，在其他没有那么严监管的系统中也有很多好处。我们在 &nbsp;<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch10?id=%e6%89%b9%e5%a4%84%e7%90%86%e8%be%93%e5%87%ba%e7%9a%84%e5%93%b2%e5%ad%a6"><strong>批处理输出的哲学</strong></a>中讨论过，如果我们允许对原始数据进行破坏性的<strong>原地修改</strong>，则<mark style="background: #FF5582A6;">在部署的有 bug 的代码后造成了数据破坏时，恢复原始数据会非常困难</mark>。如果我们使用 append-only 的不可变事件日志形式来进行修改，<strong>定位故障位置</strong>和<strong>进行错误恢复</strong>都会变得简单很多。</p>
+<p>另一方面，<mark style="background: #FFF3A3A6;">不可变的事件记录下了比当前状态更多的信息</mark>。例如，在购物网站的场景中，一个用户将某个商品加到了购物车中，后来又删掉了。尽管从最终下单的状态来说，第二个事件抵消了第一个事件的影响。但从分析用户先增后删意图的角度来讲，这两个事件并不能抵消。可能是因为他们想之后再买，也可能是因为他们找到了替代品。这个先增后删的信息回被事件日志中记录下来，但是数据库中的订单表中却没有相关条目。</p>
+<h4 id="日志衍生多视图"><strong>日志衍生多视图</strong></h4>
+<p>除此之外，将可变的状态从不可变的事件日志中解耦开来，你还可以<mark style="background: #BBFABBA6;">针对同一份事件日志来中构造面向不同读取场景的多种状态表示</mark>。这种方法本质上是给一个事件流增加多个<strong>不同类型的消费者</strong>：举个例子，从 Kafka 中注入数据到分析型数据库 Druid 中、使用 Kafka 保存提交日志的分布式 KV 存储 Pistachio 和使用 Kafka Connect 将数据导出到各种数据库和索引中。其他一些存储和索引系统中，也使用类似的方式来从分布式日志中读取输入。</p>
+<p>将从事件日志到数据库的翻译过程显式化，会使得我们的应用更容易随着时间进行演进。某个时刻，你想引入一个新的功能，但其要求使用某种新的<strong>组织方式对数据进行组织</strong>。此时，如果有一个日志来记录所有事件，你就可以使用事件日志来构建一个额外的、面向新功能优化的读取视图，而<mark style="background: #FFF3A3A6;">不用修改原来的数据系统</mark>。让新老系统并存，会比在老系统上进行复杂的数据模式迁移简单。并且，一旦将来确定老数据系统没用了，就可以简单地将其关停然后回收其所占资源。</p>
+<p>如果你无需担心数据将来会被怎么读取和使用，那么存储数据是一件非常简单的事情；很多复杂的模式设计、索引构建和存储布局都是为了支持<strong>特定的查询和访问模式</strong>。基于此，<mark style="background: #BBFABBA6;">如果将数据的写入形式和读取形式分开</mark>（很多云原生数据库就是这么干的，如谷歌 &nbsp;<a target="_blank" rel="noopener" href="https://cloud.google.com/alloydb"><strong>AlloyDB</strong></a>，微软 &nbsp;<a target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/uploads/prod/2019/05/socrates.pdf"><strong>Socrates</strong></a>），由此，我们<mark style="background: #BBFABBA6;">可以获得极大的设计弹性</mark>。这种思想有时也被称为：<strong>命令查询职责分离</strong>（<em>command query responsibility segregation，CQRS</em>）。</p>
+<p>传统数据库的和模式设计有一种误解：<strong>数据必须以面向查询的方式进行写入</strong>（注：其实也不算误解，因为这样可以避免翻译计算耗费和额外存储耗费）。如果你能自由的将数据从对写优化的格式转化为对读优化的数据状态，那么针对数据<strong>规范化</strong>（去除冗余）和<strong>去规范化</strong>（保持冗余）的考量讨论就变的无关紧要了：因为可以使用翻译过程来保证冗余数据的一致性性，且同时按所需方式按利于读的方式来去规范化（也就是冗余）地组织数据。</p>
+<p>在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch01?id=%e8%a1%a1%e9%87%8f%e8%b4%9f%e8%bd%bd"><strong>衡量负载</strong></a>一节中我们讨论过 Twitter 的首页时间线（也称 “瀑布流”），本质上是对所有关注人最近发的推文的缓存（类似于一个信箱）。这也是一个针对状态进行读优化的例子：首页时间线是非常去规范化的，因为你的推文会被所有关注你的用户首页冗余了一份。然而，<strong>扇出服务</strong>（fan-out service，类似我们上面提到的 “翻译服务”）会保持这些首页 “瀑布流” 信息和新发推文、新的关注关系保持同步和一致，从而让这些冗余的一致性可控。</p>
+<h4 id="并发控制"><strong>并发控制</strong></h4>
+<p>事件溯源（event souring）和 CDC 的最大缺点在于，事件日志的产生和消费过程通常是<strong>异步的</strong>，因此可能会出现：用户已经写入了某个事件到日志中，但从某个日志衍生视图中去读取，却发现该写入还并没有反映到该<strong>读取视图</strong>中。我们在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05?id=%e8%af%bb%e4%bd%a0%e6%89%80%e5%86%99"><strong>读你所写</strong></a>一节中讨论过该问题和一些可用的解决方案。</p>
+<p>一种解决方案是将事件追加到日志时同步执行读取视图的更新。而将这些写入操作合并为一个原子单元需要 &nbsp;<strong>事务</strong>，所以要么将事件日志和读取视图保存在同一个存储系统中，要么就需要跨不同系统进行分布式事务。或者，你也可以使用在 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch9?id=%e4%bd%bf%e7%94%a8%e5%85%a8%e5%ba%8f%e5%b9%bf%e6%92%ad%e5%ae%9e%e7%8e%b0%e7%ba%bf%e6%80%a7%e4%b8%80%e8%87%b4%e7%9a%84%e5%ad%98%e5%82%a8">使用全序广播实现线性一致的存储</a>” 中讨论的方法。</p>
+<p>另一方面，从事件日志导出当前状态也简化了并发控制的某些部分。许多对于多对象事务的需求（请参阅 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch7?id=%e5%8d%95%e5%af%b9%e8%b1%a1%e5%92%8c%e5%a4%9a%e5%af%b9%e8%b1%a1%e6%93%8d%e4%bd%9c">单对象和多对象操作</a>”）源于单个用户操作需要在多个不同的位置更改数据。<mark style="background: #FFF3A3A6;">通过事件溯源，你可以设计一个自包含的事件以表示一个用户操作</mark>。然后用户操作就只需要在一个地方进行单次写入操作 —— 即将事件附加到日志中，这个还是很容易使原子化的。</p>
+<p>如果事件日志与应用状态以相同的方式分区（例如，处理分区 3 中的客户事件只需要更新分区 3 中的应用状态），那么直接使用单线程日志消费者就不需要写入并发控制了。它从设计上一次只处理一个事件（请参阅 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch7?id=%e7%9c%9f%e7%9a%84%e4%b8%b2%e8%a1%8c%e6%89%a7%e8%a1%8c">真的串行执行</a>”）。<mark style="background: #BBFABBA6;">日志通过在分区中定义事件的序列顺序，消除了并发性的不确定性</mark>。如果一个事件触及多个状态分区，那么需要做更多的工作，我们将在 &nbsp;<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch12">第十二章</a>&nbsp; 讨论。</p>
+<h4 id="不可变性的一些局限"><strong>不可变性的一些局限</strong></h4>
+<p>很多不使用事件溯源的系统很多时候也<strong>间接地依赖</strong>了不可变性：很多数据库在内部实现时，使用了不可变的数据结构和<strong>多版本的数据管理</strong>来支持基于时间点的<strong>快照</strong>（参见<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch07?id=%e7%b4%a2%e5%bc%95%e5%92%8c%e5%bf%ab%e7%85%a7%e9%9a%94%e7%a6%bb"><strong>索引和快照隔离</strong></a>）。像 Git、Mercurial 和 Fossil 之类的版本控制系统，也是依赖不可变数据来保存每个文件的历史版本。</p>
+<p>我们若想将所有<strong>不可变的</strong>事件变更历史保存下来，在多大程度上是可行的？其回答取决于我们数据集的 “<strong>流失量</strong>”（the amount of churn）。在某些负载中，读取居多而增删极少，因此很容易做成不可变的。但在另外一些负载中，但涉及更改的数据子集在整体数据集中占比很大；在这种情况下，不可变的更改历史将会非常大，数据的碎片化会变成一个大问题，<strong>数据压缩</strong>和<strong>垃圾回收</strong>的性能便成为维持系统稳定性和鲁棒性中至关重要的因素了。</p>
+<p>除了性能问题之外，在有些场景下，由于运维管理原因，需要对数据进行永久删除，然而由于不可变的事件日志的存在，<strong><mark style="background: #FF5582A6;">真正的物理删除变的很麻烦</mark></strong>。比如，由于隐私条例，如果用户删除账户后，其所有相关信息应该都被删除；数据保护相关条例要求删除所有错误信息；或者防止敏感信息的意外泄露。</p>
+<p>在这些情况下，通过追加一个新的删除事件来标记这些数据被删除了是不够的。你需要真正的重写之前的事件日志历史，来删除所有相关数据，以达到这些数据<strong>看起来像从来就没有出现在系统中</strong>的效果。例如，Datomic 称该功能为<strong>切除</strong>（excision），Fossil 版本控制系统也有类似的概念称为<strong>避免</strong>（shunning，这个翻译不太好。）。</p>
+<p>反直觉的是，真正地、彻底地删除数据其实非常困难，因为一份数据的各种副本可能以多种形式存在很多地方：例如，存储引擎、文件系统和 SSD 在底层实现时，通常会不会覆盖数据，而会在新的地方写入；备份数据通常做成整体不可变的，以防止误删或者误改。因此，对于数据系统来说，<mark style="background: #FFF3A3A6;">删除一条数据，本质上可以理解为：“让查询这份数据更难”，而非 “无从查到这份数据”</mark>。然而，有些时候你不得不尽力保证后者，我们之后会在立法和自律小节中讨论更多。</p>
+<h2 id="处理流"><strong>处理流</strong></h2>
+<p>本章到此为止，我们已经讲了流从哪里来（用户活动事件、传感器和写入数据库），我们也讨论了流如何进行传输（通过直接消息，通过消息代理，使用事件日志）。</p>
+<p>余下部分要讨论的是，当你已经有一个流了要如何做 —— 即，如何处理流。广义上来说，我们有三种选择：</p>
+<ol type="1">
+<li><strong><mark style="background: #BBFABBA6;">写入存储系统</mark></strong>。我们可以将事件流中的数据写入到数据库、缓存、搜索引擎等类似的存储系统中，以供其他客户端来查询。如图 11-5 所示，这种方法可以和那好的保持数据库和其他数据系统的一致。尤其当流写入作为数据库的唯一数据来源时，更是如此。</li>
+<li><strong>给人看</strong>。可以将流中的事件以某种方式（比如邮件或者通知）推送给用户，或者将流中的事件渲染到实时可视化的数据面板上。在这些情形中，<mark style="background: #FFF3A3A6;">人是数据流最终的消费者</mark>。</li>
+<li><strong>产生新的流形成拓扑</strong>。可以<mark style="background: #FFF3A3A6;">在一个系统内处理多个流。并生成多个新的流作为输出</mark>。此时，一个数据流在最终产生输出前，可能会经过由多个处理阶段组成的流水线。</li>
+</ol>
+<p>在本章余下的部分，我们将主要聚焦第三种选择：<strong>处理数据流以产生新的数据流，即衍生数据流</strong>。其中进行处理的一个个代码片段，我们称为 “<strong>算子</strong>”（operator）或 “<strong>任务</strong>”（job）。这个概念很类似于我们在上一章讨论过的 Unix 进程和 MapReduce 任务；对数据流的处理方式也很类似：每个流处理算子会<mark style="background: #BBFABBA6;">以只读的方式消费一个输入流</mark>，然后会将输出以追加的形式写到不同的位置。</p>
+<p>对输入流进行<strong>分区</strong>和<strong>并行</strong>的模式也和第十章中对 MapReduce 和数据流引擎中讨论过的很像，这里不再赘述。像过滤和变换等基本的 Mapping 算子的原理也类似。</p>
+<p>流和批处理的一个最大的不同在于 ——<strong><mark style="background: #FFF3A3A6;"> 流数据永远不会结束</mark></strong>。这个不同会对流式系统造成很多影响，如章节开始提到的，在无界数据集上进行排序是没有意义的，因此 sort-merge join 算法不能用于流的 join。<mark style="background: #FFF3A3A6;">容错机制也需要相应的调整</mark>：对于一个只运行几分钟的批处理子任务，简单的从头开始跑即可，但对于一个可能持续运行数年的流式任务，宕机后从头开始跑恐怕是不可接受的。</p>
+<h3 id="流处理使用场景"><strong>流处理使用场景</strong></h3>
+<p>流处理广泛应用于<mark style="background: #BBFABBA6;">监控场景</mark> ** 中。在这些场景中，如果某些特定事件发生了，要第一时间进行通知。例如：</p>
+<ul>
+<li><strong>反欺诈系统</strong>需要判定信用卡的使用模式是否发生了变化，以在疑似被盗时及时冻结消费。</li>
+<li><strong>交易系统</strong>需要根据金融市场上的价格变化，及时执行对应交易策略。</li>
+<li><strong>制造系统</strong>需要监控工程中的设备状态，如果有故障及时识别。</li>
+<li><strong>军队智能系统</strong>需要识别潜在的入侵者，如果识别到攻击信号要及时报警。</li>
+</ul>
+<p>这些类型的应用系统都需要复杂的模式匹配和关联分析。当然，更多的流式处理的使用场景也在随着的时间推移不断涌现。本节，我们将会简单的比对其中的一些应用特点。</p>
+<h4 id="复杂事件处理"><strong>复杂事件处理</strong></h4>
+<p><strong>复杂事件处理</strong>（complex event processing，CEP）是 1990 年代兴起的一种分析事件流的方法，主要用于需要<strong>搜索特定事件模式</strong>（event pattern）的应用。和在字符串中使用正则表达式（regular expression）进行模式匹配一样，CEP 能让你在事件流中定制一些规则以对特定的模式进行匹配。</p>
+<p>CEP 系统常使用偏高层的描述式查询语言，如 SQL 或者图形用户接口，来描述需要检测的模式。这些带有模式的查询提交到处理引擎后，<mark style="background: #FFF3A3A6;">会在引擎内部维护一个状态机，以在不断到来的事件流中寻找相关模式</mark>。当匹配到相关模式时，处理引擎就会产生一个包含检测到的事件内容的<strong>复杂事件</strong>（complex event，也是该方法得名的原因）。</p>
+<p>相对传统数据库，这种系统里查询和数据的关系是反过来的。通常来说，<strong><mark style="background: #FFF3A3A6;">传统数据库会将数据进行持久化而将查询语句当做临时的</mark></strong>：当查询到来时，数据库会根据查询语句查找所存数据中匹配子集，当查询处理完成后，就会忘掉该查询（不会将其存储，当然存储过程可能会这么干）。而 <mark style="background: #BBFABBA6;">CEP 引擎将这两个角色翻转了过来：查询被长时间存储</mark>，而数据流中的事件会持续的流过该查询，以检查是否有匹配的事件模式。</p>
+<p>实现了 CEP 的业界系统有 Esper、IBMS 的 infoSphere Stream，Apama，TIBCO StreamBase 和 SQLStream。像 Samza 等分布式数据流处理系统也支持使用 SQL 在流上进行声明式的查询。</p>
+<h4 id="流分析"><strong>流分析</strong></h4>
+<p>流处理的另一个主要应用方向是<strong>基于流的分析</strong>。流分析和 CEP 系统的在概念上的界限有些模糊，但总体来说，流分析不太关心在事件序列上寻找特定模式，而更趋向于<strong><mark style="background: #BBFABBA6;">分析一些统计指标</mark></strong>，如：</p>
+<ul>
+<li>测算某类事件的速率（单位时间间隔内的出现频次）</li>
+<li>估算某段时间窗口内某值的滑动平均</li>
+<li>比对当前和前段时间的统计数据（比如，通过和上周同段时间对比，看指标的高低变化，以检测趋势或者进行报警）</li>
+</ul>
+<p>这些统计信息通常是针对固定时间间隔计算出来的 —— 例如，你可能想知道过去五分钟内的平均 QPS 和九十九分位的响应延迟。取几分钟内的平均延迟能够平滑掉突发的尖刺，但仍能够展示出流量变化的趋势。我们用于聚合数据进行计算的时间段通常称为 “<strong>窗口</strong>”（window，或称时间窗口），在 “时间推理” 一节我们将会讨论时间窗口的更多细节。</p>
+<p>数据流分析中有时会使用一些概率算法，如使用布隆过滤器（我们<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch03?id=%e6%80%a7%e8%83%bd%e4%bc%98%e5%8c%96"><strong>性能优化</strong></a>小节中遇到过）来管理成员资格、使用 HyperLogLog 来进行基数估计，还有各种各样的分位数值估计算法。概率算法会产生近似结果，但通常比确定算法需要更少的资源（如 CPU，内存）。使用近似算法容易让人们认为流式处理系统总是损失精度和不精确的，但这种看法并不正确：<strong><mark style="background: #FFF3A3A6;">流式处理本身并非近似的，概率算法只是一种在分析场景中的处理优化</mark></strong>。</p>
+<p>很多开源的分布式流处理库框架都是针对分析场景设计的：例如，Apache Storm、Spark Streaming、Flink、Concord、Samza 和 Kafka Streams。有一些云上的托管服务也是，如 Google Cloud Dataflow 和 Azure Stream Analytics。</p>
+<h4 id="维护物化视图"><strong>维护物化视图</strong></h4>
+<p>我们在 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch11?id=%e6%95%b0%e6%8d%ae%e5%ba%93%e4%b8%8e%e6%b5%81">数据库与流</a>” 中看到，数据库的变更流可以用于<mark style="background: #BBFABBA6;">维护衍生数据系统（如缓存、搜索索引和数据仓库），并使其与源数据库保持最新</mark>。我们可以将这些示例视作维护 &nbsp;<strong>物化视图（materialized view）</strong>&nbsp; 的一种具体场景（请参阅 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch3?id=%e8%81%9a%e5%90%88%ef%bc%9a%e6%95%b0%e6%8d%ae%e7%ab%8b%e6%96%b9%e4%bd%93%e5%92%8c%e7%89%a9%e5%8c%96%e8%a7%86%e5%9b%be">聚合：数据立方体和物化视图</a>”）：在某个数据集上衍生出一个替代视图以便高效查询，并在底层数据变更时更新视图【50】。</p>
+<p>同样，在事件溯源中，应用程序的状态是通过应用事件日志来维护的；这里的应用程序状态也是一种物化视图。与流分析场景不同的是，仅考虑某个时间窗口内的事件通常是不够的：构建物化视图可能需要任意时间段内的 &nbsp;<strong>所有</strong>&nbsp; 事件，除了那些可能由日志压缩丢弃的过时事件（请参阅 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch11?id=%e6%97%a5%e5%bf%97%e5%8e%8b%e7%bc%a9">日志压缩</a> “）。实际上，你需要一个可以一直延伸到时间开端的窗口。</p>
+<p>原则上讲，任何流处理组件都可以用于维护物化视图，尽管 “永远运行” 与一些面向分析的框架假设的 “主要在有限时间段窗口上运行” 背道而驰， Samza 和 Kafka Streams 支持这种用法，建立在 Kafka 对日志压缩的支持上【75】。</p>
+<h4 id="在流上搜索"><strong>在流上搜索</strong></h4>
+<p>除了允许搜索由多个事件构成模式的 CEP 外，有时也存在基于复杂标准（例如全文搜索查询）来搜索单个事件的需求。</p>
+<p>例如，媒体监测服务可以订阅新闻文章 Feed 与来自媒体的播客，搜索任何关于公司、产品或感兴趣的话题的新闻。这是通过预先构建一个搜索查询来完成的，然后不断地将新闻项的流与该查询进行匹配。在一些网站上也有类似的功能：例如，当市场上出现符合其搜索条件的新房产时，房地产网站的用户可以要求网站通知他们。Elasticsearch 的这种过滤器功能，是实现这种流搜索的一种选择【76】。</p>
+<p>传统的搜索引擎首先索引文件，然后在索引上跑查询。相比之下，搜索一个数据流则反了过来：查询被存储下来，文档从查询中流过，就像在 CEP 中一样。最简单的情况就是，你可以为每个文档测试每个查询。但是如果你有大量查询，这可能会变慢。为了优化这个过程，可以像对文档一样，为查询建立索引。因而收窄可能匹配的查询集合。</p>
+<h4 id="消息传递和-rpc"><strong>消息传递和 RPC</strong></h4>
+<p>在 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch4?id=%e6%b6%88%e6%81%af%e4%bc%a0%e9%80%92%e4%b8%ad%e7%9a%84%e6%95%b0%e6%8d%ae%e6%b5%81">消息传递中的数据流</a>” 中我们讨论过，消息传递系统可以作为 RPC 的替代方案，即作为一种服务间通信的机制，比如在 Actor 模型中所使用的那样。尽管这些系统也是基于消息和事件，但我们通常不会将其视作流处理组件：</p>
+<ul>
+<li>Actor 框架主要是管理模块通信的并发和分布式执行的一种机制，而流处理主要是一种数据管理技术。</li>
+<li>Actor 之间的交流往往是短暂的、一对一的；而事件日志则是持久的、多订阅者的。</li>
+<li>Actor 可以以任意方式进行通信（包括循环的请求 / 响应模式），但流处理通常配置在无环流水线中，其中每个流都是一个特定作业的输出，由良好定义的输入流中派生而来。</li>
+</ul>
+<p>也就是说，RPC 类系统与流处理之间有一些交叉领域。例如，Apache Storm 有一个称为 &nbsp;<strong>分布式 RPC</strong>&nbsp; 的功能，它允许将用户查询分散到一系列也处理事件流的节点上；然后这些查询与来自输入流的事件交织，而结果可以被汇总并发回给用户【78】（另请参阅 “<a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch12?id=%e5%a4%9a%e5%88%86%e5%8c%ba%e6%95%b0%e6%8d%ae%e5%a4%84%e7%90%86">多分区数据处理</a>”）。</p>
+<p>也可以使用 Actor 框架来处理流。但是，很多这样的框架在崩溃时不能保证消息的传递，除非你实现了额外的重试逻辑，否则这种处理<mark style="background: #FF5582A6;">不是容错的</mark>。</p>
+<h3 id="对时间的推断"><strong>对时间的推断</strong></h3>
+<p>在流处理中，尤其是在频繁使用时间窗口 “过去五分钟的平均值” 分析场景，经常要处理时间相关逻辑。看起来 “过去五分钟” 含义十分明确，但不幸的是，这个概念并非如看上去这么简单。</p>
+<p>在批处理任务中，进行处理的任务通常会在短时间内处理大量的历史数据。如果需要对事件按照时间格子进行细分，则批处理任务需要查看每个事件关联的时间戳。<mark style="background: #FFF3A3A6;">在批处理任务运行时，读取所在机器的系统时钟没有任何意义</mark>，因为一个事件被处理的时间点和其产生的时间点没有任何关系。</p>
+<p>在某个场景中，一个批处理任务可能会在短短几分钟内读取一年跨度的历史数据；多数情况下，我们感兴趣的是事件所产生的这一年的时间线，而非事件几分钟被处理的时间。此外，使用事件本身的时间戳可以让处理过程保持<strong>确定性</strong>：针对相同的输入多次运行同样任务，会产生相同的输出。</p>
+<p>但在与之相对，很多流式处理框架会使用处理机器的<mark style="background: #FFF3A3A6;">本地事件戳</mark>（即事件的处理时间）来计算<strong>时间窗口</strong>。这种方法的优点就是<strong>简单</strong>，当事件产生时间和处理事件间隔很小以至可忽略不计时，这种方法很实用。然而，一旦<mark style="background: #FF5582A6;">处理延迟</mark>很大，即上述间隔大到一定地步时，这种近似方法就不再奏效。</p>
+<h4 id="事件时间点-vs-处理时间点"><strong>事件时间点 vs 处理时间点</strong></h4>
+<p>有很多原因会造成<strong>处理延迟</strong>：处理排队、网络故障、机器性能低下造成的消息在消息代理和处理节点的堆积、流消费者的重启或者 bug 修复后对之前事件进行重新处理。</p>
+<p>更有甚者，<strong>消息延迟可能会导致无法预知的消息乱序</strong>。举个例子，一个用户首先发送了一个 web 请求（被 web 服务器 A 处理），然后发送了第二个请求（被服务器 B 处理）。A 和 B 各自将其包装成事件消息进行发送，但是 B 的事件比 A 的事件先到达消息代理。则此时，流处理任务会首先看到 B 事件，然后才看到 A 事件，但他们的实际产生顺序其实是相反的。</p>
+<p>下面用一个类比或许能帮助理解，对于《星球大战》电影系列：第四部是 1977 年上映，第五部 1980 年上映，第六部 1983 年，然后一，二，三部（作为前传）分别于 1999，2002 和 2005 年上映，最后，第七部于 2015 年上映。如果你按照上映的顺序来看这个系列，就会发现你 “处理” 电影的顺序和电影叙事顺序是不一致的（在这个例子中，电影内容的编号类似于事件发生的时间戳，你看电影的时间是事件处理的时间）。当然，作为人类，我们可以处理这种不连续型，但流处理算法就得针对性的编写特殊逻辑才能应对这种乱序问题。</p>
+<p><strong><mark style="background: #FFF3A3A6;">混淆事件产生时间和事件处理时间可能会导致错误数据</mark></strong>。举个例子，设有一个流处理任务在测算请求速率（每秒请求数量）。如果由于某种原因，我们<strong>重新部署</strong>了该任务，则可能会暂停处理一分钟，然后再开始处理积压的事件。如果请求速率是根据处理时间来算的，则在重启后由于处理堆积事速率可能会出现一个<strong>异常的突发</strong>，但实际上，服务请求的速率并没有任何变化。</p>
+<h4 id="确定何时准备完成"><strong>确定何时准备完成</strong></h4>
+<p>如果我们使用事件本身的时间戳来定义时间窗口，上述问题是不是就可以解决了？是，但这就引出了新的问题：<mark style="background: #FFF3A3A6;">对于某一个窗口来说，<strong>我们很难确定是否已经收齐了所有事件</strong></mark>。</p>
+<p>举个例子，假设你正在将事件按照一分钟的时间窗口进行聚集，以统计每分钟内的请求数。然后你已经统计了某小时内第 37 分钟内的一些事件，并向前移动窗口；现在，大部分到来的事件都落到了第 38 分钟和第 39 分钟内。那么，何时你才能够说第 37 分钟内的所有事件已经全部到来了，可以输出计数了呢？</p>
+<p>当然，你可以在一段时间（比如一个统计阈值）没有看到某个窗口的事件之后，就说该窗口中的数据已经准备完成了。但其实，<mark style="background: #FFF3A3A6;">仍然可能由于网络等原因，导致该窗口内的某个事件在某个机器上卡了很久才过来</mark>。所以，即使你已经宣布某个窗口已经完成了，但仍然要能够处理这种姗姗来迟的 “<strong>拖油瓶</strong>”（<strong>straggler</strong>）。总体上，我们有两种选择：</p>
+<ol type="1">
+<li><mark style="background: #FFF3A3A6;">忽略这些 “拖油瓶” 事件</mark>，如果这部分事件只占很小的一部分，这种做法就可以接受。当然，为了保险起见，你可以不断追踪这些被忽略事件的数量，如果某个时刻其比例变的很大，就及时给运维人员告警。</li>
+<li><strong><mark style="background: #BBFABBA6;">修正</mark></strong>。对 “拖油瓶” 事件所在时间窗口的结果进行修正（correction）。可能还需要撤回（retract）之前的输出。</li>
+</ol>
+<p>在某些情况下，也可以使用一个<strong>特殊的消息</strong>（通常称为 watermark）来标识：“从现在起，不会再有任何时间戳 t 之前的消息了”，消费者就可以利用这些特殊的消息来标记窗口的完成。然而，如果有来自多个机器的多个消费者并发的产生事件，则可能由于每个生产者的生产速度不同，导致消费者要分别对其进度进行跟踪。此时，如果动态的增删生产者，就会造成一些棘手问题。</p>
+<h4 id="用谁的时钟"><strong>用谁的时钟？</strong></h4>
+<p>当事件能够在系统中的不同环节进行缓存时，使用给事件附加时间戳的方式就会变得问题多多。举个例子，考虑一个手机定时上报使用参数给服务器的场景。当设备<strong>离线</strong>时，该 APP 也可能被使用，此时只能选择先将这些指标<strong>缓存</strong>到设备本地，等待将来（可能是数小时甚至数天后）重新联网后再次发送。对于该事件流的消费者来说，这些事件都会成为 “拖油瓶” 事件。</p>
+<p>在这个场景中，原则上事件的时间戳应该是用户交互发生时的手机本地始终所显示的时间点。但由于该时钟可能会被用户有意或者无意的进行错误设置（参阅<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch08?id=%e6%97%b6%e9%92%9f%e5%90%8c%e6%ad%a5%e5%92%8c%e7%b2%be%e5%ba%a6%e9%97%ae%e9%a2%98"><strong>时钟同步和精度问题</strong></a>），<mark style="background: #FF5582A6;">设备时钟系统通常是不可信的</mark>。相比来说，由于服务器是受我们控制的，其收到事件的时间点通常更为准确一些。但如果用其来去近似用户交互时间，又可能会有很大偏差。</p>
+<p>为了校正可能有误的设备时钟，一种方法是给每个事件记录三个时间戳：</p>
+<ol type="1">
+<li>根据设备时钟，记录事件产生时的时间戳 t1</li>
+<li> 根据设备时钟，记录事件被发送给服务器的时间戳 t2</li>
+<li> 根据服务器时钟，记录服务器收到事件的时间戳 t3</li>
+</ol>
+<p>通过计算 t3 和 t2 的差值，我们可以大致<mark style="background: #BBFABBA6;">估算出设备时钟和服务器时钟的偏移量</mark>（当然，此处假设网络延迟相比时钟偏移可以忽略不计，需要注意，这个假设并不一定总对）。然后再利用此偏移量和 t1 ，就可以大致估算出事件的真正产生时间（这里也有假设 —— 即设备和服务器的时钟偏移量在整个事件产生和处理期间没有发生过变化）。</p>
+<p>这个问题并不限于流式处理 —— 批处理也有同样地对时间进行推断的问题。只不过<mark style="background: #FFF3A3A6;">在流式处理的上下文中，时间的流逝更容易被注意到</mark>。</p>
+<h4 id="时间窗口的类型"><strong>时间窗口的类型</strong></h4>
+<p>一旦你明白了如何给事件确定时间戳之后，下一步就是如何针对时间段来定义<strong>时间窗口</strong>。时间窗口可以用于聚集操作，例如对事件进行计数、或者计算时间窗口内的一些指标的平均值。常用的<strong>时间窗口类型</strong>有以下几种：</p>
+<ul>
+<li><strong>滚动窗口</strong>（Tumbling window）。滚动窗口<mark style="background: #BBFABBA6;">具有固定时间长度，且每个事件只会唯一的属于某个窗口</mark>。例如，如果你使用一分钟粒度的滚动窗口，所有时间戳落到 &nbsp;<code>10:03:00</code>&nbsp; 和 &nbsp;<code>10:03:59</code>&nbsp; 之间的事件会被分到一个窗口中；所有时间戳落到 &nbsp;<code>10:04:00</code>&nbsp; 和 &nbsp;<code>10:04:59</code>&nbsp; 之间的事件会被分到下一个窗口中，以此类推。我们可以通过将每个事件的时间戳按分钟向下取整以确定时间窗口，就能实现一个一分钟的滚动窗口。</li>
+<li><strong>跳跃窗口</strong>（Hopping window）。<mark style="background: #FFF3A3A6;">跳跃窗口的时间长度也固定，但允许有交叠</mark>。例如，带有一分钟跳步的五分钟跳跃窗口，包括落在 <code>10:03:00</code>&nbsp; 至 &nbsp;<code>10:07:59</code>&nbsp; 中的所有事件；下一个窗口会包含落在 <code>10:04:00</code>&nbsp; 至 &nbsp;<code>10:08:59</code>&nbsp; 窗口内的事件，依次类推。通常，你可以先实现一分钟的滚动窗口，然后在按规则聚集为跳跃窗口。</li>
+<li><strong>滑动窗口</strong>（Sliding window）。<mark style="background: #BBFABBA6;">滑动窗口会包含一定时间间隔内发生的所有事件</mark>。例如，一个 5 分钟的滑动窗口可能会包含 &nbsp;<code>10:03:39</code>&nbsp; 和 &nbsp;<code>10:08:12</code>&nbsp; 的所有事件，因为他们小于五分钟（注意滑动窗口和跳跃窗口基本不会这么分，因为他们的界限会对齐到整点）。滑动窗口通常可以通过一个时间戳有序的缓存来实现，每次插入最新的事件，挤掉过期事件。</li>
+<li><strong>会话窗口</strong>（Session window）。和其他窗口类型不一样，<mark style="background: #FFF3A3A6;">会话窗口没有固定的长度。相反，它由从属于一个用户的相近事件段的所有事件聚集在一块定义而成的</mark>，窗口会在用户不活跃一段时间后（例如，三十分钟内没有新的事件了）结束。按会话对用户数据进行聚集，是网站分析的一个常见需求。</li>
+</ul>
+<h3 id="多流-join"><strong>多流 Join</strong></h3>
+<p>在第十章中我们讨论过批处理如何对数据集按 key 进行 join，并且展示了 join 如何构成了数据流水线中非常重要的一环。由于<mark style="background: #FFF3A3A6;">流式处理在某种程度上是对无界数据集进行增量处理的流水线的泛化，因此流式处理中同样有 Join 的需求</mark>。</p>
+<p>然而，在流中，新的事件可能会出现在流中的任意时刻，这使得数据流的 join 比批处理任务更加有挑战性。为了更好的理解其背后原因，让我们来仔细区分下以下三种类型的 Join：流流连接（streams-streams join），流表连接（stream-table join） 和表表连接（ table-table join）。在接下来的小节，我们将分别举例来阐述三种 join。</p>
+<h4 id="流流连接窗口连接"><strong>流流连接（窗口连接）</strong></h4>
+<p>假设你有个网站，支持搜索功能，然后你想知道最近 URL 的搜索趋势。于是每当有人进行搜索时，你都会生成一个包含<strong>查询条件</strong>和<strong>返回结果</strong>的事件。每次有人点击其中一个搜索结果时，你又会记录另一个包含该点击内容的事件。为了估算搜索结果中每个 URL 的<strong>点击率</strong>（click through rate，<code>CTR = URL 被点击次数 / URL 被展示的次数</code>），你需要将搜索动作中的事件和点击动作中的事件放到一块，即按照会话 ID 将两种事件连接到一块。在广告系统中也需要进行类似的分析以衡量广告投放效果。</p>
+<p>如果用户搜索后抛掉了结果，则本次会话中的点击事件可能永远不会到来。此外，即使点击事件最后来了，查找事件和点击事件间的时间差可能参差不齐：该时间差大多数情况下可能只有几秒，但也有可能长达数天或者数星期（比如用户进行了搜索，但是没有关相应浏览器页面，过了很久之后回到这个页面进行了点击）。此外，由于网络的不可控延迟，<mark style="background: #FFF3A3A6;">同一会话的点击事件甚至有可能比搜索事件提前到达</mark>。因此，我们需要<mark style="background: #BBFABBA6;">评估该时间差的分布以选择一个合适大小的 join 窗口</mark> —— 例如，如果大部分同会话的搜索和点击会到到一小时内，就可以选择一小时跳步的跳跃 join 窗口。</p>
+<p>需要注意的是，在点击事件中嵌入查询细节和对两事件流进行 join 并不等价：将查询嵌入点击事件中，只有在用户对所有的搜索都进行点击时，才能保证点击率的正确性，而可能有很多搜索结果，用户是没有任何点击的。因此，两种流要分开，且我们都需要，才能计算出精确的点击率。</p>
+<p>为了实现这种类型的 join，流处理任务需要维护一定的状态：例如，<mark style="background: #BBFABBA6;">记下所有过去一小时的事件，并用会话 id 进行索引</mark>。当一个新的搜索或者点击事件到来时，就会记录到对应的索引中去。同时，流处理任务也会检查同会话 id 中是否已经有另外类型的事件。如果有匹配的事件，则可以产生一个新的事件 —— 某个搜索结果被点击了。如果时间窗口已经过去了，查询事件仍然没有看到匹配的点击事件，则此时我们可以认为该查询的搜索结果没有被点击，于是也产生一个 join 结果。</p>
+<h4 id="流表连接流扩充"><strong>流表连接（流扩充）</strong></h4>
+<p>在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch10?id=%e4%be%8b%e5%ad%90%ef%bc%9a%e7%94%a8%e6%88%b7%e8%a1%8c%e4%b8%ba%e6%95%b0%e6%8d%ae%e5%88%86%e6%9e%90"><strong>例子：用户行为数据分析</strong></a>（图 10-2）一节中，我们讨论了使用批处理任务对两个数据集进行 join 的例子 —— 对用户活动事件集和用户资料数据库进行 join。可以把用户活动事件看做流，然后在流处理任务中进行持续的、但同样逻辑的 join 。在这种情形下，输入是一个包含用户 ID 的事件流，输出是附加了用户的个人资料信息扩充事件流。因此，该过程有时候也被称为使用数据库中的信息对活动事件进行<strong>扩充</strong>。</p>
+<p>为了进行该 join，在处理时需要每次从流中取一个活动事件，然后依据事件中的用户 ID 在数据库中查找相关信息，最后将找到的用户资料信息附加到事件中。数据库的查找可能<strong>发生在远端</strong>；然而，就像我们在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch10?id=%e4%be%8b%e5%ad%90%ef%bc%9a%e7%94%a8%e6%88%b7%e8%a1%8c%e4%b8%ba%e6%95%b0%e6%8d%ae%e5%88%86%e6%9e%90"><strong>例子：用户行为数据分析</strong></a>中讨论过的，这些<mark style="background: #FF5582A6;">远端查询通常会比较慢而且有打垮数据库的风险</mark>。</p>
+<p>另外一种方式是将数据库的数据加载一份到各个流处理节点的内存中，则每次 join 直接从本地内存查找即可，省掉了 RPC 往返的网络开销。这种技术很像我们在 <a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch10?id=map-%e4%be%a7%e7%9a%84%e8%bf%9e%e6%8e%a5"><strong>Map 侧的连接</strong></a>中讨论过的哈希 join：<mark style="background: #BBFABBA6;">如果数据库表足够小</mark>，可以将其以哈希表的形式缓存在各个节点内存，或以索引的形式放在本地磁盘中。</p>
+<p>这种方式和批处理任务的区别在于，批处理在进行 join 时用的是某个时间点的数据库的快照作为输入。但流式处理任务是常驻的，随着时间的推移，数据库中的数据就可能发生变化，因此每个<mark style="background: #BBFABBA6;">流处理节点的数据库副本需要不断更新</mark>。我们可以用 CDC 来解决这个问题：流处理任务去同时订阅数据库中用户信息表的变更日志。当用户资料在数据库中被创建或者更新时，流处理任务就会收到相关事件以更新其本地副本。如此一来，我们<mark style="background: #BBFABBA6;">本质上也是在 join 两个流：活动事件流和资料变更流</mark>。</p>
+<p>流表连接和流流连接非常像，但与流流连接（基于时间窗口范围的 Join）不同的是，在流表连接中：</p>
+<ol type="1">
+<li>对于 join 一侧的数据库表的日志变更，我们使用了一个从 join 起始的<mark style="background: #FFF3A3A6;">无限大的窗口</mark>，且新的数据会覆盖旧的数据。</li>
+<li>对于 join 另一侧的普通流来说，完全不用维持一个窗口的数据，一个个事件看就行。</li>
+</ol>
+<h4 id="表表连接维持物化视图"><strong>表表连接（维持物化视图）</strong></h4>
+<p>考虑我们在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch01?id=%e8%a1%a1%e9%87%8f%e8%b4%9f%e8%bd%bd"><strong>衡量负载</strong></a>一节中讨论过的 Twitter 时间线例子。当时我们说，每次用户在看其首页瀑布流时，如果都去所有关注者那拉取一遍最近的推文后进行合并，代价会非常高。</p>
+<p>相反，我们想要<mark style="background: #FFF3A3A6;">对该时间线进行缓存</mark>：<strong>某种程度上类似于用户粒度的 “信箱”，即以用户为单位保存其所有关注者发的推文</strong>。基于此缓存，为每个用户生成时间线时，只需要从 “信箱” 中拉取最近的推文即可。对该缓存进行<mark style="background: #BBFABBA6;">物化和维护</mark>需要进行以下处理：</p>
+<ul>
+<li>当某个用户 u 发送一条新的推文时，该推文会被推送到所有关注了 u 的用户时间线上。</li>
+<li>当某个用户删除一条推文时，将其从所有用户的时间线上删除。</li>
+<li>当用户 u1 开始关注用户 u2 时，u2 的所有最近的推文都要合并到 u1 的时间线上。</li>
+<li>当用户 u1 取关用户 u2 时，u2 的所有推文都要从 u1 的时间线上删除。</li>
+</ul>
+<p>为了在流处理任务中实现这种<strong>缓存更新</strong>策略，我们需要综合考虑<mark style="background: #FFF3A3A6;">推文增删事件流</mark>和<mark style="background: #FFF3A3A6;">关注取关流</mark>。流处理任务需要维护一个小型数据库，包含每个用户的关注集合。这样，当新的推文来到时，才能知道要更新哪些用户的时间线。</p>
+<p>从另一种角度来看待这种流处理任务，我们发现它其实是在维护如下一个将两个表（推文表和关系表）进行 join 的查询的<strong>物化视图</strong>：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SELECT follows.follower_id AS timeline_id,</span><br><span class="line">  array_agg(tweets.* ORDER BY tweets.timestamp DESC)</span><br><span class="line">FROM tweets</span><br><span class="line">JOIN follows ON follows.followee_id = tweets.sender_id</span><br><span class="line">GROUP BY follows.follower_id</span><br></pre></td></tr></tbody></table></figure>
+<p>对数据流的 join 可以直接映射到上述查询中对表的 join。<mark style="background: #BBFABBA6;">时间线可以理解为是上述查询结果的缓存</mark>，每当底层表修改后，该缓存也会更新。</p>
+<blockquote>
+<p>可以从需要维护的状态来看三者区别：流流 Join 只需要维护 Join 前两流某个时间窗口的状态；流表 Join 需要维护 Join 前表侧任务开始以来所有的状态；表表 Join 则需要维护 Join 之后的物化视图的状态。</p>
+</blockquote>
+<h4 id="join-的时间依赖"><strong>join 的时间依赖</strong></h4>
+<p>上述三种类型的连接（流流连接，流表连接和表表连接）有很多共通之处：流处理任务都是会<mark style="background: #FFF3A3A6;">根据其中一个流来维持某种状态</mark>（查询和点击事件、用户资料信息和关注者列表），然后<mark style="background: #BBFABBA6;">针对另一个流中的每个事件来查询上述状态</mark>。</p>
+<p>用于维护状态的事件的顺序很重要（比如说你对某个用户是先关注再取关，还是反过来，结果完全不同）。在具有分区的日志中，单个分区中的事件顺序能够被保序，但通常来说跨分区或者不同流间很难进行顺序保证。</p>
+<p>这引出了一个问题：不同流间的事件在很近的时间并发产生，它们最终将会以何种顺序进行处理？</p>
+<ul>
+<li>在流表连接的例子中，如果用户更新了资料，哪些活动事件和老的资料信息 join 了（即 join 发生在用户资料缓存更新前）？</li>
+<li>哪些活动事件却和新的资料信息进行 join 了（即 join 发生在用户缓存更新后）？</li>
+<li>换个角度，如果状态会随着时间不断变化，而你需要和状态进行 join，你需要和哪个时间点的状态进行 join？</li>
+</ul>
+<p>这种时间先后的依赖（本质上就是因果依赖）会发生在各种各样的场景中。举个例子，你在卖东西，因此需要在发票上计算税率，而税率取决于多种因素，如国家甚至省份、产品类型、销售日期（税率可能会随着时间而变化）。当我们将销售事件和税率进行 join 时，你会想其 join 到<mark style="background: #BBFABBA6;">销售发生的时间点的税率而非处理时的税率</mark>（因为有可能发生变化）。</p>
+<p>由于不同流间的事件的相对顺序是不确定的，因此不同流间的 join 本身也变成了不确定的 —— 这意味着，即使你针对同样的输入流重跑同样的 join，也可能会得到不同的结果：因为当你再次跑任务时，输入流可能会以不同的方式进行了交叠和 join。</p>
+<p>在数据仓库中，这种现象也被成为<strong>缓慢变化维</strong>（slowly changing dimension, SCD）。通常可以<mark style="background: #FFF3A3A6;">给每个待 join 的记录关联一个唯一的全局 id 或者时间戳来解决</mark>。例如，每次税率发生变化时，我们给其一个新的 id，然后在为销售事件生成发票时需要关联上 id。这会使得 join 变成确定性的，但有个不好的后果就是，<mark style="background: #FF5582A6;">阻止了数据压缩</mark>因为同一个 key 的所有版本的记录都不能删除。</p>
+<h3 id="容错"><strong>容错</strong></h3>
+<p>在本章的最后一部分，让我们来考虑下流处理任务如何进行容错。在第十章中，我们可以看到，<mark style="background: #BBFABBA6;">批处理的容错很轻松</mark>：如果某个 MapReduce 任务出错了，可以很简单地在另外的机器重新拉起一个同样任务，并将所有失败任务的输出丢弃即可。在批处理中，容错可以做的如此简单、透明，原因有以下几点：</p>
+<ol type="1">
+<li>输入文件<strong>不可变</strong></li>
+<li>输出会放到另外 HDFS 文件中</li>
+<li>任务结束时，输出才对外可见</li>
+</ol>
+<p>且，即使有些子任务失败，批处理的容错方式也能够保证输出结果是一样的，看起来就像没有发生过任何不好的事情一样。所有的输入记录看起来就像只被严格的处理过一次一样 —— 没有任何记录被跳过、也没有任何记录被处理了两次。尽管失败任务被重启时可能会导致某些输入被多次处理，但是对于输出的<strong>可见性控制</strong>会让这些输入 “看起来” 像只被处理过一次。这种保证被称为 “<mark style="background: #BBFABBA6;">严格一次</mark>”（exactly-once）的语义，虽然在这里 “有效的一次”（effectively-once）的名字可能更准确一些。</p>
+<p>流式处理中也会有类似的容错需求，但是处理起来会更加棘手一些。因为在流中，我们做不到等待流任务结束后，再将任务输出对外可见 —— 流是无限的，你永远不要期待等到任务结束。</p>
+<h4 id="微批和检查点"><strong>微批和检查点</strong></h4>
+<p>一种容错方法是将流拆成小段，然后将每一小段当做一个小批的数据（化流为小批）。这种方法称为<strong>微批</strong>（<strong>microbatching</strong>），Spark Streaming 用的就是这种方法。微批的粒度通常在一秒左右，这是根据性能折中的一个结果：如果批太小，会带来太多的<mark style="background: #FF5582A6;">调度和协调的额外开销</mark>；如果批太大，则流处理的结果<mark style="background: #FFF3A3A6;">延迟</mark>就会太高。</p>
+<p>微批隐式的引入了批大小的滚动窗口（基于事件被处理时的时间戳的 tumbling window）。如果基于微批窗口的任务，用户需要自己定义更大的事件窗口，就需要显式的将状态从一个微批带到下个微批中。</p>
+<p>Apache Flink 使用的是一种变种容错方式 —— 周期性地将状态做检查点（checkpointing）然后持久化到外部存储。如果某个流算子挂掉后，就可以从最近的检查点重启，并且丢弃宕机前所有检查点之后产生的输出。检查点的创建是由混在流里的<strong>界障</strong>（barriers）触发的，两个界障会界定出一段类似微批的数据，但和微批不同的是，其大小不是固定的。</p>
+<p>在流处理框架的限制下，使用微批和检查点等手段，能够<mark style="background: #BBFABBA6;">提供和批处理中 “严格一次” 一样的语义</mark>。然而，如果结果出了流处理边界（如，写入数据库、发送消息到外部消息代理、发送邮件等<strong>外部副作用</strong>），流处理框架就没有办法在遇到错误时，撤销掉这些输出。在这种情况下，简单的重启失败任务会造成这些副作用发生多次，而仅靠微批和检查点又不足以解决这些问题。</p>
+<h4 id="原子提交回顾"><strong>原子提交回顾</strong></h4>
+<p>为了在出错时仍然让外界看起来像只发生了一次一样，我们需要保证所有事件处理后产生的输出或者副作用仅在处理成功时才生效。这些影响包括：发送消息到下游算子或外部消息系统（包括发邮件或者其他通知）、写入外部数据库、修改算子状态或者对输入消息的 ACK（比如将基于日志的消息系统中消费者的偏移量往前拨）。</p>
+<p>这些事情要么全部发生，要么没有任何一个发生，也就是说需要某种<mark style="background: #FFF3A3A6;">跨模块的同步机制来保证原子性</mark>。对此你可能听起来很熟悉，因为我们在 “严格一次的消息传递” 一节中讨论过这个问题，当时的上下文是分布式事务和两阶段提交。</p>
+<p>在第九章我们讨论过该问题的解决办法 —— 分布式事务，如 XA。然而，在更特定的环境里，我们可以将原子提交实现的更高效。如，在 Google Cloud Dataflow 和 VoltDB 中，Kafka 也有增加类似功能的计划。和 XA 不同的是，这些实现没有试图在异构系统中提供事务保证，而是<mark style="background: #BBFABBA6;">仅在流式系统框架内部保证状态变更和消息发送间的原子性</mark>。事务引入的额外开销可以通过在单个事务中处理多条输入来摊平。</p>
+<h4 id="幂等性"><strong>幂等性</strong></h4>
+<p>我们的目的是丢弃任何失败任务的部分输出，以便可以<mark style="background: #BBFABBA6;">安全地重试这些失败任务，而不会产生重复影响</mark>。分布式事务是一种解决办法，另一种常用的方法是：幂等性（<strong>idempotence</strong>）。</p>
+<p>所谓幂等操作，就是该操作执行多遍造成结果和仅执行一次一样。例如，在 key-value 存储中设置一个 key 为某个特定的值就是幂等的（使用同样的 kv 对重复 put 多次，结果是一样的）；而给计数器加一就不是一个幂等操作（重复执行该操作，会使得计数器增加多次，而不是一次）。</p>
+<p>即使某些操作不是幂等的，但是<mark style="background: #FFF3A3A6;">可以通过附加一些额外信息来使之幂等</mark>。例如，Kafka 中的每条消息都有持久化的、全局递增的偏移量。当将某条消息写入外部数据库时，你可以将该偏移量带上。这样，写入逻辑可以维护一个写入偏移量的水位，如果发现该消息已经被应用过了，就可以跳过该消息，避免重复更新。Storm’s Trident 对于状态的管理使用了类似的理念。</p>
+<p>使用幂等性进行容错时依赖一些假设：</p>
+<ol type="1">
+<li>重启错误任务后，必须按照同样的顺序应用消息（基于日志的消息代理能干这件事）</li>
+<li>消息的处理需要是确定性的</li>
+<li>没有其他节点来并发地更新同样值</li>
+</ol>
+<p>当由于故障，在其他机器上拉起同样子任务时，需要一些防护。否则，如果原任务只是假死，就仍然会干扰系统。尽管有很多需要注意的点，但<mark style="background: #BBFABBA6;">幂等操作仍然是高效地实现严格一次语义的一种手段</mark>。</p>
+<h4 id="故障后状态重建"><strong>故障后状态重建</strong></h4>
+<p>所有流处理都会有一些中间状态 —— 例如，基于窗口的聚合操作（计数、求平均、直方图）和待 join 的表或索引。这些状态需要<mark style="background: #FFF3A3A6;">定期持久化</mark>，以保证算子失败重启后能够恢复。</p>
+<p>一种选择是将状态放到外部存储中，但如果每条消息都要去查远端数据库可能会很慢。另一种方法是<mark style="background: #BBFABBA6;">将状态保存到流处理算子本地，并定期将其复制到其他机器</mark>。如此一来，当算子从失败中重启时，新的任务就可以从其他机器的副本来读取原状态，从而不丢失数据地” 断点重启 “。</p>
+<p>例如，Flink 会定期的将算子状态做快照，并将其持久化到外部存储，如 HDFS 中；Samza 和 Kafka Stream 则会将状态变更发送到具有日志压缩功能的专用 Kafka 的 Topic 中，有点类似于 CDC；VoltDB 则会通过在多个节点冗余的处理每条消息来保持高可用性。</p>
+<p>在某些情况下，如果我们能够根据输入流再次构建状态，我们就不需要对其进行冗余。例如，如果状态只包含一个很小时间窗口的聚集结果，则可以通过重放相关输入来很快地重建该状态。如果状态是通过 CDC 来维护的一个数据库的本地副本，则可以从压缩过后的变更流来重建该数据库副本。</p>
+<p>当然，如何在上面不同手段间（主要是本地还是远端）进行取舍取决于<mark style="background: #FFF3A3A6;">底层基础设施的环境特点</mark>：在一些系统中，网络延迟甚至会比本地磁盘读写低，且网络带宽甚至能比得上磁盘吞吐带宽。没有一种取舍能满足任何场景，并且随着技术的不断发展，本地和远端访问的指标对比可能也会发生变化。</p>
+<h2 id="小结"><strong>小结</strong></h2>
+<p>在本章中我们讨论了事件流、其所服务的场景以及如何对其进行处理。在某些方面，流处理很像我们前一章讨论过的批处理，但两者对输入的假设不同 ——<mark style="background: #FFF3A3A6;"> 批处理是固定、有限输入，而流处理事持续、无界输入</mark>。从这个角度看，消息代理和事件日志充当了流处理系统中的文件系统和文件的生态位。</p>
+<p>我们花了一些时间来比较两种类型的消息代理：</p>
+<ul>
+<li><strong>AMQP/JMS 风格消息代理</strong>：
+<ul>
+<li>消息代理会将消息逐条分配给某个消费者，消费者在成功处理消息后会给消息代理返回 ACK。<mark style="background: #FFF3A3A6;">一旦收到 ACK，消息代理就会将对应消息删除</mark>。在异步 RPC 的场景中使用这种风格很合适，例如在异步<strong>任务队列</strong>场景中，每条消息被处理的顺序并不重要，且消息（任务）通常也无需被回退以进行二次处理。</li>
+</ul></li>
+<li><strong>基于日志风格消息代理</strong>：
+<ul>
+<li>这种消息代理会将某个消息分区中的消息作为整体安排给某个消费节点，并且（在分区内部）总是以同样的顺序来交付消息。消费的并行是做在分区粒度的，每个消费者仅需要定期持久化偏移量就可以保存消费进度。<mark style="background: #BBFABBA6;">消息代理会将消息保存在硬盘中</mark>，因此可在必要时可以进行回退对消息进行重复消费。</li>
+</ul></li>
+</ul>
+<p>这种基于日志的手段，和在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch05"><strong>第五章</strong></a>中讨论数据库时提到的冗余日志和在<a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch03"><strong>第三章</strong></a>中提到的日志结构的存储引擎有诸多相似之处。这种手段在流式处理中非常适用，因为流处理就是消费输入流、然后生成衍生状态或者新的衍生流。</p>
+<p>说到<strong>流从哪里来</strong>，我们讨论了多种可能的情况：用户活动、传感器读数、数据 feed 流（如财务中的市场数据）都可以表达为流。我们也看到了，将对数据库的按时间次序的更新也看做流是一种非常有效的抽象：可以通过隐式的 CDC 或者显式的事件溯源来捕获数据库的变更日志（即对数据库的更新历史）。日志压缩使得我们能够以较低成本保存数据库的所有内容。</p>
+<p>将数据库表达为流带来了对不同系统进行整合的诸多机会。<mark style="background: #BBFABBA6;">可以通过消费变更日志并应用到衍生系统，来保持存储引擎、缓存和数仓等衍生系统和原系统的一致性</mark>。我们也可以从头消费所有变更日志来对现有数据构建高效的物化视图。</p>
+<p><strong>维护流状态</strong>和<strong>重放消息</strong>也是实现各种流处理框架中流 Join 和容错技术的基础。我们讨论了流处理的几个目的，包括搜索事件模式（复杂事件处理）、计算窗口聚合（流分析）以及保持派生数据系统的最新状态（物化视图）。</p>
+<p>然后我们讨论了在流处理器中对时间进行推断的困难性，包括事件附加时间戳和事件处理时间点的区别、在某窗口处理完后有事件姗姗来迟的应对等等。</p>
+<p>在流处理中，我们区别出了三种不同的 join 类型：</p>
+<ul>
+<li><strong>流流 Join</strong>：两个输入流都包含用户活动事件，join 算子会搜索某些事件窗口内所有相关的事件。例如，可能会将同一个用户 30 分钟内发生的两个事件匹配起来。如果你想 join 同一个流中的不同事件，可以让 join 两侧是同一个流。</li>
+<li>** 流表 Join：一个输入流包含用户事件，另一个输入流是数据库变更日志。<mark style="background: #BBFABBA6;">通过变更日志可以在算子本地维护一个实时的数据库副本</mark>。对于每个到来的用户事件，join 算子会在该数据库中进行查询，然后输出所有匹配上的扩展后的事件。</li>
+<li><strong>表表 Join</strong>：输入流两侧都是数据库的变更日志。在这种情况下，每一侧的到来的变更都要和另一侧的最新状态来 Join。<mark style="background: #FFF3A3A6;">其结果其实是两表 Join 的物化视图的变更流</mark>。</li>
+</ul>
+<p>最后，我们讨论了在流处理器中进行容错和实现严格一次语义的一些技术。对于批处理来说，我们可以简单的抛掉故障任务的中间输出。但流处理是长时间运行的、并持续产生输出的。因此我们不能将所有历史输出都丢掉，然后重算。相反，我们需要引入一些细粒度的恢复机制，可以<mark style="background: #BBFABBA6;">基于微批、检查点、事务或者幂等更新</mark>来实现。</p>
+<h2 id="参考"><strong>参考</strong></h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://ddia.qtmuniao.com/#/ch11">第十一章：流处理 (qtmuniao.com)</a></li>
+<li><a target="_blank" rel="noopener" href="http://ddia.vonng.com/#/ch11">第十一章：流处理 (vonng.com)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/" title="DDIA 阅读笔记第 11 章：流处理">https://tqnwhz.github.io/blog/2024/07/13/DDIA-Note-11/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/DDIA/" rel="tag"><i class="fa fa-tag"></i> DDIA</a>
+              <a href="/blog/tags/%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E5%AF%86%E9%9B%86%E5%9E%8B%E5%BA%94%E7%94%A8/" rel="tag"><i class="fa fa-tag"></i> 设计数据密集型应用</a>
+              <a href="/blog/tags/%E6%B5%81%E5%A4%84%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 流处理</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2024/06/30/DDIA-Note-10/" rel="prev" title="DDIA 阅读笔记第十章：批处理">
+                  <i class="fa fa-angle-left"></i> DDIA 阅读笔记第十章：批处理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2024</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">595k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/sidebar.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.1/dist/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
