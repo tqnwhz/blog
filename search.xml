@@ -6266,7 +6266,7 @@
 <p>结果如下：</p>
 <figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">*** Basic ***</span><br><span class="line">Starting tiny on 15325</span><br><span class="line">Starting proxy on 20457</span><br><span class="line">1: home.html</span><br><span class="line">   Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/home.html into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">2: csapp.c</span><br><span class="line">   Fetching ./tiny/csapp.c into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/csapp.c into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">3: tiny.c</span><br><span class="line">   Fetching ./tiny/tiny.c into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/tiny.c into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">4: godzilla.jpg</span><br><span class="line">   Fetching ./tiny/godzilla.jpg into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/godzilla.jpg into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">5: tiny</span><br><span class="line">   Fetching ./tiny/tiny into ./.proxy using the proxy</span><br><span class="line">   Fetching ./tiny/tiny into ./.noproxy directly from Tiny</span><br><span class="line">   Comparing the two files</span><br><span class="line">   Success: Files are identical.</span><br><span class="line">Killing tiny and proxy</span><br><span class="line">basicScore: 40/40</span><br><span class="line"></span><br><span class="line">*** Concurrency ***</span><br><span class="line">Starting tiny on port 12414</span><br><span class="line">Starting proxy on port 22796</span><br><span class="line">Starting the blocking NOP server on port 32913</span><br><span class="line">Trying to fetch a file from the blocking nop-server</span><br><span class="line">Fetching ./tiny/home.html into ./.noproxy directly from Tiny</span><br><span class="line">Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">Checking whether the proxy fetch succeeded</span><br><span class="line">Success: Was able to fetch tiny/home.html from the proxy.</span><br><span class="line">Killing tiny, proxy, and nop-server</span><br><span class="line">concurrencyScore: 15/15</span><br><span class="line"></span><br><span class="line">*** Cache ***</span><br><span class="line">Starting tiny on port 23752</span><br><span class="line">Starting proxy on port 26743</span><br><span class="line">Fetching ./tiny/tiny.c into ./.proxy using the proxy</span><br><span class="line">Fetching ./tiny/home.html into ./.proxy using the proxy</span><br><span class="line">Fetching ./tiny/csapp.c into ./.proxy using the proxy</span><br><span class="line">Killing tiny</span><br><span class="line">Fetching a cached copy of ./tiny/home.html into ./.noproxy</span><br><span class="line">Success: Was able to fetch tiny/home.html from the cache.</span><br><span class="line">Killing proxy</span><br><span class="line">cacheScore: 15/15</span><br><span class="line"></span><br><span class="line">totalScore: 70/70</span><br></pre></td></tr></tbody></table></figure>
 <h2 id="总结">总结</h2>
-<p>完结撒花！终于在 2023 年完成了 CSAPP 这门课的学习！在这门课的学习与实践里，收获还是非常多的。一方面复习了本科学习的专业知识，还从教授的旁征博引中领悟了新的理解；另一方面，在这么多课程学完之后，对计算机系统的认识也有了更清晰的轮廓，有一种计算机大厦落地简称的感觉。细分方向的专业课是计算机系统里小而独立的模块，像计算机组成、操作系统、编译原理等，CSAPP 可以把相关的知识串起来，以程序员的角度，建立起对计算机系统的顶层认识。这也是我觉得这门课的魅力所在。</p>
+<p>完结撒花！终于在 2023 年完成了 CSAPP 这门课的学习！在这门课的学习与实践里，收获还是非常多的。一方面复习了本科学习的专业知识，还从教授的旁征博引中领悟了新的理解；另一方面，在这么多课程学完之后，对计算机系统的认识也有了更清晰的轮廓，有一种计算机大厦落地建成的感觉。细分方向的专业课是计算机系统里小而独立的模块，像计算机组成、操作系统、编译原理等，CSAPP 可以把相关的知识串起来，以程序员的角度，建立起对计算机系统的顶层认识。这也是我觉得这门课的魅力所在。</p>
 <p>祝看到这篇博客的朋友们，新年快乐，万事顺意！</p>
 <h2 id="参考">参考</h2>
 <ul>
@@ -9914,8 +9914,8 @@ p(y|a,q)=\mathbb E_{z_q\sim p(z_q|q),z_a\sim p(z_a|a)}[p(y|z_a,z_q)]
         <category>问答</category>
       </categories>
       <tags>
-        <tag>自然语言处理</tag>
         <tag>VAE</tag>
+        <tag>自然语言处理</tag>
         <tag>问答</tag>
         <tag>负面案例</tag>
       </tags>
@@ -10546,8 +10546,8 @@ e_{ij}=a(s_{i-1},h_j)\\
         <tag>预训练模型</tag>
         <tag>BERT</tag>
         <tag>自然语言处理</tag>
-        <tag>综述</tag>
         <tag>GPT</tag>
+        <tag>综述</tag>
       </tags>
   </entry>
   <entry>
