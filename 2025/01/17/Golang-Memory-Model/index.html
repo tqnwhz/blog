@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.0.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/octocat.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/octocat.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="QcnjNHRiBLebjx8vMmLKX4v6WLuLRGHKSF9_I1fGmWY">
+  <meta name="msvalidate.01" content="1D9AB23CC25B14EF5C62CCB4FC9B2069">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300italic,400,400italic,700,700italic%7CLXGW+WenKai:300,300italic,400,400italic,700,700italic%7CLXGW+WenKai+Mono:300,300italic,400,400italic,700,700italic%7CSource+Code+Pro:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" integrity="sha256-XOqroi11tY4EFQMR9ZYwZWKj5ZXiftSx36RRuC3anlA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"tqnwhz.github.io","root":"/blog/","images":"/blog/images","scheme":"Gemini","darkmode":true,"version":"8.20.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"utterances","storage":true,"lazyload":false,"nav":null,"activeClass":"utterances"},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/blog/js/config.js"></script>
+
+    <meta name="description" content="摘要 本文介绍了 Golang 的内存模型，在对官方博客 The Go Memory Model 的总结基础上，结合了自己的理解。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang 内存模型">
+<meta property="og:url" content="https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/index.html">
+<meta property="og:site_name" content="一隅">
+<meta property="og:description" content="摘要 本文介绍了 Golang 的内存模型，在对官方博客 The Go Memory Model 的总结基础上，结合了自己的理解。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T16:33:36.000Z">
+<meta property="article:modified_time" content="2025-01-16T16:39:54.862Z">
+<meta property="article:author" content="Tqnwhz">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="内存模型">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/","path":"2025/01/17/Golang-Memory-Model/","title":"Golang 内存模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Golang 内存模型 | 一隅</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/blog/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">一隅</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA%E6%9C%80%E5%85%88"><span class="nav-number">2.</span> <span class="nav-text">结论最先</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">3.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.1.</span> <span class="nav-text">内存模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BB%BA%E8%AE%AE"><span class="nav-number">3.2.</span> <span class="nav-text">建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89"><span class="nav-number">3.3.</span> <span class="nav-text">数据竞争</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%AD%A3%E5%BC%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">4.</span> <span class="nav-text">内存模型的正式定义</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%93%8D%E4%BD%9C"><span class="nav-number">4.1.</span> <span class="nav-text">内存操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%95-goroutine-%E5%86%85%E7%9A%84%E6%89%A7%E8%A1%8C%E8%A6%81%E6%B1%82-sequenced-before"><span class="nav-number">4.2.</span> <span class="nav-text">单 goroutine 内的执行要求: sequenced before</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%8F%E5%BA%8F%E5%85%B3%E7%B3%BB-%E4%B8%8E-%E5%85%A8%E5%BA%8F%E5%85%B3%E7%B3%BB"><span class="nav-number">4.2.1.</span> <span class="nav-text">偏序关系 与 全序关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%81%8F%E5%BA%8F%E5%85%B3%E7%B3%BB"><span class="nav-number">4.2.2.</span> <span class="nav-text">为什么是偏序关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#go-%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C"><span class="nav-number">4.3.</span> <span class="nav-text">Go 程序的执行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%93%8D%E4%BD%9C-synchronized-before-%E5%85%B3%E7%B3%BB"><span class="nav-number">4.4.</span> <span class="nav-text">同步操作: synchronized before 关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#happens-before"><span class="nav-number">4.5.</span> <span class="nav-text">happens before</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%BA%E5%BA%8F%E4%B8%80%E8%87%B4%E6%80%A7"><span class="nav-number">4.5.1.</span> <span class="nav-text">顺序一致性</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8C%85%E5%90%AB%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E7%9A%84%E7%A8%8B%E5%BA%8F%E7%9A%84%E5%AE%9E%E7%8E%B0%E9%99%90%E5%88%B6"><span class="nav-number">5.</span> <span class="nav-text">包含数据竞争的程序的实现限制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%A5%E5%91%8A%E7%AB%9E%E4%BA%89%E7%BB%88%E6%AD%A2%E7%A8%8B%E5%BA%8F"><span class="nav-number">5.1.</span> <span class="nav-text">报告竞争 &amp; 终止程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%8D%E5%90%88%E7%BB%93%E6%9E%84%E7%9A%84%E8%AF%BB%E5%86%99"><span class="nav-number">5.2.</span> <span class="nav-text">复合结构的读写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%95%E5%AD%97%E8%AF%BB%E5%8F%96%E9%99%90%E5%88%B6"><span class="nav-number">5.3.</span> <span class="nav-text">单字读取限制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E4%BA%8E%E5%8D%95%E5%AD%97%E7%9A%84%E8%AF%BB%E5%86%99%E9%99%90%E5%88%B6"><span class="nav-number">5.4.</span> <span class="nav-text">大于单字的读写限制</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%93%8D%E4%BD%9C"><span class="nav-number">6.</span> <span class="nav-text">同步操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8C%85%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">6.1.</span> <span class="nav-text">包的初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine-%E5%88%9B%E5%BB%BA"><span class="nav-number">6.2.</span> <span class="nav-text">goroutine 创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine-%E9%94%80%E6%AF%81"><span class="nav-number">6.3.</span> <span class="nav-text">goroutine 销毁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E9%81%93%E9%80%9A%E4%BF%A1"><span class="nav-number">6.4.</span> <span class="nav-text">通道通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E9%80%81%E5%92%8C%E8%AF%BB%E5%8F%96"><span class="nav-number">6.4.1.</span> <span class="nav-text">发送和读取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%97%AD"><span class="nav-number">6.4.2.</span> <span class="nav-text">关闭</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A0%E7%BC%93%E5%86%B2%E9%80%9A%E9%81%93"><span class="nav-number">6.4.3.</span> <span class="nav-text">无缓冲通道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E5%B9%BF%E8%A7%84%E5%88%99"><span class="nav-number">6.4.4.</span> <span class="nav-text">推广规则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%81"><span class="nav-number">6.5.</span> <span class="nav-text">锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#once"><span class="nav-number">6.6.</span> <span class="nav-text">Once</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E5%80%BC-atomic-values"><span class="nav-number">6.7.</span> <span class="nav-text">原子值 (Atomic Values)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E7%BB%93%E5%99%A8-finalizers"><span class="nav-number">6.8.</span> <span class="nav-text">终结器 (Finalizers)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%84%E5%8A%A0%E6%9C%BA%E5%88%B6-additional-mechanisms"><span class="nav-number">6.9.</span> <span class="nav-text">附加机制 (Additional Mechanisms)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%8D%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%90%8C%E6%AD%A5"><span class="nav-number">7.</span> <span class="nav-text">不正确的同步</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E4%B8%AD%E7%9A%84%E7%AB%9E%E6%80%81%E6%9D%A1%E4%BB%B6"><span class="nav-number">7.1.</span> <span class="nav-text">程序中的竞态条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E9%87%8D%E6%A3%80%E6%9F%A5%E9%94%81%E5%AE%9A"><span class="nav-number">7.2.</span> <span class="nav-text">双重检查锁定</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%99%E7%AD%89%E5%BE%85"><span class="nav-number">7.3.</span> <span class="nav-text">忙等待</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E5%BE%AE%E5%A6%99%E7%9A%84%E5%8F%98%E4%BD%93"><span class="nav-number">7.4.</span> <span class="nav-text">更微妙的变体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">7.5.</span> <span class="nav-text">解决方案</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%8D%E6%AD%A3%E7%A1%AE%E7%9A%84%E7%BC%96%E8%AF%91"><span class="nav-number">8.</span> <span class="nav-text">不正确的编译</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%83%BD%E5%9C%A8%E6%97%A0%E7%AB%9E%E6%80%81%E6%9D%A1%E4%BB%B6%E7%9A%84%E7%A8%8B%E5%BA%8F%E4%B8%AD%E5%BC%95%E5%85%A5%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89"><span class="nav-number">8.1.</span> <span class="nav-text">不能在无竞态条件的程序中引入数据竞争</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%83%BD%E5%81%87%E8%AE%BE%E5%BE%AA%E7%8E%AF%E4%B8%80%E5%AE%9A%E4%BC%9A%E7%BB%88%E6%AD%A2"><span class="nav-number">8.2.</span> <span class="nav-text">不能假设循环一定会终止</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%83%BD%E5%81%87%E8%AE%BE%E8%A2%AB%E8%B0%83%E7%94%A8%E7%9A%84%E5%87%BD%E6%95%B0%E6%80%BB%E6%98%AF%E8%BF%94%E5%9B%9E%E6%88%96%E4%B8%8D%E5%8C%85%E5%90%AB%E5%90%8C%E6%AD%A5%E6%93%8D%E4%BD%9C"><span class="nav-number">8.3.</span> <span class="nav-text">不能假设被调用的函数总是返回或不包含同步操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%83%BD%E5%85%81%E8%AE%B8%E5%8D%95%E6%AC%A1%E8%AF%BB%E5%8F%96%E8%A7%82%E5%AF%9F%E5%88%B0%E5%A4%9A%E4%B8%AA%E5%80%BC"><span class="nav-number">8.4.</span> <span class="nav-text">不能允许单次读取观察到多个值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A6%81%E6%AD%A2%E5%8D%95%E6%AC%A1%E8%AF%BB%E5%8F%96%E8%A7%82%E5%AF%9F%E5%88%B0%E5%A4%9A%E4%B8%AA%E5%80%BC"><span class="nav-number">8.5.</span> <span class="nav-text">禁止单次读取观察到多个值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A6%81%E6%AD%A2%E5%8D%95%E6%AC%A1%E5%86%99%E5%85%A5%E5%86%99%E5%85%A5%E5%A4%9A%E4%B8%AA%E5%80%BC"><span class="nav-number">8.6.</span> <span class="nav-text">禁止单次写入写入多个值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cc-%E7%BC%96%E8%AF%91%E5%99%A8%E4%B8%AD%E7%9A%84%E4%BC%98%E5%8C%96%E5%B7%AE%E5%BC%82"><span class="nav-number">8.7.</span> <span class="nav-text">C&#x2F;C++ 编译器中的优化差异</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E7%9A%84%E4%BE%8B%E5%A4%96%E6%83%85%E5%86%B5"><span class="nav-number">8.8.</span> <span class="nav-text">数据竞争的例外情况</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">9.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">10.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tqnwhz"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Tqnwhz</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/archives/">
+          <span class="site-state-item-count">73</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/blog/categories/">
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/blog/tags/">
+        <span class="site-state-item-count">92</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tqnwhz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tqnwhz" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/blog/tqnwhz@gmail.com" title="E-Mail → tqnwhz@gmail.com" rel="noopener me"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="Tqnwhz">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="一隅">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Golang 内存模型 | 一隅">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Golang 内存模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-01-17 00:33:36 / 修改时间：00:39:54" itemprop="dateCreated datePublished" datetime="2025-01-17T00:33:36+08:00">2025-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/Golang/%E5%B9%B6%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">并发</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>22 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="摘要">摘要</h1>
+<p>本文介绍了 Golang 的内存模型，在对官方博客 <a target="_blank" rel="noopener" href="https://go.dev/ref/mem">The Go Memory Model</a> 的总结基础上，结合了自己的理解。</p>
+<span id="more"></span>
+<h1 id="结论最先">结论最先</h1>
+<ol type="1">
+<li>Go 的内存模型指明了在何种条件下，一个协程中对某变量的读取可以确保观测到由其他协程对同变量的写入。</li>
+<li>对于涉及多个 gorouine 读写的共享变量，一定要用 <code>sync</code> 包里的同步操作显式进行同步，避免数据竞争。</li>
+<li>不要想当然的以为赋值语句是原子的，像字符串、接口等复合结构，不加锁读写可能会导致不一致行为，一定要避免。</li>
+<li>不要耍小聪明。</li>
+</ol>
+<h1 id="简介">简介</h1>
+<h2 id="内存模型">内存模型</h2>
+<p>Go 的内存模型指明了在何种条件下，一个协程中对某变量的读取可以确保观测到由其他协程对同变量的写入。</p>
+<ul>
+<li>换而言之，不满足这些条件，一个协程的写入就 “不一定” 能够被其他协程观测到。</li>
+</ul>
+<h2 id="建议">建议</h2>
+<p>在程序中，如果要修改被多协程同时访问的共享变量，<mark style="background: #BBFABBA6;">必须将这些访问串行化</mark>。</p>
+<ul>
+<li>为了将访问串行化，需要使用 channel 或者其他同步原语，参考 <code>sync</code> 与 <code>sync/atomic</code> 包。</li>
+</ul>
+<p>不要自作聪明地以为对底层了解，搞一些炫技的代码。</p>
+<h2 id="数据竞争">数据竞争</h2>
+<p>数据竞争（<code>data race</code>）被定义为：<mark style="background: #FFF3A3A6;">对内存地址的写操作与对同一地址的另一读或写操作同时发生</mark>。</p>
+<ul>
+<li>这里提到的读写操作是普通读写，而非由 sync/atomic 包提供的原子数据访问。</li>
+</ul>
+<p>如前所述，<mark style="background: #BBFABBA6;">强烈建议程序员使用适当的同步来避免数据竞争</mark>。</p>
+<p>在没有数据竞争的情况下，Go 程序的行为就如同所有的 goroutine 都在单个处理器上复用一样。这一特性有时称为 DRF-SC：data-race-free 的程序以顺序一致的方式执行。</p>
+<p>检测数据竞争的工具：参考 <a target="_blank" rel="noopener" href="https://go.dev/doc/articles/race_detector">Data Race Detector</a>。</p>
+<h1 id="内存模型的正式定义">内存模型的正式定义</h1>
+<p>内存模型描述了对程序执行的要求。程序执行由多个 goroutine 执行组成，而每个 goroutine 执行又由多个内存操作构成。</p>
+<p>Go 中内存模型的定义与 <code>Hans-J. Boehm</code> 和 <code>Sarita V. Adve</code> 在 2008 年发表在 PLDI 上的论文 <a target="_blank" rel="noopener" href="https://www.hpl.hp.com/techreports/2008/HPL-2008-56.pdf">Foundations of the C++ Concurrency Memory Model</a> 内容非常接近；同时，关于禁止 data-race（<code>data-race-free</code>）和保证在禁止数据竞争（<code>race-free</code>）程序中顺序一致性的描述和论文内容完全一致。</p>
+<h2 id="内存操作">内存操作</h2>
+<p>一个内存操作由四个细节建模：</p>
+<ul>
+<li>操作类型：表明它是普通数据读取、普通数据写入，还是诸如原子数据访问、互斥锁操作或通道操作之类的同步操作。</li>
+<li>在程序中的位置。</li>
+<li>所访问的内存位置或变量。</li>
+<li>该操作读取或写入的值。</li>
+</ul>
+<p>内存操作的类型：</p>
+<ul>
+<li>类读取操作（<code>read-like</code>），包括：读取、原子读取、互斥锁锁定和通道接收。</li>
+<li>类写入操作（<code>write-like</code>），包括：写入、原子写入、互斥锁解锁、通道发送和通道关闭。</li>
+<li>既类读取操作又类似于写入操作，比如：原子比较并交换。</li>
+</ul>
+<p>一个 goroutine 执行被建模为单个 goroutine 执行的一组内存操作。</p>
+<h2 id="单-goroutine-内的执行要求-sequenced-before">单 goroutine 内的执行要求: <em>sequenced before</em></h2>
+<p>要求 1：在给定内存读写值的情况下，每个 goroutine 中的内存操作必须对应于该 goroutine 的正确顺序执行。此执行必须与 “顺序在前”（<em>sequenced before</em>） 关系保持一致，“顺序在前” 关系定义为 Go 语言规范针对<mark style="background: #FFF3A3A6;"> Go 控制流结构以及表达式求值顺序</mark>所设定的偏序要求。</p>
+<p>这个还是很容易理解的，单个 goroutine，也就是单线程内，需要遵循程序定义的顺序正确执行，遵循控制流，和表达式求值的顺序，比如前面的先执行、表达式遵循优先级顺序等。</p>
+<h3 id="偏序关系-与-全序关系">偏序关系 与 全序关系</h3>
+<p>要注意的是 <em>sequenced before</em> 是偏序关系，而非全序。在数学的序理论中，针对一个集合 X，偏序关系和全序关系均为一种顺序关系，具体定义为：</p>
+<ul>
+<li>偏序关系（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Partially_ordered_set">Partially ordered set - Wikipedia</a>）：对于某些元素对，其中一个元素排在另一个元素之前，但并非每一对元素都需要具有可比较性。偏序关系满足三个性质：</li>
+<li>反对称性（Antisymmetry）：对于集合中的任意元素 a, b，如果 a ≤ b 且 b ≤ a，则 a = b。即，不存在两个元素互相在彼此之前。</li>
+<li>传递性（Transitivity）：对于集合中的任意元素 a, b, c，如果 a ≤ b 且 b ≤ c，则 a ≤ c。</li>
+<li>自反性（Reflexivity）：对于集合中的任意元素 a，有 a ≤ a</li>
+<li> 全序关系（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Total_order">Total order - Wikipedia</a>）：在偏序关系的基础上，任意两个元素均可比较。即在偏序关系的基础上，增加了如下性质：</li>
+<li>全连接（Total）：对于集合中的任意元素 a, b，要么 a ≤ b，要么 b ≤ a</li>
+</ul>
+<h3 id="为什么是偏序关系">为什么是偏序关系</h3>
+<p>为什么 <em>sequenced before</em> 是偏序关系，而非全序？个人理解是因为在 Go 中，表达式求值的顺序不是严格固定。比如下面的例子，<code>x := []int{a, f()}</code> 中，<code>a</code> 与 <code>f()</code> 的顺序是不确定的。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">a := <span class="number">1</span></span><br><span class="line">f := <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">int</span></span> { a++; <span class="keyword">return</span> a }</span><br><span class="line">x := []<span class="keyword">int</span>{a, f()}      <span class="comment">// x may be [1, 2] or [2, 2]: evaluation order between a and f() is not specified</span></span><br><span class="line">m := <span class="keyword">map</span>[<span class="keyword">int</span>]<span class="keyword">int</span>{a: <span class="number">1</span>, a: <span class="number">2</span>} <span class="comment">// m may be {2: 1} or {2: 2}: evaluation order between the two map assignments is not specified</span></span><br><span class="line">n := <span class="keyword">map</span>[<span class="keyword">int</span>]<span class="keyword">int</span>{a: f()}   <span class="comment">// n may be {2: 3} or {3: 3}: evaluation order between the key and the value is not specified</span></span><br></pre></td></tr></tbody></table></figure>
+<p>这个观点在 <a target="_blank" rel="noopener" href="http://www.cs.toronto.edu/~pekhimenko/courses/csc2231-f17/Papers/C++Consistency.pdf">Foundations of the C++ Concurrency Memory Model</a> 中也得到了印证：</p>
+<blockquote>
+<p>The remainder of the C++ standard was modified to define a sequenced-before relation on memory operations performed by a single thread [14]. This is analogous to the program order relation in Java and other work on memory models. Unlike prior work, this is only a partial order per thread, reflecting undefined argument evaluation order.</p>
+</blockquote>
+<p>C++ 标准的其余部分进行了修改，以定义单个线程执行的内存操作之间的 “顺序在前” 关系 [14]。这类似于 Java 中的程序顺序关系以及其他有关内存模型的研究。与先前的研究不同，<mark style="background: #FFF3A3A6;">这只是每个线程内的一种偏序关系，反映了未定义的参数求值顺序</mark>。</p>
+<h2 id="go-程序的执行">Go 程序的执行</h2>
+<p>一个 Go 程序的执行被建模为一组 goroutine 执行以及一个映射 W，该映射 W 指定每个类读取的操作从哪个类写入的操作中读取数据。</p>
+<p>同一程序的多次执行可能会有不同的程序执行情况。例如由于调度策略的差异，goroutine 的执行顺序有所差别，进而可能影响到了映射 <em>W</em> 。</p>
+<h2 id="同步操作-synchronized-before-关系">同步操作: <em>synchronized before</em> 关系</h2>
+<p>要求 2：对于给定的程序执行，当映射 W <mark style="background: #FFF3A3A6;">仅限于同步操作</mark>时，必须能够通过同步操作的某种<mark style="background: #FFF3A3A6;">隐式全序</mark>来解释，该全序与这些操作的顺序以及它们读写的值保持一致。</p>
+<p>“同步在前” （&nbsp;<em>synchronized before</em>）关系是同步内存操作上的一种偏序关系，由映射 W 推导得出。<mark style="background: #BBFABBA6;">如果一个类读取的同步内存操作 r 观察到一个类写入的同步内存操作 w（即如果 W (r) = w），那么 w synchronized before r</mark> 。通俗地说，“同步在前” 关系是上一段中提到的隐含全序的一个子集，仅限于映射 W 直接观察到的信息。</p>
+<p>上面是文档里的定义，我觉得介绍的有点抽象。在论文 <a target="_blank" rel="noopener" href="http://www.cs.toronto.edu/~pekhimenko/courses/csc2231-f17/Papers/C++Consistency.pdf">Foundations of the C++ Concurrency Memory Model</a> 中，类似定义的名称为 “<em>synchronizes with</em>”，对应这里的 <em>synchronized before</em> 。 论文里的定义为：</p>
+<ul>
+<li>对于内存位置上的读操作，定义获取操作（acquire）为原子读、原子读写、加锁。</li>
+<li>对于内存位置上的写操作，定义释放操作（release）为原子写、原子读写、锁释放。</li>
+<li>如果在同一内存位置上，B 是获取操作，A 是释放操作，那么 A <em>synchronizes with</em> B，并且 <em>W(B) = A</em> 。</li>
+</ul>
+<p>这个定义相对好理解一些，即同一内存位置上的类写同步操作 <em>synchronizes with</em> 类读同步操作。</p>
+<h2 id="happens-before"><em>happens before</em></h2>
+<p><em>happens before</em> 关系定义为 “<em>sequenced before</em>” 关系和 “<em>synchronized before</em>” 关系并集的传递闭包。</p>
+<blockquote>
+<p>[!warning] &gt; <em>happens before</em> 并不代表操作发生的实际先后，而是在描述一个操作的结果对另一个操作可见。详见：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Happened-before">Happened-before - Wikipedia</a> 即使 A <em>happens before</em> B，B 也可能实际发生在 A 之前。但如果 A 发生在 B 之前，那么 A 的结果一定对 B 可见。</p>
+</blockquote>
+<p>要求 3： 对于一个<mark style="background: #FFF3A3A6;">普通（非同步）</mark>的在内存地址 <em>x</em> 上的读取操作 <em>r</em>，W(<em>r</em>) 操作也必须要保证，写入操作 <em>w</em> 对于读取操作 <em>r</em> 是可见的，这里的可见性意味着以下两点均成立：</p>
+<ul>
+<li>写入操作 <em>w</em> <em>happens before</em> 读取操作 <em>r</em> 之前；</li>
+<li>不存在其他 <em>happens before</em> <em>r</em> 的写入 <em>w’</em> （至 <em>x</em>），且写入操作 <em>w</em> 发生在 <em>w’</em> 之前</li>
+<li>这个限制的目的是，保证在无数据竞争的情况下，普通读只能对应唯一的可见写入。</li>
+</ul>
+<p>内存位置 x 上的读写数据竞争由对 x 的类读操作 r 和对 x 的类写操作 w 组成，其中至少有一个是非同步的，并且它们在 “<em>happens before</em>” 关系中无序（即既不是 r <em>happens before</em> w，也不是 w <em>happens before</em> r）。</p>
+<p>内存位置 x 上的写写数据竞争由对 x 的两个类似写的内存操作 w 和 w' 组成，其中至少有一个是非同步的，并且它们在 “<em>happens before</em>” 关系中无序。</p>
+<p>如果内存位置 x 上不存在读写或写写数据竞争，那么<mark style="background: #FFF3A3A6;">对 x 的任何读操作 r 都只有一个可能的 W (r)</mark>：即在 “<em>happens before</em>” 顺序中紧接在它之前的单个 w。</p>
+<p>文档里的介绍有点模糊了普通读和原子读，论文里的介绍会更清晰一点：</p>
+<ul>
+<li>对于每个普通读 <em>r</em>，<em>W(r)</em> 都对其可见。如果没有数据竞争，只能存在一个可见的 <em>W(r)</em> 。</li>
+<li>对于每个原子读 <em>r</em>，<em>W(r)</em> 是最后一个发生在这个内存位置的写入。</li>
+<li>这里的 “发生” 指真正的发生顺序。</li>
+</ul>
+<p>更一般地，可以证明，任何无数据竞争的 Go 程序（即其任何程序执行中都不存在读写或写写数据竞争），其结果只能通过 goroutine 执行的某种顺序、一致的交错执行来解释。这个属性称为 DRF - SC（数据竞争自由 - 顺序一致性）。</p>
+<p>参考原论文，这里顺序一致性的定义为：</p>
+<h3 id="顺序一致性">顺序一致性</h3>
+<p>定义程序的顺序一致性执行为一组线程执行，并伴随一个所有内存操作的全序关系 &lt;T，满足以下约束：</p>
+<ol type="1">
+<li>每个线程执行都是内部一致的，即它对应于该线程的正确顺序执行，给定从内存读取的值，并且遵守由 “<em>happens before</em>” 关系所隐含的操作顺序。</li>
+<li>&lt;T 与 “<em>happens before</em>” 顺序一致；即，如果操作 a 在操作 b 之前发生，则 a &lt;T b。</li>
+<li>每个加载、锁定和读 - 改写操作都根据 &lt;T 从同一位置的最后一次写操作中读取值。给定锁的最后一个操作，必须是由同一线程执行的锁操作，且在解锁操作之前。</li>
+</ol>
+<p>实际上，这要求 &lt;T 是各个线程操作的交错顺序。</p>
+<h1 id="包含数据竞争的程序的实现限制">包含数据竞争的程序的实现限制</h1>
+<p>上一节给出了无数据竞争程序执行的形式化定义。本节将非正式地描述实现对于确实包含数据竞争的程序必须提供的语义。</p>
+<h2 id="报告竞争终止程序">报告竞争 &amp; 终止程序</h2>
+<p>Go 提供了线程检查器（通过 “go build -race” 调用）来检测数据竞争，一旦检测到数据竞争，都会报告该竞争并终止程序的执行。</p>
+<p>这是排查并发问题的有用工具。</p>
+<h2 id="复合结构的读写">复合结构的读写</h2>
+<p>对数组、结构体或复数的读取可以按任意顺序实现为对每个单独子值（数组元素、结构体字段或实部 / 虚部）的读取。类似地，对数组、结构体或复数的写入可以按任意顺序实现为对每个单独子值的写入。</p>
+<h2 id="单字读取限制">单字读取限制</h2>
+<p>否则，对于一个在读取内存地址为 <em>x</em> 且大小不超过一个机器字长的操作，<mark style="background: #BBFABBA6;">必须能够观测到在这个读操作之前的一个写操作 <em>w</em></mark>，同时在这个 <em>w</em> 和 <em>r</em> 之间不能插入另外一个写操作 <em>w'</em> 使得 <em>w</em> <em>happens before</em> <em>w'</em>，而 <em>w'</em> <em>happens before</em> <em>r</em> ！（可见性的定义）</p>
+<p>此外，不允许观察到非因果的和 “凭空出现” 的写入。</p>
+<h2 id="大于单字的读写限制">大于单字的读写限制</h2>
+<p>对大于单个机器字的内存位置的读取，鼓励但不要求与机器字大小的内存位置具有相同的语义，即观察到单个允许的写入。出于性能原因，实现可能会将较大的操作视为以未指定顺序的一组单个机器字大小的操作。<mark style="background: #FF5582A6;">这意味着多字数据结构上的数据竞争可能会导致不一致的值</mark>，这些值并不对应于单个写入。当值依赖于内部（指针，长度）或（指针，类型）对的一致性时（在大多数 Go 实现中<mark style="background: #FF5582A6;">，接口值、映射、切片和字符串可能就是这种情况</mark>），此类数据竞争进而可能导致任意的内存损坏。</p>
+<h1 id="同步操作">同步操作</h1>
+<h2 id="包的初始化">包的初始化</h2>
+<p>程序初始化在单个 goroutine 中运行，但该 goroutine 可能会创建其他并发运行的 goroutine。</p>
+<p>如果包 <code>p</code> 导入了包 <code>q</code>，那么 <code>q</code> 的所有 <code>init</code> 函数完成之后，<code>p</code> 的 <code>init</code> 函数才会开始执行。</p>
+<p>所有 <code>init</code> 函数完成之后，才会同步启动 <code>main.main</code> 函数。</p>
+<h2 id="goroutine-创建">goroutine 创建</h2>
+<p><code>go</code> 语句启动新 goroutine （写），“<em>sequenced before</em>” 于该 goroutine 的开始执行（读）。例如，在这个程序中：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="built_in">print</span>(a)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">hello</span><span class="params">()</span></span> {</span><br><span class="line">	a = <span class="string">"hello, world"</span></span><br><span class="line">	<span class="keyword">go</span> f()</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>调用 <code>hello</code> 将在将来的某个时间点打印 <code>"hello, world"</code>（可能在 <code>hello</code> 返回之后）。</p>
+<h2 id="goroutine-销毁">goroutine 销毁</h2>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">hello</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> { a = <span class="string">"hello"</span> }()</span><br><span class="line">	<span class="built_in">print</span>(a)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>一个 goroutine 的退出，不能保证 “<em>sequenced before</em>” 于程序中的任何事件。例如，在这个程序中：</p>
+<ul>
+<li>对 <code>a</code> 的赋值之后没有任何同步事件，因此不能保证其他任何 goroutine 能观察到该赋值。实际上，<mark style="background: #FF5582A6;">激进的编译器可能会删除整个 go 语句</mark>。</li>
+<li>如果一个 goroutine 的执行结果必须被另一个 goroutine 观察到，就需要<mark style="background: #BBFABBA6;">使用诸如锁或通道通信这样的同步机制来建立相对顺序</mark>。</li>
+</ul>
+<h2 id="通道通信">通道通信</h2>
+<h3 id="发送和读取">发送和读取</h3>
+<p>通道通信是 goroutine 之间进行同步的主要方式。对特定通道的每次发送操作，都会与从该通道进行的相应接收操作相匹配，这两个操作通常发生在不同的 goroutine 中。</p>
+<ul>
+<li>对通道的发送操作（写） <em>synchronized before</em> 在从该通道进行的相应接收操作（读）。</li>
+</ul>
+<p>下面这个程序：必定会输出 <code>"hello, world"</code>。对 <code>a</code> 的写入操作 <em>sequenced before</em> 对 <code>c</code> 的发送操作，而对 <code>c</code> 的发送操作 <em>synchronized before</em> 从 <code>c</code> 进行的相应接收操作，从 <code>c</code> 的接收操作又 <em>sequenced before</em> <code>print</code> 操作。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">10</span>)</span><br><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> {</span><br><span class="line">	a = <span class="string">"hello, world"</span></span><br><span class="line">	c &lt;- <span class="number">0</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="keyword">go</span> f()</span><br><span class="line">	&lt;-c</span><br><span class="line">	<span class="built_in">print</span>(a)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="关闭">关闭</h3>
+<p>通道的关闭（写） <em>synchronized before</em> 在因通道关闭而返回零值的接收操作（读）。</p>
+<p>在前面的示例中，将 c &lt;- 0 替换为 close (c) 会得到一个具有相同可靠行为的程序。从无缓冲通道接收数据的操作，会在该通道上相应的发送操作完成之前进行同步。</p>
+<h3 id="无缓冲通道">无缓冲通道</h3>
+<p>这个程序（与上述类似，但交换了发送和接收语句，并使用无缓冲通道）：也可以确保该程序会打印 “hello, world”。利用了无缓冲通道中，读写操作会互相阻塞的特性，都就绪了才会往下执行。</p>
+<ul>
+<li>个人理解：不仅是通道写 <em>synchronized before</em> 通道读，通道读也 <em>synchronized before</em> 通道写。</li>
+</ul>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> {</span><br><span class="line">	a = <span class="string">"hello, world"</span></span><br><span class="line">	&lt;-c</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="keyword">go</span> f()</span><br><span class="line">	c &lt;- <span class="number">0</span></span><br><span class="line">	<span class="built_in">print</span>(a)</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>对 <code>a</code> 的写入操作 <em>sequenced before</em> 对 <code>c</code> 的接收操作，对 <code>c</code> 的接收操作 <em>synchronized before</em> 在对 <code>c</code> 相应的发送操作，而对 <code>c</code> 的发送操作 <em>sequenced before</em> 打印操作。</p>
+<p>如果通道是带缓冲的（例如，<code>c = make(chan int, 1)</code>），那么就不能保证该程序会打印 “hello, world”。（它可能会打印空字符串、崩溃或出现其他情况。）</p>
+<ul>
+<li>个人理解：对于有缓冲通道，不能保证 通道写 <em>synchronized before</em> 通道读。当有缓冲区时，写操作直接写入缓冲区了，无需阻塞等待读。</li>
+</ul>
+<h3 id="推广规则">推广规则</h3>
+<blockquote>
+<p>[!tip] 对通道的同步规则推广可得：对容量为 <code>C</code> 的通道进行第 <code>k</code> 次接收操作，会在该通道第 <code>k+C</code> 次发送操作完成之前同步。</p>
+</blockquote>
+<p>这条规则将前面的规则推广到了带缓冲的通道。它使得可以用带缓冲的通道来模拟计数信号量：通道中的元素数量对应于活动使用的数量，通道的容量对应于同时使用的最大数量，发送一个元素表示获取信号量，接收一个元素表示释放信号量。这是一种限制并发的常用习惯用法。</p>
+<p>这个程序为工作列表中的每一项都启动一个 goroutine，但这些 goroutine 使用 <code>limit</code> 通道进行协调，以确保一次最多有三个 goroutine 在运行工作函数。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> limit = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">3</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="keyword">for</span> _, w := <span class="keyword">range</span> work {</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(w <span class="keyword">func</span>()</span>)</span> {</span><br><span class="line">			limit &lt;- <span class="number">1</span></span><br><span class="line">			w()</span><br><span class="line">			&lt;-limit</span><br><span class="line">		}(w)</span><br><span class="line">	}</span><br><span class="line">	<span class="keyword">select</span>{}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="锁">锁</h2>
+<p><code>sync</code> 包实现了两种锁数据类型：<code>sync.Mutex</code> 和 <code>sync.RWMutex</code>。</p>
+<p>对于任意 <code>sync.Mutex</code> 或 <code>sync.RWMutex</code> 变量 <code>l</code> 和 <code>n &lt; m</code>，<code>l.Unlock()</code> 的第 <code>n</code> 次调用 <em>synchronized before</em> 在 <code>l.Lock()</code> 的第 <code>m</code> 次调用。</p>
+<ul>
+<li>如果解锁一个未加锁的锁，会报错。</li>
+<li>如果对一个锁定中的锁加锁，会阻塞等到锁释放。</li>
+</ul>
+<p>对于 <code>sync.RWMutex</code> 变量 <code>l</code>，<code>l.RLock</code> 的任意调用与第 <code>n</code> 次调用 <code>l.Unlock</code> 同步，返回时会保证此关系。此外，与其匹配的 <code>l.RUnlock</code> 调用在第 <code>n+1</code> 次调用 <code>l.Lock</code> 返回之前同步完成。</p>
+<p>成功调用 <code>l.TryLock</code>（或 <code>l.TryRLock</code>）等效于调用 <code>l.Lock</code>（或 <code>l.RLock</code>）。而未成功的调用不具备任何同步效果。就内存模型而言，即使 <code>l</code> 未加锁，<code>l.TryLock</code>（或 <code>l.TryRLock</code>）也可能返回 <code>false</code>。</p>
+<h2 id="once">Once</h2>
+<p><code>sync</code> 包通过 <code>Once</code> 类型为多协程提供了安全的初始化机制。多个线程可以调用 <code>once.Do(f)</code> 来执行特定的函数 <code>f</code>，但 <code>f()</code> 只会运行一次，其它调用会阻塞直到 <code>f()</code> 返回。</p>
+<p>完成一次 <code>once.Do(f)</code> 的调用会在其返回之前完成同步。</p>
+<p>以下程序：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"><span class="keyword">var</span> once sync.Once</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setup</span><span class="params">()</span></span> {</span><br><span class="line">  a = <span class="string">"hello, world"</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doprint</span><span class="params">()</span></span> {</span><br><span class="line">  once.Do(setup)</span><br><span class="line">  <span class="built_in">print</span>(a)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">twoprint</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">go</span> doprint()</span><br><span class="line">  <span class="keyword">go</span> doprint()</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>调用 <code>twoprint</code> 会确保 <code>setup</code> 函数被调用且只被调用一次。在任意 <code>print</code> 调用之前，<code>setup</code> 函数会完成。因此，程序会输出两次 "hello, world"。</p>
+<h2 id="原子值-atomic-values">原子值 (Atomic Values)</h2>
+<p><code>sync/atomic</code> 包中的 API 提供了 “原子操作”，可以用于不同协程之间的同步。如果原子操作 <code>A</code> 的效果被另一个原子操作 <code>B</code> 所观察到，则 <code>A</code> <em>synchronized before</em> <code>B</code> 。在程序中，所有原子操作的执行表现为按某种顺序一致地执行。</p>
+<p>上述定义与 C++ 的顺序一致性原子操作和 Java 的 <code>volatile</code> 变量语义一致。</p>
+<h2 id="终结器-finalizers">终结器 (Finalizers)</h2>
+<p><code>runtime</code> 包提供了一个 <code>SetFinalizer</code> 函数，用于在某对象不再被程序访问时添加一个终结器。对 <code>SetFinalizer(x, f)</code> 的调用，会保证 <em>synchronized before</em> 在调用 <code>f(x)</code> 的终结操作。</p>
+<h2 id="附加机制-additional-mechanisms">附加机制 (Additional Mechanisms)</h2>
+<p><code>sync</code> 包还提供了额外的同步抽象，包括条件变量、无锁映射、内存池和等待组。这些的文档会详细说明其同步保证。</p>
+<p>其它提供同步抽象的包也应在文档中说明其保证。</p>
+<h1 id="不正确的同步">不正确的同步</h1>
+<h2 id="程序中的竞态条件">程序中的竞态条件</h2>
+<p>存在竞态条件的程序是不正确的，可能表现出非顺序一致的执行行为。特别是，请注意一个读取操作 <code>r</code> 可能会读取到与 <code>r</code> 并发执行的某个写入操作 <code>w</code> 的值。即使这种情况发生，<mark style="background: #FF5582A6;">也并不意味着 <code>r</code> 之后的读取操作会观察到发生在 <code>w</code> 之前的写入操作</mark>。</p>
+<ul>
+<li>这句话需要着重理解。上文提到，如果没有数据竞态，线程表现为顺序交叉执行，这就意味着如果 r 读取到 w，r 之后的操作一定能读取到 w 之前的操作。</li>
+<li>但如果有数据竞态，在编译器的重排序侠，这个规则就被打破了，可能会发生预期外的行为。</li>
+</ul>
+<p>以下程序：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a, b <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span></span> {</span><br><span class="line">  a = <span class="number">1</span></span><br><span class="line">  b = <span class="number">2</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">g</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="built_in">print</span>(b)</span><br><span class="line">  <span class="built_in">print</span>(a)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">go</span> f()</span><br><span class="line">  g()</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>可能会输出 <code>2</code> 然后是 <code>0</code>。因为编译器可能会对代码进行重排序。这一事实使某些常见的代码模式变得无效。</p>
+<h2 id="双重检查锁定">双重检查锁定</h2>
+<p>双重检查锁定试图避免同步的开销。例如，<code>twoprint</code> 程序可能被错误地写成：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"><span class="keyword">var</span> done <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setup</span><span class="params">()</span></span> {</span><br><span class="line">  a = <span class="string">"hello, world"</span></span><br><span class="line">  done = <span class="literal">true</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doprint</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">if</span> !done {</span><br><span class="line">    once.Do(setup)</span><br><span class="line">  }</span><br><span class="line">  <span class="built_in">print</span>(a)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">twoprint</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">go</span> doprint()</span><br><span class="line">  <span class="keyword">go</span> doprint()</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>但是在 <code>doprint</code> 中，观察到 <code>done</code> 的写入并不保证观察到 <code>a</code> 的写入。该版本可能（错误地）打印空字符串，而不是 "hello, world"。</p>
+<ul>
+<li>同样，由于重排序，可能先执行 <code>done=true</code> ，再执行 a 的赋值。</li>
+</ul>
+<h2 id="忙等待">忙等待</h2>
+<p>另一个错误的模式是忙等待值的变化，例如：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="keyword">string</span></span><br><span class="line"><span class="keyword">var</span> done <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setup</span><span class="params">()</span></span> {</span><br><span class="line">  a = <span class="string">"hello, world"</span></span><br><span class="line">  done = <span class="literal">true</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">go</span> setup()</span><br><span class="line">  <span class="keyword">for</span> !done {</span><br><span class="line">  }</span><br><span class="line">  <span class="built_in">print</span>(a)</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>如前所述，在 <code>main</code> 中，<mark style="background: #FF5582A6;">观察到 <code>done</code> 的写入并不保证观察到 <code>a</code> 的写入</mark>，因此该程序也可能打印空字符串。更糟糕的是，由于两个线程之间没有同步事件，<code>main</code> 中可能永远无法观察到对 <code>done</code> 的写入。<code>main</code> 中的循环可能永远不会结束。</p>
+<h2 id="更微妙的变体">更微妙的变体</h2>
+<p>还有一些更微妙的变体，例如以下程序：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> T <span class="keyword">struct</span> {</span><br><span class="line">  msg <span class="keyword">string</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> g *T</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setup</span><span class="params">()</span></span> {</span><br><span class="line">  t := <span class="built_in">new</span>(T)</span><br><span class="line">  t.msg = <span class="string">"hello, world"</span></span><br><span class="line">  g = t</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">  <span class="keyword">go</span> setup()</span><br><span class="line">  <span class="keyword">for</span> g == <span class="literal">nil</span> {</span><br><span class="line">  }</span><br><span class="line">  <span class="built_in">print</span>(g.msg)</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>即使 <code>main</code> 观察到 <code>g != nil</code> 并退出循环，也无法保证它会观察到 <code>g.msg</code> 的初始化值。</p>
+<p>有可能 setup 被重排序为以下代码。这就回到了那个经典的问题，<mark style="background: #FFF3A3A6;">为什么 Java 里的双重校验加锁单例模式需要用 <code>volatile</code> 修饰</mark>，就是为了避免构造函数里的重排序导致读取到未初始化的对象。</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">setup</span><span class="params">()</span></span> {</span><br><span class="line">  t := <span class="built_in">new</span>(T)</span><br><span class="line">  g = t</span><br><span class="line">  t.msg = <span class="string">"hello, world"</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="解决方案">解决方案</h2>
+<p>在所有这些示例中，解决方案都是相同的：使用显式的同步机制。</p>
+<h1 id="不正确的编译">不正确的编译</h1>
+<p>Go 内存模型不仅约束了 Go 程序的行为，也同样约束了编译器的优化。一些在单线程程序中有效的编译器优化在所有 Go 程序中可能是不合法的。具体来说，编译器必须遵守以下规则：</p>
+<ol type="1">
+<li>不能引入原程序中不存在的写操作。</li>
+<li>不能允许单次读取观察到多个值。</li>
+<li>不能允许单次写入写入多个值。</li>
+</ol>
+<p>以下示例假设 <code>*p</code> 和 <code>*q</code> 指向的内存地址可以被多个协程访问。</p>
+<h2 id="不能在无竞态条件的程序中引入数据竞争">不能在无竞态条件的程序中引入数据竞争</h2>
+<p>编译器不得将写操作移出其所在的条件语句。例如，编译器不能将以下程序：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">*p = <span class="number">1</span></span><br><span class="line"><span class="keyword">if</span> cond {</span><br><span class="line">	*p = <span class="number">2</span></span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>重写为：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">*p = <span class="number">2</span></span><br><span class="line"><span class="keyword">if</span> !cond {</span><br><span class="line">	*p = <span class="number">1</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在原始程序中，如果 <code>cond</code> 为 <code>false</code> 且另一个协程正在读取 <code>*p</code>，则该协程只能观察到 <code>*p</code> 的先前值或 <code>1</code>。在重写后的程序中，另一个协程可能观察到 <code>2</code>，这是原始程序中不可能发生的。</p>
+<h2 id="不能假设循环一定会终止">不能假设循环一定会终止</h2>
+<p>例如，编译器通常不得将对 <code>*p</code> 或 <code>*q</code> 的访问移到循环之前：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">n := <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> e := list; e != <span class="literal">nil</span>; e = e.next {</span><br><span class="line">	n++</span><br><span class="line">}</span><br><span class="line">i := *p</span><br><span class="line">*q = <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>如果 <code>list</code> 指向一个循环链表，则原始程序永远不会访问 <code>*p</code> 或 <code>*q</code>，但重写后的程序可能会。（如果编译器能证明访问 <code>*p</code> 不会引发 panic，则移动 <code>*p</code> 是安全的；要移动 <code>*q</code>，还需要证明没有其他协程可以访问 <code>*q</code>。）</p>
+<h2 id="不能假设被调用的函数总是返回或不包含同步操作">不能假设被调用的函数总是返回或不包含同步操作</h2>
+<p>例如，编译器不得将对 <code>*p</code> 或 <code>*q</code> 的访问移到函数调用之前（除非能够直接确定函数 <code>f</code> 的确切行为）：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">f()</span><br><span class="line">i := *p</span><br><span class="line">*q = <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>如果 <code>f</code> 从未返回，则原始程序永远不会访问 <code>*p</code> 或 <code>*q</code>，但重写后的程序可能会。而且，如果 <code>f</code> 包含同步操作，原始程序可能通过这些同步操作建立对 <code>*p</code> 和 <code>*q</code> 的 “先发生” 关系，但重写后的程序无法保证这一点。</p>
+<h2 id="不能允许单次读取观察到多个值">不能允许单次读取观察到多个值</h2>
+<p>这意味着编译器不得从共享内存中重新加载局部变量。例如，在以下程序中，编译器不得丢弃 <code>i</code> 并第二次从 <code>*p</code> 重新加载：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">i := *p</span><br><span class="line"><span class="keyword">if</span> i &gt; <span class="number">0</span> {</span><br><span class="line">	<span class="built_in">print</span>(i)</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>如果编译器重新从 <code>*p</code> 加载 <code>i</code>，可能会导致程序观察到不一致的值，这是不允许的。</p>
+<h2 id="禁止单次读取观察到多个值">禁止单次读取观察到多个值</h2>
+<p>禁止单次读取观察到多个值，意味着编译器不得从共享内存中重新加载局部变量。例如，在以下程序中，编译器不得丢弃 <code>i</code> 并在 <code>funcs[i]()</code> 前重新加载 <code>i = *p</code>：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">i := *p</span><br><span class="line"><span class="keyword">if</span> i &lt; <span class="number">0</span> || i &gt;= <span class="built_in">len</span>(funcs) {</span><br><span class="line">	<span class="built_in">panic</span>(<span class="string">"invalid function index"</span>)</span><br><span class="line">}</span><br><span class="line">... <span class="built_in">complex</span> code ...</span><br><span class="line"><span class="comment">// 编译器不得在这里重新加载 i = *p</span></span><br><span class="line">funcs[i]()</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>在单线程程序中，如果复杂代码需要大量寄存器，编译器可能会丢弃 <code>i</code> 而不保存其副本，并在 <code>funcs[i]()</code> 之前重新加载 <code>i = *p</code>。但在 Go 中，这种做法是不允许的，因为 <code>*p</code> 的值可能已经改变。（相反，编译器可以将 <code>i</code> 存储到栈中以备后用。）</p>
+<h2 id="禁止单次写入写入多个值">禁止单次写入写入多个值</h2>
+<p>这也意味着，编译器不得使用局部变量将要写入的内存作为写入前的临时存储。例如，以下程序：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*p = i + *p/<span class="number">2</span></span><br></pre></td></tr></tbody></table></figure>
+<p>不得被重写为：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*p /= <span class="number">2</span> *p += i</span><br></pre></td></tr></tbody></table></figure>
+<p>如果 <code>i</code> 和 <code>*p</code> 初始值均为 <code>2</code>，原始代码的结果是 <code>*p = 3</code>，因此发生竞态的线程只能从 <code>*p</code> 读取到 <code>2</code> 或 <code>3</code>。而重写后的代码会先执行 <code>*p = 1</code>，然后执行 <code>*p = 3</code>，使得发生竞态的线程可能读取到 <code>1</code>，这是原始代码中不可能发生的。</p>
+<h2 id="cc-编译器中的优化差异">C/C++ 编译器中的优化差异</h2>
+<p>需要注意的是，所有上述优化在 C/C++ 编译器中是被允许的。因此，共享同一个后端的 Go 编译器需要特别注意，<mark style="background: #FFF3A3A6;">禁用在 Go 中无效的优化</mark>。</p>
+<h2 id="数据竞争的例外情况">数据竞争的例外情况</h2>
+<p>禁止引入数据竞争的规则并非绝对适用。如果编译器能够证明数据竞争不会影响目标平台上的正确执行，则可以进行某些优化。例如，在几乎所有的 CPU 上，以下代码可以被安全地重写：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">n := <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; m; i++ {</span><br><span class="line">	n += *shared</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>重写为（减少对地址的访问）：</p>
+<figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">n := <span class="number">0</span></span><br><span class="line">local := *shared</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; m; i++ {</span><br><span class="line">	n += local</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>前提是能够证明 <code>*shared</code> 的访问不会触发错误，因为潜在增加的读取操作不会影响现有的并发读取或写入。然而，这种重写在源代码到源代码的翻译器中是不合法的，因为它可能改变程序的行为语义。</p>
+<h1 id="结论">结论</h1>
+<p>编写无数据竞争程序的 Go 程序员可以像在几乎所有现代编程语言中一样，依赖这些程序的顺序一致性执行。</p>
+<p>对于存在数据竞争的程序，无论是程序员还是编译器，都应该记住一条忠告：不要耍小聪明。</p>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://go.dev/ref/mem">The Go Memory Model - The Go Programming Language</a></li>
+<li><a target="_blank" rel="noopener" href="https://jasonkayzk.github.io/2022/10/26/%E3%80%90%E7%BF%BB%E8%AF%91%E3%80%91Go%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">【翻译】Go 内存模型 - 张小凯的博客 (jasonkayzk.github.io)</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Tqnwhz
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/" title="Golang 内存模型">https://tqnwhz.github.io/blog/2025/01/17/Golang-Memory-Model/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/blog/tags/Golang/" rel="tag"><i class="fa fa-tag"></i> Golang</a>
+              <a href="/blog/tags/%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" rel="tag"><i class="fa fa-tag"></i> 内存模型</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/blog/2024/07/13/DDIA-Note-11/" rel="prev" title="DDIA 阅读笔记第 11 章：流处理">
+                  <i class="fa fa-angle-left"></i> DDIA 阅读笔记第 11 章：流处理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Tqnwhz</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">607k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:23</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div><div>
+<span id="timeDate">载入天数...</span><span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date(2021,6,13);
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站已安全运行 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/blog/js/comments.js"></script><script src="/blog/js/utils.js"></script><script src="/blog/js/sidebar.js"></script><script src="/blog/js/next-boot.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.1/dist/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/blog/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/blog/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"tqnwhz/blog","issue_term":"pathname","theme":"github-dark"}</script>
+<script src="/blog/js/third-party/comments/utterances.js"></script>
+
+</body>
+</html>
